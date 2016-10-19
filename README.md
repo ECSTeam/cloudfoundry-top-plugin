@@ -1,5 +1,8 @@
 # top-plugin
 
+WORK IN PROGRESS - Currently this plugin doesn't do anything yet.
+
+This plugin is based on the firehose plugin: https://github.com/cloudfoundry/firehose-plugin
 
 ## Installation
 
