@@ -8,7 +8,7 @@ This plugin is based on the firehose plugin: https://github.com/cloudfoundry/fir
 
 ```bash
 cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
-cf install-plugin ./top-plugin
+cf install-plugin ./top-plugin-osx
 ```
 
 ## Usage
