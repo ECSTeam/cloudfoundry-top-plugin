@@ -28,6 +28,13 @@ type ClientOptions struct {
 	SubscriptionID string
 }
 
+type AppMetadata struct {
+	Low              uint64
+	High             uint64
+	//UUID					   *events.UUID
+	//Name						 string
+}
+
 func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui terminal.UI) *Client {
 	return &Client{
 		dopplerEndpoint: doppplerEndpoint,
@@ -92,9 +99,11 @@ func (c *Client) Start() {
 
 	c.ui.Say("Hit Ctrl+c to exit")
 
+// *******************
+
   //var x events.UUID
-	var appMap map[*events.UUID]int
-	appMap = make(map[*events.UUID]int)
+	var appMap map[AppMetadata]int
+	appMap = make(map[AppMetadata]int)
 
 	for envelope := range output {
 		if filter == "" || filter == strconv.Itoa((int)(envelope.GetEventType())) {
@@ -102,8 +111,11 @@ func (c *Client) Start() {
 			instId := envelope.GetHttpStartStop().GetInstanceId()
 
 			if appId != nil && instId != "" {
-				appMap[appId]++
-				c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), appMap[appId])
+				myUUID := &AppMetadata{appId.GetLow(), appId.GetHigh()}
+				count := appMap[*myUUID]
+				count++
+				appMap[*myUUID] = count
+				c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), count)
 
 				//if envelope.GetHttpStartStop().GetPeerType() == events.PeerType_Client {
 				//	c.ui.Say("CLIENT EVENT \n")
