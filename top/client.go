@@ -1,5 +1,6 @@
 package top
 
+
 import (
 	"crypto/tls"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
+
 )
 
 type Client struct {
@@ -90,9 +92,25 @@ func (c *Client) Start() {
 
 	c.ui.Say("Hit Ctrl+c to exit")
 
+  //var x events.UUID
+	var appMap map[*events.UUID]int
+	appMap = make(map[*events.UUID]int)
+
 	for envelope := range output {
 		if filter == "" || filter == strconv.Itoa((int)(envelope.GetEventType())) {
-			c.ui.Say("%v \n", envelope)
+			appId := envelope.GetHttpStartStop().GetApplicationId()
+			instId := envelope.GetHttpStartStop().GetInstanceId()
+
+			if appId != nil && instId != "" {
+				appMap[appId]++
+				c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), appMap[appId])
+
+				//if envelope.GetHttpStartStop().GetPeerType() == events.PeerType_Client {
+				//	c.ui.Say("CLIENT EVENT \n")
+				//}
+
+				c.ui.Say("%v \n", envelope)
+			}
 		}
 	}
 	<-done
@@ -100,6 +118,8 @@ func (c *Client) Start() {
 
 func (c *Client) promptFilterType() (string, error) {
 
+  filter := "4"
+	/*
 	filter := c.ui.Ask(`Please enter one of the following choices:
 	  hit 'enter' for all messages
 	  2 for HttpStart
@@ -111,7 +131,7 @@ func (c *Client) promptFilterType() (string, error) {
 	  8 for Error
 	  9 for ContainerMetric
 	`)
-
+  */
 	if filter == "" {
 		return "", nil
 	}
