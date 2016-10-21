@@ -12,6 +12,11 @@ import (
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
 
+	"github.com/jroimartin/gocui"
+	"log"
+	"sync"
+	//"syscall"
+
 )
 
 type Client struct {
@@ -33,6 +38,19 @@ type UUIDKey struct {
 	Low              uint64
 	High             uint64
 }
+
+var (
+	doneX = make(chan bool)
+	wg   sync.WaitGroup
+
+	mu  sync.Mutex // protects ctr
+	ctr = 0
+
+	//appMap map[UUIDKey]int
+	appMap = make(map[UUIDKey]int)
+
+	done = make(chan struct{})
+)
 
 func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui terminal.UI) *Client {
 	return &Client{
@@ -85,7 +103,8 @@ func (c *Client) Start() {
 		output, errors = dopplerConnection.FirehoseWithoutReconnect(subscriptionID, c.authToken)
 	}
 
-	done := make(chan struct{})
+	//done := make(chan struct{})
+
 	go func() {
 		defer close(done)
 		for err := range errors {
@@ -94,19 +113,22 @@ func (c *Client) Start() {
 		}
 	}()
 
+
 	defer dopplerConnection.Close()
 
 	c.ui.Say("Hit Ctrl+c to exit")
 
 // *******************
 
-	var appMap map[UUIDKey]int
-	appMap = make(map[UUIDKey]int)
+	go initGui()
+
+	//var appMap map[UUIDKey]int
+	//appMap = make(map[UUIDKey]int)
 
 	// Create once outside loop
   lookupUUIDKey := &UUIDKey{0, 0}
 
-	go say(appMap, "world")
+	//go say(appMap, "world")
 
 	for envelope := range output {
 
@@ -191,4 +213,79 @@ type ConsoleDebugPrinter struct {
 func (p ConsoleDebugPrinter) Print(title, dump string) {
 	p.ui.Say(title)
 	p.ui.Say(dump)
+}
+
+func initGui() {
+
+	g := gocui.NewGui()
+	if err := g.Init(); err != nil {
+		log.Panicln(err)
+	}
+	defer g.Close()
+
+	g.SetLayout(layout)
+
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+
+	//wg.Add(1)
+	go counter(g)
+
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		log.Panicln(err)
+	}
+
+	// Send this process a SIGHUP
+  //go syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+  //waitSig(t, c, syscall.SIGHUP)
+
+}
+
+func layout(g *gocui.Gui) error {
+	maxX, maxY := g.Size()
+	if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		//fmt.Fprintln(v, "Hello world!")
+		fmt.Fprintln(v, "waiting...")
+	}
+	return nil
+}
+
+func quit(g *gocui.Gui, v *gocui.View) error {
+	close(done)
+	return gocui.ErrQuit
+}
+
+
+func counter(g *gocui.Gui) {
+	//defer wg.Done()
+
+	for {
+		select {
+		case <-doneX:
+			return
+		case <-time.After(1000 * time.Millisecond):
+			mu.Lock()
+			m := appMap
+			ctr++
+			mu.Unlock()
+
+			g.Execute(func(g *gocui.Gui) error {
+				v, err := g.View("helloView")
+				if err != nil {
+					return err
+				}
+				v.Clear()
+				//fmt.Fprintln(v, n)
+				for appId, count := range m {
+					//fmt.Println(s)
+					fmt.Fprintf(v, "%v size:%d  count:%d\n", appId, len(appMap), count)
+				}
+				return nil
+			})
+		}
+	}
 }
