@@ -304,11 +304,13 @@ func counter(g *gocui.Gui) {
 				if err != nil {
 					return err
 				}
-				v.Clear()
-				//fmt.Fprintln(v, n)
-				for appId, count := range m {
-					//fmt.Println(s)
-					fmt.Fprintf(v, "%v count:%d\n", appId, count)
+				if len(appMap) > 0 {
+					v.Clear()
+					//fmt.Fprintln(v, n)
+					for appId, count := range m {
+						//fmt.Println(s)
+						fmt.Fprintf(v, "%v count:%d\n", appId, count)
+					}
 				}
 
 				v, err = g.View("summaryView")
