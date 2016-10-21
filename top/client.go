@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"fmt"
+	"time"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
@@ -28,11 +29,9 @@ type ClientOptions struct {
 	SubscriptionID string
 }
 
-type AppMetadata struct {
+type UUIDKey struct {
 	Low              uint64
 	High             uint64
-	//UUID					   *events.UUID
-	//Name						 string
 }
 
 func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui terminal.UI) *Client {
@@ -101,31 +100,55 @@ func (c *Client) Start() {
 
 // *******************
 
-  //var x events.UUID
-	var appMap map[AppMetadata]int
-	appMap = make(map[AppMetadata]int)
+	var appMap map[UUIDKey]int
+	appMap = make(map[UUIDKey]int)
+
+	// Create once outside loop
+  lookupUUIDKey := &UUIDKey{0, 0}
+
+	go say(appMap, "world")
 
 	for envelope := range output {
+
+		// Check if this is an HttpStartStop event
 		if filter == "" || filter == strconv.Itoa((int)(envelope.GetEventType())) {
 			appId := envelope.GetHttpStartStop().GetApplicationId()
 			instId := envelope.GetHttpStartStop().GetInstanceId()
 
+			// Check if this is an application event
 			if appId != nil && instId != "" {
-				myUUID := &AppMetadata{appId.GetLow(), appId.GetHigh()}
-				count := appMap[*myUUID]
+				lookupUUIDKey.Low = appId.GetLow()
+				lookupUUIDKey.High = appId.GetHigh()
+				count := appMap[*lookupUUIDKey]
 				count++
-				appMap[*myUUID] = count
-				c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), count)
+				appMap[*lookupUUIDKey] = count
+				//c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), count)
 
 				//if envelope.GetHttpStartStop().GetPeerType() == events.PeerType_Client {
 				//	c.ui.Say("CLIENT EVENT \n")
 				//}
 
-				c.ui.Say("%v \n", envelope)
+				//c.ui.Say("%v \n", envelope)
 			}
 		}
 	}
+	c.ui.Say("after for envelope loop")
+	for error := range errors {
+		c.ui.Say("ERROR event from top: %v \n", error)
+	}
 	<-done
+}
+
+func say(appMap map[UUIDKey]int, s string) {
+	//for i := 0; i < 50; i++ {
+	for {
+		for appId, count := range appMap {
+			//fmt.Println(s)
+			fmt.Printf("%v size:%d  count:%d\n", appId, len(appMap), count)
+		}
+		fmt.Printf("-\n")
+		time.Sleep(1000 * time.Millisecond)
+	}
 }
 
 func (c *Client) promptFilterType() (string, error) {

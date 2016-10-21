@@ -6,4 +6,4 @@ if [ $? != 0 ]; then
    exit 1
 fi
 cf uninstall-plugin TopPlugin
-cf install-plugin ./top-plugin-osx
+cf install-plugin -f ./top-plugin-osx
