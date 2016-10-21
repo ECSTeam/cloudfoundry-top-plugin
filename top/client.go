@@ -237,6 +237,13 @@ func initGui() {
 		log.Panicln(err)
 	}
 
+	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", 'Q', gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+
 	//wg.Add(1)
 	go counter(g)
 
@@ -261,11 +268,12 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "waiting...")
 	}
 
-	if v, err := g.SetView("summaryView", 20, 4, 40, 8); err != nil {
+	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 8); err != nil {
 			if err != gocui.ErrUnknownView {
 				return err
 			}
-			v.Title = "Regular title"
+			v.Title = "Summary"
+			v.Frame = true
 			fmt.Fprintln(v, "View #2")
 	}
 
@@ -308,8 +316,8 @@ func counter(g *gocui.Gui) {
 					return err
 				}
 				v.Clear()
-				fmt.Fprintf(v, "Unique Apps:%v\n", len(appMap))
-
+				fmt.Fprintf(v, "Unique Apps:%5v  ", len(appMap))
+				fmt.Fprintf(v, "More stats:%v", len(appMap))
 				return nil
 			})
 		}
