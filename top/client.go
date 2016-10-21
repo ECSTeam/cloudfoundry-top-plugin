@@ -49,7 +49,7 @@ var (
 	//appMap map[UUIDKey]int
 	appMap = make(map[UUIDKey]int)
 
-	done = make(chan struct{})
+	dopplerConnection *consumer.Consumer
 )
 
 func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui terminal.UI) *Client {
@@ -64,7 +64,7 @@ func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui te
 
 func (c *Client) Start() {
 	var err error
-	dopplerConnection := consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: true}, nil)
+	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: true}, nil)
 	if c.options.Debug {
 		dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
 	}
@@ -81,7 +81,7 @@ func (c *Client) Start() {
 		filter = strconv.Itoa(int(envelopeType))
 
 	default:
-		c.ui.Say("What type of firehose messages do you want to see?")
+		//c.ui.Say("What type of firehose messages do you want to see?")
 		filter, err = c.promptFilterType()
 		if err != nil {
 			c.ui.Warn(err.Error())
@@ -99,11 +99,11 @@ func (c *Client) Start() {
 		if len(subscriptionID) == 0 {
 			subscriptionID = "TopPlugin"
 		}
-		c.ui.Say("Starting the nozzle")
+		c.ui.Say("Starting the nozzle for monitoring")
 		output, errors = dopplerConnection.FirehoseWithoutReconnect(subscriptionID, c.authToken)
 	}
 
-	//done := make(chan struct{})
+	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
@@ -117,6 +117,10 @@ func (c *Client) Start() {
 	defer dopplerConnection.Close()
 
 	c.ui.Say("Hit Ctrl+c to exit")
+
+  if output == nil || filter == "" {
+		c.ui.Say("whatever")
+	}
 
 // *******************
 
@@ -154,11 +158,15 @@ func (c *Client) Start() {
 			}
 		}
 	}
+
+	/*
 	c.ui.Say("after for envelope loop")
 	for error := range errors {
 		c.ui.Say("ERROR event from top: %v \n", error)
 	}
 	<-done
+
+	*/
 }
 
 func say(appMap map[UUIDKey]int, s string) {
@@ -244,6 +252,7 @@ func initGui() {
 
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
+
 	if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -251,11 +260,20 @@ func layout(g *gocui.Gui) error {
 		//fmt.Fprintln(v, "Hello world!")
 		fmt.Fprintln(v, "waiting...")
 	}
+
+	if v, err := g.SetView("summaryView", 20, 4, 40, 8); err != nil {
+			if err != gocui.ErrUnknownView {
+				return err
+			}
+			v.Title = "Regular title"
+			fmt.Fprintln(v, "View #2")
+	}
+
 	return nil
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
-	close(done)
+	dopplerConnection.Close()
 	return gocui.ErrQuit
 }
 
@@ -282,8 +300,16 @@ func counter(g *gocui.Gui) {
 				//fmt.Fprintln(v, n)
 				for appId, count := range m {
 					//fmt.Println(s)
-					fmt.Fprintf(v, "%v size:%d  count:%d\n", appId, len(appMap), count)
+					fmt.Fprintf(v, "%v count:%d\n", appId, count)
 				}
+
+				v, err = g.View("summaryView")
+				if err != nil {
+					return err
+				}
+				v.Clear()
+				fmt.Fprintf(v, "Unique Apps:%v\n", len(appMap))
+
 				return nil
 			})
 		}
