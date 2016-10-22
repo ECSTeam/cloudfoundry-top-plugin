@@ -7,10 +7,14 @@ import (
 
 	"fmt"
 	"time"
+	"encoding/binary"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
+
+
+	//cfClient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/jroimartin/gocui"
 	"log"
@@ -44,10 +48,10 @@ var (
 	wg   sync.WaitGroup
 
 	mu  sync.Mutex // protects ctr
-	ctr = 0
 
-	//appMap map[UUIDKey]int
-	appMap = make(map[UUIDKey]int)
+	//appMap = make(map[UUIDKey]int)
+	appMap = make(map[string]int)
+	totalEvents = 0
 
 	dopplerConnection *consumer.Consumer
 )
@@ -88,6 +92,11 @@ func (c *Client) Start() {
 			return
 		}
 	}
+
+
+
+
+
 
 	var errors <-chan error
 	var output <-chan *events.Envelope
@@ -130,24 +139,35 @@ func (c *Client) Start() {
 	//appMap = make(map[UUIDKey]int)
 
 	// Create once outside loop
-  lookupUUIDKey := &UUIDKey{0, 0}
+  //lookupUUIDKey := &UUIDKey{0, 0}
 
 	//go say(appMap, "world")
 
 	for envelope := range output {
+		totalEvents++
+
+		// Took the following from the nozzle code -- how does it know that WE are the slow one and not another nozzle?
+		if envelope.GetEventType() == events.Envelope_CounterEvent && envelope.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" && envelope.GetOrigin() == "doppler" {
+			c.ui.Say("We've intercepted an upstream message which indicates that the nozzle or the TrafficController is not keeping up. Please try scaling up the nozzle.")
+		}
+
+		//time.Sleep(1000 * time.Millisecond)
 
 		// Check if this is an HttpStartStop event
 		if filter == "" || filter == strconv.Itoa((int)(envelope.GetEventType())) {
-			appId := envelope.GetHttpStartStop().GetApplicationId()
+
+			appUUID := envelope.GetHttpStartStop().GetApplicationId()
 			instId := envelope.GetHttpStartStop().GetInstanceId()
 
 			// Check if this is an application event
-			if appId != nil && instId != "" {
-				lookupUUIDKey.Low = appId.GetLow()
-				lookupUUIDKey.High = appId.GetHigh()
-				count := appMap[*lookupUUIDKey]
+			if appUUID != nil && instId != "" {
+
+				appId := formatUUID(appUUID)
+				//c.ui.Say("**** appId:%v ****", appId)
+
+				count := appMap[appId]
 				count++
-				appMap[*lookupUUIDKey] = count
+				appMap[appId] = count
 				//c.ui.Say("%v size:%d  count:%d\n", appId, len(appMap), count)
 
 				//if envelope.GetHttpStartStop().GetPeerType() == events.PeerType_Client {
@@ -243,7 +263,9 @@ func initGui() {
 	if err := g.SetKeybinding("", 'Q', gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
-
+	if err := g.SetKeybinding("", 'c', gocui.ModNone, clearStats); err != nil {
+		log.Panicln(err)
+	}
 	//wg.Add(1)
 	go counter(g)
 
@@ -260,21 +282,22 @@ func initGui() {
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
+	//if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
+	if v, err := g.SetView("detailView", 0, 5, maxX-1, maxY-4); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		//fmt.Fprintln(v, "Hello world!")
-		fmt.Fprintln(v, "waiting...")
+		fmt.Fprintln(v, "")
 	}
 
-	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 8); err != nil {
+	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 4); err != nil {
 			if err != gocui.ErrUnknownView {
 				return err
 			}
 			v.Title = "Summary"
 			v.Frame = true
-			fmt.Fprintln(v, "View #2")
+			fmt.Fprintln(v, "")
 	}
 
 	return nil
@@ -285,43 +308,69 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
+func clearStats(g *gocui.Gui, v *gocui.View) error {
+	appMap = make(map[string]int)
+	totalEvents = 0
+	updateDisplay(g)
+	return nil
+}
 
 func counter(g *gocui.Gui) {
-	//defer wg.Done()
-
 	for {
 		select {
 		case <-doneX:
 			return
 		case <-time.After(1000 * time.Millisecond):
-			mu.Lock()
-			m := appMap
-			ctr++
-			mu.Unlock()
-
-			g.Execute(func(g *gocui.Gui) error {
-				v, err := g.View("helloView")
-				if err != nil {
-					return err
-				}
-				if len(appMap) > 0 {
-					v.Clear()
-					//fmt.Fprintln(v, n)
-					for appId, count := range m {
-						//fmt.Println(s)
-						fmt.Fprintf(v, "%v count:%d\n", appId, count)
-					}
-				}
-
-				v, err = g.View("summaryView")
-				if err != nil {
-					return err
-				}
-				v.Clear()
-				fmt.Fprintf(v, "Unique Apps:%5v  ", len(appMap))
-				fmt.Fprintf(v, "More stats:%v", len(appMap))
-				return nil
-			})
+			updateDisplay(g)
 		}
 	}
+}
+
+func updateDisplay(g *gocui.Gui) {
+	mu.Lock()
+	m := appMap
+	mu.Unlock()
+
+	//maxX, maxY := g.Size()
+
+	g.Execute(func(g *gocui.Gui) error {
+		v, err := g.View("detailView")
+		if err != nil {
+			return err
+		}
+		if len(m) > 0 {
+			v.Clear()
+			fmt.Fprintf(v, "%-40v %6v %6v %6v %6v %6v\n", "Application","2xx","3xx","4xx","5xx","Total")
+			for appId, count := range m {
+				fmt.Fprintf(v, "%-40v %6d %6d %6d %6d %6d\n", appId, 0,0,0 ,0,count)
+			}
+		} else {
+			v.Clear()
+			fmt.Fprintln(v, "No data yet...")
+		}
+
+		v, err = g.View("summaryView")
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		/*
+		for i := 0; i < 200000; i++ {
+			v.Clear()
+		}
+		*/
+		fmt.Fprintf(v, "Total events: %-11v", totalEvents)
+		fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
+		fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05.000"))
+
+		return nil
+	})
+}
+
+
+func formatUUID(uuid *events.UUID) string {
+	var uuidBytes [16]byte
+	binary.LittleEndian.PutUint64(uuidBytes[:8], uuid.GetLow())
+	binary.LittleEndian.PutUint64(uuidBytes[8:], uuid.GetHigh())
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuidBytes[0:4], uuidBytes[4:6], uuidBytes[6:8], uuidBytes[8:10], uuidBytes[10:])
 }
