@@ -8,13 +8,15 @@ import (
 	"fmt"
 	"time"
 	"encoding/binary"
+	"strings"
+	"encoding/json"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/cloudfoundry/cli/plugin"
 
-
-	//cfClient "github.com/cloudfoundry-community/go-cfclient"
+  cfclient "github.com/cloudfoundry-community/go-cfclient"
 
 	"github.com/jroimartin/gocui"
 	"log"
@@ -28,6 +30,7 @@ type Client struct {
 	authToken       string
 	options         *ClientOptions
 	ui              terminal.UI
+	cliConnection   plugin.CliConnection
 }
 
 type ClientOptions struct {
@@ -54,19 +57,70 @@ var (
 	totalEvents = 0
 
 	dopplerConnection *consumer.Consumer
+	appsMetadata []cfclient.App
 )
 
-func NewClient(authToken, doppplerEndpoint string, options *ClientOptions, ui terminal.UI) *Client {
+func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
+
+	dopplerEndpoint, err := cliConnection.DopplerEndpoint()
+	if err != nil {
+		ui.Failed(err.Error())
+	}
+
+
+	authToken, err := cliConnection.AccessToken()
+	if err != nil {
+		ui.Failed(err.Error())
+	}
+
 	return &Client{
-		dopplerEndpoint: doppplerEndpoint,
+		dopplerEndpoint: dopplerEndpoint,
 		authToken:       authToken,
 		options:         options,
 		ui:              ui,
+		cliConnection:   cliConnection,
 	}
 
 }
 
+func GetAppMetadata(c *Client) {
+
+
+		//requestUrl := "/v2/apps?inline-relations-depth=2"
+		requestUrl := "/v2/apps"
+		reponseJSON, err := c.cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
+		if err != nil {
+			c.ui.Failed(err.Error())
+			return
+		}
+
+		var appResp cfclient.AppResponse
+		// joining since it's an array of strings
+		outputStr := strings.Join(reponseJSON, "")
+		fmt.Printf("Response Size: %v\n", len(outputStr))
+		outputBytes := []byte(outputStr)
+		err2 := json.Unmarshal(outputBytes, &appResp)
+		if err2 != nil {
+					c.ui.Failed(err.Error())
+		}
+
+		//var apps []cfclient.App
+		for _, app := range appResp.Resources {
+			app.Entity.Guid = app.Meta.Guid
+			app.Entity.SpaceData.Entity.Guid = app.Entity.SpaceData.Meta.Guid
+			app.Entity.SpaceData.Entity.OrgData.Entity.Guid = app.Entity.SpaceData.Entity.OrgData.Meta.Guid
+			appsMetadata = append(appsMetadata, app.Entity)
+		}
+
+		for _, app := range appsMetadata {
+			fmt.Printf("appName: %v  %v\n", app.Name, app.Guid)
+		}
+
+
+}
+
 func (c *Client) Start() {
+
 	var err error
 	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: true}, nil)
 	if c.options.Debug {
@@ -94,7 +148,7 @@ func (c *Client) Start() {
 	}
 
 
-
+	GetAppMetadata(c)
 
 
 
@@ -342,7 +396,8 @@ func updateDisplay(g *gocui.Gui) {
 			v.Clear()
 			fmt.Fprintf(v, "%-40v %6v %6v %6v %6v %6v\n", "Application","2xx","3xx","4xx","5xx","Total")
 			for appId, count := range m {
-				fmt.Fprintf(v, "%-40v %6d %6d %6d %6d %6d\n", appId, 0,0,0 ,0,count)
+				appName := findAppName(appId)
+				fmt.Fprintf(v, "%-40v %6d %6d %6d %6d %6d\n", appName, 0,0,0 ,0,count)
 			}
 		} else {
 			v.Clear()
@@ -367,6 +422,14 @@ func updateDisplay(g *gocui.Gui) {
 	})
 }
 
+func findAppName(appId string) string {
+	for _, app := range appsMetadata {
+		if app.Guid == appId {
+			return app.Name;
+		}
+	}
+	return appId
+}
 
 func formatUUID(uuid *events.UUID) string {
 	var uuidBytes [16]byte
