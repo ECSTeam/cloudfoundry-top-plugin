@@ -8,14 +8,15 @@ import (
 
 
 type AppStatsEventProcessor struct {
-  appMap      map[string]int64
+  appMap      map[string]*AppStats
   totalEvents int64
 }
 
 
+
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
   return &AppStatsEventProcessor {
-    appMap:  make(map[string]int64),
+    appMap:  make(map[string]*AppStats),
     totalEvents: 0,
   }
 }
@@ -24,12 +25,12 @@ func (ap *AppStatsEventProcessor) GetTotalEvents() int64 {
   return ap.totalEvents
 }
 
-func (ap *AppStatsEventProcessor) GetAppMap() map[string]int64 {
+func (ap *AppStatsEventProcessor) GetAppMap() map[string]*AppStats {
   return ap.appMap
 }
 
 func (ap *AppStatsEventProcessor) Clear() {
-  ap.appMap = make(map[string]int64)
+  ap.appMap = make(map[string]*AppStats)
 	ap.totalEvents = 0
 }
 
@@ -46,9 +47,15 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
     appId := formatUUID(appUUID)
     //c.ui.Say("**** appId:%v ****", appId)
 
-    count := ap.appMap[appId]
-    count++
-    ap.appMap[appId] = count
+    appStats := ap.appMap[appId]
+    if appStats == nil {
+      appStats = &AppStats {
+        AppId: appId,
+        //appName: findAppMetadata(appId),
+      }
+      ap.appMap[appId] = appStats
+    }
+    appStats.EventCount++
 
   }
 

@@ -5,7 +5,7 @@ import (
   "log"
 	//"github.com/Sirupsen/logrus"
 	//"os"
-	//"sort"
+
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +22,6 @@ type AppStatsUI struct {
   mu  sync.Mutex // protects ctr
   appsMetadata []cfclient.App
 }
-
 
 
 func NewAppStatsUI(cliConnection plugin.CliConnection ) *AppStatsUI {
@@ -177,42 +176,72 @@ func (asUI *AppStatsUI) updateDisplay(g *gocui.Gui) {
 
 	g.Execute(func(g *gocui.Gui) error {
 		v, err := g.View("detailView")
+    //maxX, maxY := v.Size()
+    _, maxY := v.Size()
+
+
 		if err != nil {
 			return err
 		}
 		if len(m) > 0 {
 			v.Clear()
+      row := 1
 			fmt.Fprintf(v, "%-40v %10v %6v %6v %6v %6v %6v\n", "APPLICATION","SPACE","2XX","3XX","4XX","5XX","TOTAL")
-			for appId, count := range m {
-				appMetadata := asUI.findAppMetadata(appId)
-				fmt.Fprintf(v, "%-40v %10v %6d %6d %6d %6d %6d\n", appMetadata.Name, appMetadata.SpaceData.Entity.Name,0,0,0 ,0,count)
+
+      sortedStatList := getStats(m)
+
+      for _, appStats := range sortedStatList {
+
+        row++
+				appMetadata := asUI.findAppMetadata(appStats.AppId)
+        appName := appMetadata.Name
+        if appName == "" {
+          appName = appStats.AppId
+        }
+        spaceName := appMetadata.SpaceData.Entity.Name
+        if spaceName == "" {
+          spaceName = "unknown"
+        }
+				fmt.Fprintf(v, "%-40.40v %10.10v %6d %6d %6d %6d %6d\n", appMetadata.Name, appMetadata.SpaceData.Entity.Name,0,0,0 ,0,appStats.EventCount)
+        if row == maxY {
+          break
+        }
 			}
 		} else {
 			v.Clear()
 			fmt.Fprintln(v, "No data yet...")
 		}
 
-		v, err = g.View("summaryView")
-		if err != nil {
-			return err
-		}
-		v.Clear()
-		/*
-		for i := 0; i < 200000; i++ {
-			v.Clear()
-		}
-		*/
-		fmt.Fprintf(v, "Total events: %-11v", asUI.processor.GetTotalEvents())
-		fmt.Fprintf(v, "Total Apps: %-11v", len(asUI.appsMetadata))
-		fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
-		fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
-		fmt.Fprintf(v, "Stats duration: %v\n", 0)
-    // TODO: this should be info that parent UI has / displays
-		//fmt.Fprintf(v, "API EP:%v", apiEndpoint)
+		asUI.updateHeaderDisplay(g)
 
 		return nil
 	})
 }
+
+func (asUI *AppStatsUI) updateHeaderDisplay(g *gocui.Gui) error {
+
+  asUI.mu.Lock()
+  m := asUI.processor.GetAppMap()
+  asUI.mu.Unlock()
+
+  v, err := g.View("summaryView")
+  if err != nil {
+    return err
+  }
+  v.Clear()
+
+  fmt.Fprintf(v, "Total events: %-11v", asUI.processor.GetTotalEvents())
+  fmt.Fprintf(v, "Stats duration: %v", 0)
+  fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
+  // TODO: this should be info that parent UI has / displays
+  //fmt.Fprintf(v, "API EP:%v", apiEndpoint)
+
+  fmt.Fprintf(v, "Total Apps: %-11v", len(asUI.appsMetadata))
+  fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
+  return nil
+}
+
+
 
 func (asUI *AppStatsUI) findAppMetadata(appId string) cfclient.App {
 	for _, app := range asUI.appsMetadata {
