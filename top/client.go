@@ -23,7 +23,7 @@ type Client struct {
 	options         *ClientOptions
 	ui              terminal.UI
 	cliConnection   plugin.CliConnection
-	eventrouting 		*eventrouting.EventRouting
+	eventrouting 		*eventrouting.EventRouter
 	errors 					<-chan error
 	messages 				<-chan *events.Envelope
 }
@@ -111,10 +111,13 @@ func (c *Client) Start() {
 }
 
 func (c *Client) routeEvent() error {
+
+	router := eventrouting.NewEventRouter(appStatsUI.GetProcessor())
+
 	for {
 		select {
 		case envelope := <-c.messages:
-			c.eventrouting.RouteEvent(appStatsUI.GetProcessor(), envelope)
+			router.Route(envelope)
 		case err := <-c.errors:
 			c.handleError(err)
 			return err

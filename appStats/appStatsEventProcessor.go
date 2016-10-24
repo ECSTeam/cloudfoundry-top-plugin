@@ -9,7 +9,7 @@ import (
 
 type AppStatsEventProcessor struct {
   appMap      map[string]*AppStats
-  totalEvents int64
+  totalEvents uint64
 }
 
 
@@ -21,7 +21,7 @@ func NewAppStatsEventProcessor() *AppStatsEventProcessor {
   }
 }
 
-func (ap *AppStatsEventProcessor) GetTotalEvents() int64 {
+func (ap *AppStatsEventProcessor) GetTotalEvents() uint64 {
   return ap.totalEvents
 }
 
@@ -35,6 +35,14 @@ func (ap *AppStatsEventProcessor) Clear() {
 }
 
 func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
+
+  eventType := msg.GetEventType()
+
+	// Check if this is an HttpStartStop event
+	if (int)(eventType) != 4 {
+		//fmt.Printf("event: %v\n", msg)
+		return
+	}
 
   ap.totalEvents++
 

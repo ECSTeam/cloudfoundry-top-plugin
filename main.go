@@ -2,19 +2,11 @@ package main
 
 import (
 	"os"
-	//"fmt"
-	//"strings"
-	//"encoding/json"
-
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/kkellner/cloudfoundry-top-plugin/top"
 	"github.com/simonleung8/flags"
-
-	//cfclient "github.com/cloudfoundry-community/go-cfclient"
-
-	//"github.com/krujos/cfcurl"
 )
 
 type TopCmd struct {
@@ -78,10 +70,7 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 
-
-
 	client := top.NewClient(cliConnection, options, c.ui)
-
 	client.Start()
 }
 
