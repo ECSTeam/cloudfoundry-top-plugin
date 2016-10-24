@@ -58,6 +58,7 @@ var (
 
 	dopplerConnection *consumer.Consumer
 	appsMetadata []cfclient.App
+	apiEndpoint string
 )
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
@@ -69,6 +70,11 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 
 
 	authToken, err := cliConnection.AccessToken()
+	if err != nil {
+		ui.Failed(err.Error())
+	}
+
+	apiEndpoint, err = cliConnection.ApiEndpoint()
 	if err != nil {
 		ui.Failed(err.Error())
 	}
@@ -86,8 +92,8 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 func GetAppMetadata(c *Client) {
 
 
-		//requestUrl := "/v2/apps?inline-relations-depth=2"
-		requestUrl := "/v2/apps"
+		requestUrl := "/v2/apps?inline-relations-depth=2"
+		//requestUrl := "/v2/apps"
 		reponseJSON, err := c.cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
 		if err != nil {
 			c.ui.Failed(err.Error())
@@ -320,7 +326,17 @@ func initGui() {
 	if err := g.SetKeybinding("", 'c', gocui.ModNone, clearStats); err != nil {
 		log.Panicln(err)
 	}
-	//wg.Add(1)
+	if err := g.SetKeybinding("", 'h', gocui.ModNone, showHelp); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("helpView", gocui.KeyEnter, gocui.ModNone, closeHelp); err != nil {
+		log.Panicln(err)
+	}
+
+
+
+
+
 	go counter(g)
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -336,13 +352,13 @@ func initGui() {
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	//if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
-	if v, err := g.SetView("detailView", 0, 5, maxX-1, maxY-4); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		//fmt.Fprintln(v, "Hello world!")
-		fmt.Fprintln(v, "")
+	if v, err := g.SetView("helpView", maxX/2-32, maxY/5, maxX/2+32, maxY/2+5); err != nil {
+			if err != gocui.ErrUnknownView {
+				return err
+			}
+			v.Title = "Help"
+			v.Frame = true
+			fmt.Fprintln(v, "Future home of help text")
 	}
 
 	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 4); err != nil {
@@ -353,6 +369,37 @@ func layout(g *gocui.Gui) error {
 			v.Frame = true
 			fmt.Fprintln(v, "")
 	}
+
+	//if v, err := g.SetView("helloView", maxX/2-32, maxY/2, maxX/2+32, maxY/2+4); err != nil {
+	if v, err := g.SetView("detailView", 0, 5, maxX-1, maxY-4); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		//fmt.Fprintln(v, "Hello world!")
+		fmt.Fprintln(v, "")
+	}
+
+
+	if v, err := g.SetView("footerView", 0, maxY-4, maxX-1, maxY); err != nil {
+			if err != gocui.ErrUnknownView {
+				return err
+			}
+			v.Title = "Footer"
+			v.Frame = false
+			fmt.Fprintln(v, "c:clear q:quit")
+			fmt.Fprintln(v, "s:sleep")
+			fmt.Fprintln(v, "h:help")
+	}
+
+
+
+	/*
+	if _, err := g.SetViewOnTop("detailView"); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+	}
+	*/
 
 	return nil
 }
@@ -368,6 +415,24 @@ func clearStats(g *gocui.Gui, v *gocui.View) error {
 	updateDisplay(g)
 	return nil
 }
+
+func setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
+	if _, err := g.SetCurrentView(name); err != nil {
+		return nil, err
+	}
+	return g.SetViewOnTop(name)
+}
+
+func showHelp(g *gocui.Gui, v *gocui.View) error {
+	 _, err := setCurrentViewOnTop(g, "helpView")
+	 return err
+}
+
+func closeHelp(g *gocui.Gui, v *gocui.View) error {
+	_, err := setCurrentViewOnTop(g, "detailView")
+	return err
+}
+
 
 func counter(g *gocui.Gui) {
 	for {
@@ -394,10 +459,10 @@ func updateDisplay(g *gocui.Gui) {
 		}
 		if len(m) > 0 {
 			v.Clear()
-			fmt.Fprintf(v, "%-40v %6v %6v %6v %6v %6v\n", "Application","2xx","3xx","4xx","5xx","Total")
+			fmt.Fprintf(v, "%-40v %10v %6v %6v %6v %6v %6v\n", "APPLICATION","SPACE","2XX","3XX","4XX","5XX","TOTAL")
 			for appId, count := range m {
-				appName := findAppName(appId)
-				fmt.Fprintf(v, "%-40v %6d %6d %6d %6d %6d\n", appName, 0,0,0 ,0,count)
+				appMetadata := findAppMetadata(appId)
+				fmt.Fprintf(v, "%-40v %10v %6d %6d %6d %6d %6d\n", appMetadata.Name, appMetadata.SpaceData.Entity.Name,0,0,0 ,0,count)
 			}
 		} else {
 			v.Clear()
@@ -415,20 +480,23 @@ func updateDisplay(g *gocui.Gui) {
 		}
 		*/
 		fmt.Fprintf(v, "Total events: %-11v", totalEvents)
+		fmt.Fprintf(v, "Total Apps: %-11v", len(appsMetadata))
 		fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
-		fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05.000"))
+		fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
+		fmt.Fprintf(v, "Stats duration: %v", 0)
+		fmt.Fprintf(v, "API EP:%v", apiEndpoint)
 
 		return nil
 	})
 }
 
-func findAppName(appId string) string {
+func findAppMetadata(appId string) cfclient.App {
 	for _, app := range appsMetadata {
 		if app.Guid == appId {
-			return app.Name;
+			return app;
 		}
 	}
-	return appId
+	return cfclient.App{}
 }
 
 func formatUUID(uuid *events.UUID) string {
