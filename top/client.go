@@ -26,6 +26,7 @@ type Client struct {
 	eventrouting 		*eventrouting.EventRouter
 	errors 					<-chan error
 	messages 				<-chan *events.Envelope
+	router					*eventrouting.EventRouter
 }
 
 type ClientOptions struct {
@@ -89,35 +90,27 @@ func (c *Client) Start() {
 	//c.messages, c.errors = dopplerConnection.FirehoseWithoutReconnect(subscriptionID, c.authToken)
 	c.messages, c.errors = dopplerConnection.Firehose(subscriptionID, c.authToken)
 
-	/*
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		for err := range c.errors {
-			c.ui.Warn(err.Error())
-			return
-		}
-	}()
-	*/
-
 	defer dopplerConnection.Close()
 	c.ui.Say("Hit Ctrl+c to exit")
 
 
-  appStatsUI = appStats.NewAppStatsUI(c.cliConnection)
+	//c.router = eventrouting.NewEventRouter(appStatsUI.GetProcessor())
 	go c.routeEvent()
-	appStatsUI.Start()
+
+	ui := NewUI(c.cliConnection)
+	c.router = ui.GetRouter()
+
+	ui.Start()
 	dopplerConnection.Close()
 }
 
-func (c *Client) routeEvent() error {
 
-	router := eventrouting.NewEventRouter(appStatsUI.GetProcessor())
+func (c *Client) routeEvent() error {
 
 	for {
 		select {
 		case envelope := <-c.messages:
-			router.Route(envelope)
+			c.router.Route(envelope)
 		case err := <-c.errors:
 			c.handleError(err)
 			return err
@@ -140,8 +133,6 @@ func (c *Client) handleError(err error) {
 	dopplerConnection.Close()
 
 }
-
-
 
 
 type ConsoleDebugPrinter struct {

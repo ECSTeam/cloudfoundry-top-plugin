@@ -2,13 +2,14 @@ package appStats
 
 import (
 	"fmt"
-  "log"
+  //"log"
 	//"github.com/Sirupsen/logrus"
 	//"os"
 
 	"strings"
+  "sort"
 	"sync"
-	"time"
+	//"time"
   "encoding/json"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
@@ -34,7 +35,6 @@ func NewAppStatsUI(cliConnection plugin.CliConnection ) *AppStatsUI {
 
 func (asUI *AppStatsUI) Start() {
   go asUI.getAppMetadata()
-  asUI.initGui()
 }
 
 func (asUI *AppStatsUI) GetProcessor() *AppStatsEventProcessor {
@@ -42,64 +42,19 @@ func (asUI *AppStatsUI) GetProcessor() *AppStatsEventProcessor {
 }
 
 
-func (asUI *AppStatsUI) initGui() {
-
-	g := gocui.NewGui()
-	if err := g.Init(); err != nil {
-		log.Panicln(err)
-	}
-	defer g.Close()
-
-	g.SetLayout(layout)
-
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, asUI.quit); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := g.SetKeybinding("", 'q', gocui.ModNone, asUI.quit); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", 'Q', gocui.ModNone, asUI.quit); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", 'c', gocui.ModNone, asUI.clearStats); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("", 'h', gocui.ModNone, asUI.showHelp); err != nil {
-		log.Panicln(err)
-	}
-	if err := g.SetKeybinding("helpView", gocui.KeyEnter, gocui.ModNone, asUI.closeHelp); err != nil {
-		log.Panicln(err)
-	}
-
-	go asUI.counter(g)
-
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		log.Panicln(err)
-	}
-
+func (asUI *AppStatsUI) InitGui(g *gocui.Gui) error {
+  /*
+  if err := g.SetKeybinding("", 'c', gocui.ModNone, asUI.clearStats); err != nil {
+    log.Panicln(err)
+  }
+  */
+  return nil
 }
 
-func layout(g *gocui.Gui) error {
+
+func (asUI *AppStatsUI) Layout(g *gocui.Gui) error {
+
 	maxX, maxY := g.Size()
-
-	if v, err := g.SetView("helpView", maxX/2-32, maxY/5, maxX/2+32, maxY/2+5); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Help"
-			v.Frame = true
-			fmt.Fprintln(v, "Future home of help text")
-	}
-
-	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 4); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Summary"
-			v.Frame = true
-			fmt.Fprintln(v, "")
-	}
 
 	if v, err := g.SetView("detailView", 0, 5, maxX-1, maxY-4); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -109,138 +64,91 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "")
 	}
 
-	if v, err := g.SetView("footerView", 0, maxY-4, maxX-1, maxY); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Footer"
-			v.Frame = false
-			fmt.Fprintln(v, "c:clear q:quit")
-			fmt.Fprintln(v, "s:sleep")
-			fmt.Fprintln(v, "h:help")
-	}
 	return nil
 }
 
-func (asUI *AppStatsUI) quit(g *gocui.Gui, v *gocui.View) error {
-  //TODO: Where should this close go?
-	//dopplerConnection.Close()
-	return gocui.ErrQuit
-}
 
-func (asUI *AppStatsUI) clearStats(g *gocui.Gui, v *gocui.View) error {
+func (asUI *AppStatsUI) ClearStats(g *gocui.Gui, v *gocui.View) error {
   asUI.processor.Clear()
-	asUI.updateDisplay(g)
 	return nil
 }
 
-func (asUI *AppStatsUI) setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
-	if _, err := g.SetCurrentView(name); err != nil {
-		return nil, err
-	}
-	return g.SetViewOnTop(name)
-}
-
-func (asUI *AppStatsUI) showHelp(g *gocui.Gui, v *gocui.View) error {
-	 _, err := asUI.setCurrentViewOnTop(g, "helpView")
-	 return err
-}
-
-func (asUI *AppStatsUI) closeHelp(g *gocui.Gui, v *gocui.View) error {
-	_, err := asUI.setCurrentViewOnTop(g, "detailView")
-	return err
-}
 
 
-func (asUI *AppStatsUI) counter(g *gocui.Gui) {
-
-  // TODO: What is doneX used for and how is it set?
-  doneX := make(chan bool)
-
-	for {
-		select {
-		case <-doneX:
-			return
-		case <-time.After(1000 * time.Millisecond):
-			asUI.updateDisplay(g)
-		}
-	}
-}
-
-func (asUI *AppStatsUI) updateDisplay(g *gocui.Gui) {
+func (asUI *AppStatsUI) UpdateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
 	m := asUI.processor.GetAppMap()
 	asUI.mu.Unlock()
 
-	//maxX, maxY := g.Size()
+  asUI.updateHeader(g, m)
 
-	g.Execute(func(g *gocui.Gui) error {
-		v, err := g.View("detailView")
-    //maxX, maxY := v.Size()
-    _, maxY := v.Size()
+  v, err := g.View("detailView")
+  if err != nil {
+		return err
+	}
 
+  //maxX, maxY := v.Size()
+  _, maxY := v.Size()
+	if len(m) > 0 {
+		v.Clear()
+    row := 1
+		fmt.Fprintf(v, "%-40v %-10v %-10v %6v %6v %6v %6v %6v\n", "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL")
 
-		if err != nil {
-			return err
+    sortedStatList := asUI.getStats2(m)
+
+    for _, appStats := range sortedStatList {
+
+      row++
+			appMetadata := asUI.findAppMetadata(appStats.AppId)
+      appName := appMetadata.Name
+      if appName == "" {
+        appName = appStats.AppId
+      }
+      spaceName := appMetadata.SpaceData.Entity.Name
+      if spaceName == "" {
+        spaceName = "unknown"
+      }
+      orgName := appMetadata.SpaceData.Entity.OrgData.Entity.Name
+      if orgName == "" {
+        orgName = "unknown"
+      }
+      fmt.Fprintf(v, "%-40.40v %-10.10v %-10.10v %6d %6d %6d %6d %6d\n", appName, spaceName, orgName,
+          appStats.Event2xxCount,appStats.Event3xxCount,appStats.Event4xxCount,appStats.Event5xxCount,appStats.EventCount)
+      if row == maxY {
+        break
+      }
 		}
-		if len(m) > 0 {
-			v.Clear()
-      row := 1
-			fmt.Fprintf(v, "%-40v %10v %6v %6v %6v %6v %6v\n", "APPLICATION","SPACE","2XX","3XX","4XX","5XX","TOTAL")
+	} else {
+		v.Clear()
+		fmt.Fprintln(v, "No data yet...")
+	}
+	return nil
 
-      sortedStatList := getStats(m)
-
-      for _, appStats := range sortedStatList {
-
-        row++
-				appMetadata := asUI.findAppMetadata(appStats.AppId)
-        appName := appMetadata.Name
-        if appName == "" {
-          appName = appStats.AppId
-        }
-        spaceName := appMetadata.SpaceData.Entity.Name
-        if spaceName == "" {
-          spaceName = "unknown"
-        }
-				fmt.Fprintf(v, "%-40.40v %10.10v %6d %6d %6d %6d %6d\n", appMetadata.Name, appMetadata.SpaceData.Entity.Name,0,0,0 ,0,appStats.EventCount)
-        if row == maxY {
-          break
-        }
-			}
-		} else {
-			v.Clear()
-			fmt.Fprintln(v, "No data yet...")
-		}
-
-		asUI.updateHeaderDisplay(g)
-
-		return nil
-	})
 }
 
-func (asUI *AppStatsUI) updateHeaderDisplay(g *gocui.Gui) error {
+func (asUI *AppStatsUI) getStats2(statsMap map[string]*AppStats) []*AppStats {
+  s := make(dataSlice, 0, len(statsMap))
+  for _, d := range statsMap {
 
-  asUI.mu.Lock()
-  m := asUI.processor.GetAppMap()
-  asUI.mu.Unlock()
+      if d.AppName == "" {
+        d.AppName = asUI.findAppMetadata(d.AppId).Name
+      }
 
+      s = append(s, d)
+  }
+  sort.Sort(sort.Reverse(s))
+  return s
+}
+
+func (asUI *AppStatsUI) updateHeader(g *gocui.Gui, appStatsMap map[string]*AppStats) error {
   v, err := g.View("summaryView")
   if err != nil {
     return err
   }
-  v.Clear()
-
-  fmt.Fprintf(v, "Total events: %-11v", asUI.processor.GetTotalEvents())
-  fmt.Fprintf(v, "Stats duration: %v", 0)
-  fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
-  // TODO: this should be info that parent UI has / displays
-  //fmt.Fprintf(v, "API EP:%v", apiEndpoint)
-
   fmt.Fprintf(v, "Total Apps: %-11v", len(asUI.appsMetadata))
-  fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
+  fmt.Fprintf(v, "Unique Apps: %-11v", len(appStatsMap))
   return nil
 }
-
 
 
 func (asUI *AppStatsUI) findAppMetadata(appId string) cfclient.App {
@@ -253,7 +161,6 @@ func (asUI *AppStatsUI) findAppMetadata(appId string) cfclient.App {
 }
 
 func (asUI *AppStatsUI) getAppMetadata() {
-
 
 		requestUrl := "/v2/apps?inline-relations-depth=2"
 		//requestUrl := "/v2/apps"

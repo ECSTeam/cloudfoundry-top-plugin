@@ -3,6 +3,7 @@ package appStats
 import (
     //"fmt"
     "sort"
+    //"strings"
 )
 
 type dataSlice []*AppStats
@@ -10,13 +11,12 @@ type dataSlice []*AppStats
 type AppStats struct {
   AppId       string
   AppName     string
-  EventCount  int64
-  Event2xxCount int64
-  Event3xxCount int64
-  Event4xxCount int64
-  Event5xxCount int64
+  EventCount  uint64
+  Event2xxCount uint64
+  Event3xxCount uint64
+  Event4xxCount uint64
+  Event5xxCount uint64
 }
-
 
 func getStats(statsMap map[string]*AppStats) []*AppStats {
   s := make(dataSlice, 0, len(statsMap))
@@ -26,7 +26,6 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
   sort.Sort(sort.Reverse(s))
   return s
 }
-
 
 // Len is part of sort.Interface.
 func (d dataSlice) Len() int {
@@ -40,7 +39,10 @@ func (d dataSlice) Swap(i, j int) {
 
 // Less is part of sort.Interface. We use count as the value to sort by
 func (d dataSlice) Less(i, j int) bool {
-    return d[i].EventCount < d[j].EventCount
+    //if (d[i].EventCount == d[j].EventCount) {
+    //  return strings.Compare(d[i].AppName, d[j].AppName) < 0
+    //}
+    return d[i].EventCount <= d[j].EventCount && d[i].AppName >= d[j].AppName
 }
 
 
