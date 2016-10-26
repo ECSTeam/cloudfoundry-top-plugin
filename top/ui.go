@@ -64,24 +64,21 @@ func (ui *UI) initGui() {
 		log.Panicln(err)
 	}
 
-	if err := g.SetKeybinding("", 'q', gocui.ModNone, ui.quit); err != nil {
+	if err := g.SetKeybinding("detailView", 'q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'Q', gocui.ModNone, ui.quit); err != nil {
+	if err := g.SetKeybinding("detailView", 'Q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", 'h', gocui.ModNone, ui.showHelp); err != nil {
+	if err := g.SetKeybinding("detailView", 'h', gocui.ModNone, ui.openHelpView); err != nil {
 		log.Panicln(err)
 	}
-  if err := g.SetKeybinding("", 'c', gocui.ModNone, ui.clearStats); err != nil {
+  if err := g.SetKeybinding("detailView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
   }
-  if err := g.SetKeybinding("", gocui.KeySpace, gocui.ModNone, ui.refeshNow); err != nil {
+  if err := g.SetKeybinding("detailView", gocui.KeySpace, gocui.ModNone, ui.refeshNow); err != nil {
     log.Panicln(err)
   }
-	if err := g.SetKeybinding("helpView", gocui.KeyEnter, gocui.ModNone, ui.closeHelp); err != nil {
-		log.Panicln(err)
-	}
 
   ui.detailUI.InitGui(g)
 
@@ -94,15 +91,6 @@ func (ui *UI) initGui() {
 
 func (ui *UI) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-
-	if v, err := g.SetView("helpView", maxX/2-32, maxY/5, maxX/2+32, maxY/2+5); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Help (press ENTER to close)"
-			v.Frame = true
-			fmt.Fprintln(v, "Future home of help text")
-	}
 
 	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 4); err != nil {
 			if err != gocui.ErrUnknownView {
@@ -126,8 +114,52 @@ func (ui *UI) layout(g *gocui.Gui) error {
 
   ui.detailUI.Layout(g)
 
+  if v, _ := g.View("helpView"); v != nil {
+    ui.openHelpView(g, nil)
+  }
+
 	return nil
 }
+
+
+func (ui *UI) openHelpView(g *gocui.Gui, v *gocui.View) error {
+
+  viewName := "helpView"
+  maxX, maxY := g.Size()
+  existingView := false
+  if v, _ := g.View(viewName); v != nil {
+    existingView = true
+  }
+
+  if v, err := g.SetView(viewName, maxX/2-32, maxY/5, maxX/2+32, maxY/2+5); err != nil {
+      if err != gocui.ErrUnknownView {
+        return err
+      }
+      v.Title = "Help (press ENTER to close)"
+      v.Frame = true
+      fmt.Fprintln(v, "Future home of help text")
+      if !existingView {
+        if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, ui.closeHelpView); err != nil {
+      		return err
+      	}
+      }
+      if _, err := ui.setCurrentViewOnTop(g, viewName); err != nil {
+    		return err
+    	}
+
+	}
+  return nil
+}
+
+func (ui *UI) closeHelpView(g *gocui.Gui, v *gocui.View) error {
+	g.DeleteView("helpView")
+  g.DeleteKeybindings("helpView")
+  if _, err := ui.setCurrentViewOnTop(g, "detailView"); err != nil {
+    return err
+  }
+	return nil
+}
+
 
 func (ui *UI) setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
 	if _, err := g.SetCurrentView(name); err != nil {
@@ -140,16 +172,6 @@ func (ui *UI) quit(g *gocui.Gui, v *gocui.View) error {
   //TODO: Where should this close go?
 	//dopplerConnection.Close()
 	return gocui.ErrQuit
-}
-
-func (ui *UI) showHelp(g *gocui.Gui, v *gocui.View) error {
-	 _, err := ui.setCurrentViewOnTop(g, "helpView")
-	 return err
-}
-
-func (ui *UI) closeHelp(g *gocui.Gui, v *gocui.View) error {
-	_, err := ui.setCurrentViewOnTop(g, "detailView")
-	return err
 }
 
 func (ui *UI) clearStats(g *gocui.Gui, v *gocui.View) error {
