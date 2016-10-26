@@ -7,13 +7,10 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
-
 type AppStatsEventProcessor struct {
   appMap      map[string]*AppStats
   totalEvents uint64
 }
-
-
 
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
   return &AppStatsEventProcessor {
@@ -48,8 +45,9 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
   appUUID := msg.GetHttpStartStop().GetApplicationId()
   instId := msg.GetHttpStartStop().GetInstanceId()
 
-  // Check if this is an application event
-  if appUUID != nil && instId != "" {
+  if msg.GetHttpStartStop().GetPeerType() == events.PeerType_Client &&
+      appUUID != nil &&
+      instId != "" {
 
     ap.totalEvents++
 
@@ -61,6 +59,7 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
       // New app we haven't seen yet
       appStats = &AppStats {
         AppId: appId,
+        AppUUID: appUUID,
       }
       ap.appMap[appId] = appStats
     }

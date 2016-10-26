@@ -4,11 +4,13 @@ import (
     //"fmt"
     "sort"
     //"strings"
+    "github.com/cloudfoundry/sonde-go/events"
 )
 
 type dataSlice []*AppStats
 
 type AppStats struct {
+  AppUUID     *events.UUID
   AppId       string
   AppName     string
   EventCount  uint64
@@ -39,10 +41,10 @@ func (d dataSlice) Swap(i, j int) {
 
 // Less is part of sort.Interface. We use count as the value to sort by
 func (d dataSlice) Less(i, j int) bool {
-    //if (d[i].EventCount == d[j].EventCount) {
-    //  return strings.Compare(d[i].AppName, d[j].AppName) < 0
-    //}
-    return d[i].EventCount <= d[j].EventCount && d[i].AppName >= d[j].AppName
+    if (d[i].EventCount == d[j].EventCount) {
+      return d[i].AppName >= d[j].AppName
+    }
+    return d[i].EventCount <= d[j].EventCount
 }
 
 

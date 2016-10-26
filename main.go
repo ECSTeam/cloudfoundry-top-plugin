@@ -18,7 +18,7 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 		Name: "TopPlugin",
 		Version: plugin.VersionType{
 			Major: 0,
-			Minor: 1,
+			Minor: 2,
 			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{

@@ -13,7 +13,6 @@ import (
   //"encoding/json"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
-  //cfclient "github.com/cloudfoundry-community/go-cfclient"
   "github.com/kkellner/cloudfoundry-top-plugin/appStats"
   "github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
@@ -25,6 +24,7 @@ type UI struct {
   detailUI        *appStats.AppStatsUI
   mu  sync.Mutex // protects ctr
   router *eventrouting.EventRouter
+  refreshNow  chan bool
 }
 
 
@@ -35,6 +35,7 @@ func NewUI(cliConnection plugin.CliConnection ) *UI {
     detailUI:      detailUI,
     cliConnection: cliConnection,
     router: router,
+    refreshNow:   make(chan bool),
   }
 }
 
@@ -45,7 +46,6 @@ func (ui *UI) GetRouter() *eventrouting.EventRouter {
 func (ui *UI) Start() {
   ui.detailUI.Start()
   ui.initGui()
-  //go c.routeEvent()
 }
 
 
@@ -76,6 +76,9 @@ func (ui *UI) initGui() {
   if err := g.SetKeybinding("", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
   }
+  if err := g.SetKeybinding("", gocui.KeySpace, gocui.ModNone, ui.refeshNow); err != nil {
+    log.Panicln(err)
+  }
 	if err := g.SetKeybinding("helpView", gocui.KeyEnter, gocui.ModNone, ui.closeHelp); err != nil {
 		log.Panicln(err)
 	}
@@ -96,7 +99,7 @@ func (ui *UI) layout(g *gocui.Gui) error {
 			if err != gocui.ErrUnknownView {
 				return err
 			}
-			v.Title = "Help"
+			v.Title = "Help (press ENTER to close)"
 			v.Frame = true
 			fmt.Fprintln(v, "Future home of help text")
 	}
@@ -116,8 +119,8 @@ func (ui *UI) layout(g *gocui.Gui) error {
 			}
 			v.Title = "Footer"
 			v.Frame = false
-			fmt.Fprintln(v, "c:clear q:quit")
-			fmt.Fprintln(v, "s:sleep")
+			fmt.Fprintln(v, "c:clear q:quit space:fresh")
+			fmt.Fprintln(v, "s:sleep(todo) f:filter(todo) o:order(todo)")
 			fmt.Fprintln(v, "h:help")
 	}
 
@@ -156,18 +159,24 @@ func (ui *UI) clearStats(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (ui *UI) refeshNow(g *gocui.Gui, v *gocui.View) error {
+  ui.refreshNow <- true
+  return nil
+}
+
 
 func (ui *UI) counter(g *gocui.Gui) {
 
   // TODO: What is doneX used for and how is it set?
-  doneX := make(chan bool)
+  //refreshNow := make(chan bool)
 
 	for {
+    ui.updateDisplay(g)
 		select {
-		case <-doneX:
-			return
+		case <-ui.refreshNow:
+
 		case <-time.After(1000 * time.Millisecond):
-			ui.updateDisplay(g)
+
 		}
 	}
 }
