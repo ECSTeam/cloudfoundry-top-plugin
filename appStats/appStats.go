@@ -13,6 +13,8 @@ type AppStats struct {
   AppUUID     *events.UUID
   AppId       string
   AppName     string
+  SpaceName    string
+  OrgName      string
   EventCount  uint64
   Event2xxCount uint64
   Event3xxCount uint64
