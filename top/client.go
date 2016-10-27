@@ -97,7 +97,7 @@ func (c *Client) Start() {
 	//c.router = eventrouting.NewEventRouter(appStatsUI.GetProcessor())
 	go c.routeEvent()
 
-	ui := NewUI(c.cliConnection)
+	ui := NewMasterUI(c.cliConnection)
 	c.router = ui.GetRouter()
 
 	ui.Start()

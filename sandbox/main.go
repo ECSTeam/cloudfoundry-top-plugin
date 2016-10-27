@@ -158,7 +158,7 @@ func saveVisualMain(g *gocui.Gui, v *gocui.View) error {
 }
 
 func layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+	_, maxY := g.Size()
 	if v, err := g.SetView("side", -1, -1, 30, maxY); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -172,17 +172,30 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprint(v, "\rWill be")
 		fmt.Fprint(v, "deleted\rItem 4\nItem 5")
 	}
-	if v, err := g.SetView("main", 30, -1, maxX, maxY); err != nil {
+	if v, err := g.SetView("main", 30, 19, 45, 21); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+
+    if err := g.SetKeybinding("main", 'a', gocui.ModNone,
+      func(g *gocui.Gui, v *gocui.View) error {
+             //len := len(v.Buffer())
+             //fmt.Fprintf(v, "[%v]", len)
+             return nil
+      }); err != nil {
+      return err
+    }
+
+    /*
 		b, err := ioutil.ReadFile("Mark.Twain-Tom.Sawyer.txt")
 		if err != nil {
 			panic(err)
 		}
-		fmt.Fprintf(v, "%s", b)
+    */
+		fmt.Fprintf(v, "%s", "xyz")
 		v.Editable = true
-		v.Wrap = true
+		v.Wrap = false
+    v.Autoscroll=false
 		if _, err := g.SetCurrentView("main"); err != nil {
 			return err
 		}
@@ -191,13 +204,13 @@ func layout(g *gocui.Gui) error {
 }
 
 func main() {
-	g := gocui.NewGui()
-	if err := g.Init(); err != nil {
+	g, err := gocui.NewGui()
+	if err != nil {
 		log.Panicln(err)
 	}
 	defer g.Close()
 
-	g.SetLayout(layout)
+	g.SetManagerFunc(layout)
 	if err := keybindings(g); err != nil {
 		log.Panicln(err)
 	}

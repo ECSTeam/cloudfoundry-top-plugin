@@ -16,10 +16,13 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/appStats"
   "github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
+  "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 
-type UI struct {
+type MasterUI struct {
+  layoutManager   *LayoutManager
+  gui             *gocui.Gui
   cliConnection   plugin.CliConnection
   detailUI        *appStats.AppStatsUI
   mu  sync.Mutex // protects ctr
@@ -28,10 +31,10 @@ type UI struct {
 }
 
 
-func NewUI(cliConnection plugin.CliConnection ) *UI {
+func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
   detailUI := appStats.NewAppStatsUI(cliConnection)
   router := eventrouting.NewEventRouter(detailUI.GetProcessor())
-  return &UI {
+  return &MasterUI {
     detailUI:      detailUI,
     cliConnection: cliConnection,
     router: router,
@@ -39,26 +42,45 @@ func NewUI(cliConnection plugin.CliConnection ) *UI {
   }
 }
 
-func (ui *UI) GetRouter() *eventrouting.EventRouter {
+func (ui *MasterUI) LayoutManager() masterUIInterface.LayoutManagerInterface {
+  return ui.layoutManager
+}
+func (ui *MasterUI) GetRouter() *eventrouting.EventRouter {
   return ui.router
 }
 
-func (ui *UI) Start() {
+func (ui *MasterUI) Start() {
   ui.detailUI.Start()
   ui.initGui()
 }
 
 
-func (ui *UI) initGui() {
+func (ui *MasterUI) initGui() {
 
-	g := gocui.NewGui()
-	if err := g.Init(); err != nil {
+  g, err := gocui.NewGui()
+	if err != nil {
 		log.Panicln(err)
 	}
+  ui.gui = g
+
 	defer g.Close()
   debug.Init(g)
 
-	g.SetLayout(ui.layout)
+  //g.SetManagerFunc(ui.layout)
+  //filter := appStats.NewFilterWidget("filterWidget", 10, 10, "Example text")
+  header := NewHeaderWidget("summaryView", 4)
+  footer := NewFooterWidget("footerView", 4)
+  help := NewHelpWidget(ui, "helpView", 60,10)
+  detail := appStats.NewDetailView(ui, "detailView", 5, 4)
+
+  //managers := []gocui.Manager { filter, header, footer, help }
+  ui.layoutManager = NewLayoutManager()
+  ui.layoutManager.Add(header)
+  ui.layoutManager.Add(footer)
+  ui.layoutManager.Add(help)
+  ui.layoutManager.Add(detail)
+
+  g.SetManager(ui.layoutManager)
 
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
@@ -70,9 +92,18 @@ func (ui *UI) initGui() {
 	if err := g.SetKeybinding("detailView", 'Q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("detailView", 'h', gocui.ModNone, ui.openHelpView); err != nil {
+
+	if err := g.SetKeybinding("", 'h', gocui.ModNone,
+    func(g *gocui.Gui, v *gocui.View) error {
+         if !ui.layoutManager.Contains(help) {
+           ui.layoutManager.Add(help)
+         }
+         ui.SetCurrentViewOnTop(g,"helpView")
+         return nil
+    }); err != nil {
 		log.Panicln(err)
 	}
+
   if err := g.SetKeybinding("detailView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
   }
@@ -80,7 +111,7 @@ func (ui *UI) initGui() {
     log.Panicln(err)
   }
 
-  ui.detailUI.InitGui(g)
+  //ui.detailUI.InitGui(g)
 
   go ui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -89,105 +120,52 @@ func (ui *UI) initGui() {
 
 }
 
-func (ui *UI) layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
+func (ui *MasterUI) CloseView(m gocui.Manager, name string ) error {
 
-	if v, err := g.SetView("summaryView", 0, 0, maxX-1, 4); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Summary"
-			v.Frame = true
-			fmt.Fprintln(v, "")
-	}
+  	ui.gui.DeleteView(name)
+    ui.gui.DeleteKeybindings(name)
+    ui.layoutManager.Remove(m)
 
-	if v, err := g.SetView("footerView", 0, maxY-4, maxX-1, maxY); err != nil {
-			if err != gocui.ErrUnknownView {
-				return err
-			}
-			v.Title = "Footer"
-			v.Frame = false
-			fmt.Fprintln(v, "c:clear q:quit space:fresh")
-			fmt.Fprintln(v, "s:sleep(todo) f:filter(todo) o:order(todo)")
-			fmt.Fprintln(v, "h:help")
-	}
-
-  ui.detailUI.Layout(g)
-
-  if v, _ := g.View("helpView"); v != nil {
-    ui.openHelpView(g, nil)
-  }
-
-	return nil
+    if err := ui.SetCurrentViewOnTop(ui.gui, "detailView"); err != nil {
+      return err
+    }
+  	return nil
 }
 
 
-func (ui *UI) openHelpView(g *gocui.Gui, v *gocui.View) error {
-
-  viewName := "helpView"
-  maxX, maxY := g.Size()
-  existingView := false
-  if v, _ := g.View(viewName); v != nil {
-    existingView = true
-  }
-
-  if v, err := g.SetView(viewName, maxX/2-32, maxY/5, maxX/2+32, maxY/2+5); err != nil {
-      if err != gocui.ErrUnknownView {
-        return err
-      }
-      v.Title = "Help (press ENTER to close)"
-      v.Frame = true
-      fmt.Fprintln(v, "Future home of help text")
-      if !existingView {
-        if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, ui.closeHelpView); err != nil {
-      		return err
-      	}
-      }
-      if _, err := ui.setCurrentViewOnTop(g, viewName); err != nil {
-    		return err
-    	}
-
+func (ui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui, name string) (error) {
+  //log.Panicln(fmt.Sprintf("DEBUG: %v", name))
+  if _, err := g.SetCurrentView(name); err != nil {
+		return err
 	}
+  //log.Panicln(fmt.Sprintf("DEBUG2: %v", name))
+
+  if _, err := g.SetViewOnTop(name); err != nil {
+    return err
+  }
   return nil
 }
 
-func (ui *UI) closeHelpView(g *gocui.Gui, v *gocui.View) error {
-	g.DeleteView("helpView")
-  g.DeleteKeybindings("helpView")
-  if _, err := ui.setCurrentViewOnTop(g, "detailView"); err != nil {
-    return err
-  }
-	return nil
-}
-
-
-func (ui *UI) setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
-	if _, err := g.SetCurrentView(name); err != nil {
-		return nil, err
-	}
-	return g.SetViewOnTop(name)
-}
-
-func (ui *UI) quit(g *gocui.Gui, v *gocui.View) error {
+func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
   //TODO: Where should this close go?
 	//dopplerConnection.Close()
 	return gocui.ErrQuit
 }
 
-func (ui *UI) clearStats(g *gocui.Gui, v *gocui.View) error {
+func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
   ui.router.Clear()
   ui.detailUI.ClearStats(g, v)
 	ui.updateDisplay(g)
 	return nil
 }
 
-func (ui *UI) refeshNow(g *gocui.Gui, v *gocui.View) error {
+func (ui *MasterUI) refeshNow(g *gocui.Gui, v *gocui.View) error {
   ui.refreshNow <- true
   return nil
 }
 
 
-func (ui *UI) counter(g *gocui.Gui) {
+func (ui *MasterUI) counter(g *gocui.Gui) {
 
   // TODO: What is doneX used for and how is it set?
   //refreshNow := make(chan bool)
@@ -203,7 +181,7 @@ func (ui *UI) counter(g *gocui.Gui) {
 	}
 }
 
-func (ui *UI) updateDisplay(g *gocui.Gui) {
+func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
 
 	g.Execute(func(g *gocui.Gui) error {
     ui.updateHeaderDisplay(g)
@@ -212,7 +190,7 @@ func (ui *UI) updateDisplay(g *gocui.Gui) {
 	})
 }
 
-func (ui *UI) updateHeaderDisplay(g *gocui.Gui) error {
+func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
   v, err := g.View("summaryView")
   if err != nil {

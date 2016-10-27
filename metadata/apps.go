@@ -36,6 +36,9 @@ var (
   appsMetadataCache []App
 )
 
+func AppMetadataSize() int {
+  return len(appsMetadataCache)
+}
 
 func FindAppMetadata(appId string) App {
 	for _, app := range appsMetadataCache {
