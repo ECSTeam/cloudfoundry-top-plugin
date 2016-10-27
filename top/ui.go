@@ -10,6 +10,7 @@ import (
 	//"strings"
 	"sync"
 	"time"
+  "net/url"
   //"encoding/json"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
@@ -42,6 +43,10 @@ func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
   }
 }
 
+func (ui *MasterUI) CliConnection() plugin.CliConnection {
+  return ui.cliConnection
+}
+
 func (ui *MasterUI) LayoutManager() masterUIInterface.LayoutManagerInterface {
   return ui.layoutManager
 }
@@ -68,7 +73,7 @@ func (ui *MasterUI) initGui() {
 
   //g.SetManagerFunc(ui.layout)
   //filter := appStats.NewFilterWidget("filterWidget", 10, 10, "Example text")
-  header := NewHeaderWidget("summaryView", 4)
+  header := NewHeaderWidget(ui, "summaryView", 4)
   footer := NewFooterWidget("footerView", 4)
   help := NewHelpWidget(ui, "helpView", 60,10)
   detail := appStats.NewDetailView(ui, "detailView", 5, 4)
@@ -201,6 +206,23 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "Total events: %-11v", ui.router.GetEventCount())
   fmt.Fprintf(v, "Stats duration: %-10v ", Round(time.Now().Sub(ui.router.GetStartTime()), time.Second) )
   fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
+
+  apiEndpoint, err := ui.cliConnection.ApiEndpoint()
+  if err != nil {
+    return err
+  }
+
+  url, err  := url.Parse(apiEndpoint)
+  if err != nil {
+    return err
+  }
+
+  username, err := ui.cliConnection.Username()
+  if err != nil {
+    return err
+  }
+
+  fmt.Fprintf(v, "Target: %v@%v\n", username, url.Host)
   // TODO: this should be info that parent UI has / displays
   //fmt.Fprintf(v, "API EP:%v", apiEndpoint)
 

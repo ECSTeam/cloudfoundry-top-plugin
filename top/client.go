@@ -76,7 +76,14 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 
 func (c *Client) Start() {
 
-	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: true}, nil)
+	skipVerifySSL, err := c.cliConnection.IsSSLDisabled()
+	if err != nil {
+		fmt.Errorf("couldn't check if ssl verification is disabled: %s", err)
+		return
+	}
+
+
+	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 	if c.options.Debug {
 		dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
 	}

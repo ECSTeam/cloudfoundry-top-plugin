@@ -6,12 +6,13 @@ import (
 )
 
 type HeaderWidget struct {
+  masterUI *MasterUI
 	name string
   height int
 }
 
-func NewHeaderWidget(name string, height int) *HeaderWidget {
-	return &HeaderWidget{name: name, height: height}
+func NewHeaderWidget(masterUI *MasterUI, name string, height int) *HeaderWidget {
+	return &HeaderWidget{masterUI: masterUI, name: name, height: height}
 }
 
 func (w *HeaderWidget) Layout(g *gocui.Gui) error {

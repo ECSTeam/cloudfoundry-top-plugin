@@ -144,7 +144,7 @@ func (asUI *AppStatsUI) updateHeader(g *gocui.Gui, appStatsMap map[string]*AppSt
     return err
   }
   fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
-  fmt.Fprintf(v, "Unique Apps: %-11v", len(appStatsMap))
+  fmt.Fprintf(v, "Reporting Apps: %-11v", len(appStatsMap))
   return nil
 }
 
