@@ -35,12 +35,44 @@ func (ap *AppStatsEventProcessor) Clear() {
 func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
 
   eventType := msg.GetEventType()
+switch eventType {
+  case events.Envelope_HttpStartStop:
+    ap.httpStartStopEvent(msg)
+  case events.Envelope_ContainerMetric:
+    ap.httpContainerMetric(msg)
+  }
 
-	// Check if this is an HttpStartStop event
-	if (int)(eventType) != 4 {
-		//fmt.Printf("event: %v\n", msg)
-		return
-	}
+
+}
+
+func (ap *AppStatsEventProcessor) httpContainerMetric(msg *events.Envelope) {
+
+  containerMetric := msg.GetContainerMetric()
+
+  appId := containerMetric.GetApplicationId()
+  appStats := ap.appMap[appId]
+  if appStats == nil {
+    // New app we haven't seen yet
+    appStats = &AppStats {
+      AppId: appId,
+    }
+    ap.appMap[appId] = appStats
+  }
+
+  // Save the container metrics -- by instance id
+  if int32(len(appStats.ContainerMetric)) <= *containerMetric.InstanceIndex {
+    cmArray := make([]*events.ContainerMetric, *containerMetric.InstanceIndex+1)
+    for i, cm := range appStats.ContainerMetric {
+      cmArray[i] = cm
+    }
+    appStats.ContainerMetric = cmArray
+  }
+  appStats.ContainerMetric[*containerMetric.InstanceIndex] = containerMetric
+
+}
+
+
+func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 
   appUUID := msg.GetHttpStartStop().GetApplicationId()
   instId := msg.GetHttpStartStop().GetInstanceId()
@@ -82,8 +114,8 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
       debug.Debug(fmt.Sprintf("event:%v\n",msg))
     }
   }
-
 }
+
 
 func formatUUID(uuid *events.UUID) string {
 	var uuidBytes [16]byte

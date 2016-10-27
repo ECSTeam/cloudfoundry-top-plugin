@@ -20,6 +20,7 @@ type AppStats struct {
   Event3xxCount uint64
   Event4xxCount uint64
   Event5xxCount uint64
+  ContainerMetric []*events.ContainerMetric
 }
 
 func getStats(statsMap map[string]*AppStats) []*AppStats {

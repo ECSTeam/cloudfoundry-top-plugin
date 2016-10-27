@@ -67,8 +67,8 @@ func (asUI *AppStatsUI) UpdateDisplay(g *gocui.Gui) error {
 	if len(m) > 0 {
 		v.Clear()
     row := 1
-		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %5v\n",
-      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTRVL")
+		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %6v %6v\n",
+      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTRVL", "CPU%")
 
     sortedStatList := asUI.getStats2(m)
 
@@ -82,8 +82,21 @@ func (asUI *AppStatsUI) UpdateDisplay(g *gocui.Gui) error {
       }
       eventsPerRefresh := appStats.EventCount - lastEventCount
 
+
+
+      maxCpuPercentage := -1.0
+      for _, cm := range appStats.ContainerMetric {
+        if (cm != nil) {
+          cpuPercentage := *cm.CpuPercentage
+          if (cpuPercentage > maxCpuPercentage) {
+            maxCpuPercentage = cpuPercentage
+          }
+        }
+      }
+
+
       row++
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %5d\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %6d %6.2f\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
@@ -91,7 +104,8 @@ func (asUI *AppStatsUI) UpdateDisplay(g *gocui.Gui) error {
           appStats.Event3xxCount,
           appStats.Event4xxCount,
           appStats.Event5xxCount,
-          appStats.EventCount, eventsPerRefresh)
+          appStats.EventCount, eventsPerRefresh,
+          maxCpuPercentage)
       if row == maxY {
         break
       }
