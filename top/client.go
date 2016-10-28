@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
-	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	//"github.com/kkellner/cloudfoundry-top-plugin/appStats"
 
 )
 
@@ -41,7 +41,7 @@ type ClientOptions struct {
 var (
 	dopplerConnection *consumer.Consumer
 	apiEndpoint string
-	appStatsUI *appStats.AppStatsUI
+	//appStatsUI *appStats.AppStatsUI
 )
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
@@ -102,12 +102,15 @@ func (c *Client) Start() {
 
 
 	//c.router = eventrouting.NewEventRouter(appStatsUI.GetProcessor())
-	go c.routeEvent()
+	//go c.routeEvent()
 
 	ui := NewMasterUI(c.cliConnection)
 	c.router = ui.GetRouter()
 
+	go c.routeEvent()
 	ui.Start()
+
+
 	dopplerConnection.Close()
 }
 

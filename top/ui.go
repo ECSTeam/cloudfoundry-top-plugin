@@ -25,7 +25,11 @@ type MasterUI struct {
   layoutManager   *LayoutManager
   gui             *gocui.Gui
   cliConnection   plugin.CliConnection
-  detailUI        *appStats.AppStatsUI
+
+  // TODO: Need to combind detailUI and detailView
+  //detailUI        *appStats.AppStatsUI
+  detailView      *appStats.DetailView
+
   mu  sync.Mutex // protects ctr
   router *eventrouting.EventRouter
   refreshNow  chan bool
@@ -33,14 +37,29 @@ type MasterUI struct {
 
 
 func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
-  detailUI := appStats.NewAppStatsUI(cliConnection)
-  router := eventrouting.NewEventRouter(detailUI.GetProcessor())
-  return &MasterUI {
-    detailUI:      detailUI,
+  //detailUI := appStats.NewAppStatsUI(cliConnection)
+
+  ui := &MasterUI {
+    //detailUI:      detailUI,
     cliConnection: cliConnection,
-    router: router,
     refreshNow:   make(chan bool),
   }
+
+  headerView := NewHeaderWidget(ui, "summaryView", 4)
+  footerView := NewFooterWidget("footerView", 4)
+  //helpView := NewHelpWidget(ui, "helpView", 60,10)
+
+  detailView := appStats.NewDetailView(ui, "detailView", 5, 4, ui.cliConnection)
+  ui.detailView = detailView
+  ui.router = eventrouting.NewEventRouter(detailView.GetProcessor())
+
+  ui.layoutManager = NewLayoutManager()
+  ui.layoutManager.Add(headerView)
+  ui.layoutManager.Add(footerView)
+  //ui.layoutManager.Add(helpView)
+  ui.layoutManager.Add(detailView)
+
+  return ui
 }
 
 func (ui *MasterUI) CliConnection() plugin.CliConnection {
@@ -55,7 +74,7 @@ func (ui *MasterUI) GetRouter() *eventrouting.EventRouter {
 }
 
 func (ui *MasterUI) Start() {
-  ui.detailUI.Start()
+  ui.detailView.Start()
   ui.initGui()
 }
 
@@ -73,17 +92,7 @@ func (ui *MasterUI) initGui() {
 
   //g.SetManagerFunc(ui.layout)
   //filter := appStats.NewFilterWidget("filterWidget", 10, 10, "Example text")
-  header := NewHeaderWidget(ui, "summaryView", 4)
-  footer := NewFooterWidget("footerView", 4)
-  help := NewHelpWidget(ui, "helpView", 60,10)
-  detail := appStats.NewDetailView(ui, "detailView", 5, 4)
 
-  //managers := []gocui.Manager { filter, header, footer, help }
-  ui.layoutManager = NewLayoutManager()
-  ui.layoutManager.Add(header)
-  ui.layoutManager.Add(footer)
-  ui.layoutManager.Add(help)
-  ui.layoutManager.Add(detail)
 
   g.SetManager(ui.layoutManager)
 
@@ -98,16 +107,18 @@ func (ui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
+  /*
 	if err := g.SetKeybinding("", 'h', gocui.ModNone,
     func(g *gocui.Gui, v *gocui.View) error {
-         if !ui.layoutManager.Contains(help) {
-           ui.layoutManager.Add(help)
+         if !ui.layoutManager.Contains(helpView) {
+           ui.layoutManager.Add(helpView)
          }
          ui.SetCurrentViewOnTop(g,"helpView")
          return nil
     }); err != nil {
 		log.Panicln(err)
 	}
+  */
 
   if err := g.SetKeybinding("detailView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
@@ -115,8 +126,6 @@ func (ui *MasterUI) initGui() {
   if err := g.SetKeybinding("detailView", gocui.KeySpace, gocui.ModNone, ui.refeshNow); err != nil {
     log.Panicln(err)
   }
-
-  //ui.detailUI.InitGui(g)
 
   go ui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -159,7 +168,7 @@ func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 
 func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
   ui.router.Clear()
-  ui.detailUI.ClearStats(g, v)
+  ui.detailView.ClearStats(g, v)
 	ui.updateDisplay(g)
 	return nil
 }
@@ -190,7 +199,7 @@ func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
 
 	g.Execute(func(g *gocui.Gui) error {
     ui.updateHeaderDisplay(g)
-    ui.detailUI.UpdateDisplay(g)
+    ui.detailView.UpdateDisplay(g)
 		return nil
 	})
 }

@@ -171,12 +171,19 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "Item 3")
 		fmt.Fprint(v, "\rWill be")
 		fmt.Fprint(v, "deleted\rItem 4\nItem 5")
+
+
+
 	}
-	if v, err := g.SetView("main", 30, 19, 45, 21); err != nil {
+	if v, err := g.SetView("main", 30, 19, 48, 21); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 
+    editor := NewMyEditor(10)
+    v.Editor=editor
+
+    /*
     if err := g.SetKeybinding("main", 'a', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
              //len := len(v.Buffer())
@@ -185,17 +192,18 @@ func layout(g *gocui.Gui) error {
       }); err != nil {
       return err
     }
-
+    */
     /*
 		b, err := ioutil.ReadFile("Mark.Twain-Tom.Sawyer.txt")
 		if err != nil {
 			panic(err)
 		}
     */
-		fmt.Fprintf(v, "%s", "xyz")
 		v.Editable = true
 		v.Wrap = false
     v.Autoscroll=false
+    v.Clear()
+    fmt.Fprintf(v, "%s", "xyz")
 		if _, err := g.SetCurrentView("main"); err != nil {
 			return err
 		}
@@ -210,6 +218,10 @@ func main() {
 	}
 	defer g.Close()
 
+
+
+
+
 	g.SetManagerFunc(layout)
 	if err := keybindings(g); err != nil {
 		log.Panicln(err)
@@ -219,4 +231,57 @@ func main() {
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
+}
+
+
+
+
+type MyEditor struct {
+  baseEditor gocui.Editor
+  MaxFieldSize int
+}
+
+func NewMyEditor(maxFieldSize int) *MyEditor {
+	return &MyEditor{MaxFieldSize: maxFieldSize, baseEditor: gocui.DefaultEditor}
+}
+
+
+func (w *MyEditor) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+  lineValue, _  := v.Line(0)
+  lineValue = strings.Replace(lineValue, "\x00", "", -1)
+  currentSize := len(lineValue)
+  atMax := false
+  if currentSize >= w.MaxFieldSize {
+    atMax = true
+  }
+  fmt.Printf("\n[%v], currentSize:%v atMax:%v ", lineValue, currentSize, atMax)
+
+  switch {
+    case key == gocui.KeyArrowRight:
+      x, _ := v.Cursor()
+      fmt.Printf("\nx:%v", x)
+      if x < currentSize  {
+  	     w.baseEditor.Edit(v, key, ch, mod)
+       }
+    case key == gocui.KeyArrowLeft:
+      fallthrough
+  	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
+  		fallthrough
+  	case key == gocui.KeyDelete:
+  		fallthrough
+  	case key == gocui.KeyInsert:
+  		w.baseEditor.Edit(v, key, ch, mod)
+  	case key == gocui.KeyEnter:
+  	//	v.EditNewLine()
+  	case key == gocui.KeyArrowDown:
+  	//	v.MoveCursor(0, 1, false)
+  	case key == gocui.KeyArrowUp:
+  	//	v.MoveCursor(0, -1, false)
+    default:
+      if !atMax {
+        //fmt.Printf("key:[%v] ch:[%v]", key, ch )
+        w.baseEditor.Edit(v, key, ch, mod)
+      }
+  }
+
 }
