@@ -4,6 +4,7 @@ import (
 
   "math"
   //"math/rand"
+  "time"
 	"fmt"
 	"github.com/cloudfoundry/sonde-go/events"
   "encoding/binary"
@@ -76,8 +77,8 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 
   appUUID := msg.GetHttpStartStop().GetApplicationId()
   instId := msg.GetHttpStartStop().GetInstanceId()
-
-  if msg.GetHttpStartStop().GetPeerType() == events.PeerType_Client &&
+  httpStartStopEvent := msg.GetHttpStartStop()
+  if httpStartStopEvent.GetPeerType() == events.PeerType_Client &&
       appUUID != nil &&
       instId != "" {
 
@@ -96,7 +97,25 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
       ap.AppMap[appId] = appStats
     }
     appStats.EventCount++
-    statusCode := msg.GetHttpStartStop().GetStatusCode()
+
+
+    responseTimeMillis := float64(*httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp) / 1000000
+
+    ftime := 60.0 * 1000 // 60 second avg
+    now := time.Now().UnixNano()
+    fdtime := float64(0)
+    if appStats.EventTime != 0 {
+      fdtime = float64(now - appStats.EventTime) / 1000000
+    }
+    lastResponseTime := appStats.EventResTime
+    if lastResponseTime == 0 {
+      lastResponseTime = responseTimeMillis
+    }
+    appStats.EventResTime = MovingExpAvg(responseTimeMillis, lastResponseTime, fdtime, ftime)
+    appStats.EventTime = now
+
+
+    statusCode := httpStartStopEvent.GetStatusCode()
     switch {
     case statusCode >= 200 && statusCode < 300:
       appStats.Event2xxCount++
@@ -109,7 +128,7 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
     }
 
   } else {
-    statusCode := msg.GetHttpStartStop().GetStatusCode()
+    statusCode := httpStartStopEvent.GetStatusCode()
     if statusCode == 4040 {
       debug.Debug(fmt.Sprintf("event:%v\n",msg))
     }

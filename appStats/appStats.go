@@ -2,6 +2,7 @@ package appStats
 
 import (
     //"fmt"
+    //"time"
     "sort"
     //"strings"
     "github.com/cloudfoundry/sonde-go/events"
@@ -16,6 +17,9 @@ type AppStats struct {
   SpaceName    string
   OrgName      string
   EventCount  uint64
+  EventRate   float64
+  EventResTime float64
+  EventTime    int64
   Event2xxCount uint64
   Event3xxCount uint64
   Event4xxCount uint64

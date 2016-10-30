@@ -20,7 +20,7 @@ type DetailView struct {
   bottomMargin int
 
   highlightAppId string
-  displayRowOffset int
+  displayIndexOffset int
 
   currentProcessor         *AppStatsEventProcessor
   displayedProcessor       *AppStatsEventProcessor
@@ -31,7 +31,7 @@ type DetailView struct {
   cliConnection   plugin.CliConnection
   mu  sync.Mutex // protects ctr
   filterAppName string
-  //lastRefreshAppMap      map[string]*AppStats
+
 }
 
 func NewDetailView(masterUI masterUIInterface.MasterUIInterface,name string, topMargin, bottomMargin int,
@@ -90,7 +90,6 @@ func (asUI *DetailView) Layout(g *gocui.Gui) error {
 func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
 
   statsList := asUI.displayedSortedStatList
-
   if asUI.highlightAppId == "" {
     if len(statsList) > 0 {
       asUI.highlightAppId = statsList[0].AppId
@@ -104,13 +103,10 @@ func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
           offset := row-1
           //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
           //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayRowOffset)+"]")
-
-          if (asUI.displayRowOffset > offset) {
-            asUI.displayRowOffset = offset
+          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
+          if (asUI.displayIndexOffset > offset) {
+            asUI.displayIndexOffset = offset
           }
-
-
           break
         }
       }
@@ -125,7 +121,6 @@ func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
 func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
 
   statsList := asUI.displayedSortedStatList
-
   if asUI.highlightAppId == "" {
     if len(statsList) > 0 {
       asUI.highlightAppId = statsList[0].AppId
@@ -137,13 +132,13 @@ func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
           asUI.highlightAppId = statsList[row+1].AppId
           _, viewY := v.Size()
           offset := (row+2) - (viewY-1)
-          if (offset>asUI.displayRowOffset) {
-            asUI.displayRowOffset = offset
+          if (offset>asUI.displayIndexOffset) {
+            asUI.displayIndexOffset = offset
           }
           //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
           //writeFooter(g,"viewY["+strconv.Itoa(viewY)+"]")
           //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayRowOffset)+"]")
+          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
           break
         }
       }
@@ -166,16 +161,13 @@ func (asUI *DetailView) Start() {
 }
 
 func (asUI *DetailView) loadCacheAtStartup() {
-
   asUI.loadMetadata()
   asUI.seedStatsFromMetadata()
-
 }
 
 func (asUI *DetailView) seedStatsFromMetadata() {
 
   currentStatsMap := asUI.currentProcessor.AppMap
-
   for _, app := range metadata.AllApps() {
     appId := app.Guid
     appStats := currentStatsMap[appId]
@@ -215,15 +207,13 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) {
 
 func (asUI *DetailView) updateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
-  //asUI.lastProcessor = asUI.displayedProcessor
-  asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
+  asUI.lastProcessor = asUI.displayedProcessor
+  //asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
   processorCopy := deepcopy.Copy(asUI.currentProcessor).(*AppStatsEventProcessor)
   asUI.displayedProcessor = processorCopy
   if len(processorCopy.AppMap) > 0 {
     asUI.displayedSortedStatList = asUI.getStats2(processorCopy.AppMap)
   }
-
-  //asUI.displayedProcessor = asUI.currentProcessor
 	asUI.mu.Unlock()
   return asUI.refreshDisplay(g)
 }
@@ -249,20 +239,18 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
 	if len(m) > 0 {
     //maxX, maxY := v.Size()
-    //_, maxY := v.Size()
-    //maxRows := maxY - 1
+    _, maxY := v.Size()
+    maxRows := maxY - 1
 
 		v.Clear()
 
 		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %9v\n",
       "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTR", "CPU%/I ")
 
-    //sortedStatList := asUI.getStats2(m)
+    row := 0
+    for statIndex, appStats := range asUI.displayedSortedStatList {
 
-
-    for row, appStats := range asUI.displayedSortedStatList {
-
-      if row < asUI.displayRowOffset {
+      if statIndex < asUI.displayIndexOffset {
         continue
       }
 
@@ -272,8 +260,6 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         lastEventCount = lastRefreshAppMap[appId].EventCount
       }
       eventsPerRefresh := appStats.EventCount - lastEventCount
-
-
 
       maxCpuPercentage := -1.0
       maxCpuAppInstance := -1
@@ -294,12 +280,11 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         maxCpuInfo = fmt.Sprintf("%6.2f/%-2v", maxCpuPercentage, maxCpuAppInstance)
       }
 
-      //if row == asUI.highlightRow {
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[32;7m")
       }
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %9v [%v]\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %9v [%6.2f]\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
@@ -309,18 +294,16 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
           appStats.Event5xxCount,
           appStats.EventCount, eventsPerRefresh,
           maxCpuInfo,
-          asUI.displayRowOffset)
+          appStats.EventResTime)
 
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[0m")
       }
 
-      /*
-      if row+1 == maxRows {
+      row++
+      if row == maxRows {
         break
       }
-      */
-
 		}
 	} else {
 		v.Clear()
