@@ -17,11 +17,14 @@ type DetailView struct {
 	name string
   topMargin int
   bottomMargin int
-  highlightRow int
 
-  currentProcessor    *AppStatsEventProcessor
-  displayedProcessor  *AppStatsEventProcessor
-  lastProcessor       *AppStatsEventProcessor
+  highlightAppId string
+  displayRowOffset int
+
+  currentProcessor         *AppStatsEventProcessor
+  displayedProcessor       *AppStatsEventProcessor
+  displayedSortedStatList  []*AppStats
+  lastProcessor            *AppStatsEventProcessor
 
 
   cliConnection   plugin.CliConnection
@@ -73,7 +76,7 @@ func (asUI *DetailView) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(asUI.name, gocui.KeyArrowDown, gocui.ModNone, asUI.arrowDown); err != nil {
       log.Panicln(err)
     }
-    
+
     if err := asUI.masterUI.SetCurrentViewOnTop(g, asUI.name); err != nil {
       log.Panicln(err)
     }
@@ -85,19 +88,58 @@ func (asUI *DetailView) Layout(g *gocui.Gui) error {
 
 func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
   // TODO: We want to scroll beyond what is visable
-   if asUI.highlightRow > 0 {
-     asUI.highlightRow--
-   }
+  statsList := asUI.displayedSortedStatList
+
+  if asUI.highlightAppId == "" {
+    if len(statsList) > 0 {
+      asUI.highlightAppId = statsList[0].AppId
+    }
+  } else {
+    lastAppId := ""
+    for row, appStats := range statsList {
+      if appStats.AppId == asUI.highlightAppId {
+        if row > 0 {
+          asUI.highlightAppId = lastAppId
+          break
+        }
+      }
+      lastAppId = appStats.AppId
+    }
+  }
+
    asUI.refreshDisplay(g)
    return nil
 }
 
 func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
   // TODO: We want to scroll beyond what is visable
+  statsList := asUI.displayedSortedStatList
+
+  if asUI.highlightAppId == "" {
+    if len(statsList) > 0 {
+      asUI.highlightAppId = statsList[0].AppId
+    }
+  } else {
+    for row, appStats := range statsList {
+      if appStats.AppId == asUI.highlightAppId {
+        if row+1 < len(statsList) {
+          asUI.highlightAppId = statsList[row+1].AppId
+          break
+        }
+      }
+    }
+  }
+
+   /*
+
+
    _, viewY := v.Size()
+
+
    if asUI.highlightRow+1 < viewY-1 && asUI.highlightRow+1 < len(asUI.displayedProcessor.AppMap) {
      asUI.highlightRow++
    }
+   */
    asUI.refreshDisplay(g)
    return nil
 }
@@ -155,6 +197,10 @@ func (asUI *DetailView) updateDisplay(g *gocui.Gui) error {
   asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
   processorCopy := deepcopy.Copy(asUI.currentProcessor).(*AppStatsEventProcessor)
   asUI.displayedProcessor = processorCopy
+  if len(processorCopy.AppMap) > 0 {
+    asUI.displayedSortedStatList = asUI.getStats2(processorCopy.AppMap)
+  }
+
   //asUI.displayedProcessor = asUI.currentProcessor
 	asUI.mu.Unlock()
   return asUI.refreshDisplay(g)
@@ -188,10 +234,10 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %9v\n",
       "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTR", "CPU%/I ")
 
-    sortedStatList := asUI.getStats2(m)
+    //sortedStatList := asUI.getStats2(m)
 
 
-    for row, appStats := range sortedStatList {
+    for row, appStats := range asUI.displayedSortedStatList {
 
       appId := appStats.AppId
       lastEventCount := uint64(0)
@@ -221,7 +267,8 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         maxCpuInfo = fmt.Sprintf("%6.2f/%-2v", maxCpuPercentage, maxCpuAppInstance)
       }
 
-      if row == asUI.highlightRow {
+      //if row == asUI.highlightRow {
+      if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[32;7m")
       }
 
@@ -235,9 +282,9 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
           appStats.Event5xxCount,
           appStats.EventCount, eventsPerRefresh,
           maxCpuInfo,
-          asUI.highlightRow)
+          0)
 
-      if row == asUI.highlightRow {
+      if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[0m")
       }
 
