@@ -48,55 +48,60 @@ func NewDetailView(masterUI masterUIInterface.MasterUIInterface,name string, top
     lastProcessor: lastProcessor}
 }
 
-func (w *DetailView) Layout(g *gocui.Gui) error {
+func (asUI *DetailView) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
-  v, err := g.SetView(w.name, 0, w.topMargin, maxX-1, maxY-w.bottomMargin)
+  v, err := g.SetView(asUI.name, 0, asUI.topMargin, maxX-1, maxY-asUI.bottomMargin)
   if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
     fmt.Fprintln(v, "")
-    filter := NewFilterWidget(w.masterUI, "filterWidget", 30, 10)
-    if err := g.SetKeybinding(w.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-         if !w.masterUI.LayoutManager().Contains(filter) {
-           w.masterUI.LayoutManager().Add(filter)
+    filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
+    if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+         if !asUI.masterUI.LayoutManager().Contains(filter) {
+           asUI.masterUI.LayoutManager().Add(filter)
          }
-         w.masterUI.SetCurrentViewOnTop(g,"filterWidget")
+         asUI.masterUI.SetCurrentViewOnTop(g,"filterWidget")
          return nil
     }); err != nil {
       log.Panicln(err)
     }
 
-    if err := g.SetKeybinding(w.name, gocui.KeyArrowDown, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-        // TODO: We want to scroll beyond what is visable
-         _, viewY := v.Size()
-         if w.highlightRow < viewY-2 {
-           w.highlightRow++
-         }
-         return nil
-    }); err != nil {
+    if err := g.SetKeybinding(asUI.name, gocui.KeyArrowUp, gocui.ModNone, asUI.arrowUp); err != nil {
       log.Panicln(err)
     }
-
-    if err := g.SetKeybinding(w.name, gocui.KeyArrowUp, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-        // TODO: We want to scroll beyond what is visable
-         if w.highlightRow > 0 {
-           w.highlightRow--
-         }
-         return nil
-    }); err != nil {
+    if err := g.SetKeybinding(asUI.name, gocui.KeyArrowDown, gocui.ModNone, asUI.arrowDown); err != nil {
       log.Panicln(err)
     }
-
-
-
-    if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
+    
+    if err := asUI.masterUI.SetCurrentViewOnTop(g, asUI.name); err != nil {
       log.Panicln(err)
     }
 
 	}
   return nil
 }
+
+
+func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
+  // TODO: We want to scroll beyond what is visable
+   if asUI.highlightRow > 0 {
+     asUI.highlightRow--
+   }
+   asUI.refreshDisplay(g)
+   return nil
+}
+
+func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
+  // TODO: We want to scroll beyond what is visable
+   _, viewY := v.Size()
+   if asUI.highlightRow+1 < viewY-1 && asUI.highlightRow+1 < len(asUI.displayedProcessor.AppMap) {
+     asUI.highlightRow++
+   }
+   asUI.refreshDisplay(g)
+   return nil
+}
+
 
 
 func (asUI *DetailView) Start() {
@@ -137,7 +142,14 @@ func (asUI *DetailView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 }
 
 
-func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
+func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) {
+  //g.Execute(func(g *gocui.Gui) error {
+  //  return asUI.updateDisplay(g)
+	//})
+  asUI.updateDisplay(g)
+}
+
+func (asUI *DetailView) updateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
   //asUI.lastProcessor = asUI.displayedProcessor
   asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
@@ -145,11 +157,17 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
   asUI.displayedProcessor = processorCopy
   //asUI.displayedProcessor = asUI.currentProcessor
 	asUI.mu.Unlock()
-  return asUI.RefeshDisplay(g)
+  return asUI.refreshDisplay(g)
 }
 
+func (asUI *DetailView) RefreshDisplay(g *gocui.Gui) {
+	//g.Execute(func(g *gocui.Gui) error {
+  //  return asUI.refreshDisplay(g)
+	//})
+  asUI.refreshDisplay(g)
+}
 
-func (asUI *DetailView) RefeshDisplay(g *gocui.Gui) error {
+func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
   m := asUI.displayedProcessor.AppMap
   lastRefreshAppMap := asUI.lastProcessor.AppMap
@@ -275,18 +293,12 @@ func (asUI *DetailView) updateHeader(g *gocui.Gui) error {
     return err
   }
 
+  fmt.Fprintf(v, "\r")
   fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
   // TODO: Active apps are apps that have had go-rounter traffic in last 60 seconds
   fmt.Fprintf(v, "Active Apps: %-11v", "--")
   // TODO: Reporting containers are containers that reported metrics in last 90 seconds
   fmt.Fprintf(v, "Rprt Cntnrs: %-11v", "--")
-
-
-  /*
-  for key, _ := range asUI.lastProcessor.AppMap {
-    fmt.Fprintf(v, "%v,", key)
-  }
-  */
 
   return nil
 }

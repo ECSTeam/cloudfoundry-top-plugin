@@ -181,25 +181,30 @@ func (ui *MasterUI) refeshNow(g *gocui.Gui, v *gocui.View) error {
 
 func (ui *MasterUI) counter(g *gocui.Gui) {
 
-  // TODO: What is doneX used for and how is it set?
-  //refreshNow := make(chan bool)
-
+  ui.updateDisplay(g)
 	for {
-    ui.updateDisplay(g)
 		select {
 		case <-ui.refreshNow:
-
+      ui.updateDisplay(g)
+      //ui.refeshDisplay(g)
 		case <-time.After(1000 * time.Millisecond):
-
+      ui.updateDisplay(g)
 		}
 	}
 }
 
 func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
-
 	g.Execute(func(g *gocui.Gui) error {
     ui.updateHeaderDisplay(g)
     ui.detailView.UpdateDisplay(g)
+		return nil
+	})
+}
+
+func (ui *MasterUI) refeshDisplay(g *gocui.Gui) {
+	g.Execute(func(g *gocui.Gui) error {
+    ui.updateHeaderDisplay(g)
+    ui.detailView.RefreshDisplay(g)
 		return nil
 	})
 }
