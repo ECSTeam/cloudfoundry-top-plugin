@@ -25,7 +25,7 @@ func (w *FooterWidget) Layout(g *gocui.Gui) error {
     v.Title = "Footer"
     fmt.Fprintln(v, "c:clear q:quit space:fresh")
     fmt.Fprintln(v, "s:sleep(todo) f:filter(todo) o:order(todo)")
-    fmt.Fprintln(v, "h:help")
+    fmt.Fprint(v, "h:help")
 	}
 	return nil
 }

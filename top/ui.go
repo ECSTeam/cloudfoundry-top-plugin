@@ -123,7 +123,10 @@ func (ui *MasterUI) initGui() {
   if err := g.SetKeybinding("detailView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
   }
-  if err := g.SetKeybinding("detailView", gocui.KeySpace, gocui.ModNone, ui.refeshNow); err != nil {
+  if err := g.SetKeybinding("detailView", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+       ui.RefeshNow()
+       return nil
+  }); err != nil {
     log.Panicln(err)
   }
 
@@ -173,9 +176,8 @@ func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (ui *MasterUI) refeshNow(g *gocui.Gui, v *gocui.View) error {
+func (ui *MasterUI) RefeshNow() {
   ui.refreshNow <- true
-  return nil
 }
 
 

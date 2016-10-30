@@ -5,6 +5,7 @@ import (
   "log"
   "sync"
   "sort"
+  //"strconv"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
@@ -87,7 +88,7 @@ func (asUI *DetailView) Layout(g *gocui.Gui) error {
 
 
 func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
-  // TODO: We want to scroll beyond what is visable
+
   statsList := asUI.displayedSortedStatList
 
   if asUI.highlightAppId == "" {
@@ -100,6 +101,16 @@ func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
       if appStats.AppId == asUI.highlightAppId {
         if row > 0 {
           asUI.highlightAppId = lastAppId
+          offset := row-1
+          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
+          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
+          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayRowOffset)+"]")
+
+          if (asUI.displayRowOffset > offset) {
+            asUI.displayRowOffset = offset
+          }
+
+
           break
         }
       }
@@ -112,7 +123,7 @@ func (asUI *DetailView) arrowUp(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
-  // TODO: We want to scroll beyond what is visable
+
   statsList := asUI.displayedSortedStatList
 
   if asUI.highlightAppId == "" {
@@ -124,27 +135,30 @@ func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
       if appStats.AppId == asUI.highlightAppId {
         if row+1 < len(statsList) {
           asUI.highlightAppId = statsList[row+1].AppId
+          _, viewY := v.Size()
+          offset := (row+2) - (viewY-1)
+          if (offset > 0) {
+            asUI.displayRowOffset = offset
+          }
+          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
+          //writeFooter(g,"viewY["+strconv.Itoa(viewY)+"]")
+          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
           break
         }
       }
     }
   }
 
-   /*
-
-
-   _, viewY := v.Size()
-
-
-   if asUI.highlightRow+1 < viewY-1 && asUI.highlightRow+1 < len(asUI.displayedProcessor.AppMap) {
-     asUI.highlightRow++
-   }
-   */
    asUI.refreshDisplay(g)
    return nil
 }
 
+// This is for debugging -- remove it later
+func writeFooter(g *gocui.Gui, msg string) {
+  v, _ := g.View("footerView")
+  fmt.Fprint(v, msg)
 
+}
 
 func (asUI *DetailView) Start() {
   go asUI.loadCacheAtStartup()
@@ -153,6 +167,11 @@ func (asUI *DetailView) Start() {
 func (asUI *DetailView) loadCacheAtStartup() {
 
   asUI.loadMetadata()
+  asUI.seedStatsFromMetadata()
+
+}
+
+func (asUI *DetailView) seedStatsFromMetadata() {
 
   currentStatsMap := asUI.currentProcessor.AppMap
 
@@ -177,9 +196,11 @@ func (asUI *DetailView) GetCurrentProcessor() *AppStatsEventProcessor {
 
 
 func (asUI *DetailView) ClearStats(g *gocui.Gui, v *gocui.View) error {
+  // TODO: I think this needs to be in a sync/mutex
   asUI.currentProcessor.Clear()
   asUI.displayedProcessor.Clear()
   asUI.lastProcessor.Clear()
+  asUI.seedStatsFromMetadata()
 	return nil
 }
 
@@ -225,10 +246,11 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 		return err
 	}
 
-  //maxX, maxY := v.Size()
-  _, maxY := v.Size()
-  maxRows := maxY - 1
 	if len(m) > 0 {
+    //maxX, maxY := v.Size()
+    //_, maxY := v.Size()
+    //maxRows := maxY - 1
+
 		v.Clear()
 
 		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %9v\n",
@@ -238,6 +260,10 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
 
     for row, appStats := range asUI.displayedSortedStatList {
+
+      if row < asUI.displayRowOffset {
+        continue
+      }
 
       appId := appStats.AppId
       lastEventCount := uint64(0)
@@ -282,15 +308,18 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
           appStats.Event5xxCount,
           appStats.EventCount, eventsPerRefresh,
           maxCpuInfo,
-          0)
+          asUI.displayRowOffset)
 
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[0m")
       }
 
+      /*
       if row+1 == maxRows {
         break
       }
+      */
+
 		}
 	} else {
 		v.Clear()
