@@ -137,12 +137,13 @@ func (asUI *DetailView) arrowDown(g *gocui.Gui, v *gocui.View) error {
           asUI.highlightAppId = statsList[row+1].AppId
           _, viewY := v.Size()
           offset := (row+2) - (viewY-1)
-          if (offset > 0) {
+          if (offset>asUI.displayRowOffset) {
             asUI.displayRowOffset = offset
           }
           //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
           //writeFooter(g,"viewY["+strconv.Itoa(viewY)+"]")
           //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
+          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayRowOffset)+"]")
           break
         }
       }
