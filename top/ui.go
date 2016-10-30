@@ -51,7 +51,7 @@ func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
 
   detailView := appStats.NewDetailView(ui, "detailView", 5, 4, ui.cliConnection)
   ui.detailView = detailView
-  ui.router = eventrouting.NewEventRouter(detailView.GetProcessor())
+  ui.router = eventrouting.NewEventRouter(detailView.GetCurrentProcessor())
 
   ui.layoutManager = NewLayoutManager()
   ui.layoutManager.Add(headerView)

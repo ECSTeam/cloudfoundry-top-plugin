@@ -19,24 +19,33 @@ type DetailView struct {
   bottomMargin int
   highlightRow int
 
-  processor     *AppStatsEventProcessor
+  currentProcessor    *AppStatsEventProcessor
+  displayedProcessor  *AppStatsEventProcessor
+  lastProcessor       *AppStatsEventProcessor
+
+
   cliConnection   plugin.CliConnection
   mu  sync.Mutex // protects ctr
   filterAppName string
-  lastRefreshAppMap      map[string]*AppStats
+  //lastRefreshAppMap      map[string]*AppStats
 }
 
 func NewDetailView(masterUI masterUIInterface.MasterUIInterface,name string, topMargin, bottomMargin int,
     cliConnection plugin.CliConnection ) *DetailView {
 
-  processor := NewAppStatsEventProcessor()
+  currentProcessor := NewAppStatsEventProcessor()
+  displayedProcessor := NewAppStatsEventProcessor()
+  lastProcessor := NewAppStatsEventProcessor()
+
 	return &DetailView{
     masterUI: masterUI,
     name: name,
     topMargin: topMargin,
     bottomMargin: bottomMargin,
     cliConnection: cliConnection,
-    processor:  processor,}
+    currentProcessor:  currentProcessor,
+    displayedProcessor: displayedProcessor,
+    lastProcessor: lastProcessor}
 }
 
 func (w *DetailView) Layout(g *gocui.Gui) error {
@@ -91,28 +100,61 @@ func (w *DetailView) Layout(g *gocui.Gui) error {
 
 
 func (asUI *DetailView) Start() {
-  go asUI.loadMetadata()
+  go asUI.loadCacheAtStartup()
 }
 
-func (asUI *DetailView) GetProcessor() *AppStatsEventProcessor {
-    return asUI.processor
+func (asUI *DetailView) loadCacheAtStartup() {
+
+  asUI.loadMetadata()
+
+  currentStatsMap := asUI.currentProcessor.AppMap
+
+  for _, app := range metadata.AllApps() {
+    appId := app.Guid
+    appStats := currentStatsMap[appId]
+    if appStats == nil {
+      // New app we haven't seen yet
+      appStats = &AppStats {
+        AppId: appId,
+      }
+      currentStatsMap[appId] = appStats
+    }
+
+  }
+
+}
+
+func (asUI *DetailView) GetCurrentProcessor() *AppStatsEventProcessor {
+    return asUI.currentProcessor
 }
 
 
 func (asUI *DetailView) ClearStats(g *gocui.Gui, v *gocui.View) error {
-  asUI.processor.Clear()
+  asUI.currentProcessor.Clear()
+  asUI.displayedProcessor.Clear()
+  asUI.lastProcessor.Clear()
 	return nil
 }
 
-// xxx
 
 func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
-	orgAppMap := asUI.processor.GetAppMap()
-  m := deepcopy.Copy(orgAppMap).(map[string]*AppStats)
+  //asUI.lastProcessor = asUI.displayedProcessor
+  asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
+  processorCopy := deepcopy.Copy(asUI.currentProcessor).(*AppStatsEventProcessor)
+  asUI.displayedProcessor = processorCopy
+  //asUI.displayedProcessor = asUI.currentProcessor
 	asUI.mu.Unlock()
+  return asUI.RefeshDisplay(g)
+}
 
-  asUI.updateHeader(g, m)
+
+func (asUI *DetailView) RefeshDisplay(g *gocui.Gui) error {
+
+  m := asUI.displayedProcessor.AppMap
+  lastRefreshAppMap := asUI.lastProcessor.AppMap
+
+  asUI.updateHeader(g)
 
   v, err := g.View("detailView")
   if err != nil {
@@ -133,10 +175,10 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
 
     for row, appStats := range sortedStatList {
 
-      appId := formatUUID(appStats.AppUUID)
+      appId := appStats.AppId
       lastEventCount := uint64(0)
-      if asUI.lastRefreshAppMap[appId] != nil {
-        lastEventCount = asUI.lastRefreshAppMap[appId].EventCount
+      if lastRefreshAppMap[appId] != nil {
+        lastEventCount = lastRefreshAppMap[appId].EventCount
       }
       eventsPerRefresh := appStats.EventCount - lastEventCount
 
@@ -156,7 +198,7 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
 
       maxCpuInfo := ""
       if maxCpuPercentage==-1 {
-        maxCpuInfo = fmt.Sprintf("%8v", "--")
+        maxCpuInfo = fmt.Sprintf("%9v", "-- ")
       } else {
         maxCpuInfo = fmt.Sprintf("%6.2f/%-2v", maxCpuPercentage, maxCpuAppInstance)
       }
@@ -165,7 +207,7 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
         fmt.Fprintf(v, "\033[32;7m")
       }
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %8v [%v]\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %9v [%v]\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
@@ -185,8 +227,6 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) error {
         break
       }
 		}
-    asUI.lastRefreshAppMap = m
-
 	} else {
 		v.Clear()
 		fmt.Fprintln(v, "No data yet...")
@@ -227,13 +267,27 @@ func (asUI *DetailView) getStats2(statsMap map[string]*AppStats) []*AppStats {
   return s
 }
 
-func (asUI *DetailView) updateHeader(g *gocui.Gui, appStatsMap map[string]*AppStats) error {
+func (asUI *DetailView) updateHeader(g *gocui.Gui) error {
+
+
   v, err := g.View("summaryView")
   if err != nil {
     return err
   }
+
   fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
-  fmt.Fprintf(v, "Reporting Apps: %-11v", len(appStatsMap))
+  // TODO: Active apps are apps that have had go-rounter traffic in last 60 seconds
+  fmt.Fprintf(v, "Active Apps: %-11v", "--")
+  // TODO: Reporting containers are containers that reported metrics in last 90 seconds
+  fmt.Fprintf(v, "Rprt Cntnrs: %-11v", "--")
+
+
+  /*
+  for key, _ := range asUI.lastProcessor.AppMap {
+    fmt.Fprintf(v, "%v,", key)
+  }
+  */
+
   return nil
 }
 

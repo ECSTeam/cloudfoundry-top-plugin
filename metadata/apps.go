@@ -40,6 +40,10 @@ func AppMetadataSize() int {
   return len(appsMetadataCache)
 }
 
+func AllApps() []App {
+  return appsMetadataCache
+}
+
 func FindAppMetadata(appId string) App {
 	for _, app := range appsMetadataCache {
 		if app.Guid == appId {
@@ -48,6 +52,8 @@ func FindAppMetadata(appId string) App {
 	}
 	return App{}
 }
+
+
 
 func LoadAppCache(cliConnection plugin.CliConnection) {
   appsMetadataCache = getAppMetadata(cliConnection)
