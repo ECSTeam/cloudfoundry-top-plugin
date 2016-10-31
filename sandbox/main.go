@@ -211,7 +211,7 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
-func main() {
+func mainX() {
 	g, err := gocui.NewGui()
 	if err != nil {
 		log.Panicln(err)

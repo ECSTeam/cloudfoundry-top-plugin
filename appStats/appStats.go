@@ -8,6 +8,11 @@ import (
     "github.com/cloudfoundry/sonde-go/events"
 )
 
+type LogMetric struct {
+  OutCount uint64
+  ErrCount uint64
+}
+
 type dataSlice []*AppStats
 
 type AppStats struct {
@@ -25,6 +30,7 @@ type AppStats struct {
   Event4xxCount uint64
   Event5xxCount uint64
   ContainerMetric []*events.ContainerMetric
+  LogMetric []*LogMetric
 }
 
 func getStats(statsMap map[string]*AppStats) []*AppStats {

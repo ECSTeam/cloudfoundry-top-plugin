@@ -4,7 +4,8 @@ import (
 
   "math"
   //"math/rand"
-  "time"
+  //"time"
+  "strconv"
 	"fmt"
 	"github.com/cloudfoundry/sonde-go/events"
   "encoding/binary"
@@ -40,13 +41,56 @@ switch eventType {
   case events.Envelope_HttpStartStop:
     ap.httpStartStopEvent(msg)
   case events.Envelope_ContainerMetric:
-    ap.httpContainerMetric(msg)
+    ap.containerMetricEvent(msg)
+  case events.Envelope_LogMessage:
+    ap.logMessageEvent(msg)
   }
 
 
 }
 
-func (ap *AppStatsEventProcessor) httpContainerMetric(msg *events.Envelope) {
+func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
+  logMessage := msg.GetLogMessage()
+  appId := logMessage.GetAppId()
+  appStats := ap.AppMap[appId]
+  if appStats == nil {
+    // New app we haven't seen yet
+    appStats = &AppStats {
+      AppId: appId,
+    }
+    ap.AppMap[appId] = appStats
+  }
+
+  instanceIndex, err := strconv.Atoi(*logMessage.SourceInstance)
+  if err==nil {
+    // Save the metrics -- by instance id
+    if len(appStats.LogMetric) <= instanceIndex {
+      metricArray := make([]*LogMetric, instanceIndex+1)
+      for i, metric := range appStats.LogMetric {
+        metricArray[i] = metric
+      }
+      appStats.LogMetric = metricArray
+    }
+
+
+    logMetric := appStats.LogMetric[instanceIndex]
+    if (logMetric == nil) {
+      logMetric = &LogMetric {}
+      appStats.LogMetric[instanceIndex] = logMetric
+    }
+    switch *logMessage.MessageType {
+    case events.LogMessage_OUT:
+      logMetric.OutCount++
+    case events.LogMessage_ERR:
+      logMetric.ErrCount++
+    }
+
+  }
+
+}
+
+
+func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
 
   containerMetric := msg.GetContainerMetric()
 
@@ -99,20 +143,21 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
     appStats.EventCount++
 
 
-    responseTimeMillis := float64(*httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp) / 1000000
 
-    ftime := 60.0 * 1000 // 60 second avg
-    now := time.Now().UnixNano()
+    ftime := 60.0 * 1000 * 1000 * 1000 // 60 second avg
+
+    responseTimeMillis := float64(*httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp)
+    lastEventTs := *httpStartStopEvent.StopTimestamp
     fdtime := float64(0)
     if appStats.EventTime != 0 {
-      fdtime = float64(now - appStats.EventTime) / 1000000
+      fdtime = float64(lastEventTs - appStats.EventTime)
     }
     lastResponseTime := appStats.EventResTime
     if lastResponseTime == 0 {
       lastResponseTime = responseTimeMillis
     }
     appStats.EventResTime = MovingExpAvg(responseTimeMillis, lastResponseTime, fdtime, ftime)
-    appStats.EventTime = now
+    appStats.EventTime = lastEventTs
 
 
     statusCode := httpStartStopEvent.GetStatusCode()

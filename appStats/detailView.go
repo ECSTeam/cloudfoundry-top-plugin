@@ -244,8 +244,8 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
 		v.Clear()
 
-		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %9v\n",
-      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTR", "CPU%/I ")
+		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %6v %9v %6v %6v\n",
+      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTR", "RATE", "CPU%/I ", "RESP", "LOGS")
 
     row := 0
     for statIndex, appStats := range asUI.displayedSortedStatList {
@@ -264,7 +264,7 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
       maxCpuPercentage := -1.0
       maxCpuAppInstance := -1
       for i, cm := range appStats.ContainerMetric {
-        if (cm != nil) {
+        if cm != nil {
           cpuPercentage := *cm.CpuPercentage
           if (cpuPercentage > maxCpuPercentage) {
             maxCpuPercentage = cpuPercentage
@@ -280,11 +280,19 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         maxCpuInfo = fmt.Sprintf("%6.2f/%-2v", maxCpuPercentage, maxCpuAppInstance)
       }
 
+      logCount := uint64(0)
+      for _, logMetric := range appStats.LogMetric {
+        if logMetric != nil {
+          logCount = logCount + (logMetric.OutCount + logMetric.ErrCount)
+        }
+      }
+
+
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[32;7m")
       }
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %9v [%6.2f]\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %6.1f %9v %6.0f %6v\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
@@ -293,8 +301,10 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
           appStats.Event4xxCount,
           appStats.Event5xxCount,
           appStats.EventCount, eventsPerRefresh,
+          -1.0,
           maxCpuInfo,
-          appStats.EventResTime)
+          appStats.EventResTime / 1000000,
+          logCount)
 
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, "\033[0m")

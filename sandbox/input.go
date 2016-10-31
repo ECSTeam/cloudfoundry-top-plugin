@@ -93,7 +93,7 @@ func SetFocus(name string) func(g *gocui.Gui) error {
 	}
 }
 
-func main() {
+func mainX() {
 	g, err := gocui.NewGui()
 	if err != nil {
 		log.Panicln(err)
