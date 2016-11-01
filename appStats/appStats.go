@@ -2,10 +2,11 @@ package appStats
 
 import (
     //"fmt"
-    //"time"
+    "time"
     "sort"
     //"strings"
     "github.com/cloudfoundry/sonde-go/events"
+    "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type LogMetric struct {
@@ -22,9 +23,21 @@ type AppStats struct {
   SpaceName    string
   OrgName      string
   EventCount  uint64
-  EventRate   float64
-  EventResTime float64
-  EventTime    int64
+
+  responseL60Time    *util.AvgTracker
+  AvgResponseL60Time float64
+  EventL60Rate       int
+
+  responseL10Time    *util.AvgTracker
+  AvgResponseL10Time float64
+  EventL10Rate       int
+
+  responseL1Time    *util.AvgTracker
+  AvgResponseL1Time float64
+  EventL1Rate       int
+
+  //EventResTime float64
+  //EventTime    int64
   Event2xxCount uint64
   Event3xxCount uint64
   Event4xxCount uint64
@@ -32,6 +45,19 @@ type AppStats struct {
   ContainerMetric []*events.ContainerMetric
   LogMetric []*LogMetric
 }
+
+
+func NewAppStats(appId string) *AppStats {
+	stats := &AppStats{}
+  stats.AppId = appId
+  stats.responseL60Time = util.NewAvgTracker(time.Minute)
+  stats.responseL10Time = util.NewAvgTracker(time.Second * 10)
+  stats.responseL1Time = util.NewAvgTracker(time.Second)
+  return stats
+
+}
+
+
 
 func getStats(statsMap map[string]*AppStats) []*AppStats {
   s := make(dataSlice, 0, len(statsMap))

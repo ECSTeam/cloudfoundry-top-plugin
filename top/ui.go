@@ -221,7 +221,7 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
   fmt.Fprintf(v, "Total events: %-11v", ui.router.GetEventCount())
   fmt.Fprintf(v, "Stats duration: %-10v ", Round(time.Now().Sub(ui.router.GetStartTime()), time.Second) )
-  fmt.Fprintf(v, "%v\n", time.Now().Format("2006-01-02 15:04:05"))
+  fmt.Fprintf(v, "%v\n", time.Now().Format("01-02-2006 15:04:05"))
 
   apiEndpoint, err := ui.cliConnection.ApiEndpoint()
   if err != nil {

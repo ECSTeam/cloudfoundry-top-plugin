@@ -9,7 +9,7 @@ import (
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
-  "github.com/mohae/deepcopy"
+  //"github.com/mohae/deepcopy"
   "github.com/kkellner/cloudfoundry-top-plugin/metadata"
 )
 
@@ -173,9 +173,7 @@ func (asUI *DetailView) seedStatsFromMetadata() {
     appStats := currentStatsMap[appId]
     if appStats == nil {
       // New app we haven't seen yet
-      appStats = &AppStats {
-        AppId: appId,
-      }
+      appStats = NewAppStats(appId)
       currentStatsMap[appId] = appStats
     }
 
@@ -208,8 +206,9 @@ func (asUI *DetailView) UpdateDisplay(g *gocui.Gui) {
 func (asUI *DetailView) updateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
   asUI.lastProcessor = asUI.displayedProcessor
-  //asUI.lastProcessor = deepcopy.Copy(asUI.displayedProcessor).(*AppStatsEventProcessor)
-  processorCopy := deepcopy.Copy(asUI.currentProcessor).(*AppStatsEventProcessor)
+  //processorCopy := deepcopy.Copy(asUI.currentProcessor).(*AppStatsEventProcessor)
+  processorCopy := asUI.currentProcessor.Clone()
+
   asUI.displayedProcessor = processorCopy
   if len(processorCopy.AppMap) > 0 {
     asUI.displayedSortedStatList = asUI.getStats2(processorCopy.AppMap)
@@ -228,9 +227,6 @@ func (asUI *DetailView) RefreshDisplay(g *gocui.Gui) {
 func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
   m := asUI.displayedProcessor.AppMap
-  lastRefreshAppMap := asUI.lastProcessor.AppMap
-
-  asUI.updateHeader(g)
 
   v, err := g.View("detailView")
   if err != nil {
@@ -244,9 +240,11 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
 		v.Clear()
 
-		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %6v %9v %6v %6v\n",
-      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "INTR", "RATE", "CPU%/I ", "RESP", "LOGS")
+		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %4v %4v %6v %3v %6v %6v\n",
+      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "L1", "L10", "L60", "CPU%", "RCR", "RESP", "LOGS")
 
+    totalActiveApps := 0
+    totalReportingAppInstances := 0
     row := 0
     for statIndex, appStats := range asUI.displayedSortedStatList {
 
@@ -254,30 +252,31 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         continue
       }
 
+
+      /*
       appId := appStats.AppId
       lastEventCount := uint64(0)
       if lastRefreshAppMap[appId] != nil {
         lastEventCount = lastRefreshAppMap[appId].EventCount
       }
       eventsPerRefresh := appStats.EventCount - lastEventCount
+      */
 
-      maxCpuPercentage := -1.0
-      maxCpuAppInstance := -1
-      for i, cm := range appStats.ContainerMetric {
+      totalCpuPercentage := 0.0
+      reportingAppInstances := 0
+      for _, cm := range appStats.ContainerMetric {
         if cm != nil {
           cpuPercentage := *cm.CpuPercentage
-          if (cpuPercentage > maxCpuPercentage) {
-            maxCpuPercentage = cpuPercentage
-            maxCpuAppInstance = i
-          }
+          totalCpuPercentage = totalCpuPercentage + cpuPercentage
+          reportingAppInstances++
         }
       }
 
-      maxCpuInfo := ""
-      if maxCpuPercentage==-1 {
-        maxCpuInfo = fmt.Sprintf("%9v", "-- ")
+      totalCpuInfo := ""
+      if reportingAppInstances==0 {
+        totalCpuInfo = fmt.Sprintf("%6v", "--")
       } else {
-        maxCpuInfo = fmt.Sprintf("%6.2f/%-2v", maxCpuPercentage, maxCpuAppInstance)
+        totalCpuInfo = fmt.Sprintf("%6.2f", totalCpuPercentage)
       }
 
       logCount := uint64(0)
@@ -292,7 +291,19 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         fmt.Fprintf(v, "\033[32;7m")
       }
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %6.1f %9v %6.0f %6v\n",
+      avgResponseTimeL60Info := "--"
+      if appStats.AvgResponseL60Time >= 0 {
+        avgResponseTimeMs := appStats.AvgResponseL60Time / 1000000
+        avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
+      }
+
+      if appStats.EventL60Rate > 0 {
+        totalActiveApps++
+      }
+      totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
+
+
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %4d %4d %6v %3v %6v %6v\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
@@ -300,10 +311,13 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
           appStats.Event3xxCount,
           appStats.Event4xxCount,
           appStats.Event5xxCount,
-          appStats.EventCount, eventsPerRefresh,
-          -1.0,
-          maxCpuInfo,
-          appStats.EventResTime / 1000000,
+          appStats.EventCount,
+          appStats.EventL1Rate, // Last 1 second
+          appStats.EventL10Rate, // Last 10 seconds
+          appStats.EventL60Rate, // Last 60 seconds
+          totalCpuInfo,
+          reportingAppInstances,
+          avgResponseTimeL60Info,
           logCount)
 
       if appStats.AppId == asUI.highlightAppId {
@@ -315,6 +329,9 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
         break
       }
 		}
+
+    asUI.updateHeader(g, totalActiveApps, totalReportingAppInstances)
+
 	} else {
 		v.Clear()
 		fmt.Fprintln(v, "No data yet...")
@@ -355,7 +372,7 @@ func (asUI *DetailView) getStats2(statsMap map[string]*AppStats) []*AppStats {
   return s
 }
 
-func (asUI *DetailView) updateHeader(g *gocui.Gui) error {
+func (asUI *DetailView) updateHeader(g *gocui.Gui, totalActiveApps int, totalReportingAppInstances int) error {
 
 
   v, err := g.View("summaryView")
@@ -366,9 +383,9 @@ func (asUI *DetailView) updateHeader(g *gocui.Gui) error {
   fmt.Fprintf(v, "\r")
   fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
   // TODO: Active apps are apps that have had go-rounter traffic in last 60 seconds
-  fmt.Fprintf(v, "Active Apps: %-11v", "--")
+  fmt.Fprintf(v, "Active Apps: %-4v", totalActiveApps)
   // TODO: Reporting containers are containers that reported metrics in last 90 seconds
-  fmt.Fprintf(v, "Rprt Cntnrs: %-11v", "--")
+  fmt.Fprintf(v, "Rprt Cntnrs: %-4v", totalReportingAppInstances)
 
   return nil
 }

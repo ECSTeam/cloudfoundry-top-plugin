@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/cloudfoundry/sonde-go/events"
   "encoding/binary"
+  "github.com/mohae/deepcopy"
   //"github.com/paulbellamy/ratecounter"  // Uses a goroutine per call - not memory frendly
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
@@ -23,6 +24,21 @@ func NewAppStatsEventProcessor() *AppStatsEventProcessor {
     AppMap:  make(map[string]*AppStats),
     TotalEvents: 0,
   }
+}
+
+func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
+  clone := deepcopy.Copy(ap).(*AppStatsEventProcessor)
+  for _, stat := range ap.AppMap {
+
+    clone.AppMap[stat.AppId].EventL60Rate = stat.responseL60Time.Rate()
+    clone.AppMap[stat.AppId].AvgResponseL60Time = stat.responseL60Time.Avg()
+    clone.AppMap[stat.AppId].EventL10Rate = stat.responseL10Time.Rate()
+    clone.AppMap[stat.AppId].AvgResponseL10Time = stat.responseL10Time.Avg()
+    clone.AppMap[stat.AppId].EventL1Rate = stat.responseL1Time.Rate()
+    clone.AppMap[stat.AppId].AvgResponseL1Time = stat.responseL1Time.Avg()
+
+  }
+  return clone
 }
 
 func (ap *AppStatsEventProcessor) GetTotalEvents() uint64 {
@@ -55,9 +71,7 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
   appStats := ap.AppMap[appId]
   if appStats == nil {
     // New app we haven't seen yet
-    appStats = &AppStats {
-      AppId: appId,
-    }
+    appStats = NewAppStats(appId)
     ap.AppMap[appId] = appStats
   }
 
@@ -98,9 +112,7 @@ func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
   appStats := ap.AppMap[appId]
   if appStats == nil {
     // New app we haven't seen yet
-    appStats = &AppStats {
-      AppId: appId,
-    }
+    appStats = NewAppStats(appId)
     ap.AppMap[appId] = appStats
   }
 
@@ -134,19 +146,20 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
     appStats := ap.AppMap[appId]
     if appStats == nil {
       // New app we haven't seen yet
-      appStats = &AppStats {
-        AppId: appId,
-        AppUUID: appUUID,
-      }
+      appStats = NewAppStats(appId)
+      appStats.AppUUID = appUUID
       ap.AppMap[appId] = appStats
     }
+
+
+    responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
     appStats.EventCount++
+    appStats.responseL60Time.Track(responseTimeMillis)
+    appStats.responseL10Time.Track(responseTimeMillis)
+    appStats.responseL1Time.Track(responseTimeMillis)
 
-
-
+    /*
     ftime := 60.0 * 1000 * 1000 * 1000 // 60 second avg
-
-    responseTimeMillis := float64(*httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp)
     lastEventTs := *httpStartStopEvent.StopTimestamp
     fdtime := float64(0)
     if appStats.EventTime != 0 {
@@ -158,6 +171,8 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
     }
     appStats.EventResTime = MovingExpAvg(responseTimeMillis, lastResponseTime, fdtime, ftime)
     appStats.EventTime = lastEventTs
+    */
+
 
 
     statusCode := httpStartStopEvent.GetStatusCode()
