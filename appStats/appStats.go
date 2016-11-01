@@ -44,6 +44,8 @@ type AppStats struct {
   Event5xxCount uint64
   ContainerMetric []*events.ContainerMetric
   LogMetric []*LogMetric
+  NonContainerOutCount uint64
+  NonContainerErrCount uint64
 }
 
 
@@ -58,7 +60,7 @@ func NewAppStats(appId string) *AppStats {
 }
 
 
-
+// Take the stats map and generated a reverse sorted list base on attribute X
 func getStats(statsMap map[string]*AppStats) []*AppStats {
   s := make(dataSlice, 0, len(statsMap))
   for _, d := range statsMap {
@@ -67,6 +69,7 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
   sort.Sort(sort.Reverse(s))
   return s
 }
+
 
 // Len is part of sort.Interface.
 func (d dataSlice) Len() int {

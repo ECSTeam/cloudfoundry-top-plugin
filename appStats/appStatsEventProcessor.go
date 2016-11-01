@@ -75,30 +75,40 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
     ap.AppMap[appId] = appStats
   }
 
-  instanceIndex, err := strconv.Atoi(*logMessage.SourceInstance)
-  if err==nil {
-    // Save the metrics -- by instance id
-    if len(appStats.LogMetric) <= instanceIndex {
-      metricArray := make([]*LogMetric, instanceIndex+1)
-      for i, metric := range appStats.LogMetric {
-        metricArray[i] = metric
+  if logMessage.SourceInstance != nil {
+    instanceIndex, err := strconv.Atoi(*logMessage.SourceInstance)
+    if err==nil {
+      // Save the metrics -- by instance id
+      if len(appStats.LogMetric) <= instanceIndex {
+        metricArray := make([]*LogMetric, instanceIndex+1)
+        for i, metric := range appStats.LogMetric {
+          metricArray[i] = metric
+        }
+        appStats.LogMetric = metricArray
       }
-      appStats.LogMetric = metricArray
-    }
 
 
-    logMetric := appStats.LogMetric[instanceIndex]
-    if (logMetric == nil) {
-      logMetric = &LogMetric {}
-      appStats.LogMetric[instanceIndex] = logMetric
+      logMetric := appStats.LogMetric[instanceIndex]
+      if (logMetric == nil) {
+        logMetric = &LogMetric {}
+        appStats.LogMetric[instanceIndex] = logMetric
+      }
+      switch *logMessage.MessageType {
+      case events.LogMessage_OUT:
+        logMetric.OutCount++
+      case events.LogMessage_ERR:
+        logMetric.ErrCount++
+      }
     }
+
+  } else {
+    // Non-container -- staging logs?
     switch *logMessage.MessageType {
     case events.LogMessage_OUT:
-      logMetric.OutCount++
+      appStats.NonContainerOutCount++
     case events.LogMessage_ERR:
-      logMetric.ErrCount++
+      appStats.NonContainerErrCount++
     }
-
   }
 
 }

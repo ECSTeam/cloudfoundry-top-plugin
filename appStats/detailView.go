@@ -240,7 +240,7 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
 
 		v.Clear()
 
-		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %4v %4v %6v %3v %6v %6v\n",
+		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %4v %4v %6v %3v %6v %8v\n",
       "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "L1", "L10", "L60", "CPU%", "RCR", "RESP", "LOGS")
 
     totalActiveApps := 0
@@ -303,7 +303,7 @@ func (asUI *DetailView) refreshDisplay(g *gocui.Gui) error {
       totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
 
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %4d %4d %6v %3v %6v %6v\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %4d %4d %6v %3v %6v %8v\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
