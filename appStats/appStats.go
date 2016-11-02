@@ -1,13 +1,17 @@
 package appStats
+//package main
 
 import (
     //"fmt"
     "time"
-    "sort"
+    //"sort"
     //"strings"
     "github.com/cloudfoundry/sonde-go/events"
     "github.com/kkellner/cloudfoundry-top-plugin/util"
+    "github.com/kkellner/cloudfoundry-top-plugin/metadata"
 )
+
+
 
 type LogMetric struct {
   OutCount uint64
@@ -20,9 +24,8 @@ type AppStats struct {
   AppUUID     *events.UUID
   AppId       string
   AppName     string
-  SpaceName    string
-  OrgName      string
-  EventCount  uint64
+  SpaceName   string
+  OrgName     string
 
   responseL60Time    *util.AvgTracker
   AvgResponseL60Time float64
@@ -36,12 +39,11 @@ type AppStats struct {
   AvgResponseL1Time float64
   EventL1Rate       int
 
-  //EventResTime float64
-  //EventTime    int64
-  Event2xxCount uint64
-  Event3xxCount uint64
-  Event4xxCount uint64
-  Event5xxCount uint64
+  HttpAllCount uint64
+  Http2xxCount uint64
+  Http3xxCount uint64
+  Http4xxCount uint64
+  Http5xxCount uint64
   ContainerMetric []*events.ContainerMetric
   LogMetric []*LogMetric
   NonContainerOutCount uint64
@@ -62,15 +64,63 @@ func NewAppStats(appId string) *AppStats {
 
 // Take the stats map and generated a reverse sorted list base on attribute X
 func getStats(statsMap map[string]*AppStats) []*AppStats {
-  s := make(dataSlice, 0, len(statsMap))
+
+  // Closures that order the Change structure.
+	eventCount := func(c1, c2 util.Sortable) bool {
+    d1 := c1.(*AppStats)
+    d2 := c2.(*AppStats)
+		return d1.HttpAllCount < d2.HttpAllCount
+	}
+	appName := func(c1, c2 util.Sortable) bool {
+    d1 := c1.(*AppStats)
+    d2 := c2.(*AppStats)
+		return d1.AppName < d2.AppName
+	}
+
+  //s := make([]*AppStats, 0, len(statsMap))
+  s := make([]util.Sortable, 0, len(statsMap))
   for _, d := range statsMap {
-      s = append(s, d)
+    appMetadata := metadata.FindAppMetadata(d.AppId)
+    appName := appMetadata.Name
+    if appName == "" {
+      appName = d.AppId
+      //appName = appStats.AppUUID.String()
+    }
+    d.AppName = appName
+
+    spaceMetadata := metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+    spaceName := spaceMetadata.Name
+    if spaceName == "" {
+      spaceName = "unknown"
+    }
+    d.SpaceName = spaceName
+
+    orgMetadata := metadata.FindOrgMetadata(spaceMetadata.OrgGuid)
+    orgName := orgMetadata.Name
+    if orgName == "" {
+      orgName = "unknown"
+    }
+    d.OrgName = orgName
+
+    s = append(s, d)
+      //s = append(s, d)
   }
-  sort.Sort(sort.Reverse(s))
-  return s
+
+  //OrderedBy(eventCount, appName).Sort(s)
+  util.OrderedBy(appName, eventCount).Sort(s)
+
+  s2 := make([]*AppStats, 0, len(s))
+  for _, d := range s {
+      s2 = append(s2, d.(*AppStats))
+  }
+
+  //sort.Sort(sort.Reverse(s))
+  return s2
 }
 
 
+
+/*
 // Len is part of sort.Interface.
 func (d dataSlice) Len() int {
     return len(d)
@@ -88,33 +138,56 @@ func (d dataSlice) Less(i, j int) bool {
     }
     return d[i].EventCount <= d[j].EventCount
 }
+*/
+
+
+
 
 
 /*
-func mainX() {
-    m := map[string]*appStats.AppStats {
-        "x": {"x", "x", 0, 0, 0 , 0 ,0 },
-        "y": {"y", "y", 9, 0, 0 , 0 ,0 },
-        "z": {"z", "z", 7, 0, 0 , 0 ,0 },
-        "a": {"z", "a", 5, 0, 0 , 0 ,0 },
-        "b": {"z", "b", 3, 0, 0 , 0 ,0 },
-        "c": {"z", "c", 10, 0, 0 , 0 ,0 },
-        "d": {"z", "d", 1, 0, 0 , 0 ,0 },
-        "e": {"z", "e", 15, 0, 0 , 0 ,0 },
-    }
 
-    s := make(appStats.DataSlice, 0, len(m))
+func main() {
 
-    for _, d := range m {
-        s = append(s, d)
-    }
+    m := map[string]*AppStats {}
 
-    //sort.Sort(s)
-    sort.Sort(sort.Reverse(s))
+    as := NewAppStats("a")
+    as.AppName = "A"
+    as.SpaceName = "AA"
+    as.OrgName = "ORGA"
+    as.EventCount = 5
+    as.EventL60Rate = 5
+    m["a"] = as
+
+    as = NewAppStats("b")
+    as.AppName = "B"
+    as.SpaceName = "AA"
+    as.OrgName = "ORGA"
+    as.EventCount = 15
+    as.EventL60Rate = 15
+    m["b"] = as
+
+    as = NewAppStats("c")
+    as.AppName = "C"
+    as.SpaceName = "AA"
+    as.OrgName = "ORGA"
+    as.EventCount = 2
+    as.EventL60Rate = 2
+    m["c"] = as
+
+    as = NewAppStats("d")
+    as.AppName = "D"
+    as.SpaceName = "AA"
+    as.OrgName = "ORGA"
+    as.EventCount = 8
+    as.EventL60Rate = 8
+    m["d"] = as
+
+    s := getStats(m)
 
     for _, d := range s {
-        fmt.Printf("%+v\n", *d)
+        //fmt.Printf("%+v\n", *d)
+        //d2 := d.(*AppStats)
+        fmt.Printf("%v %v %v %v %v\n", d.AppId, d.AppName, d.SpaceName, d.OrgName, d.EventCount)
     }
 }
-
 */

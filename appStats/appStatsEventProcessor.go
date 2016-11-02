@@ -163,38 +163,21 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 
 
     responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
-    appStats.EventCount++
+    appStats.HttpAllCount++
     appStats.responseL60Time.Track(responseTimeMillis)
     appStats.responseL10Time.Track(responseTimeMillis)
     appStats.responseL1Time.Track(responseTimeMillis)
 
-    /*
-    ftime := 60.0 * 1000 * 1000 * 1000 // 60 second avg
-    lastEventTs := *httpStartStopEvent.StopTimestamp
-    fdtime := float64(0)
-    if appStats.EventTime != 0 {
-      fdtime = float64(lastEventTs - appStats.EventTime)
-    }
-    lastResponseTime := appStats.EventResTime
-    if lastResponseTime == 0 {
-      lastResponseTime = responseTimeMillis
-    }
-    appStats.EventResTime = MovingExpAvg(responseTimeMillis, lastResponseTime, fdtime, ftime)
-    appStats.EventTime = lastEventTs
-    */
-
-
-
     statusCode := httpStartStopEvent.GetStatusCode()
     switch {
     case statusCode >= 200 && statusCode < 300:
-      appStats.Event2xxCount++
+      appStats.Http2xxCount++
     case statusCode >= 300 && statusCode < 400:
-      appStats.Event3xxCount++
+      appStats.Http3xxCount++
     case statusCode >= 400 && statusCode < 500:
-      appStats.Event4xxCount++
+      appStats.Http4xxCount++
     case statusCode >= 500 && statusCode < 600:
-      appStats.Event5xxCount++
+      appStats.Http5xxCount++
     }
 
   } else {

@@ -26,9 +26,7 @@ type MasterUI struct {
   gui             *gocui.Gui
   cliConnection   plugin.CliConnection
 
-  // TODO: Need to combind detailUI and detailView
-  //detailUI        *appStats.AppStatsUI
-  detailView      *appStats.DetailView
+  appListView      *appStats.AppListView
 
   mu  sync.Mutex // protects ctr
   router *eventrouting.EventRouter
@@ -47,17 +45,16 @@ func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
 
   headerView := NewHeaderWidget(ui, "summaryView", 4)
   footerView := NewFooterWidget("footerView", 4)
-  //helpView := NewHelpWidget(ui, "helpView", 60,10)
 
-  detailView := appStats.NewDetailView(ui, "detailView", 5, 4, ui.cliConnection)
-  ui.detailView = detailView
-  ui.router = eventrouting.NewEventRouter(detailView.GetCurrentProcessor())
+
+  appListView := appStats.NewAppListView(ui, "appListView", 5, 4, ui.cliConnection)
+  ui.appListView = appListView
+  ui.router = eventrouting.NewEventRouter(appListView.GetCurrentProcessor())
 
   ui.layoutManager = NewLayoutManager()
   ui.layoutManager.Add(headerView)
   ui.layoutManager.Add(footerView)
-  //ui.layoutManager.Add(helpView)
-  ui.layoutManager.Add(detailView)
+  ui.layoutManager.Add(appListView)
 
   return ui
 }
@@ -74,7 +71,7 @@ func (ui *MasterUI) GetRouter() *eventrouting.EventRouter {
 }
 
 func (ui *MasterUI) Start() {
-  ui.detailView.Start()
+  ui.appListView.Start()
   ui.initGui()
 }
 
@@ -100,30 +97,17 @@ func (ui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
-	if err := g.SetKeybinding("detailView", 'q', gocui.ModNone, ui.quit); err != nil {
+	if err := g.SetKeybinding("appListView", 'q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("detailView", 'Q', gocui.ModNone, ui.quit); err != nil {
+	if err := g.SetKeybinding("appListView", 'Q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
 
-  /*
-	if err := g.SetKeybinding("", 'h', gocui.ModNone,
-    func(g *gocui.Gui, v *gocui.View) error {
-         if !ui.layoutManager.Contains(helpView) {
-           ui.layoutManager.Add(helpView)
-         }
-         ui.SetCurrentViewOnTop(g,"helpView")
-         return nil
-    }); err != nil {
-		log.Panicln(err)
-	}
-  */
-
-  if err := g.SetKeybinding("detailView", 'c', gocui.ModNone, ui.clearStats); err != nil {
+  if err := g.SetKeybinding("appListView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
   }
-  if err := g.SetKeybinding("detailView", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+  if err := g.SetKeybinding("appListView", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
        ui.RefeshNow()
        return nil
   }); err != nil {
@@ -143,7 +127,7 @@ func (ui *MasterUI) CloseView(m gocui.Manager, name string ) error {
     ui.gui.DeleteKeybindings(name)
     ui.layoutManager.Remove(m)
 
-    if err := ui.SetCurrentViewOnTop(ui.gui, "detailView"); err != nil {
+    if err := ui.SetCurrentViewOnTop(ui.gui, "appListView"); err != nil {
       return err
     }
   	return nil
@@ -163,6 +147,13 @@ func (ui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui, name string) (error) {
   return nil
 }
 
+func (ui *MasterUI) GetCurrentView(g *gocui.Gui) *gocui.View {
+  views := g.Views()
+  view := views[len(views)-1]
+  return view
+}
+
+
 func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
   //TODO: Where should this close go?
 	//dopplerConnection.Close()
@@ -171,7 +162,7 @@ func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 
 func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
   ui.router.Clear()
-  ui.detailView.ClearStats(g, v)
+  ui.appListView.ClearStats(g, v)
 	ui.updateDisplay(g)
 	return nil
 }
@@ -198,7 +189,7 @@ func (ui *MasterUI) counter(g *gocui.Gui) {
 func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
     ui.updateHeaderDisplay(g)
-    ui.detailView.UpdateDisplay(g)
+    ui.appListView.UpdateDisplay(g)
 		return nil
 	})
 }
@@ -206,7 +197,7 @@ func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
 func (ui *MasterUI) refeshDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
     ui.updateHeaderDisplay(g)
-    ui.detailView.RefreshDisplay(g)
+    ui.appListView.RefreshDisplay(g)
 		return nil
 	})
 }
