@@ -19,7 +19,7 @@ type multiSorter struct {
 func (ms *multiSorter) Sort(slice []Sortable) {
 	ms.slice = slice
 	//sort.Sort(sort.Reverse(ms))
-  sort.Sort(sort.Reverse(ms))
+  sort.Sort(ms)
 }
 
 // OrderedBy returns a Sorter that sorts using the less functions, in order.

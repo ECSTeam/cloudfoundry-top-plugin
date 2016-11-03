@@ -6,6 +6,7 @@ import (
   "log"
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+  "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppDetailView struct {
@@ -100,7 +101,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   }
 
   fmt.Fprintf(v, " \n")
-  fmt.Fprintf(v, "AppName: %v\n", appStats.AppName)
+  fmt.Fprintf(v, "AppName: %v%v%v\n", util.WHITe + util.BRIGHT, appStats.AppName, util.CLEAR)
   fmt.Fprintf(v, "AppId:   %v\n", appStats.AppId)
   fmt.Fprintf(v, "AppUUID: %v\n", appStats.AppUUID)
   fmt.Fprintf(v, "Space:   %v\n", appStats.SpaceName)
@@ -146,7 +147,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
       fmt.Fprintf(v, "%8.2f", cpuPercentage)
       fmt.Fprintf(v, "%12v",   *cm.MemoryBytes)
       fmt.Fprintf(v, "%12v",   *cm.DiskBytes)
-      
+
       if i < len(appStats.LogMetric) {
         logMetric := appStats.LogMetric[i]
         if logMetric != nil {

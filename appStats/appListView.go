@@ -12,6 +12,7 @@ import (
   //"github.com/mohae/deepcopy"
   "github.com/kkellner/cloudfoundry-top-plugin/metadata"
   "github.com/kkellner/cloudfoundry-top-plugin/helpView"
+  "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppListView struct {
@@ -303,7 +304,7 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 
 
       if appStats.AppId == asUI.highlightAppId {
-        fmt.Fprintf(v, "\033[32;7m")
+        fmt.Fprintf(v, util.GREEN + util.REVERSE)
       }
 
       avgResponseTimeL60Info := "--"
@@ -336,7 +337,7 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
           logCount)
 
       if appStats.AppId == asUI.highlightAppId {
-        fmt.Fprintf(v, "\033[0m")
+        fmt.Fprintf(v, util.CLEAR)
       }
 
       row++

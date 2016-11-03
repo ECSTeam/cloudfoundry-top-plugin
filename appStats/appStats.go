@@ -65,19 +65,33 @@ func NewAppStats(appId string) *AppStats {
 // Take the stats map and generated a reverse sorted list base on attribute X
 func getStats(statsMap map[string]*AppStats) []*AppStats {
 
-  // Closures that order the Change structure.
+
+  /*
 	eventCount := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
     d2 := c2.(*AppStats)
 		return d1.HttpAllCount < d2.HttpAllCount
 	}
+  */
+  eventCountRev := func(c1, c2 util.Sortable) bool {
+    d1 := c1.(*AppStats)
+    d2 := c2.(*AppStats)
+    return d1.HttpAllCount > d2.HttpAllCount
+  }
+
 	appName := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
     d2 := c2.(*AppStats)
-		return d1.AppName < d2.AppName
+		return util.CaseInsensitiveLess(d1.AppName, d2.AppName)
 	}
+  /*
+  appNameRev := func(c1, c2 util.Sortable) bool {
+    d1 := c1.(*AppStats)
+    d2 := c2.(*AppStats)
+		return util.CaseInsensitiveLess(d2.AppName, d1.AppName)
+	}
+  */
 
-  //s := make([]*AppStats, 0, len(statsMap))
   s := make([]util.Sortable, 0, len(statsMap))
   for _, d := range statsMap {
     appMetadata := metadata.FindAppMetadata(d.AppId)
@@ -103,11 +117,9 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
     d.OrgName = orgName
 
     s = append(s, d)
-      //s = append(s, d)
   }
 
-  //OrderedBy(eventCount, appName).Sort(s)
-  util.OrderedBy(appName, eventCount).Sort(s)
+  util.OrderedBy(eventCountRev, appName).Sort(s)
 
   s2 := make([]*AppStats, 0, len(s))
   for _, d := range s {
