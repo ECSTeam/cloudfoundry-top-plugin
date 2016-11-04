@@ -82,26 +82,28 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   m := w.appListView.displayedProcessor.AppMap
   appStats := m[w.appId]
 
+
   avgResponseTimeL60Info := "--"
-  if appStats.AvgResponseL60Time >= 0 {
-    avgResponseTimeMs := appStats.AvgResponseL60Time / 1000000
+  if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
+    avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
     avgResponseTimeL60Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
   }
 
   avgResponseTimeL10Info := "--"
-  if appStats.AvgResponseL10Time >= 0 {
-    avgResponseTimeMs := appStats.AvgResponseL10Time / 1000000
+  if appStats.TotalTraffic.AvgResponseL10Time >= 0 {
+    avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL10Time / 1000000
     avgResponseTimeL10Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
   }
 
   avgResponseTimeL1Info := "--"
-  if appStats.AvgResponseL1Time >= 0 {
-    avgResponseTimeMs := appStats.AvgResponseL1Time / 1000000
+  if appStats.TotalTraffic.AvgResponseL1Time >= 0 {
+    avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL1Time / 1000000
     avgResponseTimeL1Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
   }
 
+
   fmt.Fprintf(v, " \n")
-  fmt.Fprintf(v, "AppName: %v%v%v\n", util.WHITe + util.BRIGHT, appStats.AppName, util.CLEAR)
+  fmt.Fprintf(v, "AppName: %v%v%v\n", util.WHITE + util.BRIGHT, appStats.AppName, util.CLEAR)
   fmt.Fprintf(v, "AppId:   %v\n", appStats.AppId)
   fmt.Fprintf(v, "AppUUID: %v\n", appStats.AppUUID)
   fmt.Fprintf(v, "Space:   %v\n", appStats.SpaceName)
@@ -112,9 +114,9 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "    1sec   10sec   60sec\n")
 
   fmt.Fprintf(v, "%22v", "HTTP Event Rate:")
-  fmt.Fprintf(v, "%8v", appStats.EventL1Rate)
-  fmt.Fprintf(v, "%8v", appStats.EventL10Rate)
-  fmt.Fprintf(v, "%8v\n", appStats.EventL60Rate)
+  fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL1Rate)
+  fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL10Rate)
+  fmt.Fprintf(v, "%8v\n", appStats.TotalTraffic.EventL60Rate)
 
   fmt.Fprintf(v, "%22v", "Avg Response Time(ms):")
   fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
@@ -122,11 +124,11 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 
   fmt.Fprintf(v, "\nHTTP Requests:\n")
-  fmt.Fprintf(v, "2xx: %9v\n", appStats.Http2xxCount)
-  fmt.Fprintf(v, "3xx: %9v\n", appStats.Http3xxCount)
-  fmt.Fprintf(v, "4xx: %9v\n", appStats.Http4xxCount)
-  fmt.Fprintf(v, "5xx: %9v\n", appStats.Http5xxCount)
-  fmt.Fprintf(v, "All: %9v\n", appStats.HttpAllCount)
+  fmt.Fprintf(v, "2xx: %9v\n", appStats.TotalTraffic.Http2xxCount)
+  fmt.Fprintf(v, "3xx: %9v\n", appStats.TotalTraffic.Http3xxCount)
+  fmt.Fprintf(v, "4xx: %9v\n", appStats.TotalTraffic.Http4xxCount)
+  fmt.Fprintf(v, "5xx: %9v\n", appStats.TotalTraffic.Http5xxCount)
+  fmt.Fprintf(v, "All: %9v\n", appStats.TotalTraffic.HttpAllCount)
 
   fmt.Fprintf(v, "\nContainer Info:\n")
   fmt.Fprintf(v, "%5v", "Inst")
@@ -139,25 +141,27 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 
   totalCpuPercentage := 0.0
   reportingAppInstances := 0
-  for i, cm := range appStats.ContainerMetric {
-    if cm != nil {
-      cpuPercentage := *cm.CpuPercentage
-      totalCpuPercentage = totalCpuPercentage + cpuPercentage
-      fmt.Fprintf(v, "%5v", i)
-      fmt.Fprintf(v, "%8.2f", cpuPercentage)
-      fmt.Fprintf(v, "%12v",   *cm.MemoryBytes)
-      fmt.Fprintf(v, "%12v",   *cm.DiskBytes)
+  logCount := uint64(0)
+  for i, ca := range appStats.ContainerArray {
+    if ca != nil {
 
-      if i < len(appStats.LogMetric) {
-        logMetric := appStats.LogMetric[i]
-        if logMetric != nil {
-          fmt.Fprintf(v, "%12v", logMetric.OutCount)
-          fmt.Fprintf(v, "%12v", logMetric.ErrCount)
-        } else {
-          fmt.Fprintf(v, "%12v", "--")
-          fmt.Fprintf(v, "%12v", "--")
-        }
+      fmt.Fprintf(v, "%5v", i)
+      if ca.ContainerMetric != nil {
+        cpuPercentage := *ca.ContainerMetric.CpuPercentage
+        totalCpuPercentage = totalCpuPercentage + cpuPercentage
+        fmt.Fprintf(v, "%8.2f", cpuPercentage)
+        fmt.Fprintf(v, "%12v",  util.ByteSize(*ca.ContainerMetric.MemoryBytes))
+        fmt.Fprintf(v, "%12v",  util.ByteSize(*ca.ContainerMetric.DiskBytes))
+      } else {
+        fmt.Fprintf(v, "%8v", "--")
+        fmt.Fprintf(v, "%12v", "--")
+        fmt.Fprintf(v, "%12v", "--")
       }
+
+      fmt.Fprintf(v, "%12v", ca.OutCount)
+      fmt.Fprintf(v, "%12v", ca.ErrCount)
+      logCount = logCount + (ca.OutCount + ca.ErrCount)
+
       fmt.Fprintf(v, "\n")
       reportingAppInstances++
     }
@@ -170,12 +174,6 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
     fmt.Fprintf(v, "Total CPU: %6.2f", totalCpuPercentage)
   }
 
-  logCount := uint64(0)
-  for _, logMetric := range appStats.LogMetric {
-    if logMetric != nil {
-      logCount = logCount + (logMetric.OutCount + logMetric.ErrCount)
-    }
-  }
   fmt.Fprintf(v, "\nTotal log events: %9v\n", logCount)
 
   return nil

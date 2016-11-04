@@ -245,8 +245,10 @@ func (asUI *AppListView) refreshDisplay(g *gocui.Gui) error {
   currentView := asUI.masterUI.GetCurrentView(g)
   if currentView.Name() == asUI.name {
     return asUI.refreshListDisplay(g)
-  } else {
+  } else if currentView.Name() == asUI.appDetailView.name {
     return asUI.appDetailView.refreshDisplay(g)
+  } else {
+    return nil
   }
 }
 
@@ -266,7 +268,7 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 
 		v.Clear()
 
-		fmt.Fprintf(v, "%-50v %-10v %-10v %6v %6v %6v %6v %6v %4v %4v %4v %6v %3v %6v %9v\n",
+		fmt.Fprintf(v, "%-50v %-10v %-10v %8v %8v %8v %8v %8v %5v %5v %5v %6v %3v %6v %9v\n",
       "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "L1", "L10", "L60", "CPU%", "RCR", "RESP", "LOGS")
 
     totalActiveApps := 0
@@ -280,9 +282,9 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 
       totalCpuPercentage := 0.0
       reportingAppInstances := 0
-      for _, cm := range appStats.ContainerMetric {
-        if cm != nil {
-          cpuPercentage := *cm.CpuPercentage
+      for _, cs := range appStats.ContainerArray {
+        if cs != nil && cs.ContainerMetric != nil {
+          cpuPercentage := *cs.ContainerMetric.CpuPercentage
           totalCpuPercentage = totalCpuPercentage + cpuPercentage
           reportingAppInstances++
         }
@@ -296,9 +298,9 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
       }
 
       logCount := uint64(0)
-      for _, logMetric := range appStats.LogMetric {
-        if logMetric != nil {
-          logCount = logCount + (logMetric.OutCount + logMetric.ErrCount)
+      for _, cs := range appStats.ContainerArray {
+        if cs != nil {
+          logCount = logCount + (cs.OutCount + cs.ErrCount)
         }
       }
 
@@ -308,29 +310,29 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
       }
 
       avgResponseTimeL60Info := "--"
-      if appStats.AvgResponseL60Time >= 0 {
-        avgResponseTimeMs := appStats.AvgResponseL60Time / 1000000
+      if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
+        avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
         avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
       }
 
-      if appStats.EventL60Rate > 0 {
+      if appStats.TotalTraffic.EventL60Rate > 0 {
         totalActiveApps++
       }
       totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
 
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %6d %6d %6d %6d %6d %4d %4d %4d %6v %3v %6v %9v\n",
+      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %8d %8d %8d %8d %8d %5d %5d %5d %6v %3v %6v %9v\n",
           appStats.AppName,
           appStats.SpaceName,
           appStats.OrgName,
-          appStats.Http2xxCount,
-          appStats.Http3xxCount,
-          appStats.Http4xxCount,
-          appStats.Http5xxCount,
-          appStats.HttpAllCount,
-          appStats.EventL1Rate, // Last 1 second
-          appStats.EventL10Rate, // Last 10 seconds
-          appStats.EventL60Rate, // Last 60 seconds
+          appStats.TotalTraffic.Http2xxCount,
+          appStats.TotalTraffic.Http3xxCount,
+          appStats.TotalTraffic.Http4xxCount,
+          appStats.TotalTraffic.Http5xxCount,
+          appStats.TotalTraffic.HttpAllCount,
+          appStats.TotalTraffic.EventL1Rate, // Last 1 second
+          appStats.TotalTraffic.EventL10Rate, // Last 10 seconds
+          appStats.TotalTraffic.EventL60Rate, // Last 60 seconds
           totalCpuInfo,
           reportingAppInstances,
           avgResponseTimeL60Info,

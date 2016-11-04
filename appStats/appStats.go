@@ -3,7 +3,7 @@ package appStats
 
 import (
     //"fmt"
-    "time"
+    //"time"
     //"sort"
     //"strings"
     "github.com/cloudfoundry/sonde-go/events"
@@ -13,19 +13,7 @@ import (
 
 
 
-type LogMetric struct {
-  OutCount uint64
-  ErrCount uint64
-}
-
-type dataSlice []*AppStats
-
-type AppStats struct {
-  AppUUID     *events.UUID
-  AppId       string
-  AppName     string
-  SpaceName   string
-  OrgName     string
+type Traffic struct {
 
   responseL60Time    *util.AvgTracker
   AvgResponseL60Time float64
@@ -44,23 +32,48 @@ type AppStats struct {
   Http3xxCount uint64
   Http4xxCount uint64
   Http5xxCount uint64
-  ContainerMetric []*events.ContainerMetric
-  LogMetric []*LogMetric
+
+}
+
+type ContainerStats struct {
+  ContainerMetric *events.ContainerMetric
+  OutCount uint64
+  ErrCount uint64
+}
+
+type dataSlice []*AppStats
+
+type AppStats struct {
+  AppUUID     *events.UUID
+  AppId       string
+  AppName     string
+  SpaceName   string
+  OrgName     string
+
   NonContainerOutCount uint64
   NonContainerErrCount uint64
+
+  ContainerArray []*ContainerStats
+  ContainerTrafficMap map[string]*Traffic
+  TotalTraffic *Traffic
 }
 
 
 func NewAppStats(appId string) *AppStats {
 	stats := &AppStats{}
   stats.AppId = appId
-  stats.responseL60Time = util.NewAvgTracker(time.Minute)
-  stats.responseL10Time = util.NewAvgTracker(time.Second * 10)
-  stats.responseL1Time = util.NewAvgTracker(time.Second)
   return stats
-
 }
 
+func NewContainerStats() *ContainerStats {
+	stats := &ContainerStats{}
+  return stats
+}
+
+func NewTraffic() *Traffic {
+	stats := &Traffic{}
+  return stats
+}
 
 // Take the stats map and generated a reverse sorted list base on attribute X
 func getStats(statsMap map[string]*AppStats) []*AppStats {
@@ -73,11 +86,13 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
 		return d1.HttpAllCount < d2.HttpAllCount
 	}
   */
+  /*
   eventCountRev := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
     d2 := c2.(*AppStats)
     return d1.HttpAllCount > d2.HttpAllCount
   }
+  */
 
 	appName := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
@@ -119,7 +134,8 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
     s = append(s, d)
   }
 
-  util.OrderedBy(eventCountRev, appName).Sort(s)
+  //util.OrderedBy(eventCountRev, appName).Sort(s)
+  util.OrderedBy(appName).Sort(s)
 
   s2 := make([]*AppStats, 0, len(s))
   for _, d := range s {

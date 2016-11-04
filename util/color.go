@@ -2,7 +2,7 @@ package util
 
 const (
   CLEAR = "\033[0m"
-  
+
   BLACK = "\033[30"
   RED = "\033[31"
   GREEN = "\033[32"
@@ -10,7 +10,7 @@ const (
   BLUE = "\033[34"
   PURPLE = "\033[35"
   CYAN = "\033[36"
-  WHITe = "\033[37"
+  WHITE = "\033[37"
 
 
   BRIGHT = ";1m"

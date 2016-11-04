@@ -7,6 +7,8 @@ import (
   "sync"
   //"gopkg.in/eapache/queue.v1"
   "github.com/eapache/queue"
+	//"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	//"fmt"
 )
 
 /*
@@ -33,6 +35,34 @@ type AvgTracker struct {
   mu  *sync.Mutex
 	totalValue int64
 }
+
+func AvgMultipleTrackers(trackers []*AvgTracker) float64 {
+
+	totalLen := 0
+	totalValue := int64(0)
+
+//fmt.Printf("\n\n***** len: [%v] **** \n", len(trackers))
+
+	for _, tracker := range trackers {
+
+		//fmt.Printf("\n\n***** interval: [%v] **** \n", tracker)
+		//debug.Debug(msg)
+		//time.Sleep(10 * time.Second)
+
+		tracker.mu.Lock()
+	  tracker.removeOld()
+	  totalLen = totalLen + tracker.valueQueue.Length()
+		totalValue = totalValue + tracker.totalValue
+		tracker.mu.Unlock()
+	}
+
+	avg := float64(-1)
+	if totalLen > 0 {
+		avg = float64(totalValue) / float64(totalLen)
+	}
+	return avg
+}
+
 
 // Constructs a new RateCounter, for the interval provided
 func NewAvgTracker(intrvl time.Duration) *AvgTracker {
@@ -74,6 +104,8 @@ func (r *AvgTracker) Avg() float64 {
   r.mu.Unlock()
 	return avg
 }
+
+
 
 func (r *AvgTracker) removeOld() {
 

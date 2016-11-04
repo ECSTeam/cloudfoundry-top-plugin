@@ -4,14 +4,16 @@ import (
 
   "math"
   //"math/rand"
-  //"time"
+  "time"
   "strconv"
 	"fmt"
+  //"log"
 	"github.com/cloudfoundry/sonde-go/events"
   "encoding/binary"
   "github.com/mohae/deepcopy"
   //"github.com/paulbellamy/ratecounter"  // Uses a goroutine per call - not memory frendly
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
+  "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppStatsEventProcessor struct {
@@ -28,16 +30,70 @@ func NewAppStatsEventProcessor() *AppStatsEventProcessor {
 
 func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
   clone := deepcopy.Copy(ap).(*AppStatsEventProcessor)
-  for _, stat := range ap.AppMap {
 
-    clone.AppMap[stat.AppId].EventL60Rate = stat.responseL60Time.Rate()
-    clone.AppMap[stat.AppId].AvgResponseL60Time = stat.responseL60Time.Avg()
-    clone.AppMap[stat.AppId].EventL10Rate = stat.responseL10Time.Rate()
-    clone.AppMap[stat.AppId].AvgResponseL10Time = stat.responseL10Time.Avg()
-    clone.AppMap[stat.AppId].EventL1Rate = stat.responseL1Time.Rate()
-    clone.AppMap[stat.AppId].AvgResponseL1Time = stat.responseL1Time.Avg()
+  for _, appStat := range ap.AppMap {
+
+    httpAllCount := uint64(0)
+    http2xxCount := uint64(0)
+    http3xxCount := uint64(0)
+    http4xxCount := uint64(0)
+    http5xxCount := uint64(0)
+
+    //trafficMapSize := len(appStat.ContainerTrafficMap)
+    responseL60TimeArray := make([]*util.AvgTracker, 0)
+    responseL10TimeArray := make([]*util.AvgTracker, 0)
+    responseL1TimeArray := make([]*util.AvgTracker, 0)
+    totalTraffic := NewTraffic()
+
+    for instanceId, containerTraffic := range appStat.ContainerTrafficMap {
+
+        rate60 := containerTraffic.responseL60Time.Rate()
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL60Rate = rate60
+        totalTraffic.EventL60Rate = totalTraffic.EventL60Rate + rate60
+
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL60Time = containerTraffic.responseL60Time.Avg()
+
+        rate10 := containerTraffic.responseL10Time.Rate()
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL10Rate = rate10
+        totalTraffic.EventL10Rate = totalTraffic.EventL10Rate + rate10
+
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL10Time = containerTraffic.responseL10Time.Avg()
+
+
+        rate1 := containerTraffic.responseL1Time.Rate()
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL1Rate = rate1
+        totalTraffic.EventL1Rate = totalTraffic.EventL1Rate + rate1
+
+
+        clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL1Time = containerTraffic.responseL1Time.Avg()
+
+        httpAllCount = httpAllCount + containerTraffic.HttpAllCount
+        http2xxCount = http2xxCount + containerTraffic.Http2xxCount
+        http3xxCount = http3xxCount + containerTraffic.Http3xxCount
+        http4xxCount = http4xxCount + containerTraffic.Http4xxCount
+        http5xxCount = http5xxCount + containerTraffic.Http5xxCount
+
+        responseL60TimeArray = append(responseL60TimeArray, containerTraffic.responseL60Time)
+        responseL10TimeArray = append(responseL10TimeArray, containerTraffic.responseL10Time)
+        responseL1TimeArray = append(responseL1TimeArray, containerTraffic.responseL1Time)
+
+        //fmt.Printf("\n **** instanceId: %v\n", instanceId)
+
+    }
+
+    totalTraffic.AvgResponseL60Time = util.AvgMultipleTrackers(responseL60TimeArray)
+    totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)
+    totalTraffic.AvgResponseL1Time = util.AvgMultipleTrackers(responseL1TimeArray)
+
+    totalTraffic.HttpAllCount = httpAllCount
+    totalTraffic.Http2xxCount = http2xxCount
+    totalTraffic.Http3xxCount = http3xxCount
+    totalTraffic.Http4xxCount = http4xxCount
+    totalTraffic.Http5xxCount = http5xxCount
+    clone.AppMap[appStat.AppId].TotalTraffic = totalTraffic
 
   }
+
   return clone
 }
 
@@ -66,38 +122,22 @@ switch eventType {
 }
 
 func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
+
   logMessage := msg.GetLogMessage()
   appId := logMessage.GetAppId()
-  appStats := ap.AppMap[appId]
-  if appStats == nil {
-    // New app we haven't seen yet
-    appStats = NewAppStats(appId)
-    ap.AppMap[appId] = appStats
-  }
+
+  appStats := ap.getAppStats(appId)
 
   if logMessage.SourceInstance != nil {
-    instanceIndex, err := strconv.Atoi(*logMessage.SourceInstance)
+    instNum, err := strconv.Atoi(*logMessage.SourceInstance)
     if err==nil {
-      // Save the metrics -- by instance id
-      if len(appStats.LogMetric) <= instanceIndex {
-        metricArray := make([]*LogMetric, instanceIndex+1)
-        for i, metric := range appStats.LogMetric {
-          metricArray[i] = metric
-        }
-        appStats.LogMetric = metricArray
-      }
+      containerStats := ap.getContainerStats(appStats, instNum)
 
-
-      logMetric := appStats.LogMetric[instanceIndex]
-      if (logMetric == nil) {
-        logMetric = &LogMetric {}
-        appStats.LogMetric[instanceIndex] = logMetric
-      }
       switch *logMessage.MessageType {
       case events.LogMessage_OUT:
-        logMetric.OutCount++
+        containerStats.OutCount++
       case events.LogMessage_ERR:
-        logMetric.ErrCount++
+        containerStats.ErrCount++
       }
     }
 
@@ -119,65 +159,115 @@ func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
   containerMetric := msg.GetContainerMetric()
 
   appId := containerMetric.GetApplicationId()
+
+  appStats := ap.getAppStats(appId)
+  instNum := int(*containerMetric.InstanceIndex)
+  containerStats := ap.getContainerStats(appStats, instNum)
+
+  containerStats.ContainerMetric = containerMetric
+
+}
+
+func (ap *AppStatsEventProcessor) getAppStats(appId string) *AppStats {
   appStats := ap.AppMap[appId]
   if appStats == nil {
     // New app we haven't seen yet
     appStats = NewAppStats(appId)
     ap.AppMap[appId] = appStats
   }
-
-  // Save the container metrics -- by instance id
-  if int32(len(appStats.ContainerMetric)) <= *containerMetric.InstanceIndex {
-    cmArray := make([]*events.ContainerMetric, *containerMetric.InstanceIndex+1)
-    for i, cm := range appStats.ContainerMetric {
-      cmArray[i] = cm
-    }
-    appStats.ContainerMetric = cmArray
-  }
-  appStats.ContainerMetric[*containerMetric.InstanceIndex] = containerMetric
-
+  return appStats
 }
+
+
+
+func (ap *AppStatsEventProcessor) getContainerStats(appStats *AppStats, instIndex int) *ContainerStats {
+
+  // Save the container data -- by instance id
+  if len(appStats.ContainerArray) <= instIndex {
+    caArray := make([]*ContainerStats, instIndex+1)
+    for i, ca := range appStats.ContainerArray {
+      caArray[i] = ca
+    }
+    appStats.ContainerArray = caArray
+  }
+
+  containerStats := appStats.ContainerArray[instIndex]
+
+  if containerStats == nil {
+    // New app we haven't seen yet
+    containerStats = NewContainerStats()
+    appStats.ContainerArray[instIndex] = containerStats
+
+  }
+  return containerStats
+}
+
+func (ap *AppStatsEventProcessor) getContainerTraffic(appStats *AppStats, instId string) *Traffic {
+
+  // Save the container data -- by instance id
+
+  if appStats.ContainerTrafficMap == nil {
+    appStats.ContainerTrafficMap = make(map[string]*Traffic)
+  }
+
+  containerTraffic := appStats.ContainerTrafficMap[instId]
+  if containerTraffic == nil {
+    containerTraffic = NewTraffic()
+    appStats.ContainerTrafficMap[instId] = containerTraffic
+    containerTraffic.responseL60Time = util.NewAvgTracker(time.Minute)
+    containerTraffic.responseL10Time = util.NewAvgTracker(time.Second * 10)
+    containerTraffic.responseL1Time = util.NewAvgTracker(time.Second)
+  }
+
+  return containerTraffic
+}
+
 
 
 func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 
   appUUID := msg.GetHttpStartStop().GetApplicationId()
   instId := msg.GetHttpStartStop().GetInstanceId()
+  //instIndex := msg.GetHttpStartStop().GetInstanceIndex()
   httpStartStopEvent := msg.GetHttpStartStop()
   if httpStartStopEvent.GetPeerType() == events.PeerType_Client &&
       appUUID != nil &&
       instId != "" {
 
-    ap.TotalEvents++
 
+      //debug.Debug(fmt.Sprintf("index: %v\n", instIndex))
+      //debug.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
+
+
+    //fmt.Printf("index: %v\n", instIndex)
+
+    ap.TotalEvents++
     appId := formatUUID(appUUID)
     //c.ui.Say("**** appId:%v ****", appId)
 
-    appStats := ap.AppMap[appId]
-    if appStats == nil {
-      // New app we haven't seen yet
-      appStats = NewAppStats(appId)
+    appStats := ap.getAppStats(appId)
+    if appStats.AppUUID == nil {
       appStats.AppUUID = appUUID
-      ap.AppMap[appId] = appStats
     }
 
+    containerTraffic := ap.getContainerTraffic(appStats, instId)
 
     responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
-    appStats.HttpAllCount++
-    appStats.responseL60Time.Track(responseTimeMillis)
-    appStats.responseL10Time.Track(responseTimeMillis)
-    appStats.responseL1Time.Track(responseTimeMillis)
+    containerTraffic.HttpAllCount++
+    containerTraffic.responseL60Time.Track(responseTimeMillis)
+    containerTraffic.responseL10Time.Track(responseTimeMillis)
+    containerTraffic.responseL1Time.Track(responseTimeMillis)
 
     statusCode := httpStartStopEvent.GetStatusCode()
     switch {
     case statusCode >= 200 && statusCode < 300:
-      appStats.Http2xxCount++
+      containerTraffic.Http2xxCount++
     case statusCode >= 300 && statusCode < 400:
-      appStats.Http3xxCount++
+      containerTraffic.Http3xxCount++
     case statusCode >= 400 && statusCode < 500:
-      appStats.Http4xxCount++
+      containerTraffic.Http4xxCount++
     case statusCode >= 500 && statusCode < 600:
-      appStats.Http5xxCount++
+      containerTraffic.Http5xxCount++
     }
 
   } else {
