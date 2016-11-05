@@ -9,7 +9,7 @@ import (
 )
 
 type EventRouter struct {
-	eventCount 				uint64
+	eventCount 				int64
 	startTime					time.Time
 	mutex             *sync.Mutex
 	processor 			  *appStats.AppStatsEventProcessor
@@ -25,7 +25,7 @@ func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
 
 }
 
-func (er *EventRouter) GetEventCount() uint64 {
+func (er *EventRouter) GetEventCount() int64 {
 	return er.eventCount
 }
 
@@ -45,6 +45,6 @@ func (er *EventRouter) Route(msg *events.Envelope) {
 	er.processor.Process(msg)
 }
 
-func (er *EventRouter) GetTotalEventCount() uint64 {
+func (er *EventRouter) GetTotalEventCount() int64 {
 	return er.eventCount
 }

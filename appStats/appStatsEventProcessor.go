@@ -18,7 +18,7 @@ import (
 
 type AppStatsEventProcessor struct {
   AppMap      map[string]*AppStats
-  TotalEvents uint64
+  TotalEvents int64
 }
 
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
@@ -33,11 +33,11 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 
   for _, appStat := range ap.AppMap {
 
-    httpAllCount := uint64(0)
-    http2xxCount := uint64(0)
-    http3xxCount := uint64(0)
-    http4xxCount := uint64(0)
-    http5xxCount := uint64(0)
+    httpAllCount := int64(0)
+    http2xxCount := int64(0)
+    http3xxCount := int64(0)
+    http4xxCount := int64(0)
+    http5xxCount := int64(0)
 
     //trafficMapSize := len(appStat.ContainerTrafficMap)
     responseL60TimeArray := make([]*util.AvgTracker, 0)
@@ -97,7 +97,7 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
   return clone
 }
 
-func (ap *AppStatsEventProcessor) GetTotalEvents() uint64 {
+func (ap *AppStatsEventProcessor) GetTotalEvents() int64 {
   return ap.TotalEvents
 }
 
@@ -128,11 +128,11 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
 
   appStats := ap.getAppStats(appId)
 
-  if logMessage.SourceInstance != nil {
+  switch logMessage.GetSourceType() {
+  case "APP":
     instNum, err := strconv.Atoi(*logMessage.SourceInstance)
     if err==nil {
       containerStats := ap.getContainerStats(appStats, instNum)
-
       switch *logMessage.MessageType {
       case events.LogMessage_OUT:
         containerStats.OutCount++
@@ -140,8 +140,7 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
         containerStats.ErrCount++
       }
     }
-
-  } else {
+  default:
     // Non-container -- staging logs?
     switch *logMessage.MessageType {
     case events.LogMessage_OUT:

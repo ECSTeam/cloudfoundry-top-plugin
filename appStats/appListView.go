@@ -59,6 +59,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+    v.Title = "App List"
     fmt.Fprintln(v, "")
     if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
          filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
@@ -268,8 +269,26 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 
 		v.Clear()
 
-		fmt.Fprintf(v, "%-50v %-10v %-10v %8v %8v %8v %8v %8v %5v %5v %5v %6v %3v %6v %9v\n",
-      "APPLICATION","SPACE","ORG", "2XX","3XX","4XX","5XX","TOTAL", "L1", "L10", "L60", "CPU%", "RCR", "RESP", "LOGS")
+    fmt.Fprintf(v, "%-50v ","APPLICATION")
+    fmt.Fprintf(v, "%-10v ","SPACE")
+    fmt.Fprintf(v, "%-10v ","ORG")
+
+    fmt.Fprintf(v, "%8v ","2XX")
+    fmt.Fprintf(v, "%8v ","3XX")
+    fmt.Fprintf(v, "%8v ","4XX")
+    fmt.Fprintf(v, "%8v ","5XX")
+    fmt.Fprintf(v, "%8v ","TOTAL")
+
+    fmt.Fprintf(v, "%5v ","L1")
+    fmt.Fprintf(v, "%5v ","L10")
+    fmt.Fprintf(v, "%5v ","L60")
+
+    fmt.Fprintf(v, "%6v ","CPU%")
+    fmt.Fprintf(v, "%3v ","RCR")
+    fmt.Fprintf(v, "%6v ","RESP")
+    fmt.Fprintf(v, "%11v","LOGS")
+
+	  fmt.Fprintf(v, "\n")
 
     totalActiveApps := 0
     totalReportingAppInstances := 0
@@ -279,6 +298,11 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
       if statIndex < asUI.displayIndexOffset {
         continue
       }
+
+      if (appStats.TotalTraffic.EventL10Rate > 0) {
+        fmt.Fprintf(v, util.BRIGHT_WHITE)
+      }
+
 
       totalCpuPercentage := 0.0
       reportingAppInstances := 0
@@ -297,7 +321,7 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
         totalCpuInfo = fmt.Sprintf("%6.2f", totalCpuPercentage)
       }
 
-      logCount := uint64(0)
+      logCount := int64(0)
       for _, cs := range appStats.ContainerArray {
         if cs != nil {
           logCount = logCount + (cs.OutCount + cs.ErrCount)
@@ -321,26 +345,31 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
       totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
 
 
-      fmt.Fprintf(v, "%-50.50v %-10.10v %-10.10v %8d %8d %8d %8d %8d %5d %5d %5d %6v %3v %6v %9v\n",
-          appStats.AppName,
-          appStats.SpaceName,
-          appStats.OrgName,
-          appStats.TotalTraffic.Http2xxCount,
-          appStats.TotalTraffic.Http3xxCount,
-          appStats.TotalTraffic.Http4xxCount,
-          appStats.TotalTraffic.Http5xxCount,
-          appStats.TotalTraffic.HttpAllCount,
-          appStats.TotalTraffic.EventL1Rate, // Last 1 second
-          appStats.TotalTraffic.EventL10Rate, // Last 10 seconds
-          appStats.TotalTraffic.EventL60Rate, // Last 60 seconds
-          totalCpuInfo,
-          reportingAppInstances,
-          avgResponseTimeL60Info,
-          logCount)
+      fmt.Fprintf(v, "%-50.50v ", appStats.AppName)
+      fmt.Fprintf(v, "%-10.10v ", appStats.SpaceName)
+      fmt.Fprintf(v, "%-10.10v ",appStats.OrgName )
+      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http2xxCount)
+      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http3xxCount)
+      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http4xxCount)
+      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http5xxCount)
+      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.HttpAllCount)
+
+      // Last 1 second
+      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL1Rate);
+      // Last 10 seconds
+      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL10Rate);
+      // Last 60 seconds
+      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL60Rate);
+
+      fmt.Fprintf(v, "%6v ", totalCpuInfo)
+      fmt.Fprintf(v, "%3v ", reportingAppInstances)
+      fmt.Fprintf(v, "%6v ", avgResponseTimeL60Info)
+      fmt.Fprintf(v, "%11v\n",util.Format(logCount))
 
       if appStats.AppId == asUI.highlightAppId {
         fmt.Fprintf(v, util.CLEAR)
       }
+      fmt.Fprintf(v, util.CLEAR)
 
       row++
       if row == maxRows {

@@ -103,7 +103,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 
 
   fmt.Fprintf(v, " \n")
-  fmt.Fprintf(v, "AppName: %v%v%v\n", util.WHITE + util.BRIGHT, appStats.AppName, util.CLEAR)
+  fmt.Fprintf(v, "AppName: %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
   fmt.Fprintf(v, "AppId:   %v\n", appStats.AppId)
   fmt.Fprintf(v, "AppUUID: %v\n", appStats.AppUUID)
   fmt.Fprintf(v, "Space:   %v\n", appStats.SpaceName)
@@ -124,11 +124,11 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 
   fmt.Fprintf(v, "\nHTTP Requests:\n")
-  fmt.Fprintf(v, "2xx: %9v\n", appStats.TotalTraffic.Http2xxCount)
-  fmt.Fprintf(v, "3xx: %9v\n", appStats.TotalTraffic.Http3xxCount)
-  fmt.Fprintf(v, "4xx: %9v\n", appStats.TotalTraffic.Http4xxCount)
-  fmt.Fprintf(v, "5xx: %9v\n", appStats.TotalTraffic.Http5xxCount)
-  fmt.Fprintf(v, "All: %9v\n", appStats.TotalTraffic.HttpAllCount)
+  fmt.Fprintf(v, "2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
+  fmt.Fprintf(v, "3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
+  fmt.Fprintf(v, "4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
+  fmt.Fprintf(v, "5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
+  fmt.Fprintf(v, "All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
 
   fmt.Fprintf(v, "\nContainer Info:\n")
   fmt.Fprintf(v, "%5v", "Inst")
@@ -141,7 +141,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 
   totalCpuPercentage := 0.0
   reportingAppInstances := 0
-  logCount := uint64(0)
+  totalLogCount := int64(0)
   for i, ca := range appStats.ContainerArray {
     if ca != nil {
 
@@ -158,23 +158,24 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
         fmt.Fprintf(v, "%12v", "--")
       }
 
-      fmt.Fprintf(v, "%12v", ca.OutCount)
-      fmt.Fprintf(v, "%12v", ca.ErrCount)
-      logCount = logCount + (ca.OutCount + ca.ErrCount)
+      fmt.Fprintf(v, "%12v", util.Format(ca.OutCount))
+      fmt.Fprintf(v, "%12v", util.Format(ca.ErrCount))
+      totalLogCount = totalLogCount + (ca.OutCount + ca.ErrCount)
 
       fmt.Fprintf(v, "\n")
       reportingAppInstances++
     }
   }
-
   fmt.Fprintf(v, "\n")
   if reportingAppInstances==0 {
     fmt.Fprintf(v, "%6v", " Waiting for container metrics...")
   } else {
-    fmt.Fprintf(v, "Total CPU: %6.2f", totalCpuPercentage)
+    fmt.Fprintf(v, "Total CPU: %6.2f\n", totalCpuPercentage)
   }
-
-  fmt.Fprintf(v, "\nTotal log events: %9v\n", logCount)
+  totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
+  fmt.Fprintf(v, "Non container logs - Stdout: %-12v ",util.Format(appStats.NonContainerOutCount))
+  fmt.Fprintf(v, "Stderr: %-12v\n",util.Format(appStats.NonContainerErrCount))
+  fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
 
   return nil
 }

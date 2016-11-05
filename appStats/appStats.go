@@ -27,18 +27,18 @@ type Traffic struct {
   AvgResponseL1Time float64
   EventL1Rate       int
 
-  HttpAllCount uint64
-  Http2xxCount uint64
-  Http3xxCount uint64
-  Http4xxCount uint64
-  Http5xxCount uint64
+  HttpAllCount int64
+  Http2xxCount int64
+  Http3xxCount int64
+  Http4xxCount int64
+  Http5xxCount int64
 
 }
 
 type ContainerStats struct {
   ContainerMetric *events.ContainerMetric
-  OutCount uint64
-  ErrCount uint64
+  OutCount int64
+  ErrCount int64
 }
 
 type dataSlice []*AppStats
@@ -50,8 +50,8 @@ type AppStats struct {
   SpaceName   string
   OrgName     string
 
-  NonContainerOutCount uint64
-  NonContainerErrCount uint64
+  NonContainerOutCount int64
+  NonContainerErrCount int64
 
   ContainerArray []*ContainerStats
   ContainerTrafficMap map[string]*Traffic

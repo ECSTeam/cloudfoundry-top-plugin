@@ -17,6 +17,7 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/appStats"
   "github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
+  "github.com/kkellner/cloudfoundry-top-plugin/util"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
@@ -210,7 +211,7 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
   }
   v.Clear()
 
-  fmt.Fprintf(v, "Total events: %-11v", ui.router.GetEventCount())
+  fmt.Fprintf(v, "Total events: %-13v", util.Format(ui.router.GetEventCount()))
   fmt.Fprintf(v, "Stats duration: %-10v ", Round(time.Now().Sub(ui.router.GetStartTime()), time.Second) )
   fmt.Fprintf(v, "%v\n", time.Now().Format("01-02-2006 15:04:05"))
 
