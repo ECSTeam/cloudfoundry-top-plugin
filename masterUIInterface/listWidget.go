@@ -81,7 +81,6 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
       log.Panicln(err)
     }
 
-
     if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
       log.Panicln(err)
     }
@@ -93,6 +92,12 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 func (asUI *ListWidget) Name() string {
   return asUI.name
 }
+
+func (asUI *ListWidget) HighlightKey() string {
+  return asUI.highlightKey
+}
+
+
 
 func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
   if asUI.GetRowDisplay==nil {

@@ -22,8 +22,8 @@ type AppListView struct {
   topMargin int
   bottomMargin int
 
-  highlightAppId string
-  displayIndexOffset int
+  //highlightAppId string
+  //displayIndexOffset int
 
   currentProcessor         *AppStatsEventProcessor
   displayedProcessor       *AppStatsEventProcessor
@@ -55,6 +55,7 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,name string, to
 }
 
 func (asUI *AppListView) Layout(g *gocui.Gui) error {
+  /*
   maxX, maxY := g.Size()
   v, err := g.SetView(asUI.name, 0, asUI.topMargin, maxX-1, maxY-asUI.bottomMargin)
   if err != nil {
@@ -63,6 +64,20 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 		}
     v.Title = "App List"
     fmt.Fprintln(v, "")
+    */
+  if asUI.appListWidget == nil {
+
+    // START list widget
+    appListWidget := masterUIInterface.NewListWidget(asUI.masterUI, asUI.name, asUI.topMargin, asUI.bottomMargin, asUI)
+    appListWidget.Title = "Testing..."
+    appListWidget.GetRowDisplay = asUI.GetRowDisplay
+    appListWidget.GetListSize = asUI.GetListSize
+    appListWidget.GetRowKey = asUI.GetRowKey
+    appListWidget.GetDisplayHeader = asUI.GetDisplayHeader
+    asUI.appListWidget = appListWidget
+    //asUI.masterUI.LayoutManager().Add(appListWidget)
+    // END
+
     if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
          filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
          asUI.masterUI.LayoutManager().Add(filter)
@@ -71,17 +86,6 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
     }); err != nil {
       log.Panicln(err)
     }
-    // START list widget
-    appListWidget := masterUIInterface.NewListWidget(asUI.masterUI, "appListWidget", asUI.topMargin, asUI.bottomMargin, asUI)
-    appListWidget.Title = "Testing..."
-    appListWidget.GetRowDisplay = asUI.GetRowDisplay
-    appListWidget.GetListSize = asUI.GetListSize
-    appListWidget.GetRowKey = asUI.GetRowKey
-    appListWidget.GetDisplayHeader = asUI.GetDisplayHeader
-
-    asUI.appListWidget = appListWidget
-    asUI.masterUI.LayoutManager().Add(appListWidget)
-    // END
 
   	if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
@@ -95,7 +99,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
     if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
-           asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.highlightAppId, asUI)
+           asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
            asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
            asUI.masterUI.SetCurrentViewOnTop(g,"appDetailView")
            //asUI.refreshDisplay(g)
@@ -103,13 +107,18 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
       }); err != nil {
   		log.Panicln(err)
   	}
+  }
 
-    if err := asUI.masterUI.SetCurrentViewOnTop(g, asUI.name); err != nil {
-      log.Panicln(err)
-    }
+  return asUI.appListWidget.Layout(g)
+  //return nil
+  /*
+  if err := asUI.masterUI.SetCurrentViewOnTop(g, asUI.name); err != nil {
+    log.Panicln(err)
+  }
+  */
 
-	}
-  return nil
+
+
 }
 
 
@@ -156,8 +165,6 @@ func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-
-
 func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
   processorCopy := asUI.currentProcessor.Clone()
@@ -170,7 +177,6 @@ func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
   return asUI.RefreshDisplay(g)
 }
 
-
 func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 
   currentView := asUI.masterUI.GetCurrentView(g)
@@ -179,8 +185,6 @@ func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
     return asUI.refreshListDisplay(g)
   } else if asUI.appDetailView != nil && currentName == asUI.appDetailView.name {
     return asUI.appDetailView.refreshDisplay(g)
-  } else if asUI.appListWidget != nil && currentName == asUI.appListWidget.Name() {
-    return asUI.appListWidget.RefreshDisplay(g)
   } else {
     return nil
   }
@@ -193,8 +197,6 @@ func (asUI *AppListView) GetListSize() int {
 func (asUI *AppListView) GetRowKey(statIndex int) string  {
   return asUI.displayedSortedStatList[statIndex].AppId
 }
-
-
 
 func (asUI *AppListView) GetRowDisplay(statIndex int, isSelected bool) string {
   appStats := asUI.displayedSortedStatList[statIndex]
@@ -233,12 +235,6 @@ func (asUI *AppListView) GetRowDisplay(statIndex int, isSelected bool) string {
     avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
     avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
   }
-
-  //if appStats.TotalTraffic.EventL60Rate > 0 {
-  //  totalActiveApps++
-  //}
-  //totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
-
 
   fmt.Fprintf(v, "%-50.50v ", appStats.AppName)
   fmt.Fprintf(v, "%-10.10v ", appStats.SpaceName)
@@ -288,22 +284,38 @@ func (asUI *AppListView) GetDisplayHeader() string {
 }
 
 func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
-  return nil
+  err := asUI.appListWidget.RefreshDisplay(g)
+  if err != nil {
+    return err
+  }
+  return asUI.updateHeader(g)
 }
 
-func (asUI *AppListView) updateHeader(g *gocui.Gui, totalActiveApps int, totalReportingAppInstances int) error {
-
+func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 
   v, err := g.View("summaryView")
   if err != nil {
     return err
   }
 
+  totalReportingAppInstances := 0
+  totalActiveApps := 0
+  for _, appStats := range asUI.displayedSortedStatList {
+    for _, cs := range appStats.ContainerArray {
+      if cs != nil && cs.ContainerMetric != nil {
+        totalReportingAppInstances++
+      }
+    }
+    if appStats.TotalTraffic.EventL60Rate > 0 {
+      totalActiveApps++
+    }
+  }
+
   fmt.Fprintf(v, "\r")
   fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
-  // TODO: Active apps are apps that have had go-rounter traffic in last 60 seconds
+  // Active apps are apps that have had go-rounter traffic in last 60 seconds
   fmt.Fprintf(v, "Active Apps: %-4v", totalActiveApps)
-  // TODO: Reporting containers are containers that reported metrics in last 90 seconds
+  // Reporting containers are containers that reported metrics in last 90 seconds
   fmt.Fprintf(v, "Rprt Cntnrs: %-4v", totalReportingAppInstances)
 
   return nil
