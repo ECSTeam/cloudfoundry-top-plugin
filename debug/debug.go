@@ -54,6 +54,7 @@ func openView() error {
 			v.Frame = true
       v.Autoscroll = true
       v.Wrap = true
+      v.BgColor = gocui.ColorRed
 			//fmt.Fprintln(v, "Debug Window")
       if err := gui.SetKeybinding(debugViewName, gocui.KeyEnter, gocui.ModNone, closeView); err != nil {
         return err

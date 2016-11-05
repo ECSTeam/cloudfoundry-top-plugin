@@ -168,7 +168,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   }
   fmt.Fprintf(v, "\n")
   if reportingAppInstances==0 {
-    fmt.Fprintf(v, "%6v", " Waiting for container metrics...")
+    fmt.Fprintf(v, "%6v", " Waiting for container metrics...\n\n")
   } else {
     fmt.Fprintf(v, "Total CPU: %6.2f\n", totalCpuPercentage)
   }

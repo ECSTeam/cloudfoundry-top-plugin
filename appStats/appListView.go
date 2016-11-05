@@ -4,6 +4,7 @@ import (
 	"fmt"
   "log"
   "sync"
+  "bytes"
   //"sort"
   //"strconv"
   "github.com/jroimartin/gocui"
@@ -33,6 +34,7 @@ type AppListView struct {
   filterAppName string
 
   appDetailView *AppDetailView
+  appListWidget *masterUIInterface.ListWidget
 
 }
 
@@ -69,13 +71,17 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
     }); err != nil {
       log.Panicln(err)
     }
+    // START list widget
+    appListWidget := masterUIInterface.NewListWidget(asUI.masterUI, "appListWidget", asUI.topMargin, asUI.bottomMargin, asUI)
+    appListWidget.Title = "Testing..."
+    appListWidget.GetRowDisplay = asUI.GetRowDisplay
+    appListWidget.GetListSize = asUI.GetListSize
+    appListWidget.GetRowKey = asUI.GetRowKey
+    appListWidget.GetDisplayHeader = asUI.GetDisplayHeader
 
-    if err := g.SetKeybinding(asUI.name, gocui.KeyArrowUp, gocui.ModNone, asUI.arrowUp); err != nil {
-      log.Panicln(err)
-    }
-    if err := g.SetKeybinding(asUI.name, gocui.KeyArrowDown, gocui.ModNone, asUI.arrowDown); err != nil {
-      log.Panicln(err)
-    }
+    asUI.appListWidget = appListWidget
+    asUI.masterUI.LayoutManager().Add(appListWidget)
+    // END
 
   	if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
@@ -107,68 +113,6 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 }
 
 
-func (asUI *AppListView) arrowUp(g *gocui.Gui, v *gocui.View) error {
-
-  statsList := asUI.displayedSortedStatList
-  if asUI.highlightAppId == "" {
-    if len(statsList) > 0 {
-      asUI.highlightAppId = statsList[0].AppId
-    }
-  } else {
-    lastAppId := ""
-    for row, appStats := range statsList {
-      if appStats.AppId == asUI.highlightAppId {
-        if row > 0 {
-          asUI.highlightAppId = lastAppId
-          offset := row-1
-          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
-          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
-          if (asUI.displayIndexOffset > offset) {
-            asUI.displayIndexOffset = offset
-          }
-          break
-        }
-      }
-      lastAppId = appStats.AppId
-    }
-  }
-
-   asUI.refreshDisplay(g)
-   return nil
-}
-
-func (asUI *AppListView) arrowDown(g *gocui.Gui, v *gocui.View) error {
-
-  statsList := asUI.displayedSortedStatList
-  if asUI.highlightAppId == "" {
-    if len(statsList) > 0 {
-      asUI.highlightAppId = statsList[0].AppId
-    }
-  } else {
-    for row, appStats := range statsList {
-      if appStats.AppId == asUI.highlightAppId {
-        if row+1 < len(statsList) {
-          asUI.highlightAppId = statsList[row+1].AppId
-          _, viewY := v.Size()
-          offset := (row+2) - (viewY-1)
-          if (offset>asUI.displayIndexOffset) {
-            asUI.displayIndexOffset = offset
-          }
-          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
-          //writeFooter(g,"viewY["+strconv.Itoa(viewY)+"]")
-          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
-          break
-        }
-      }
-    }
-  }
-
-   asUI.refreshDisplay(g)
-   return nil
-}
-
 // This is for debugging -- remove it later
 func writeFooter(g *gocui.Gui, msg string) {
   v, _ := g.View("footerView")
@@ -196,9 +140,7 @@ func (asUI *AppListView) seedStatsFromMetadata() {
       appStats = NewAppStats(appId)
       currentStatsMap[appId] = appStats
     }
-
   }
-
 }
 
 func (asUI *AppListView) GetCurrentProcessor() *AppStatsEventProcessor {
@@ -215,14 +157,8 @@ func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 }
 
 
-func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) {
-  //g.Execute(func(g *gocui.Gui) error {
-  //  return asUI.updateDisplay(g)
-	//})
-  asUI.updateDisplay(g)
-}
 
-func (asUI *AppListView) updateDisplay(g *gocui.Gui) error {
+func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
   processorCopy := asUI.currentProcessor.Clone()
 
@@ -231,160 +167,128 @@ func (asUI *AppListView) updateDisplay(g *gocui.Gui) error {
     asUI.displayedSortedStatList = getStats(processorCopy.AppMap)
   }
 	asUI.mu.Unlock()
-  return asUI.refreshDisplay(g)
+  return asUI.RefreshDisplay(g)
 }
 
-func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) {
-	//g.Execute(func(g *gocui.Gui) error {
-  //  return asUI.refreshDisplay(g)
-	//})
-  asUI.refreshDisplay(g)
-}
 
-func (asUI *AppListView) refreshDisplay(g *gocui.Gui) error {
+func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 
   currentView := asUI.masterUI.GetCurrentView(g)
-  if currentView.Name() == asUI.name {
+  currentName := currentView.Name()
+  if currentName == asUI.name {
     return asUI.refreshListDisplay(g)
-  } else if currentView.Name() == asUI.appDetailView.name {
+  } else if asUI.appDetailView != nil && currentName == asUI.appDetailView.name {
     return asUI.appDetailView.refreshDisplay(g)
+  } else if asUI.appListWidget != nil && currentName == asUI.appListWidget.Name() {
+    return asUI.appListWidget.RefreshDisplay(g)
   } else {
     return nil
   }
 }
 
+func (asUI *AppListView) GetListSize() int {
+  return len(asUI.displayedSortedStatList)
+}
+
+func (asUI *AppListView) GetRowKey(statIndex int) string  {
+  return asUI.displayedSortedStatList[statIndex].AppId
+}
+
+
+
+func (asUI *AppListView) GetRowDisplay(statIndex int, isSelected bool) string {
+  appStats := asUI.displayedSortedStatList[statIndex]
+  v := bytes.NewBufferString("")
+
+  if (!isSelected && appStats.TotalTraffic.EventL10Rate > 0) {
+    fmt.Fprintf(v, util.BRIGHT_WHITE)
+  }
+
+  totalCpuPercentage := 0.0
+  reportingAppInstances := 0
+  for _, cs := range appStats.ContainerArray {
+    if cs != nil && cs.ContainerMetric != nil {
+      cpuPercentage := *cs.ContainerMetric.CpuPercentage
+      totalCpuPercentage = totalCpuPercentage + cpuPercentage
+      reportingAppInstances++
+    }
+  }
+
+  totalCpuInfo := ""
+  if reportingAppInstances==0 {
+    totalCpuInfo = fmt.Sprintf("%6v", "--")
+  } else {
+    totalCpuInfo = fmt.Sprintf("%6.2f", totalCpuPercentage)
+  }
+
+  logCount := int64(0)
+  for _, cs := range appStats.ContainerArray {
+    if cs != nil {
+      logCount = logCount + (cs.OutCount + cs.ErrCount)
+    }
+  }
+
+  avgResponseTimeL60Info := "--"
+  if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
+    avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
+    avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
+  }
+
+  //if appStats.TotalTraffic.EventL60Rate > 0 {
+  //  totalActiveApps++
+  //}
+  //totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
+
+
+  fmt.Fprintf(v, "%-50.50v ", appStats.AppName)
+  fmt.Fprintf(v, "%-10.10v ", appStats.SpaceName)
+  fmt.Fprintf(v, "%-10.10v ",appStats.OrgName )
+  fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http2xxCount)
+  fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http3xxCount)
+  fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http4xxCount)
+  fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http5xxCount)
+  fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.HttpAllCount)
+
+  // Last 1 second
+  fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL1Rate);
+  // Last 10 seconds
+  fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL10Rate);
+  // Last 60 seconds
+  fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL60Rate);
+
+  fmt.Fprintf(v, "%6v ", totalCpuInfo)
+  fmt.Fprintf(v, "%3v ", reportingAppInstances)
+  fmt.Fprintf(v, "%6v ", avgResponseTimeL60Info)
+  fmt.Fprintf(v, "%11v", util.Format(logCount))
+
+  return v.String()
+}
+
+func (asUI *AppListView) GetDisplayHeader() string {
+  v := bytes.NewBufferString("")
+  fmt.Fprintf(v, "%-50v ","APPLICATION")
+  fmt.Fprintf(v, "%-10v ","SPACE")
+  fmt.Fprintf(v, "%-10v ","ORG")
+
+  fmt.Fprintf(v, "%8v ","2XX")
+  fmt.Fprintf(v, "%8v ","3XX")
+  fmt.Fprintf(v, "%8v ","4XX")
+  fmt.Fprintf(v, "%8v ","5XX")
+  fmt.Fprintf(v, "%8v ","TOTAL")
+
+  fmt.Fprintf(v, "%5v ","L1")
+  fmt.Fprintf(v, "%5v ","L10")
+  fmt.Fprintf(v, "%5v ","L60")
+
+  fmt.Fprintf(v, "%6v ","CPU%")
+  fmt.Fprintf(v, "%3v ","RCR")
+  fmt.Fprintf(v, "%6v ","RESP")
+  fmt.Fprintf(v, "%11v","LOGS")
+  return v.String()
+}
+
 func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
-
-  m := asUI.displayedProcessor.AppMap
-
-  v, err := g.View("appListView")
-  if err != nil {
-		return err
-	}
-
-	if len(m) > 0 {
-    //maxX, maxY := v.Size()
-    _, maxY := v.Size()
-    maxRows := maxY - 1
-
-		v.Clear()
-
-    fmt.Fprintf(v, "%-50v ","APPLICATION")
-    fmt.Fprintf(v, "%-10v ","SPACE")
-    fmt.Fprintf(v, "%-10v ","ORG")
-
-    fmt.Fprintf(v, "%8v ","2XX")
-    fmt.Fprintf(v, "%8v ","3XX")
-    fmt.Fprintf(v, "%8v ","4XX")
-    fmt.Fprintf(v, "%8v ","5XX")
-    fmt.Fprintf(v, "%8v ","TOTAL")
-
-    fmt.Fprintf(v, "%5v ","L1")
-    fmt.Fprintf(v, "%5v ","L10")
-    fmt.Fprintf(v, "%5v ","L60")
-
-    fmt.Fprintf(v, "%6v ","CPU%")
-    fmt.Fprintf(v, "%3v ","RCR")
-    fmt.Fprintf(v, "%6v ","RESP")
-    fmt.Fprintf(v, "%11v","LOGS")
-
-	  fmt.Fprintf(v, "\n")
-
-    totalActiveApps := 0
-    totalReportingAppInstances := 0
-    row := 0
-    for statIndex, appStats := range asUI.displayedSortedStatList {
-
-      if statIndex < asUI.displayIndexOffset {
-        continue
-      }
-
-      if (appStats.TotalTraffic.EventL10Rate > 0) {
-        fmt.Fprintf(v, util.BRIGHT_WHITE)
-      }
-
-
-      totalCpuPercentage := 0.0
-      reportingAppInstances := 0
-      for _, cs := range appStats.ContainerArray {
-        if cs != nil && cs.ContainerMetric != nil {
-          cpuPercentage := *cs.ContainerMetric.CpuPercentage
-          totalCpuPercentage = totalCpuPercentage + cpuPercentage
-          reportingAppInstances++
-        }
-      }
-
-      totalCpuInfo := ""
-      if reportingAppInstances==0 {
-        totalCpuInfo = fmt.Sprintf("%6v", "--")
-      } else {
-        totalCpuInfo = fmt.Sprintf("%6.2f", totalCpuPercentage)
-      }
-
-      logCount := int64(0)
-      for _, cs := range appStats.ContainerArray {
-        if cs != nil {
-          logCount = logCount + (cs.OutCount + cs.ErrCount)
-        }
-      }
-
-
-      if appStats.AppId == asUI.highlightAppId {
-        fmt.Fprintf(v, util.GREEN + util.REVERSE)
-      }
-
-      avgResponseTimeL60Info := "--"
-      if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
-        avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
-        avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
-      }
-
-      if appStats.TotalTraffic.EventL60Rate > 0 {
-        totalActiveApps++
-      }
-      totalReportingAppInstances = totalReportingAppInstances + reportingAppInstances
-
-
-      fmt.Fprintf(v, "%-50.50v ", appStats.AppName)
-      fmt.Fprintf(v, "%-10.10v ", appStats.SpaceName)
-      fmt.Fprintf(v, "%-10.10v ",appStats.OrgName )
-      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http2xxCount)
-      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http3xxCount)
-      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http4xxCount)
-      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.Http5xxCount)
-      fmt.Fprintf(v, "%8d ", appStats.TotalTraffic.HttpAllCount)
-
-      // Last 1 second
-      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL1Rate);
-      // Last 10 seconds
-      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL10Rate);
-      // Last 60 seconds
-      fmt.Fprintf(v, "%5d ", appStats.TotalTraffic.EventL60Rate);
-
-      fmt.Fprintf(v, "%6v ", totalCpuInfo)
-      fmt.Fprintf(v, "%3v ", reportingAppInstances)
-      fmt.Fprintf(v, "%6v ", avgResponseTimeL60Info)
-      fmt.Fprintf(v, "%11v\n",util.Format(logCount))
-
-      if appStats.AppId == asUI.highlightAppId {
-        fmt.Fprintf(v, util.CLEAR)
-      }
-      fmt.Fprintf(v, util.CLEAR)
-
-      row++
-      if row == maxRows {
-        break
-      }
-		}
-
-    asUI.updateHeader(g, totalActiveApps, totalReportingAppInstances)
-
-	} else {
-		v.Clear()
-		fmt.Fprintln(v, "No data yet...")
-	}
-	return nil
-
+  return nil
 }
 
 func (asUI *AppListView) updateHeader(g *gocui.Gui, totalActiveApps int, totalReportingAppInstances int) error {
