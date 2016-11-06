@@ -81,6 +81,25 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 
     }
 
+    totalCpuPercentage := 0.0
+    totalReportingContainers := 0
+    for _, cs := range appStat.ContainerArray {
+      if cs != nil && cs.ContainerMetric != nil {
+        totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
+        totalReportingContainers++
+      }
+    }
+    appStat.TotalCpuPercentage = totalCpuPercentage
+    appStat.TotalReportingContainers = totalReportingContainers
+
+    logCount := int64(0)
+    for _, cs := range appStat.ContainerArray {
+      if cs != nil {
+        logCount = logCount + (cs.OutCount + cs.ErrCount)
+      }
+    }
+    appStat.TotalLogCount = logCount + appStat.NonContainerOutCount + appStat.NonContainerErrCount
+
     totalTraffic.AvgResponseL60Time = util.AvgMultipleTrackers(responseL60TimeArray)
     totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)
     totalTraffic.AvgResponseL1Time = util.AvgMultipleTrackers(responseL1TimeArray)

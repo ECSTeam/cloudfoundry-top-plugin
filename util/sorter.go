@@ -6,12 +6,12 @@ import (
 
 type Sortable interface { }
 
-type lessFunc func(p1, p2 Sortable) bool
+type LessFunc func(p1, p2 Sortable) bool
 
 // multiSorter implements the Sort interface, sorting the changes within.
 type multiSorter struct {
 	slice []Sortable
-	less  []lessFunc
+	less  []LessFunc
 }
 
 // Sort sorts the argument slice according to the less functions passed to OrderedBy.
@@ -24,7 +24,7 @@ func (ms *multiSorter) Sort(slice []Sortable) {
 
 // OrderedBy returns a Sorter that sorts using the less functions, in order.
 // Call its Sort method to sort the data.
-func OrderedBy(less ...lessFunc) *multiSorter {
+func OrderedBy(less ...LessFunc) *multiSorter {
 	return &multiSorter{
 		less: less,
 	}

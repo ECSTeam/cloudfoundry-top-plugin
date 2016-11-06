@@ -16,16 +16,16 @@ import (
 type Traffic struct {
 
   responseL60Time    *util.AvgTracker
-  AvgResponseL60Time float64
-  EventL60Rate       int
+  AvgResponseL60Time float64 // updated after a clone of this object
+  EventL60Rate       int // updated after a clone of this object
 
   responseL10Time    *util.AvgTracker
-  AvgResponseL10Time float64
-  EventL10Rate       int
+  AvgResponseL10Time float64 // updated after a clone of this object
+  EventL10Rate       int // updated after a clone of this object
 
   responseL1Time    *util.AvgTracker
-  AvgResponseL1Time float64
-  EventL1Rate       int
+  AvgResponseL1Time float64 // updated after a clone of this object
+  EventL1Rate       int // updated after a clone of this object
 
   HttpAllCount int64
   Http2xxCount int64
@@ -56,6 +56,10 @@ type AppStats struct {
   ContainerArray []*ContainerStats
   ContainerTrafficMap map[string]*Traffic
   TotalTraffic *Traffic
+
+  TotalCpuPercentage float64  // updated after a clone of this object
+  TotalReportingContainers int //updated after a clone of this object
+  TotalLogCount int64 //updated after a clone of this object
 }
 
 
@@ -76,36 +80,15 @@ func NewTraffic() *Traffic {
 }
 
 // Take the stats map and generated a reverse sorted list base on attribute X
-func getStats(statsMap map[string]*AppStats) []*AppStats {
+func getSortedStats(statsMap map[string]*AppStats) []*AppStats {
 
-
-  /*
-	eventCount := func(c1, c2 util.Sortable) bool {
-    d1 := c1.(*AppStats)
-    d2 := c2.(*AppStats)
-		return d1.HttpAllCount < d2.HttpAllCount
-	}
-  */
-  /*
-  eventCountRev := func(c1, c2 util.Sortable) bool {
-    d1 := c1.(*AppStats)
-    d2 := c2.(*AppStats)
-    return d1.HttpAllCount > d2.HttpAllCount
-  }
-  */
 
 	appName := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
     d2 := c2.(*AppStats)
 		return util.CaseInsensitiveLess(d1.AppName, d2.AppName)
 	}
-  /*
-  appNameRev := func(c1, c2 util.Sortable) bool {
-    d1 := c1.(*AppStats)
-    d2 := c2.(*AppStats)
-		return util.CaseInsensitiveLess(d2.AppName, d1.AppName)
-	}
-  */
+
 
   s := make([]util.Sortable, 0, len(statsMap))
   for _, d := range statsMap {
@@ -113,7 +96,6 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
     appName := appMetadata.Name
     if appName == "" {
       appName = d.AppId
-      //appName = appStats.AppUUID.String()
     }
     d.AppName = appName
 
@@ -137,9 +119,9 @@ func getStats(statsMap map[string]*AppStats) []*AppStats {
   //util.OrderedBy(eventCountRev, appName).Sort(s)
   util.OrderedBy(appName).Sort(s)
 
-  s2 := make([]*AppStats, 0, len(s))
-  for _, d := range s {
-      s2 = append(s2, d.(*AppStats))
+  s2 := make([]*AppStats, len(s))
+  for i, d := range s {
+      s2[i] = d.(*AppStats)
   }
 
   //sort.Sort(sort.Reverse(s))

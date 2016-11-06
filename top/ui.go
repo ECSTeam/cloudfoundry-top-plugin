@@ -84,7 +84,7 @@ func (ui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
   ui.gui = g
-
+  g.InputEsc = true
 	defer g.Close()
   debug.Init(g)
 
@@ -104,6 +104,9 @@ func (ui *MasterUI) initGui() {
 	if err := g.SetKeybinding("appListView", 'Q', gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
 	}
+  if err := g.SetKeybinding("appListView", gocui.KeyEsc, gocui.ModNone, ui.quit); err != nil {
+    log.Panicln(err)
+  }
 
   if err := g.SetKeybinding("appListView", 'c', gocui.ModNone, ui.clearStats); err != nil {
     log.Panicln(err)
