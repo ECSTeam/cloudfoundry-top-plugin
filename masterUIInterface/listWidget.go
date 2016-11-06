@@ -19,6 +19,7 @@ type getListSizeFunc func() int
 
 type DisplayViewInterface interface {
   RefreshDisplay(g *gocui.Gui) error
+  SortData()
 }
 
 type ListColumn struct {
@@ -27,7 +28,7 @@ type ListColumn struct {
   size    int
   leftJustifyLabel bool
   sortFunc  util.LessFunc
-  reverseSort bool
+  defaultReverseSort bool
   displayFunc getRowDisplayFunc
 }
 
@@ -50,20 +51,27 @@ type ListWidget struct {
   GetListSize getListSizeFunc
 
   columns []*ListColumn
+  columnMap map[string]*ListColumn
 
   editSort bool
   editSortColumnId string
 
-  sortColumns []string
+  sortColumns []*sortColumn
 
 }
+
+type sortColumn struct {
+  id  string
+  reverseSort bool
+}
+
 
 func NewListColumn(
   id, label string,
   size int,
   leftJustifyLabel bool,
   sortFunc  util.LessFunc,
-  reverseSort bool,
+  defaultReverseSort bool,
   displayFunc getRowDisplayFunc) *ListColumn {
   column := &ListColumn {
     id: id,
@@ -71,7 +79,7 @@ func NewListColumn(
     size: size,
     leftJustifyLabel: leftJustifyLabel,
     sortFunc: sortFunc,
-    reverseSort: reverseSort,
+    defaultReverseSort: defaultReverseSort,
     displayFunc: displayFunc,
   }
   return column
@@ -88,14 +96,16 @@ func NewListWidget(masterUI MasterUIInterface, name string,
     bottomMargin: bottomMargin,
     displayView: displayView,
     columns: columns,
+    columnMap: make(map[string]*ListColumn),
+  }
+  for _, col := range columns {
+    w.columnMap[col.id] = col
   }
   return w
 }
 
 func (w *ListWidget) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
-
-  //0, asUI.topMargin, maxX-1, maxY-asUI.bottomMargin
 
 	v, err := g.SetView(w.name, 0, w.topMargin, maxX-1, maxY-w.bottomMargin)
 	if err != nil {
@@ -135,6 +145,25 @@ func (asUI *ListWidget) HighlightKey() string {
   return asUI.highlightKey
 }
 
+func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
+
+  sortFunctions := make([]util.LessFunc, 0)
+  for _, sortColumn := range asUI.sortColumns {
+    sc := asUI.columnMap[sortColumn.id]
+    sortFunc := sc.sortFunc
+    if sortColumn.reverseSort {
+      sortFunc = util.Reverse(sortFunc)
+    }
+    sortFunctions = append(sortFunctions, sortFunc)
+  }
+  return sortFunctions
+}
+
+
+func (asUI *ListWidget) SortData() {
+  asUI.displayView.SortData()
+}
+
 
 func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
@@ -163,7 +192,7 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
   isSelected := false
   if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
-    fmt.Fprintf(v, util.GREEN + util.REVERSE)
+    fmt.Fprintf(v, util.REVERSE_GREEN)
     isSelected = true
   }
 
@@ -187,7 +216,7 @@ func (asUI *ListWidget) writeHeader(v *gocui.View) {
     editSortColumn := false
     if asUI.editSort && asUI.editSortColumnId == column.id {
       editSortColumn = true
-      fmt.Fprintf(v, util.WHITE + util.REVERSE)
+      fmt.Fprintf(v, util.REVERSE_WHITE)
     }
     var buffer bytes.Buffer
     buffer.WriteString("%")
@@ -296,8 +325,6 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
   editView := NewEditSortView(asUI.masterUI, "editView", asUI)
   asUI.masterUI.LayoutManager().Add(editView)
   asUI.masterUI.SetCurrentViewOnTop(g,"editView")
-
-
   asUI.RefreshDisplay(g)
   return nil
 

@@ -80,15 +80,15 @@ func NewTraffic() *Traffic {
 }
 
 // Take the stats map and generated a reverse sorted list base on attribute X
-func getSortedStats(statsMap map[string]*AppStats) []*AppStats {
+func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc) []*AppStats {
 
-
+  /*
 	appName := func(c1, c2 util.Sortable) bool {
     d1 := c1.(*AppStats)
     d2 := c2.(*AppStats)
 		return util.CaseInsensitiveLess(d1.AppName, d2.AppName)
 	}
-
+  */
 
   s := make([]util.Sortable, 0, len(statsMap))
   for _, d := range statsMap {
@@ -117,7 +117,7 @@ func getSortedStats(statsMap map[string]*AppStats) []*AppStats {
   }
 
   //util.OrderedBy(eventCountRev, appName).Sort(s)
-  util.OrderedBy(appName).Sort(s)
+  util.OrderedBy(sortFunctions).Sort(s)
 
   s2 := make([]*AppStats, len(s))
   for i, d := range s {

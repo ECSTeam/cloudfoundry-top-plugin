@@ -147,6 +147,7 @@ func (asUI *AppListView) columnAppName() *masterUIInterface.ListColumn {
   appNameSortFunc := func(c1, c2 util.Sortable) bool {
     return util.CaseInsensitiveLess(c1.(*AppStats).AppName, c2.(*AppStats).AppName)
   }
+
   displayFunc := func(statIndex int, isSelected bool) string {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%-50.50v", appStats.AppName)
@@ -187,7 +188,7 @@ func (asUI *AppListView) column2XX() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%8d", appStats.TotalTraffic.Http2xxCount)
   }
-  c := masterUIInterface.NewListColumn("2XX", "2XX", 8, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("2XX", "2XX", 8, false, appNameSortFunc, true, displayFunc)
   return c
 }
 func (asUI *AppListView) column3XX() *masterUIInterface.ListColumn {
@@ -198,7 +199,7 @@ func (asUI *AppListView) column3XX() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%8d", appStats.TotalTraffic.Http3xxCount)
   }
-  c := masterUIInterface.NewListColumn("3XX", "3XX", 8, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("3XX", "3XX", 8, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -210,7 +211,7 @@ func (asUI *AppListView) column4XX() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%8d", appStats.TotalTraffic.Http4xxCount)
   }
-  c := masterUIInterface.NewListColumn("4XX", "4XX", 8, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("4XX", "4XX", 8, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -222,7 +223,7 @@ func (asUI *AppListView) column5XX() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%8d", appStats.TotalTraffic.Http3xxCount)
   }
-  c := masterUIInterface.NewListColumn("5XX", "5XX", 8, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("5XX", "5XX", 8, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -234,7 +235,7 @@ func (asUI *AppListView) columnAll() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%8d", appStats.TotalTraffic.HttpAllCount)
   }
-  c := masterUIInterface.NewListColumn("total", "TOTAL", 8, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("total", "TOTAL", 8, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -246,7 +247,7 @@ func (asUI *AppListView) columnL1() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL1Rate)
   }
-  c := masterUIInterface.NewListColumn("L1", "L1", 5, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("L1", "L1", 5, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -258,7 +259,7 @@ func (asUI *AppListView) columnL10() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL10Rate)
   }
-  c := masterUIInterface.NewListColumn("L10", "L10", 5, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("L10", "L10", 5, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -270,7 +271,7 @@ func (asUI *AppListView) columnL60() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL60Rate)
   }
-  c := masterUIInterface.NewListColumn("L60", "L60", 5, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("L60", "L60", 5, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -288,7 +289,7 @@ func (asUI *AppListView) columnTotalCpu() *masterUIInterface.ListColumn {
     }
     return fmt.Sprintf("%6v", totalCpuInfo)
   }
-  c := masterUIInterface.NewListColumn("CPU", "CPU%", 6, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("CPU", "CPU%", 6, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -300,7 +301,7 @@ func (asUI *AppListView) columnReportingContainers() *masterUIInterface.ListColu
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%3v", appStats.TotalReportingContainers)
   }
-  c := masterUIInterface.NewListColumn("reportingContainers", "RCR", 3, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("reportingContainers", "RCR", 3, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -317,7 +318,7 @@ func (asUI *AppListView) columnAvgResponseTimeL60Info() *masterUIInterface.ListC
     }
     return fmt.Sprintf("%6v", avgResponseTimeL60Info)
   }
-  c := masterUIInterface.NewListColumn("avgResponseTimeL60", "RESP", 6, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("avgResponseTimeL60", "RESP", 6, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -329,7 +330,7 @@ func (asUI *AppListView) columnLogCount() *masterUIInterface.ListColumn {
     appStats := asUI.displayedSortedStatList[statIndex]
     return fmt.Sprintf("%11v", util.Format(appStats.TotalLogCount))
   }
-  c := masterUIInterface.NewListColumn("totalLogCount", "LOGS", 11, false, appNameSortFunc, false, displayFunc)
+  c := masterUIInterface.NewListColumn("totalLogCount", "LOGS", 11, false, appNameSortFunc, true, displayFunc)
   return c
 }
 
@@ -373,13 +374,18 @@ func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 	asUI.mu.Lock()
   processorCopy := asUI.currentProcessor.Clone()
   asUI.displayedProcessor = processorCopy
-  if len(processorCopy.AppMap) > 0 {
-    asUI.displayedSortedStatList = getSortedStats(processorCopy.AppMap)
+  asUI.SortData()
+	asUI.mu.Unlock()
+  return asUI.RefreshDisplay(g)
+}
+
+func (asUI *AppListView) SortData() {
+  if len(asUI.displayedProcessor.AppMap) > 0 {
+    sortFunctions := asUI.appListWidget.GetSortFunctions()
+    asUI.displayedSortedStatList = getSortedStats(asUI.displayedProcessor.AppMap, sortFunctions)
   } else {
     asUI.displayedSortedStatList = nil
   }
-	asUI.mu.Unlock()
-  return asUI.RefreshDisplay(g)
 }
 
 func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {

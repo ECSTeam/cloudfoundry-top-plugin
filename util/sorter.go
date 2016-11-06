@@ -14,6 +14,10 @@ type multiSorter struct {
 	less  []LessFunc
 }
 
+func Reverse(less LessFunc) LessFunc {
+  return func(p1, p2 Sortable) bool { return less(p2, p1) }
+}
+
 // Sort sorts the argument slice according to the less functions passed to OrderedBy.
 //func (ms *multiSorter) Sort(appStats []*AppStats) {
 func (ms *multiSorter) Sort(slice []Sortable) {
@@ -24,7 +28,7 @@ func (ms *multiSorter) Sort(slice []Sortable) {
 
 // OrderedBy returns a Sorter that sorts using the less functions, in order.
 // Call its Sort method to sort the data.
-func OrderedBy(less ...LessFunc) *multiSorter {
+func OrderedBy(less []LessFunc) *multiSorter {
 	return &multiSorter{
 		less: less,
 	}
@@ -63,5 +67,8 @@ func (ms *multiSorter) Less(i, j int) bool {
 	}
 	// All comparisons to here said "equal", so just return whatever
 	// the final comparison reports.
-	return ms.less[k](p, q)
+  if len(ms.less) > 0 {
+	 return ms.less[k](p, q)
+  }
+  return false
 }
