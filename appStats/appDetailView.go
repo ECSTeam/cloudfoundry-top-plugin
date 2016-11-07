@@ -177,5 +177,5 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "Stderr: %-12v\n",util.Format(appStats.NonContainerErrCount))
   fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
 
-  return nil
+  return w.appListView.updateHeader(g)
 }

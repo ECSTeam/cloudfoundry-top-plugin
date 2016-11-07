@@ -19,6 +19,8 @@ type getListSizeFunc func() int
 
 type DisplayViewInterface interface {
   RefreshDisplay(g *gocui.Gui) error
+  SetDisplayPaused(paused bool)
+  GetDisplayPaused() bool
   SortData()
 }
 
@@ -56,15 +58,18 @@ type ListWidget struct {
   editSort bool
   editSortColumnId string
 
-  sortColumns []*sortColumn
+  sortColumns []*SortColumn
 
 }
 
-type sortColumn struct {
+type SortColumn struct {
   id  string
   reverseSort bool
 }
 
+func NewSortColumn(id string, reverseSort bool) *SortColumn {
+  return &SortColumn{ id:id, reverseSort:reverseSort}
+}
 
 func NewListColumn(
   id, label string,
@@ -82,6 +87,7 @@ func NewListColumn(
     defaultReverseSort: defaultReverseSort,
     displayFunc: displayFunc,
   }
+
   return column
 }
 
@@ -101,6 +107,7 @@ func NewListWidget(masterUI MasterUIInterface, name string,
   for _, col := range columns {
     w.columnMap[col.id] = col
   }
+
   return w
 }
 
@@ -129,6 +136,10 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
       log.Panicln(err)
     }
 
+    if err := g.SetKeybinding(w.name, 'p', gocui.ModNone, w.toggleDisplayPauseAction); err != nil {
+      log.Panicln(err)
+    }
+
     if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
       log.Panicln(err)
     }
@@ -144,6 +155,12 @@ func (asUI *ListWidget) Name() string {
 func (asUI *ListWidget) HighlightKey() string {
   return asUI.highlightKey
 }
+
+func (asUI *ListWidget) SetSortColumns(sortColumns []*SortColumn) {
+  asUI.sortColumns = sortColumns
+}
+
+
 
 func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
 
@@ -301,17 +318,20 @@ func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
   return nil
 }
 
-func (asUI *ListWidget) RefreshDisplayX(g *gocui.Gui) {
-  asUI.displayView.RefreshDisplay(g)
-}
-
-
 // This is for debugging -- remove it later
 func writeFooter(g *gocui.Gui, msg string) {
   v, _ := g.View("footerView")
   fmt.Fprint(v, msg)
 
 }
+
+func (asUI *ListWidget) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error {
+
+  asUI.displayView.SetDisplayPaused(!asUI.displayView.GetDisplayPaused())
+  asUI.displayView.RefreshDisplay(g)
+  return nil
+}
+
 
 func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 
@@ -320,7 +340,7 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
   if asUI.editSortColumnId == "" {
     asUI.editSortColumnId = asUI.columns[0].id
   }
-  writeFooter(g,"\r EDIT SORT")
+  //writeFooter(g,"\r EDIT SORT")
 
   editView := NewEditSortView(asUI.masterUI, "editView", asUI)
   asUI.masterUI.LayoutManager().Add(editView)

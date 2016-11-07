@@ -22,19 +22,18 @@ type AppListView struct {
   topMargin int
   bottomMargin int
 
-  //highlightAppId string
-  //displayIndexOffset int
-
   currentProcessor         *AppStatsEventProcessor
   displayedProcessor       *AppStatsEventProcessor
   displayedSortedStatList  []*AppStats
 
   cliConnection   plugin.CliConnection
-  mu  sync.Mutex // protects ctr
+  mu  sync.Mutex
   filterAppName string
 
   appDetailView *AppDetailView
   appListWidget *masterUIInterface.ListWidget
+
+  displayPaused bool
 
 }
 
@@ -55,28 +54,26 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,name string, to
 }
 
 func (asUI *AppListView) Layout(g *gocui.Gui) error {
-  /*
-  maxX, maxY := g.Size()
-  v, err := g.SetView(asUI.name, 0, asUI.topMargin, maxX-1, maxY-asUI.bottomMargin)
-  if err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-    v.Title = "App List"
-    fmt.Fprintln(v, "")
-    */
+
   if asUI.appListWidget == nil {
 
-    // START list widget
     appListWidget := masterUIInterface.NewListWidget(asUI.masterUI, asUI.name,
       asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions())
-    appListWidget.Title = asUI.name
+    appListWidget.Title = "App List"
     appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
     appListWidget.GetListSize = asUI.GetListSize
     appListWidget.GetRowKey = asUI.GetRowKey
+
+    defaultSortColums := []*masterUIInterface.SortColumn {
+      masterUIInterface.NewSortColumn("CPU", true),
+      masterUIInterface.NewSortColumn("L60", true),
+      masterUIInterface.NewSortColumn("appName", false),
+      masterUIInterface.NewSortColumn("spaceName", false),
+      masterUIInterface.NewSortColumn("orgName", false),
+    }
+    appListWidget.SetSortColumns(defaultSortColums)
+
     asUI.appListWidget = appListWidget
-    //asUI.masterUI.LayoutManager().Add(appListWidget)
-    // END
 
     if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
          filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
@@ -110,14 +107,6 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
   }
 
   return asUI.appListWidget.Layout(g)
-  //return nil
-  /*
-  if err := asUI.masterUI.SetCurrentViewOnTop(g, asUI.name); err != nil {
-    log.Panicln(err)
-  }
-  */
-
-
 
 }
 
@@ -361,6 +350,16 @@ func (asUI *AppListView) GetCurrentProcessor() *AppStatsEventProcessor {
     return asUI.currentProcessor
 }
 
+func (asUI *AppListView) SetDisplayPaused(paused bool) {
+    asUI.displayPaused = paused
+    if !paused {
+      asUI.updateData()
+    }
+}
+
+func (asUI *AppListView) GetDisplayPaused() bool {
+    return asUI.displayPaused
+}
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
   // TODO: I think this needs to be in a sync/mutex
@@ -371,13 +370,20 @@ func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
+  if !asUI.displayPaused {
+  	asUI.updateData()
+  }
+  return asUI.RefreshDisplay(g)
+}
+
+func (asUI *AppListView) updateData() {
 	asUI.mu.Lock()
   processorCopy := asUI.currentProcessor.Clone()
   asUI.displayedProcessor = processorCopy
   asUI.SortData()
 	asUI.mu.Unlock()
-  return asUI.RefreshDisplay(g)
 }
+
 
 func (asUI *AppListView) SortData() {
   if len(asUI.displayedProcessor.AppMap) > 0 {
@@ -446,13 +452,18 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
     }
   }
 
-  fmt.Fprintf(v, "\r")
-  fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
-  // Active apps are apps that have had go-rounter traffic in last 60 seconds
-  fmt.Fprintf(v, "Active Apps: %-4v", totalActiveApps)
-  // Reporting containers are containers that reported metrics in last 90 seconds
-  fmt.Fprintf(v, "Rprt Cntnrs: %-4v", totalReportingAppInstances)
-
+  if asUI.displayPaused {
+    fmt.Fprintf(v, util.REVERSE_GREEN)
+    fmt.Fprintf(v, "\r Display update paused ")
+    fmt.Fprintf(v, util.CLEAR)
+  } else {
+    fmt.Fprintf(v, "\r")
+    fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
+    // Active apps are apps that have had go-rounter traffic in last 60 seconds
+    fmt.Fprintf(v, "Active Apps: %-4v", totalActiveApps)
+    // Reporting containers are containers that reported metrics in last 90 seconds
+    fmt.Fprintf(v, "Rprt Cntnrs: %-4v", totalReportingAppInstances)
+  }
   return nil
 }
 

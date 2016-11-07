@@ -7,7 +7,7 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
-const MAX_SORT_COLUMNS = 4
+const MAX_SORT_COLUMNS = 5
 
 type EditSortView struct {
   masterUI MasterUIInterface
@@ -17,18 +17,28 @@ type EditSortView struct {
   listWidget *ListWidget
 
   sortPosition int
-  sortColumns []*sortColumn
+  sortColumns []*SortColumn
+  oldSortColumns []*SortColumn
 }
 
 func NewEditSortView(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditSortView {
 	w := &EditSortView{masterUI: masterUI, name: name, listWidget: listWidget}
   w.width = 55
-  w.height = 10
+  w.height = 14
 
-  w.sortColumns = make([]*sortColumn,MAX_SORT_COLUMNS)
-
+  w.sortColumns = make([]*SortColumn,MAX_SORT_COLUMNS)
   for i, sc := range listWidget.sortColumns {
     w.sortColumns[i] = sc
+  }
+
+  // Save old sort for cancel
+  w.oldSortColumns = make([]*SortColumn,len(listWidget.sortColumns))
+  for i, sc := range listWidget.sortColumns {
+    scClone := &SortColumn{
+      id: sc.id,
+      reverseSort: sc.reverseSort,
+    }
+    w.oldSortColumns[i] = scClone
   }
   return w
 }
@@ -42,6 +52,11 @@ func (w *EditSortView) Layout(g *gocui.Gui) error {
 		}
     v.Title = "Edit Sort"
     v.Frame = true
+    g.Highlight = true
+    //g.SelFgColor = gocui.ColorGreen
+    //g.SelFgColor = gocui.ColorWhite | gocui.AttrBold
+    //v.BgColor = gocui.ColorRed
+    //v.FgColor = gocui.ColorGreen
     fmt.Fprintln(v, "...")
     if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeView); err != nil {
       return err
@@ -70,6 +85,12 @@ func (w *EditSortView) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(w.name, gocui.KeyBackspace2, gocui.ModNone, w.keyDeleteAction); err != nil {
       return err
     }
+    if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.cancelView); err != nil {
+      return err
+    }
+    if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.cancelView); err != nil {
+      return err
+    }
 
     if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
       log.Panicln(err)
@@ -85,16 +106,20 @@ func (w *EditSortView) RefreshDisplay(g *gocui.Gui) error {
     return err
   }
   v.Clear()
-  fmt.Fprintln(v, " Right Arrow or Left Arrow to select sort column,")
-  fmt.Fprintln(v, " press SPACE to select column for sorting.")
-  fmt.Fprintln(v, " Press ENTER to apply sort")
+  fmt.Fprintln(v, " ")
+  fmt.Fprintln(v, "  RIGHT or LEFT arrow - select sort column")
+  fmt.Fprintln(v, "  DOWN or UP arrow - select sort position")
+  fmt.Fprintln(v, "  SPACE - select column and toggle sort direction")
+  fmt.Fprintln(v, "  DELETE - remove sort for position")
+  fmt.Fprintln(v, "  ENTER - apply sort")
   fmt.Fprintln(v, "")
 
   for i, sc := range w.sortColumns {
+    fmt.Fprintf(v, "    ")
     if w.sortPosition == i {
       fmt.Fprintf(v, util.REVERSE_WHITE)
     }
-    displayName := "-none-"
+    displayName := "--none--"
     if sc != nil {
       sortDirection := "(ascending)"
       if sc.reverseSort {
@@ -103,7 +128,7 @@ func (w *EditSortView) RefreshDisplay(g *gocui.Gui) error {
       columnLabel := w.listWidget.columnMap[sc.id].label
       displayName = fmt.Sprintf("%-13v %v", columnLabel, sortDirection)
     }
-    fmt.Fprintf(v, " Sort #%v: %v\n", i+1, displayName)
+    fmt.Fprintf(v, " Sort #%v: %v \n", i+1, displayName)
     if w.sortPosition == i {
       fmt.Fprintf(v, util.CLEAR)
     }
@@ -157,8 +182,19 @@ func (w *EditSortView) keyArrowUpAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *EditSortView) keyDeleteAction(g *gocui.Gui, v *gocui.View) error {
-  writeFooter(g, fmt.Sprintf("\r DELETE") )
+  //writeFooter(g, fmt.Sprintf("\r DELETE") )
   w.sortColumns[w.sortPosition] = nil
+
+  pos := 0
+  for _, sc := range w.sortColumns {
+    if sc != nil {
+      w.sortColumns[pos] = sc
+      pos++
+    }
+  }
+  for i := pos; i<len(w.sortColumns); i++ {
+    w.sortColumns[i] = nil
+  }
   return w.RefreshDisplay(g)
 }
 
@@ -167,7 +203,7 @@ func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
   sc := w.sortColumns[w.sortPosition]
   columnId := w.listWidget.editSortColumnId
   if sc == nil {
-    sc = &sortColumn{
+    sc = &SortColumn{
       id: columnId,
       reverseSort: w.listWidget.columnMap[columnId].defaultReverseSort,
     }
@@ -190,7 +226,7 @@ func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
 func (w *EditSortView) applySort(g *gocui.Gui) {
 
-  useSortColumns := make([]*sortColumn,0)
+  useSortColumns := make([]*SortColumn,0)
   for _, sc := range w.sortColumns {
     if sc != nil {
       useSortColumns = append(useSortColumns, sc)
@@ -208,6 +244,18 @@ func (w *EditSortView) closeView(g *gocui.Gui, v *gocui.View) error {
     return err
   }
   w.applySort(g)
-  //w.listWidget.RefreshDisplay(g)
+  //w.RefreshDisplay(g)
+  w.listWidget.RefreshDisplay(g)
+	return nil
+}
+
+func (w *EditSortView) cancelView(g *gocui.Gui, v *gocui.View) error {
+  w.listWidget.enableSortEdit(false)
+  if err := w.masterUI.CloseView(w, w.name); err != nil {
+    return err
+  }
+  w.listWidget.sortColumns = w.oldSortColumns
+  w.listWidget.SortData()
+  w.listWidget.RefreshDisplay(g)
 	return nil
 }
