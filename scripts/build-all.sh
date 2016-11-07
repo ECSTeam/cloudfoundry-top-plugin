@@ -21,9 +21,9 @@ if [[ "$1" = "release" ]] ; then
 	fi
 fi
 
-LINUX_FILENAME="nozzle-plugin-linux"
-MAC_FILENAME="nozzle-plugin-darwin"
-WIN_FILENAME="nozzle-plugin.exe"
+LINUX_FILENAME="top-plugin-linux"
+MAC_FILENAME="top-plugin-darwin"
+WIN_FILENAME="top-plugin.exe"
 
 GOOS=linux GOARCH=amd64 go build -o $LINUX_FILENAME
 LINUX64_SHA1=`cat $LINUX_FILENAME | openssl sha1`
@@ -52,7 +52,7 @@ cat
 
 if [[ "$1" = "release" ]] ; then
 	git commit -am "Build version $TAG"
-	git tag -a $TAG -m "Nozzle Plugin v$TAG"
+	git tag -a $TAG -m "Top Plugin v$TAG"
 	echo "Tagged release, 'git push --follow-tags' to push it to github, upload the binaries to github"
 	echo "and copy the output above to the cli repo you plan to deploy in"
 fi

@@ -32,6 +32,7 @@ type Client struct {
 type ClientOptions struct {
 	AppGUID        string
 	Debug          bool
+	Cygwin				 bool
 	NoFilter       bool
 	Filter         string
 	SubscriptionID string

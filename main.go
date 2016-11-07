@@ -2,6 +2,9 @@ package main
 
 import (
 	"os"
+	"strings"
+	//"fmt"
+	//"runtime"
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
@@ -34,9 +37,9 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 					Usage: "cf top",
 					Options: map[string]string{
 						"debug":           "-d, enable debugging",
-						"no-filter":       "-n, no firehose filter. Display all messages",
-						"filter":          "-f, specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop",
-						"subscription-id": "-s, specify subscription id for distributing firehose output between clients",
+						"cygwin":          "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
+						//"filter":          "-f, specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop",
+						//"subscription-id": "-s, specify subscription id for distributing firehose output between clients",
 					},
 				},
 			},
@@ -70,21 +73,70 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 
+	cfTrace := os.Getenv("CF_TRACE")
+	if strings.ToLower(cfTrace) == "true" {
+		c.ui.Failed("The cf top plugin will not run with CF_TRACE environment variable set to true")
+		return
+	}
+
+	if !options.Cygwin && strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") {
+		shell := os.Getenv("SHELL")
+		if len(shell) > 0 {
+			c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top -cygwin'")
+			return
+		}
+	}
+
+	/***********************************************************
+	Trying to find a way to detect cygwin but not detect cygwin if cmd.exe is spawned from cygwin
+
+	values := os.Environ()
+	for _, v := range values  {
+		fmt.Printf("value: [%v]\n", v)
+	}
+
+	fmt.Printf("Separator: [%v]\n", os.PathSeparator)
+	fmt.Printf("PathListSeparator: [%v]\n", os.PathListSeparator)
+	fmt.Printf("Geteuid: %v\n", os.Geteuid())
+	fmt.Printf("Getppid: %v\n", os.Getppid())
+	p, e := os.FindProcess(os.Getppid())
+	fmt.Printf("Getppid: %+v [Err:%v]\n", p, e)
+
+	if strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") {
+		shell := os.Getenv("SHELL")
+		if len(shell) > 0 {
+			c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top'")
+			return
+		}
+	}
+	fmt.Printf("runtime.GOOS: [%v]\n", runtime.GOOS)
+	*/
+
+	/*
+	if strings.ToLower(osType) == "cygwin" {
+		c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top'")
+		return
+	}
+	*/
+
+
 	client := top.NewClient(cliConnection, options, c.ui)
 	client.Start()
 }
 
 func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	var debug bool
+	var cygwin bool
 	var noFilter bool
 	var filter string
 	var subscriptionId string
 
 	fc := flags.New()
 	fc.NewBoolFlag("debug", "d", "used for debugging")
-	fc.NewBoolFlag("no-filter", "n", "no firehose filter. Display all messages")
-	fc.NewStringFlag("filter", "f", "specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop")
-	fc.NewStringFlag("subscription-id", "s", "specify subscription id for distributing firehose output between clients")
+	fc.NewBoolFlag("cygwin", "c", "force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )")
+	//fc.NewBoolFlag("no-filter", "n", "no firehose filter. Display all messages")
+	//fc.NewStringFlag("filter", "f", "specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop")
+	//fc.NewStringFlag("subscription-id", "s", "specify subscription id for distributing firehose output between clients")
 	err := fc.Parse(args[1:]...)
 
 	if err != nil {
@@ -93,6 +145,10 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	if fc.IsSet("debug") {
 		debug = fc.Bool("debug")
 	}
+	if fc.IsSet("cygwin") {
+		cygwin = fc.Bool("cygwin")
+	}
+	/*
 	if fc.IsSet("no-filter") {
 		noFilter = fc.Bool("no-filter")
 	}
@@ -102,9 +158,10 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	if fc.IsSet("subscription-id") {
 		subscriptionId = fc.String("subscription-id")
 	}
-
+	*/
 	return &top.ClientOptions{
 		Debug:          debug,
+		Cygwin:					cygwin,
 		NoFilter:       noFilter,
 		Filter:         filter,
 		SubscriptionID: subscriptionId,
