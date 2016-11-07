@@ -3,6 +3,7 @@ package helpView
 import (
 	"fmt"
   "log"
+  "strings"
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
@@ -13,10 +14,16 @@ type HelpView struct {
   width int
   height int
   helpText string
+
+  helpTextLines int
+
+  viewOffset int
 }
 
 func NewHelpView(masterUI masterUIInterface.MasterUIInterface, name string, width, height int, helpText string) *HelpView {
-	return &HelpView{masterUI: masterUI, name: name, width: width, height: height, helpText: helpText}
+	hv := &HelpView{masterUI: masterUI, name: name, width: width, height: height, helpText: helpText}
+  hv.helpTextLines = strings.Count(helpText,"\n")
+  return hv
 }
 
 func (w *HelpView) Layout(g *gocui.Gui) error {
@@ -32,6 +39,18 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeHelpView); err != nil {
       return err
     }
+    if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeHelpView); err != nil {
+      return err
+    }
+    if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeHelpView); err != nil {
+      return err
+    }
+    if err := g.SetKeybinding(w.name, gocui.KeyArrowUp, gocui.ModNone, w.arrowUp); err != nil {
+      log.Panicln(err)
+    }
+    if err := g.SetKeybinding(w.name, gocui.KeyArrowDown, gocui.ModNone, w.arrowDown); err != nil {
+      log.Panicln(err)
+    }
 
     if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
       log.Panicln(err)
@@ -44,6 +63,23 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 func (w *HelpView) closeHelpView(g *gocui.Gui, v *gocui.View) error {
   if err := w.masterUI.CloseView(w, w.name); err != nil {
     return err
+  }
+	return nil
+}
+
+
+func (w *HelpView) arrowUp(g *gocui.Gui, v *gocui.View) error {
+  if w.viewOffset > 0 {
+    w.viewOffset--
+    v.SetOrigin(0, w.viewOffset)
+  }
+	return nil
+}
+
+func (w *HelpView) arrowDown(g *gocui.Gui, v *gocui.View) error {
+  if w.viewOffset <= (w.helpTextLines - w.height) {
+    w.viewOffset++
+    v.SetOrigin(0, w.viewOffset)
   }
 	return nil
 }

@@ -82,14 +82,6 @@ func NewTraffic() *Traffic {
 // Take the stats map and generated a reverse sorted list base on attribute X
 func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc) []*AppStats {
 
-  /*
-	appName := func(c1, c2 util.Sortable) bool {
-    d1 := c1.(*AppStats)
-    d2 := c2.(*AppStats)
-		return util.CaseInsensitiveLess(d1.AppName, d2.AppName)
-	}
-  */
-
   s := make([]util.Sortable, 0, len(statsMap))
   for _, d := range statsMap {
     appMetadata := metadata.FindAppMetadata(d.AppId)
@@ -116,7 +108,6 @@ func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc
     s = append(s, d)
   }
 
-  //util.OrderedBy(eventCountRev, appName).Sort(s)
   util.OrderedBy(sortFunctions).Sort(s)
 
   s2 := make([]*AppStats, len(s))
@@ -124,80 +115,5 @@ func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc
       s2[i] = d.(*AppStats)
   }
 
-  //sort.Sort(sort.Reverse(s))
   return s2
 }
-
-
-
-/*
-// Len is part of sort.Interface.
-func (d dataSlice) Len() int {
-    return len(d)
-}
-
-// Swap is part of sort.Interface.
-func (d dataSlice) Swap(i, j int) {
-    d[i], d[j] = d[j], d[i]
-}
-
-// Less is part of sort.Interface. We use count as the value to sort by
-func (d dataSlice) Less(i, j int) bool {
-    if (d[i].EventCount == d[j].EventCount) {
-      return d[i].AppName >= d[j].AppName
-    }
-    return d[i].EventCount <= d[j].EventCount
-}
-*/
-
-
-
-
-
-/*
-
-func main() {
-
-    m := map[string]*AppStats {}
-
-    as := NewAppStats("a")
-    as.AppName = "A"
-    as.SpaceName = "AA"
-    as.OrgName = "ORGA"
-    as.EventCount = 5
-    as.EventL60Rate = 5
-    m["a"] = as
-
-    as = NewAppStats("b")
-    as.AppName = "B"
-    as.SpaceName = "AA"
-    as.OrgName = "ORGA"
-    as.EventCount = 15
-    as.EventL60Rate = 15
-    m["b"] = as
-
-    as = NewAppStats("c")
-    as.AppName = "C"
-    as.SpaceName = "AA"
-    as.OrgName = "ORGA"
-    as.EventCount = 2
-    as.EventL60Rate = 2
-    m["c"] = as
-
-    as = NewAppStats("d")
-    as.AppName = "D"
-    as.SpaceName = "AA"
-    as.OrgName = "ORGA"
-    as.EventCount = 8
-    as.EventL60Rate = 8
-    m["d"] = as
-
-    s := getStats(m)
-
-    for _, d := range s {
-        //fmt.Printf("%+v\n", *d)
-        //d2 := d.(*AppStats)
-        fmt.Printf("%v %v %v %v %v\n", d.AppId, d.AppName, d.SpaceName, d.OrgName, d.EventCount)
-    }
-}
-*/

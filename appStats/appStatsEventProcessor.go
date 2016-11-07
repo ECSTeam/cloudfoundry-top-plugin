@@ -6,6 +6,7 @@ import (
   //"math/rand"
   "time"
   "strconv"
+  "sync"
 	"fmt"
   //"log"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -19,19 +20,27 @@ import (
 type AppStatsEventProcessor struct {
   AppMap      map[string]*AppStats
   TotalEvents int64
+  mu  *sync.Mutex
 }
 
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
   return &AppStatsEventProcessor {
     AppMap:  make(map[string]*AppStats),
     TotalEvents: 0,
+    mu: &sync.Mutex{},
   }
 }
 
 func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
+
+  ap.mu.Lock()
+  defer ap.mu.Unlock()
+
   clone := deepcopy.Copy(ap).(*AppStatsEventProcessor)
 
   for _, appStat := range ap.AppMap {
+
+    clonedAppStat := clone.AppMap[appStat.AppId]
 
     httpAllCount := int64(0)
     http2xxCount := int64(0)
@@ -89,16 +98,17 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
         totalReportingContainers++
       }
     }
-    appStat.TotalCpuPercentage = totalCpuPercentage
-    appStat.TotalReportingContainers = totalReportingContainers
+    clonedAppStat.TotalCpuPercentage = totalCpuPercentage
+    clonedAppStat.TotalReportingContainers = totalReportingContainers
 
     logCount := int64(0)
     for _, cs := range appStat.ContainerArray {
       if cs != nil {
-        logCount = logCount + (cs.OutCount + cs.ErrCount)
+        logCount = logCount + cs.OutCount + cs.ErrCount
       }
     }
-    appStat.TotalLogCount = logCount + appStat.NonContainerOutCount + appStat.NonContainerErrCount
+
+    clonedAppStat.TotalLogCount = logCount + appStat.NonContainerOutCount + appStat.NonContainerErrCount
 
     totalTraffic.AvgResponseL60Time = util.AvgMultipleTrackers(responseL60TimeArray)
     totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)
@@ -109,7 +119,7 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
     totalTraffic.Http3xxCount = http3xxCount
     totalTraffic.Http4xxCount = http4xxCount
     totalTraffic.Http5xxCount = http5xxCount
-    clone.AppMap[appStat.AppId].TotalTraffic = totalTraffic
+    clonedAppStat.TotalTraffic = totalTraffic
 
   }
 
@@ -121,14 +131,21 @@ func (ap *AppStatsEventProcessor) GetTotalEvents() int64 {
 }
 
 func (ap *AppStatsEventProcessor) Clear() {
+
+  ap.mu.Lock()
+  defer ap.mu.Unlock()
+
   ap.AppMap = make(map[string]*AppStats)
 	ap.TotalEvents = 0
 }
 
 func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
 
+  ap.mu.Lock()
+  defer ap.mu.Unlock()
+
   eventType := msg.GetEventType()
-switch eventType {
+  switch eventType {
   case events.Envelope_HttpStartStop:
     ap.httpStartStopEvent(msg)
   case events.Envelope_ContainerMetric:

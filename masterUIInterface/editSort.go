@@ -19,12 +19,17 @@ type EditSortView struct {
   sortPosition int
   sortColumns []*SortColumn
   oldSortColumns []*SortColumn
+  priorStateOfDisplayPaused bool
 }
 
 func NewEditSortView(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditSortView {
 	w := &EditSortView{masterUI: masterUI, name: name, listWidget: listWidget}
   w.width = 55
   w.height = 14
+
+
+  w.priorStateOfDisplayPaused = listWidget.displayView.GetDisplayPaused()
+  listWidget.displayView.SetDisplayPaused(true)
 
   w.sortColumns = make([]*SortColumn,MAX_SORT_COLUMNS)
   for i, sc := range listWidget.sortColumns {
@@ -134,6 +139,7 @@ func (w *EditSortView) RefreshDisplay(g *gocui.Gui) error {
     }
   }
   return w.listWidget.RefreshDisplay(g)
+  //return w.listWidget.displayView.RefreshDisplay(g)
 }
 
 
@@ -218,7 +224,7 @@ func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
   }
 
-  writeFooter(g, fmt.Sprintf("\r sc: %+v", sc) )
+  //writeFooter(g, fmt.Sprintf("\r sc: %+v", sc) )
   w.applySort(g)
 
   return nil
@@ -243,9 +249,11 @@ func (w *EditSortView) closeView(g *gocui.Gui, v *gocui.View) error {
   if err := w.masterUI.CloseView(w, w.name); err != nil {
     return err
   }
+
+  w.listWidget.displayView.SetDisplayPaused(w.priorStateOfDisplayPaused)
   w.applySort(g)
-  //w.RefreshDisplay(g)
-  w.listWidget.RefreshDisplay(g)
+  //w.listWidget.RefreshDisplay(g)
+  w.listWidget.displayView.RefreshDisplay(g)
 	return nil
 }
 
@@ -254,8 +262,9 @@ func (w *EditSortView) cancelView(g *gocui.Gui, v *gocui.View) error {
   if err := w.masterUI.CloseView(w, w.name); err != nil {
     return err
   }
+  w.listWidget.displayView.SetDisplayPaused(w.priorStateOfDisplayPaused)
   w.listWidget.sortColumns = w.oldSortColumns
   w.listWidget.SortData()
-  w.listWidget.RefreshDisplay(g)
+  w.listWidget.displayView.RefreshDisplay(g)
 	return nil
 }

@@ -5,6 +5,7 @@ import (
   "log"
   "sync"
   "bytes"
+  "strings"
   //"sort"
   //"strconv"
   "github.com/jroimartin/gocui"
@@ -86,7 +87,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
   	if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
-           helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 60,10, "This is the appStats help text")
+           helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 70,15, helpText)
            asUI.masterUI.LayoutManager().Add(helpView)
            asUI.masterUI.SetCurrentViewOnTop(g,"helpView")
            return nil
@@ -104,6 +105,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
       }); err != nil {
   		log.Panicln(err)
   	}
+
   }
 
   return asUI.appListWidget.Layout(g)
@@ -398,13 +400,18 @@ func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 
   currentView := asUI.masterUI.GetCurrentView(g)
   currentName := currentView.Name()
-  if currentName == asUI.name {
-    return asUI.refreshListDisplay(g)
-  } else if asUI.appDetailView != nil && currentName == asUI.appDetailView.name {
-    return asUI.appDetailView.refreshDisplay(g)
-  } else {
-    return nil
+  if strings.HasPrefix(currentName, asUI.name) {
+    err := asUI.refreshListDisplay(g)
+    if err != nil {
+      return err
+    }
+  } else if asUI.appDetailView != nil && strings.HasPrefix(currentName, asUI.appDetailView.name) {
+    err := asUI.appDetailView.refreshDisplay(g)
+    if err != nil {
+      return err
+    }
   }
+  return asUI.updateHeader(g)
 }
 
 func (asUI *AppListView) GetListSize() int {
@@ -429,7 +436,8 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
   if err != nil {
     return err
   }
-  return asUI.updateHeader(g)
+  //return asUI.updateHeader(g)
+  return err
 }
 
 func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
