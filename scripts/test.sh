@@ -4,7 +4,7 @@ set -e
 
 function cleanup {
   rm -f main.exe
-  rm -f nozzle
+  rm -f top
 }
 trap cleanup EXIT
 

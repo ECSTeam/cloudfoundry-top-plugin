@@ -1,13 +1,21 @@
 #!/bin/sh
+#
+# To use this script, install github-release via:
+#   go get github.com/aktau/github-release
+# Then verify GITHUB_TOKEN variable is set
+#   export GITHUB_TOKEN=XXXXXXX (your personal token)
+#
 
 set -e
+export GITHUB_USER=kkellner
+export GITHUB_REPO=cloudfoundry-top-plugin
 
 if [[ "$1" = "release" ]] ; then
 	TAG="$2"
 	: ${TAG:?"Usage: build_all.sh [release] [TAG]"}
 
 
-	if git tag | grep $TAG > /dev/null 2>&1 ; then
+	if $GOPATH/bin/github-release info --tag $TAG > /dev/null 2>&1 ; then
 		echo "$TAG exists, remove it or increment"
 		exit 1
 	else
@@ -51,8 +59,29 @@ sed "s/__TODAY__/$NOW/" |
 cat
 
 if [[ "$1" = "release" ]] ; then
-	git commit -am "Build version $TAG"
-	git tag -a $TAG -m "Top Plugin v$TAG"
-	echo "Tagged release, 'git push --follow-tags' to push it to github, upload the binaries to github"
-	echo "and copy the output above to the cli repo you plan to deploy in"
+
+	$GOPATH/bin/github-release release \
+    --tag $TAG \
+    --name "Cloud Foundry top plugin $TAG" \
+    --description "$TAG release - work in progress"
+
+	$GOPATH/bin/github-release upload \
+    --tag $TAG \
+    --name "top-plugin-darwin" \
+    --file bin/osx/top-plugin-darwin
+
+	$GOPATH/bin/github-release upload \
+    --tag $TAG \
+    --name "top-plugin-linux" \
+    --file bin/linux64/top-plugin-linux
+
+	$GOPATH/bin/github-release upload \
+    --tag $TAG \
+    --name "top-plugin.exe" \
+    --file bin/win64/top-plugin.exe
+
+	#git commit -am "Build version $TAG"
+	#git tag -a $TAG -m "Top Plugin v$TAG"
+	#echo "Tagged release, 'git push --follow-tags' to push it to github, upload the binaries to github"
+	echo "copy the output above to the cli repo you plan to deploy in"
 fi

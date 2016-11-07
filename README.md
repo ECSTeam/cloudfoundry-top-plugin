@@ -33,7 +33,14 @@ Not yet implemented - This will show statistics based on routes (domain/host/pat
 
 # Installation
 
-TODO: Put in community plugins yet
+
+* Download the binary file for your target OS from the latest [release](https://github.com/kkellner/cloudfoundry-top-plugin/releases)
+* If you've already installed the plugin and are updating, you must first run cf uninstall-plugin TopPlugin
+* Then install the plugin with cf install-plugin top-plugin-darwin   (or top-plugin-linux or top-plugin.exe)
+* If you get a permission error run: chmod +x top-plugin-darwin (or top-plugin-linux) on the binary
+* Verify the plugin installed by looking for it with cf plugins
+
+TODO: Register plugin with the community cloud foundry plugins website (https://plugins.cloudfoundry.org/)
 [comment]: # ```bash
 [comment]: # cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
 [comment]: # cf install-plugin ./top-plugin-osx
@@ -41,7 +48,10 @@ TODO: Put in community plugins yet
 
 # Usage
 
-User must be logged in as admin
+User must be logged in as admin.
+```
+cf top
+```
 
 ## Options
 

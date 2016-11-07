@@ -2,4 +2,4 @@
 
 set -e
 
-(cf uninstall-plugin "FirehosePlugin" || true) && go build -o firehose-plugin main.go && cf install-plugin firehose-plugin
+(cf uninstall-plugin "TopPlugin" || true) && go build -o top-plugin main.go && cf install-plugin top-plugin
