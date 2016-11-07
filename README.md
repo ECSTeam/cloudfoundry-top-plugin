@@ -34,7 +34,7 @@ Not yet implemented - This will show statistics based on routes (domain/host/pat
 # Installation
 
 
-* Download the binary file for your target OS from the latest [release](https://github.com/kkellner/cloudfoundry-top-plugin/releases/latest)
+* **Download the binary file for your target OS from the latest [release](https://github.com/kkellner/cloudfoundry-top-plugin/releases/latest)**
 * If you've already installed the plugin and are updating, you must first run cf uninstall-plugin TopPlugin
 * Then install the plugin with cf install-plugin top-plugin-darwin   (or top-plugin-linux or top-plugin.exe)
 * If you get a permission error run: chmod +x top-plugin-darwin (or top-plugin-linux) on the binary
