@@ -170,7 +170,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   if reportingAppInstances==0 {
     fmt.Fprintf(v, "%6v", " Waiting for container metrics...\n\n")
   } else {
-    fmt.Fprintf(v, "Total CPU: %6.2f\n", totalCpuPercentage)
+    fmt.Fprintf(v, "Total CPU%: %6.2f\n", totalCpuPercentage)
   }
   totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
   fmt.Fprintf(v, "Non container logs - Stdout: %-12v ",util.Format(appStats.NonContainerOutCount))

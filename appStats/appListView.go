@@ -212,7 +212,7 @@ func (asUI *AppListView) column5XX() *masterUIInterface.ListColumn {
   }
   displayFunc := func(statIndex int, isSelected bool) string {
     appStats := asUI.displayedSortedStatList[statIndex]
-    return fmt.Sprintf("%8d", appStats.TotalTraffic.Http3xxCount)
+    return fmt.Sprintf("%8d", appStats.TotalTraffic.Http5xxCount)
   }
   c := masterUIInterface.NewListColumn("5XX", "5XX", 8, false, appNameSortFunc, true, displayFunc)
   return c

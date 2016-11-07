@@ -23,10 +23,15 @@ A list of application stats which include:
 
 Sorting display:
 Press 's' to show the sort window allowing multi-column
-sorting of any column
+sorting of any column.
 
 Clear stats:
-Press 'c' to clear the statistics counters
+Press 'c' to clear the statistics counters.
+
+Pause display update:
+Press 'p' to toggle pause display update.  When display update is paused
+top will continue to capture statstics and display updated values when
+unpaused.
 
 Filter display:
 TODO
