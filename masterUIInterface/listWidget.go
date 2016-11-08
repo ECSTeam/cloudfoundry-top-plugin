@@ -328,12 +328,69 @@ func (asUI *ListWidget) moveHighlight(g *gocui.Gui, v *gocui.View, callback chan
 
 
 func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
-  return nil
+  callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
+    if rowIndex > 0 {
+      _, viewY := v.Size()
+      viewSize := viewY-1
+      //offset := rowIndex - viewSize + 1
+      offset := 0
+      if rowIndex == asUI.displayIndexOffset {
+        offset = rowIndex - viewSize
+      } else {
+        offset = rowIndex - (rowIndex - asUI.displayIndexOffset)
+      }
+
+      if offset < 0 {
+        offset = 0
+      }
+
+      writeFooter(g,"\r PGUP rowIndex["+strconv.Itoa(rowIndex)+"]")
+      writeFooter(g," viewSize["+strconv.Itoa(viewSize)+"]")
+      writeFooter(g," o["+strconv.Itoa(offset)+"]")
+      writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]  ")
+
+      if (offset < (asUI.displayIndexOffset)) {
+        asUI.displayIndexOffset = (offset)
+        writeFooter(g," update["+strconv.Itoa(asUI.displayIndexOffset)+"] ")
+      } else {
+        //offset++
+      }
+      asUI.highlightKey = asUI.GetRowKey(offset)
+      return true
+    }
+    return false
+  }
+  return asUI.moveHighlight(g, v, callbackFunc)
 }
 
 func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
-
-  return nil
+  listSize := asUI.GetListSize()
+  callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
+    if rowIndex+1 < listSize {
+      _, viewY := v.Size()
+      viewSize := viewY-1
+      offset := rowIndex + viewSize
+      writeFooter(g,"\r PGDN rowIndex["+strconv.Itoa(rowIndex)+"]")
+      writeFooter(g," viewSize["+strconv.Itoa(viewSize)+"]")
+      writeFooter(g," o["+strconv.Itoa(offset)+"]")
+      writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]  ")
+      if offset > listSize-1 {
+        offset = listSize - 1
+      }
+      if (offset > (asUI.displayIndexOffset + viewSize)) {
+        asUI.displayIndexOffset = (offset - viewSize) + 1
+        writeFooter(g," update["+strconv.Itoa(asUI.displayIndexOffset)+"] ")
+      } else {
+        if offset < listSize-1 {
+          offset--
+        }
+      }
+      asUI.highlightKey = asUI.GetRowKey(offset)
+      return true
+    }
+    return false
+  }
+  return asUI.moveHighlight(g, v, callbackFunc)
 }
 
 
