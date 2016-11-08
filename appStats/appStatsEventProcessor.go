@@ -91,14 +91,20 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
     }
 
     totalCpuPercentage := 0.0
+    totalUsedMemory := uint64(0)
+    totalUsedDisk:= uint64(0)
     totalReportingContainers := 0
     for _, cs := range appStat.ContainerArray {
       if cs != nil && cs.ContainerMetric != nil {
         totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
+        totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
+        totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
         totalReportingContainers++
       }
     }
     clonedAppStat.TotalCpuPercentage = totalCpuPercentage
+    clonedAppStat.TotalUsedMemory = totalUsedMemory
+    clonedAppStat.TotalUsedDisk = totalUsedDisk
     clonedAppStat.TotalReportingContainers = totalReportingContainers
 
     logCount := int64(0)

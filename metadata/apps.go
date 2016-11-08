@@ -8,6 +8,7 @@ import (
   "github.com/cloudfoundry/cli/plugin"
 )
 
+const MEGABYTE  = (1024 * 1024)
 
 type AppResponse struct {
 	Count     int           `json:"total_results"`
@@ -22,18 +23,48 @@ type AppResource struct {
 }
 
 type App struct {
-	Guid        string                 `json:"guid"`
-	Name        string                 `json:"name"`
-	//Environment map[string]interface{} `json:"environment_json"`
-	SpaceGuid    string                `json:"space_guid"`
+  Guid         string     `json:"guid"`
+  Name         string     `json:"name,omitempty"`
+  SpaceGuid    string     `json:"space_guid,omitempty"`
   SpaceName    string
   OrgGuid      string
   OrgName      string
+
+  StackGuid    string     `json:"stack_guid,omitempty"`
+  MemoryMB     float64    `json:"memory,omitempty"`
+  DiskQuotaMB  float64    `json:"disk_quota,omitempty"`
+
+  Environment map[string]interface{} `json:"environment_json,omitempty"`
+  Instances           float64 `json:"instances,omitempty"`
+  State               string  `json:"state,omitempty"`
+  EnableSsh           bool    `json:"enable_ssh,omitempty"`
+
+  PackageState        string  `json:"package_state,omitempty"`
+  StagingFailedReason string  `json:"staging_failed_reason,omitempty"`
+  StagingFailedDesc   string  `json:"staging_failed_description,omitempty"`
+  DetectedStartCmd    string  `json:"detected_start_command,omitempty"`
+  //DockerCredentials string  `json:"docker_credentials_json,omitempty"`
+  //audit.app.create event fields
+  Console             bool    `json:"console,omitempty"`
+  Buildpack           string  `json:"buildpack,omitempty"`
+  DetectedBuildpack   string  `json:"detected_buildpack,omitempty"`
+
+  HealthcheckType     string  `json:"health_check_type,omitempty"`
+  HealthcheckTimeout  float64 `json:"health_check_timeout,omitempty"`
+  Production          bool    `json:"production,omitempty"`
+  //app.crash event fields
+  //Index           float64 `json:"index,omitempty"`
+  //ExitStatus      string  `json:"exit_status,omitempty"`
+  //ExitDescription string  `json:"exit_description,omitempty"`
+  //ExitReason      string  `json:"reason,omitempty"`
+
+
 }
 
 
 var (
   appsMetadataCache []App
+  totalMemoryAllStartedApps float64
 )
 
 func AppMetadataSize() int {
@@ -45,6 +76,7 @@ func AllApps() []App {
 }
 
 func FindAppMetadata(appId string) App {
+  // TODO: put this into a map for efficiency
 	for _, app := range appsMetadataCache {
 		if app.Guid == appId {
 			return app;
@@ -53,7 +85,16 @@ func FindAppMetadata(appId string) App {
 	return App{}
 }
 
-
+func GetTotalMemoryAllStartedApps() float64 {
+  if totalMemoryAllStartedApps == 0 {
+    for _, app := range appsMetadataCache {
+      if app.State == "STARTED" {
+        totalMemoryAllStartedApps = totalMemoryAllStartedApps + ((app.MemoryMB * MEGABYTE) * app.Instances)
+      }
+    }
+  }
+  return totalMemoryAllStartedApps
+}
 
 func LoadAppCache(cliConnection plugin.CliConnection) {
   appsMetadataCache = getAppMetadata(cliConnection)
@@ -98,6 +139,9 @@ func getAppMetadata(cliConnection plugin.CliConnection)[]App {
       totalPages = appResp.Pages
     }
 
+    // Flush the total memory counter
+
+    totalMemoryAllStartedApps = 0
     return appsMetadata
 
     /*

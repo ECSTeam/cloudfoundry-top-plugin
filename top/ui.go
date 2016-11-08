@@ -19,6 +19,7 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/debug"
   "github.com/kkellner/cloudfoundry-top-plugin/util"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+  "github.com/kkellner/cloudfoundry-top-plugin/metadata"
 )
 
 
@@ -234,12 +235,16 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
     return err
   }
 
-  fmt.Fprintf(v, "Target: %v@%v\n", username, url.Host)
-  // TODO: this should be info that parent UI has / displays
-  //fmt.Fprintf(v, "API EP:%v", apiEndpoint)
+  fmt.Fprintf(v, "Target: %v@%v    ", username, url.Host)
 
-  //fmt.Fprintf(v, "Total Apps: %-11v", len(ui.appsMetadata))
-  //fmt.Fprintf(v, "Unique Apps: %-11v", len(m))
+  displayTotalMem := "--"
+  totalMem := metadata.GetTotalMemoryAllStartedApps()
+  if totalMem > 0 {
+    displayTotalMem = util.ByteSize(totalMem).String()
+  }
+  // Total quota memory of all running app instances
+  fmt.Fprintf(v, "Reserved Mem: %v\n", displayTotalMem)
+
   return nil
 }
 

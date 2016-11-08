@@ -4,6 +4,7 @@ import (
 	"fmt"
   "log"
   "strings"
+  "regexp"
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
@@ -14,7 +15,7 @@ type HelpView struct {
   width int
   height int
   helpText string
-
+  displayText string
   helpTextLines int
 
   viewOffset int
@@ -33,9 +34,15 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-    v.Title = "Help (press ENTER to close)"
+    v.Title = "Help (press ENTER to close, DOWN/UP arrow to scroll)"
     v.Frame = true
-    fmt.Fprintln(v, w.helpText)
+
+    if w.displayText == "" {
+      re := regexp.MustCompile(`\*\*(.*)\*\*`)
+      w.displayText = re.ReplaceAllString(w.helpText, "\033[37;1m${1}\033[0m")
+    }
+
+    fmt.Fprintf(v, w.displayText)
     if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeHelpView); err != nil {
       return err
     }

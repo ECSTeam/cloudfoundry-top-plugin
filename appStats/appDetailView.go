@@ -7,7 +7,10 @@ import (
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
   "github.com/kkellner/cloudfoundry-top-plugin/util"
+  "github.com/kkellner/cloudfoundry-top-plugin/metadata"
 )
+
+const MEGABYTE  = (1024 * 1024)
 
 type AppDetailView struct {
   masterUI masterUIInterface.MasterUIInterface
@@ -62,6 +65,7 @@ func (w *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
   if err := w.masterUI.CloseView(w, w.name); err != nil {
     return err
   }
+  w.appListView.RefreshDisplay(g)
 	return nil
 }
 
@@ -123,6 +127,27 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
   fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 
+  appMetadata := metadata.FindAppMetadata(appStats.AppId)
+
+  memoryDisplay := "--"
+  totalMemoryDisplay := "--"
+  instancesDisplay := "--"
+  diskQuotaDisplay := "--"
+  if appMetadata.Guid != "" {
+    memoryDisplay = util.ByteSize(appMetadata.MemoryMB * MEGABYTE).String()
+    diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * MEGABYTE).String()
+    instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
+    totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * MEGABYTE) * appMetadata.Instances).String()
+  }
+
+  fmt.Fprintf(v, "Memory quota:         %v\n", memoryDisplay)
+  fmt.Fprintf(v, "Disk quota:           %v\n", diskQuotaDisplay)
+  fmt.Fprintf(v, "Desired instances:    %v\n", instancesDisplay)
+  fmt.Fprintf(v, "Total memory for all: %v\n", totalMemoryDisplay)
+
+  //fmt.Fprintf(v, "appMetadata: %+v\n", appMetadata)
+
+
   fmt.Fprintf(v, "\nHTTP Requests:\n")
   fmt.Fprintf(v, "2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
   fmt.Fprintf(v, "3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
@@ -140,6 +165,8 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "\n")
 
   totalCpuPercentage := 0.0
+  totalMemory := uint64(0)
+  totalDisk := uint64(0)
   reportingAppInstances := 0
   totalLogCount := int64(0)
   for i, ca := range appStats.ContainerArray {
@@ -149,9 +176,13 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
       if ca.ContainerMetric != nil {
         cpuPercentage := *ca.ContainerMetric.CpuPercentage
         totalCpuPercentage = totalCpuPercentage + cpuPercentage
+        memory := *ca.ContainerMetric.MemoryBytes
+        totalMemory = totalMemory + memory
+        disk := *ca.ContainerMetric.DiskBytes
+        totalDisk = totalDisk + disk
         fmt.Fprintf(v, "%8.2f", cpuPercentage)
-        fmt.Fprintf(v, "%12v",  util.ByteSize(*ca.ContainerMetric.MemoryBytes))
-        fmt.Fprintf(v, "%12v",  util.ByteSize(*ca.ContainerMetric.DiskBytes))
+        fmt.Fprintf(v, "%12v",  util.ByteSize(memory))
+        fmt.Fprintf(v, "%12v",  util.ByteSize(disk))
       } else {
         fmt.Fprintf(v, "%8v", "--")
         fmt.Fprintf(v, "%12v", "--")
@@ -166,12 +197,20 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
       reportingAppInstances++
     }
   }
-  fmt.Fprintf(v, "\n")
+  //fmt.Fprintf(v, "\n")
   if reportingAppInstances==0 {
-    fmt.Fprintf(v, "%6v", " Waiting for container metrics...\n\n")
+    fmt.Fprintf(v, "%6v", "\n Waiting for container metrics...")
   } else {
-    fmt.Fprintf(v, "Total CPU%: %6.2f\n", totalCpuPercentage)
+    if totalMemory > 0 {
+      fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+      fmt.Fprintf(v, "Total")
+      fmt.Fprintf(v, "%8.2f", totalCpuPercentage)
+      fmt.Fprintf(v, "%12v",util.ByteSize(totalMemory))
+      fmt.Fprintf(v, "%12v",util.ByteSize(totalDisk))
+      fmt.Fprintf(v, "%v", util.CLEAR)
+    }
   }
+  fmt.Fprintf(v, "\n\n")
   totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
   fmt.Fprintf(v, "Non container logs - Stdout: %-12v ",util.Format(appStats.NonContainerOutCount))
   fmt.Fprintf(v, "Stderr: %-12v\n",util.Format(appStats.NonContainerErrCount))

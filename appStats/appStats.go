@@ -58,6 +58,9 @@ type AppStats struct {
   TotalTraffic *Traffic
 
   TotalCpuPercentage float64  // updated after a clone of this object
+  TotalUsedMemory uint64  // updated after a clone of this object
+  TotalUsedDisk uint64  // updated after a clone of this object
+
   TotalReportingContainers int //updated after a clone of this object
   TotalLogCount int64 //updated after a clone of this object
 }
