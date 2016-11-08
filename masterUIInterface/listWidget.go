@@ -196,8 +196,12 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
   listSize := asUI.GetListSize()
 
   if listSize>0 {
+    stopRowIndex := maxRows + asUI.displayIndexOffset
     asUI.writeHeader(v)
-    for i:=0;i<listSize && i<maxRows;i++ {
+    for i:=0;i<listSize && i<stopRowIndex;i++ {
+      if i < asUI.displayIndexOffset {
+        continue
+      }
       asUI.writeRowData(v, i)
     }
   } else {
@@ -268,9 +272,9 @@ func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
         if i > 0 {
           asUI.highlightKey = lastKey
           offset := i-1
-          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
-          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
+          writeFooter(g,"\r i["+strconv.Itoa(i)+"]")
+          writeFooter(g," o["+strconv.Itoa(offset)+"]")
+          writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
           if (asUI.displayIndexOffset > offset) {
             asUI.displayIndexOffset = offset
           }
@@ -301,10 +305,10 @@ func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
           if (offset>asUI.displayIndexOffset) {
             asUI.displayIndexOffset = offset
           }
-          //writeFooter(g,"\r row["+strconv.Itoa(row)+"]")
-          //writeFooter(g,"viewY["+strconv.Itoa(viewY)+"]")
-          //writeFooter(g,"o["+strconv.Itoa(offset)+"]")
-          //writeFooter(g,"rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
+          writeFooter(g,"\r i["+strconv.Itoa(i)+"]")
+          writeFooter(g," viewY["+strconv.Itoa(viewY)+"]")
+          writeFooter(g," o["+strconv.Itoa(offset)+"]")
+          writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
           break
         }
       }

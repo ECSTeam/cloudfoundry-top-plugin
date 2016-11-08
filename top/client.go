@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 	"crypto/tls"
+	"time"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
@@ -92,6 +93,9 @@ func (c *Client) Start() {
 	subscriptionID := "TopPlugin_" + pseudo_uuid()
 	c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:"+subscriptionID)
 
+	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
+	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
+	dopplerConnection.SetIdleTimeout(30 * time.Second)
 	// consumer.Stream(appGuid, authToken)
 	// consumer.ContainerEnvelopes(appId, authToken)
 	// consumer.Firehose(appId, authToken)
@@ -124,7 +128,7 @@ func (c *Client) routeEvent() error {
 			c.router.Route(envelope)
 		case err := <-c.errors:
 			c.handleError(err)
-			return err
+			//return err
 		}
 	}
 }
@@ -140,8 +144,8 @@ func (c *Client) handleError(err error) {
 	default:
 		fmt.Printf("Error while reading from the firehose: %v", err)
 	}
-	fmt.Printf("Closing connection with traffic controller due to %v", err)
-	dopplerConnection.Close()
+	//fmt.Printf("Closing connection with traffic controller due to %v", err)
+	//dopplerConnection.Close()
 
 }
 

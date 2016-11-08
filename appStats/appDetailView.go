@@ -52,6 +52,9 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeAppDetailView); err != nil {
       return err
     }
+    if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeAppDetailView); err != nil {
+      return err
+    }
 
     if err := g.SetKeybinding(w.name, 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
          appInfoWidget := NewAppInfoWidget(w.masterUI, "appInfoWidget", 70, 20)
@@ -147,7 +150,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "%22v", "")
   fmt.Fprintf(v, "    1sec   10sec   60sec\n")
 
-  fmt.Fprintf(v, "%22v", "HTTP Event Rate:")
+  fmt.Fprintf(v, "%22v", "HTTP(S) Event Rate:")
   fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL1Rate)
   fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL10Rate)
   fmt.Fprintf(v, "%8v\n", appStats.TotalTraffic.EventL60Rate)
@@ -159,22 +162,24 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 
 
   fmt.Fprintf(v, "\n")
-  fmt.Fprintf(v, "HTTP Requests:\n")
-  fmt.Fprintf(v, "2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
-  fmt.Fprintf(v, "3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
-  fmt.Fprintf(v, "4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
-  fmt.Fprintf(v, "5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
+  fmt.Fprintf(v, "HTTP(S) status code:\n")
+  fmt.Fprintf(v, "  2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
+  fmt.Fprintf(v, "  3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
+  fmt.Fprintf(v, "  4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
+  fmt.Fprintf(v, "  5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
   fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-  fmt.Fprintf(v, "All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
+  fmt.Fprintf(v, "  All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
   fmt.Fprintf(v, "%v", util.CLEAR)
 
   fmt.Fprintf(v, "\nContainer Info:\n")
-  fmt.Fprintf(v, "%5v", "Inst")
+  fmt.Fprintf(v, "%5v", "INST")
   fmt.Fprintf(v, "%8v", "CPU%")
-  fmt.Fprintf(v, "%12v", "Mem(bytes)")
-  fmt.Fprintf(v, "%12v", "Disk(bytes)")
-  fmt.Fprintf(v, "%12v", "Stdout")
-  fmt.Fprintf(v, "%12v", "Stderr")
+  fmt.Fprintf(v, "%12v", "MEM USED")
+  fmt.Fprintf(v, "%12v", "MEM FREE")
+  fmt.Fprintf(v, "%12v", "DISK USED")
+  fmt.Fprintf(v, "%12v", "DISK FREE")
+  fmt.Fprintf(v, "%12v", "STDOUT")
+  fmt.Fprintf(v, "%12v", "STDERR")
   fmt.Fprintf(v, "\n")
 
   totalCpuPercentage := 0.0
@@ -195,9 +200,13 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
         totalDisk = totalDisk + disk
         fmt.Fprintf(v, "%8.2f", cpuPercentage)
         fmt.Fprintf(v, "%12v",  util.ByteSize(memory))
+        fmt.Fprintf(v, "%12v",  util.ByteSize((uint64(appMetadata.MemoryMB) * MEGABYTE) - memory))
         fmt.Fprintf(v, "%12v",  util.ByteSize(disk))
+        fmt.Fprintf(v, "%12v",  util.ByteSize((uint64(appMetadata.DiskQuotaMB) * MEGABYTE) - disk))
       } else {
         fmt.Fprintf(v, "%8v", "--")
+        fmt.Fprintf(v, "%12v", "--")
+        fmt.Fprintf(v, "%12v", "--")
         fmt.Fprintf(v, "%12v", "--")
         fmt.Fprintf(v, "%12v", "--")
       }
