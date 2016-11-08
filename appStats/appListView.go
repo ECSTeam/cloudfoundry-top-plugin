@@ -521,7 +521,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
   }
 
   fmt.Fprintf(v, "\r")
-  fmt.Fprintf(v, "Total Apps: %-5v ", metadata.AppMetadataSize())
+  fmt.Fprintf(v, "Total Apps: %-5v ", len(asUI.displayedSortedStatList))
   // Active apps are apps that have had go-rounter traffic in last 60 seconds
   fmt.Fprintf(v, "Active Apps: %-4v ", totalActiveApps)
   // Reporting containers are containers that reported metrics in last 90 seconds

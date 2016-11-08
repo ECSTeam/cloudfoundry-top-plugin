@@ -3,11 +3,11 @@ package masterUIInterface
 import (
   "log"
   "fmt"
-  "errors"
+  //"errors"
   "bytes"
   "strconv"
 	"github.com/jroimartin/gocui"
-  "github.com/kkellner/cloudfoundry-top-plugin/debug"
+  //"github.com/kkellner/cloudfoundry-top-plugin/debug"
   "github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -16,6 +16,7 @@ type getRowDisplayFunc func(index int, isSelected bool) string
 type getDisplayHeaderFunc func() string
 
 type getListSizeFunc func() int
+type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool
 
 type DisplayViewInterface interface {
   RefreshDisplay(g *gocui.Gui) error
@@ -132,6 +133,14 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(w.name, gocui.KeyArrowDown, gocui.ModNone, w.arrowDown); err != nil {
       log.Panicln(err)
     }
+    if err := g.SetKeybinding(w.name, gocui.KeyPgdn, gocui.ModNone, w.pageDownAction); err != nil {
+      log.Panicln(err)
+    }
+    if err := g.SetKeybinding(w.name, gocui.KeyPgup, gocui.ModNone, w.pageUpAction); err != nil {
+      log.Panicln(err)
+    }
+
+
     if err := g.SetKeybinding(w.name, 's', gocui.ModNone, w.editSortAction); err != nil {
       log.Panicln(err)
     }
@@ -254,11 +263,47 @@ func (asUI *ListWidget) writeHeader(v *gocui.View) {
 }
 
 func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
-
-  if asUI.GetRowKey==nil {
-    debug.Debug(fmt.Sprintf("GetRowKey function not set"))
-    return errors.New("GetRowKey function not set")
+  callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
+    if rowIndex > 0 {
+      asUI.highlightKey = lastKey
+      offset := rowIndex-1
+      writeFooter(g,"\r rowIndex["+strconv.Itoa(rowIndex)+"]")
+      writeFooter(g," o["+strconv.Itoa(offset)+"]")
+      writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
+      if (asUI.displayIndexOffset > offset) {
+        asUI.displayIndexOffset = offset
+      }
+      return true
+    }
+    return false
   }
+  return asUI.moveHighlight(g, v, callbackFunc)
+}
+
+func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
+
+  listSize := asUI.GetListSize()
+  callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
+    if rowIndex+1 < listSize {
+      asUI.highlightKey = asUI.GetRowKey(rowIndex+1)
+      _, viewY := v.Size()
+      offset := (rowIndex+2) - (viewY-1)
+      if (offset>asUI.displayIndexOffset) {
+        asUI.displayIndexOffset = offset
+      }
+      writeFooter(g,"\r rowIndex["+strconv.Itoa(rowIndex)+"]")
+      writeFooter(g," viewY["+strconv.Itoa(viewY)+"]")
+      writeFooter(g," o["+strconv.Itoa(offset)+"]")
+      writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
+      return true
+    }
+    return false
+  }
+  return asUI.moveHighlight(g, v, callbackFunc)
+}
+
+
+func (asUI *ListWidget) moveHighlight(g *gocui.Gui, v *gocui.View, callback changeSelectionCallbackFunc) error {
 
   listSize := asUI.GetListSize()
   if asUI.highlightKey == "" {
@@ -267,57 +312,30 @@ func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
     }
   } else {
     lastKey := ""
-    for i:=0;i<listSize;i++ {
-      if asUI.GetRowKey(i) == asUI.highlightKey {
-        if i > 0 {
-          asUI.highlightKey = lastKey
-          offset := i-1
-          writeFooter(g,"\r i["+strconv.Itoa(i)+"]")
-          writeFooter(g," o["+strconv.Itoa(offset)+"]")
-          writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
-          if (asUI.displayIndexOffset > offset) {
-            asUI.displayIndexOffset = offset
-          }
+    for rowIndex:=0;rowIndex<listSize;rowIndex++ {
+      if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
+        if callback(g,v,rowIndex,lastKey) {
           break
         }
       }
-      lastKey = asUI.GetRowKey(i)
+      lastKey = asUI.GetRowKey(rowIndex)
     }
   }
-
-  return asUI.RefreshDisplay(g)
-}
-
-func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
-
-  listSize := asUI.GetListSize()
-  if asUI.highlightKey == "" {
-    if listSize > 0 {
-      asUI.highlightKey = asUI.GetRowKey(0)
-    }
-  } else {
-    for i:=0;i<listSize;i++ {
-      if asUI.GetRowKey(i) == asUI.highlightKey {
-        if i+1 < listSize {
-          asUI.highlightKey = asUI.GetRowKey(i+1)
-          _, viewY := v.Size()
-          offset := (i+2) - (viewY-1)
-          if (offset>asUI.displayIndexOffset) {
-            asUI.displayIndexOffset = offset
-          }
-          writeFooter(g,"\r i["+strconv.Itoa(i)+"]")
-          writeFooter(g," viewY["+strconv.Itoa(viewY)+"]")
-          writeFooter(g," o["+strconv.Itoa(offset)+"]")
-          writeFooter(g," rowOff["+strconv.Itoa(asUI.displayIndexOffset)+"]")
-          break
-        }
-      }
-    }
-  }
-
   return asUI.RefreshDisplay(g)
 
+  return nil
 }
+
+
+func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
+  return nil
+}
+
+func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
+
+  return nil
+}
+
 
 // This is for debugging -- remove it later
 func writeFooter(g *gocui.Gui, msg string) {

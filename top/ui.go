@@ -217,7 +217,16 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
   v.Clear()
 
   fmt.Fprintf(v, "Total events: %-13v", util.Format(ui.router.GetEventCount()))
-  fmt.Fprintf(v, "Stats duration: %-10v ", Round(time.Now().Sub(ui.router.GetStartTime()), time.Second) )
+
+  runtimeSeconds := Round(time.Now().Sub(ui.router.GetStartTime()), time.Second)
+  if runtimeSeconds < time.Second * 30 {
+    fmt.Fprintf(v, util.DIM_GREEN)
+    fmt.Fprintf(v, "Warm-up period: %-10v ", runtimeSeconds)
+    fmt.Fprintf(v, util.CLEAR)
+  } else {
+    fmt.Fprintf(v, "Stats duration: %-10v ", runtimeSeconds)
+  }
+
   fmt.Fprintf(v, "%v\n", time.Now().Format("01-02-2006 15:04:05"))
 
   apiEndpoint, err := ui.cliConnection.ApiEndpoint()
