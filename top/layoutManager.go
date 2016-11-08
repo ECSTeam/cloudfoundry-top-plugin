@@ -3,10 +3,12 @@ package top
 import (
 	//"fmt"
   "github.com/jroimartin/gocui"
+  "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 type LayoutManager struct {
-	 managers []gocui.Manager
+	 managers []masterUIInterface.Manager
+   viewNames []string
 }
 
 func NewLayoutManager() *LayoutManager {
@@ -22,7 +24,7 @@ func (w *LayoutManager) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func (w *LayoutManager) Contains(managerToFind gocui.Manager) bool {
+func (w *LayoutManager) Contains(managerToFind masterUIInterface.Manager) bool {
   for _, m := range w.managers {
      if m == managerToFind {
          return true
@@ -31,14 +33,14 @@ func (w *LayoutManager) Contains(managerToFind gocui.Manager) bool {
    return false
 }
 
-func (w *LayoutManager) Add(m gocui.Manager) {
+func (w *LayoutManager) Add(m masterUIInterface.Manager) {
 	w.managers = append(w.managers, m)
 }
 
 
-func (w *LayoutManager) Remove(managerToRemove gocui.Manager) {
+func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) masterUIInterface.Manager {
 
-  filteredManagers := []gocui.Manager{}
+  filteredManagers := []masterUIInterface.Manager{}
   for _, m := range w.managers {
      if m != managerToRemove {
          filteredManagers = append(filteredManagers, m)
@@ -46,4 +48,9 @@ func (w *LayoutManager) Remove(managerToRemove gocui.Manager) {
    }
    //fmt.Printf("\n\n\n[filteredManagers size:%v]", len(w.managers))
    w.managers = filteredManagers
+   len := len(filteredManagers)
+   if len > 0 {
+     return filteredManagers[len-1]
+   }
+   return nil
 }

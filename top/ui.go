@@ -127,13 +127,13 @@ func (ui *MasterUI) initGui() {
 
 }
 
-func (ui *MasterUI) CloseView(m gocui.Manager, name string ) error {
+func (ui *MasterUI) CloseView(m masterUIInterface.Manager, name string ) error {
 
   	ui.gui.DeleteView(name)
     ui.gui.DeleteKeybindings(name)
-    ui.layoutManager.Remove(m)
+    nextForFocus := ui.layoutManager.Remove(m)
 
-    if err := ui.SetCurrentViewOnTop(ui.gui, "appListView"); err != nil {
+    if err := ui.SetCurrentViewOnTop(ui.gui, nextForFocus.Name()); err != nil {
       return err
     }
   	return nil
@@ -235,7 +235,8 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
     return err
   }
 
-  fmt.Fprintf(v, "Target: %v@%v    ", username, url.Host)
+  targetDisplay := fmt.Sprintf("%v@%v", username, url.Host)
+  fmt.Fprintf(v, "Target: %-46.46v", targetDisplay)
 
   displayTotalMem := "--"
   totalMem := metadata.GetTotalMemoryAllStartedApps()
@@ -243,8 +244,16 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
     displayTotalMem = util.ByteSize(totalMem).String()
   }
   // Total quota memory of all running app instances
-  fmt.Fprintf(v, "Reserved Mem: %v\n", displayTotalMem)
+  fmt.Fprintf(v, "Rsrvd Mem: %8v ", displayTotalMem)
 
+  displayTotalDisk := "--"
+  totalDisk := metadata.GetTotalDiskAllStartedApps()
+  if totalMem > 0 {
+    displayTotalDisk = util.ByteSize(totalDisk).String()
+  }
+
+  fmt.Fprintf(v, "Rsrvd Disk: %8v ", displayTotalDisk)
+  fmt.Fprintf(v, "\n")
   return nil
 }
 

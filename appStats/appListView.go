@@ -54,6 +54,11 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,name string, to
     displayedProcessor: displayedProcessor,}
 }
 
+func (asUI *AppListView) Name() string {
+  return asUI.name
+}
+
+
 func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
   if asUI.appListWidget == nil {
@@ -501,11 +506,13 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
   totalReportingAppInstances := 0
   totalActiveApps := 0
   totalUsedMemoryAppInstances := uint64(0)
+  totalUsedDiskAppInstances := uint64(0)
   for _, appStats := range asUI.displayedSortedStatList {
     for _, cs := range appStats.ContainerArray {
       if cs != nil && cs.ContainerMetric != nil {
         totalReportingAppInstances++
         totalUsedMemoryAppInstances = totalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
+        totalUsedDiskAppInstances = totalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
       }
     }
     if appStats.TotalTraffic.EventL60Rate > 0 {
@@ -514,13 +521,20 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
   }
 
   fmt.Fprintf(v, "\r")
-  fmt.Fprintf(v, "Total Apps: %-11v", metadata.AppMetadataSize())
+  fmt.Fprintf(v, "Total Apps: %-5v ", metadata.AppMetadataSize())
   // Active apps are apps that have had go-rounter traffic in last 60 seconds
-  fmt.Fprintf(v, "Active Apps: %-4v", totalActiveApps)
+  fmt.Fprintf(v, "Active Apps: %-4v ", totalActiveApps)
   // Reporting containers are containers that reported metrics in last 90 seconds
-  fmt.Fprintf(v, "Rprt Cntnrs: %-4v", totalReportingAppInstances)
+  fmt.Fprintf(v, "Rprt Cntnrs: %-4v ", totalReportingAppInstances)
 
-  fmt.Fprintf(v, "Used Mem: %8v", util.ByteSize(totalUsedMemoryAppInstances))
+  totalUsedMemoryAppInstancesDisplay := "--"
+  totalUsedDiskAppInstancesDisplay := "--"
+  if totalReportingAppInstances > 0 {
+    totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).String()
+    totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).String()
+  }
+  fmt.Fprintf(v, "Used Mem:  %8v ", totalUsedMemoryAppInstancesDisplay)
+  fmt.Fprintf(v, "Used Disk:  %8v ", totalUsedDiskAppInstancesDisplay)
 
 
   return nil

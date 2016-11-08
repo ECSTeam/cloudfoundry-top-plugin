@@ -65,6 +65,7 @@ type App struct {
 var (
   appsMetadataCache []App
   totalMemoryAllStartedApps float64
+  totalDiskAllStartedApps float64
 )
 
 func AppMetadataSize() int {
@@ -94,6 +95,17 @@ func GetTotalMemoryAllStartedApps() float64 {
     }
   }
   return totalMemoryAllStartedApps
+}
+
+func GetTotalDiskAllStartedApps() float64 {
+  if totalDiskAllStartedApps == 0 {
+    for _, app := range appsMetadataCache {
+      if app.State == "STARTED" {
+        totalDiskAllStartedApps = totalDiskAllStartedApps + ((app.DiskQuotaMB * MEGABYTE) * app.Instances)
+      }
+    }
+  }
+  return totalDiskAllStartedApps
 }
 
 func LoadAppCache(cliConnection plugin.CliConnection) {

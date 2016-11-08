@@ -48,6 +48,10 @@ func NewEditSortView(masterUI MasterUIInterface, name string, listWidget *ListWi
   return w
 }
 
+func (w *EditSortView) Name() string {
+  return w.name
+}
+
 func (w *EditSortView) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
 	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
@@ -115,7 +119,7 @@ func (w *EditSortView) RefreshDisplay(g *gocui.Gui) error {
   fmt.Fprintln(v, "  RIGHT or LEFT arrow - select sort column")
   fmt.Fprintln(v, "  DOWN or UP arrow - select sort position")
   fmt.Fprintln(v, "  SPACE - select column and toggle sort direction")
-  fmt.Fprintln(v, "  DELETE - remove sort for position")
+  fmt.Fprintln(v, "  DELETE - remove sort from position")
   fmt.Fprintln(v, "  ENTER - apply sort")
   fmt.Fprintln(v, "")
 

@@ -112,6 +112,10 @@ func NewListWidget(masterUI MasterUIInterface, name string,
   return w
 }
 
+func (w *ListWidget) Name() string {
+  return w.name
+}
+
 func (w *ListWidget) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
 
@@ -151,10 +155,6 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 
 	}
 	return nil
-}
-
-func (asUI *ListWidget) Name() string {
-  return asUI.name
 }
 
 func (asUI *ListWidget) HighlightKey() string {

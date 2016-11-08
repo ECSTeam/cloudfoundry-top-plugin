@@ -19,6 +19,10 @@ func NewFilterWidget(masterUI masterUIInterface.MasterUIInterface, name string, 
 	return &FilterWidget{masterUI: masterUI, name: name, width: width, height: height}
 }
 
+func (w *FilterWidget) Name() string {
+  return w.name
+}
+
 func (w *FilterWidget) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
 	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))

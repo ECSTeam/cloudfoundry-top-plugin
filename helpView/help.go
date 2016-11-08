@@ -27,6 +27,10 @@ func NewHelpView(masterUI masterUIInterface.MasterUIInterface, name string, widt
   return hv
 }
 
+func (w *HelpView) Name() string {
+  return w.name
+}
+
 func (w *HelpView) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
 	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))

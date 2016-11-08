@@ -25,6 +25,10 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface, name string,
 	return &AppDetailView{masterUI: masterUI, name: name, appId: appId, appListView: appListView}
 }
 
+func (w *AppDetailView) Name() string {
+  return w.name
+}
+
 func (w *AppDetailView) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
   //topMargin := w.appListView.topMargin+2
@@ -42,13 +46,20 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-    v.Title = "App Details (press ENTER to close)"
+    v.Title = "App Details (press 'q' to quit view)"
     v.Frame = true
-    if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeAppDetailView); err != nil {
-      return err
-    }
+
     if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeAppDetailView); err != nil {
       return err
+    }
+
+    if err := g.SetKeybinding(w.name, 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+         appInfoWidget := NewAppInfoWidget(w.masterUI, "appInfoWidget", 70, 20)
+         w.masterUI.LayoutManager().Add(appInfoWidget)
+         w.masterUI.SetCurrentViewOnTop(g,"appInfoWidget")
+         return nil
+    }); err != nil {
+      log.Panicln(err)
     }
 
     if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
@@ -105,13 +116,32 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
     avgResponseTimeL1Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
   }
 
+  appMetadata := metadata.FindAppMetadata(appStats.AppId)
+
+  memoryDisplay := "--"
+  totalMemoryDisplay := "--"
+  totalDiskDisplay := "--"
+  instancesDisplay := "--"
+  diskQuotaDisplay := "--"
+  if appMetadata.Guid != "" {
+    memoryDisplay = util.ByteSize(appMetadata.MemoryMB * MEGABYTE).String()
+    diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * MEGABYTE).String()
+    instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
+    totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * MEGABYTE) * appMetadata.Instances).String()
+    totalDiskDisplay = util.ByteSize((appMetadata.DiskQuotaMB * MEGABYTE) * appMetadata.Instances).String()
+  }
 
   fmt.Fprintf(v, " \n")
-  fmt.Fprintf(v, "AppName: %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
-  fmt.Fprintf(v, "AppId:   %v\n", appStats.AppId)
-  fmt.Fprintf(v, "AppUUID: %v\n", appStats.AppUUID)
-  fmt.Fprintf(v, "Space:   %v\n", appStats.SpaceName)
-  fmt.Fprintf(v, "Org:     %v\n", appStats.OrgName)
+  fmt.Fprintf(v, "App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
+  fmt.Fprintf(v, "AppId:           %v\n", appStats.AppId)
+  fmt.Fprintf(v, "AppUUID:         %v\n", appStats.AppUUID)
+  fmt.Fprintf(v, "Space:           %v\n", appStats.SpaceName)
+  fmt.Fprintf(v, "Organization:    %v\n", appStats.OrgName)
+  fmt.Fprintf(v, "Desired insts:   %v\n", instancesDisplay)
+  fmt.Fprintf(v, "Rsrvd mem per (all):  %8v (%8v)\n", memoryDisplay, totalMemoryDisplay)
+  fmt.Fprintf(v, "Rsrvd disk per (all): %8v (%8v)\n", diskQuotaDisplay, totalDiskDisplay)
+  //fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+  //fmt.Fprintf(v, "%v", util.CLEAR)
   fmt.Fprintf(v, "\n")
 
   fmt.Fprintf(v, "%22v", "")
@@ -122,38 +152,21 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
   fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL10Rate)
   fmt.Fprintf(v, "%8v\n", appStats.TotalTraffic.EventL60Rate)
 
-  fmt.Fprintf(v, "%22v", "Avg Response Time(ms):")
+  fmt.Fprintf(v, "%22v", "Avg Rspnse Time(ms):")
   fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
   fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
   fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 
-  appMetadata := metadata.FindAppMetadata(appStats.AppId)
 
-  memoryDisplay := "--"
-  totalMemoryDisplay := "--"
-  instancesDisplay := "--"
-  diskQuotaDisplay := "--"
-  if appMetadata.Guid != "" {
-    memoryDisplay = util.ByteSize(appMetadata.MemoryMB * MEGABYTE).String()
-    diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * MEGABYTE).String()
-    instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
-    totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * MEGABYTE) * appMetadata.Instances).String()
-  }
-
-  fmt.Fprintf(v, "Memory quota:         %v\n", memoryDisplay)
-  fmt.Fprintf(v, "Disk quota:           %v\n", diskQuotaDisplay)
-  fmt.Fprintf(v, "Desired instances:    %v\n", instancesDisplay)
-  fmt.Fprintf(v, "Total memory for all: %v\n", totalMemoryDisplay)
-
-  //fmt.Fprintf(v, "appMetadata: %+v\n", appMetadata)
-
-
-  fmt.Fprintf(v, "\nHTTP Requests:\n")
+  fmt.Fprintf(v, "\n")
+  fmt.Fprintf(v, "HTTP Requests:\n")
   fmt.Fprintf(v, "2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
   fmt.Fprintf(v, "3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
   fmt.Fprintf(v, "4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
   fmt.Fprintf(v, "5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
+  fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
   fmt.Fprintf(v, "All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
+  fmt.Fprintf(v, "%v", util.CLEAR)
 
   fmt.Fprintf(v, "\nContainer Info:\n")
   fmt.Fprintf(v, "%5v", "Inst")
