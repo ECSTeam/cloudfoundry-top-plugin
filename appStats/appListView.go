@@ -507,6 +507,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
   totalActiveApps := 0
   totalUsedMemoryAppInstances := uint64(0)
   totalUsedDiskAppInstances := uint64(0)
+  totalCpuPercentage := float64(0)
   for _, appStats := range asUI.displayedSortedStatList {
     for _, cs := range appStats.ContainerArray {
       if cs != nil && cs.ContainerMetric != nil {
@@ -514,6 +515,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
         totalUsedMemoryAppInstances = totalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
         totalUsedDiskAppInstances = totalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
       }
+      totalCpuPercentage = totalCpuPercentage + appStats.TotalCpuPercentage
     }
     if appStats.TotalTraffic.EventL60Rate > 0 {
       totalActiveApps++
@@ -529,12 +531,15 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 
   totalUsedMemoryAppInstancesDisplay := "--"
   totalUsedDiskAppInstancesDisplay := "--"
+  totalCpuPercentageDisplay := "--"
   if totalReportingAppInstances > 0 {
     totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).String()
     totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).String()
+    totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", totalCpuPercentage)
   }
   fmt.Fprintf(v, "Used Mem:  %8v ", totalUsedMemoryAppInstancesDisplay)
   fmt.Fprintf(v, "Used Disk:  %8v ", totalUsedDiskAppInstancesDisplay)
+  fmt.Fprintf(v, "CPU: %-8v ", totalCpuPercentageDisplay)
 
 
   return nil
