@@ -53,7 +53,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection)[]Org {
     //fmt.Printf("url: %v  pageCount: %v  totalPages: %v\n", requestUrl, pageCount, totalPages)
     reponseJSON, err := cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
     if err != nil {
-      fmt.Printf("org error: %v\n", err.Error())
+      fmt.Printf("org curl [%v] error: %v\n", requestUrl, err.Error())
       return nil
     }
 
@@ -62,7 +62,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection)[]Org {
     outputBytes := []byte(outputStr)
     err2 := json.Unmarshal(outputBytes, &orgResp)
     if err2 != nil {
-          fmt.Printf("org error: %v\n", err2.Error())
+          fmt.Printf("org unmarshal error: %v\n", err2.Error())
           return nil
     }
 

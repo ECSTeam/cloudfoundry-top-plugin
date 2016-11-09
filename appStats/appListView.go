@@ -515,8 +515,8 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
         totalUsedMemoryAppInstances = totalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
         totalUsedDiskAppInstances = totalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
       }
-      totalCpuPercentage = totalCpuPercentage + appStats.TotalCpuPercentage
     }
+    totalCpuPercentage = totalCpuPercentage + appStats.TotalCpuPercentage
     if appStats.TotalTraffic.EventL60Rate > 0 {
       totalActiveApps++
     }
@@ -539,7 +539,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
   }
   fmt.Fprintf(v, "Used Mem:  %8v ", totalUsedMemoryAppInstancesDisplay)
   fmt.Fprintf(v, "Used Disk:  %8v ", totalUsedDiskAppInstancesDisplay)
-  fmt.Fprintf(v, "CPU: %-8v ", totalCpuPercentageDisplay)
+  fmt.Fprintf(v, "Used CPU: %-8v ", totalCpuPercentageDisplay)
 
 
   return nil

@@ -4,6 +4,7 @@ import (
   "fmt"
   "strconv"
   "strings"
+  "time"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
 )
@@ -109,27 +110,33 @@ func GetTotalDiskAllStartedApps() float64 {
 }
 
 func LoadAppCache(cliConnection plugin.CliConnection) {
-  appsMetadataCache = getAppMetadata(cliConnection)
+  retryDelay := 100 * time.Millisecond
+  for retryCount:=0;retryCount<5;retryCount++ {
+    data, err := getAppMetadata(cliConnection)
+    if err == nil {
+      appsMetadataCache = data
+      break
+    }
+    time.Sleep(retryDelay)
+  }
 }
 
 
-func getAppMetadata(cliConnection plugin.CliConnection)[]App {
+func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 
-    // Clear cache of any p
     appsMetadata := []App{ }
 
-		//requestUrl := "/v2/apps?inline-relations-depth=2"
     baseRequestUrl := "/v2/apps"
     totalPages := 1
     for pageCount := 1; pageCount<=totalPages ; pageCount++ {
       requestUrl := baseRequestUrl+"?page="+strconv.FormatInt(int64(pageCount), 10)
-      //requestUrl := baseRequestUrl+"?results-per-page=1&page="+strconv.FormatInt(int64(pageCount), 10)
-      //fmt.Printf("url: %v  pageCount: %v  totalPages: %v\n", requestUrl, pageCount, totalPages)
-      //debug.Debug(fmt.Sprintf("url: %v\n", requestUrl))
+
+      // XXX: We need to retry on error
+
   		reponseJSON, err := cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
   		if err != nil {
-  			fmt.Printf("app error: %v\n", err.Error())
-  			return nil
+  			fmt.Printf("app curl [%v] error: %v\n", requestUrl, err.Error())
+  			return nil, err
   		}
 
   		var appResp AppResponse
@@ -138,8 +145,8 @@ func getAppMetadata(cliConnection plugin.CliConnection)[]App {
   		outputBytes := []byte(outputStr)
   		err2 := json.Unmarshal(outputBytes, &appResp)
   		if err2 != nil {
-  					fmt.Printf("app error: %v\n", err2.Error())
-            return nil
+  					fmt.Printf("app unmarshal error: %v\n", err2.Error())
+            return nil, err2
   		}
 
   		for _, app := range appResp.Resources {
@@ -152,9 +159,8 @@ func getAppMetadata(cliConnection plugin.CliConnection)[]App {
     }
 
     // Flush the total memory counter
-
     totalMemoryAllStartedApps = 0
-    return appsMetadata
+    return appsMetadata, nil
 
     /*
 		for _, app := range asUI.appsMetadata {

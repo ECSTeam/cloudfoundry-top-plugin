@@ -84,6 +84,12 @@ func (c *Client) Start() {
 		return
 	}
 
+	isLoggedIn, err := c.cliConnection.IsLoggedIn()
+	if err !=nil && isLoggedIn {
+		fmt.Errorf("Must login first")
+		return
+	}
+
 
 	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 	if c.options.Debug {
@@ -96,6 +102,8 @@ func (c *Client) Start() {
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
 	dopplerConnection.SetIdleTimeout(30 * time.Second)
+
+
 	// consumer.Stream(appGuid, authToken)
 	// consumer.ContainerEnvelopes(appId, authToken)
 	// consumer.Firehose(appId, authToken)
