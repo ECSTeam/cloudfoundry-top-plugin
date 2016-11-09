@@ -2,8 +2,6 @@ package metadata
 
 import (
   "fmt"
-  "strconv"
-  "strings"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
 )
@@ -37,49 +35,39 @@ func FindOrgMetadata(orgGuid string) Org {
 	return Org{}
 }
 
+
+
 func LoadOrgCache(cliConnection plugin.CliConnection) {
-  orgsMetadataCache = getOrgMetadata(cliConnection)
+  data, err := getOrgMetadata(cliConnection)
+  if err != nil {
+    //TODO: DO something cleaner with this error
+    fmt.Printf("*** org metadata error: %v\n", err.Error())
+    return
+  }
+  orgsMetadataCache = data
 }
 
-func getOrgMetadata(cliConnection plugin.CliConnection)[]Org {
+func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 
-  orgsMetadata := []Org{ }
+  url := "/v2/organizations"
+  metadata := []Org{ }
 
-  baseRequestUrl := "/v2/organizations"
-  totalPages := 1
-  for pageCount := 1; pageCount<=totalPages ; pageCount++ {
-    requestUrl := baseRequestUrl+"?page="+strconv.FormatInt(int64(pageCount), 10)
-    //requestUrl := baseRequestUrl+"?results-per-page=1&page="+strconv.FormatInt(int64(pageCount), 10)
-    //fmt.Printf("url: %v  pageCount: %v  totalPages: %v\n", requestUrl, pageCount, totalPages)
-    reponseJSON, err := cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
+  handleRequest := func(outputBytes []byte) (interface{}, error) {
+    var response OrgResponse
+    err := json.Unmarshal(outputBytes, &response)
     if err != nil {
-      fmt.Printf("org curl [%v] error: %v\n", requestUrl, err.Error())
-      return nil
+          //fmt.Printf("org unmarshal error: %v\n", err.Error())
+          return metadata, err
     }
-
-    var orgResp OrgResponse
-    outputStr := strings.Join(reponseJSON, "")
-    outputBytes := []byte(outputStr)
-    err2 := json.Unmarshal(outputBytes, &orgResp)
-    if err2 != nil {
-          fmt.Printf("org unmarshal error: %v\n", err2.Error())
-          return nil
+    for _, item := range response.Resources {
+      item.Entity.Guid = item.Meta.Guid
+      metadata = append(metadata, item.Entity)
     }
-
-    for _, org := range orgResp.Resources {
-      org.Entity.Guid = org.Meta.Guid
-      //space.Entity.OrgGuid = space.Entity.OrgData.Meta.Guid
-      orgsMetadata = append(orgsMetadata, org.Entity)
-    }
-    totalPages = orgResp.Pages
+    return response, nil
   }
 
-  return orgsMetadata
-  /*
-  for _, org := range orgsMetadata {
-    fmt.Printf("orgName: %v  orgGuid: %v\n", org.Name, org.Guid)
-  }
-  */
+  callRetriableAPI(cliConnection, url, handleRequest )
 
-  //os.Exit(1)
+  return metadata, nil
+
 }

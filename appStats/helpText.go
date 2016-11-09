@@ -14,7 +14,7 @@ const helpText = `
   SPACE - Space name
   ORG - Organization name
   RCR - Total reporting Containers
-  CPU% - Total CPU percent consumed by all containers
+  CPU%% - Total CPU percent consumed by all containers
   MEM - Total memory used by all containers
   DISK - Total disk used by all containers
   RESP - Avg response time in milliseconds over last 60 seconds

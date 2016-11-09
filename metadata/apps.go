@@ -2,10 +2,6 @@ package metadata
 
 import (
   "fmt"
-  //"strconv"
-  "strings"
-  "time"
-  "reflect"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
 )
@@ -112,20 +108,14 @@ func GetTotalDiskAllStartedApps() float64 {
 }
 
 func LoadAppCache(cliConnection plugin.CliConnection) {
-  retryDelay := 100 * time.Millisecond
-  for retryCount:=0;retryCount<5;retryCount++ {
-    data, err := getAppMetadata(cliConnection)
-    if err == nil {
-      appsMetadataCache = data
-      break
-    }
-    time.Sleep(retryDelay)
+  data, err := getAppMetadata(cliConnection)
+  if err != nil {
+    //TODO: DO something cleaner with this error
+    fmt.Printf("*** app metadata error: %v\n", err.Error())
+    return
   }
+  appsMetadataCache = data
 }
-
-
-type handleResponseFunc func(outputBytes []byte) (interface{}, error)
-
 
 func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 
@@ -136,7 +126,7 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
     var appResp AppResponse
     err := json.Unmarshal(outputBytes, &appResp)
     if err != nil {
-          fmt.Printf("app unmarshal error: %v\n", err.Error())
+          //fmt.Printf("app unmarshal error: %v\n", err.Error())
           return appsMetadata, err
     }
     for _, app := range appResp.Resources {
@@ -146,66 +136,9 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
     return appResp, nil
   }
 
-  callAPI(cliConnection, url, handleRequest )
+  callRetriableAPI(cliConnection, url, handleRequest )
   // Flush the total memory counter
   totalMemoryAllStartedApps = 0
   return appsMetadata, nil
 
-}
-
-func callAPI(cliConnection plugin.CliConnection, nextUrl string, handleResponse handleResponseFunc) error {
-
-	for nextUrl != "" {
-		output, err := cliConnection.CliCommandWithoutTerminalOutput("curl", nextUrl)
-		if err != nil {
-			return err
-		}
-    outputStr := strings.Join(output, "")
-    outputBytes := []byte(outputStr)
-
-    resp, err := handleResponse(outputBytes)
-    if err != nil {
-      return err
-    }
-
-    nextUrl = reflect.ValueOf(resp).FieldByName("NextUrl").String()
-
-	}
-  return nil
-}
-
-
-func getAppMetadataX(cliConnection plugin.CliConnection) ([]App, error) {
-
-  nextUrl := "/v2/apps"
-	//allApps := AppsModel{}
-  appsMetadata := []App{ }
-
-	for nextUrl != "" {
-		output, err := cliConnection.CliCommandWithoutTerminalOutput("curl", nextUrl)
-		if err != nil {
-			return appsMetadata, err
-		}
-
-    var appResp AppResponse
-    outputStr := strings.Join(output, "")
-    outputBytes := []byte(outputStr)
-    err = json.Unmarshal(outputBytes, &appResp)
-    if err != nil {
-          fmt.Printf("app unmarshal error: %v\n", err.Error())
-          return appsMetadata, err
-    }
-    for _, app := range appResp.Resources {
-      app.Entity.Guid = app.Meta.Guid
-      appsMetadata = append(appsMetadata, app.Entity)
-    }
-		if appResp.NextUrl != "" {
-			nextUrl = appResp.NextUrl
-		} else {
-			nextUrl = ""
-		}
-	}
-  // Flush the total memory counter
-  totalMemoryAllStartedApps = 0
-  return appsMetadata, nil
 }

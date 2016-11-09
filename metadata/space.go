@@ -2,8 +2,6 @@ package metadata
 
 import (
   "fmt"
-  "strconv"
-  "strings"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
 )
@@ -41,49 +39,39 @@ func FindSpaceMetadata(spaceGuid string) Space {
 	return Space{}
 }
 
+
+
 func LoadSpaceCache(cliConnection plugin.CliConnection) {
-  spacesMetadataCache = getSpaceMetadata(cliConnection)
+  data, err := getSpaceMetadata(cliConnection)
+  if err != nil {
+    //TODO: DO something cleaner with this error
+    fmt.Printf("*** space metadata error: %v\n", err.Error())
+    return
+  }
+  spacesMetadataCache = data
 }
 
-func getSpaceMetadata(cliConnection plugin.CliConnection)[]Space {
-  // Clear cache of any p
-  spacesMetadata := []Space{ }
+func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 
-  //requestUrl := "/v2/apps?inline-relations-depth=2"
-  baseRequestUrl := "/v2/spaces"
-  totalPages := 1
-  for pageCount := 1; pageCount<=totalPages ; pageCount++ {
-    requestUrl := baseRequestUrl+"?page="+strconv.FormatInt(int64(pageCount), 10)
-    //requestUrl := baseRequestUrl+"?results-per-page=1&page="+strconv.FormatInt(int64(pageCount), 10)
-    //fmt.Printf("url: %v  pageCount: %v  totalPages: %v\n", requestUrl, pageCount, totalPages)
-    reponseJSON, err := cliConnection.CliCommandWithoutTerminalOutput("curl", requestUrl)
+  url := "/v2/spaces"
+  metadata := []Space{ }
+
+  handleRequest := func(outputBytes []byte) (interface{}, error) {
+    var response SpaceResponse
+    err := json.Unmarshal(outputBytes, &response)
     if err != nil {
-      fmt.Printf("space curl [%v] error: %v\n", requestUrl, err.Error())
-      return nil
+          //fmt.Printf("space unmarshal error: %v\n", err.Error())
+          return metadata, err
     }
-
-    var spaceResp SpaceResponse
-    outputStr := strings.Join(reponseJSON, "")
-    outputBytes := []byte(outputStr)
-    err2 := json.Unmarshal(outputBytes, &spaceResp)
-    if err2 != nil {
-          fmt.Printf("space unmarshal error: %v\n", err2.Error())
-          return nil
+    for _, item := range response.Resources {
+      item.Entity.Guid = item.Meta.Guid
+      metadata = append(metadata, item.Entity)
     }
-
-    for _, space := range spaceResp.Resources {
-      space.Entity.Guid = space.Meta.Guid
-      //space.Entity.OrgGuid = space.Entity.OrgData.Meta.Guid
-      spacesMetadata = append(spacesMetadata, space.Entity)
-    }
-    totalPages = spaceResp.Pages
+    return response, nil
   }
-  return spacesMetadata
 
-  /*
-  for _, space := range spacesMetadata {
-    fmt.Printf("spaceName: %v  spaceGuid: %v  orgGuid: %v\n", space.Name, space.Guid, space.OrgGuid)
-  }
-  */
+  callRetriableAPI(cliConnection, url, handleRequest )
+
+  return metadata, nil
 
 }
