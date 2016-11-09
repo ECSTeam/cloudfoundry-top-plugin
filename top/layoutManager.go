@@ -37,6 +37,15 @@ func (w *LayoutManager) Add(m masterUIInterface.Manager) {
 	w.managers = append(w.managers, m)
 }
 
+func (w *LayoutManager) Top() masterUIInterface.Manager {
+  len := len(w.managers)
+  if len > 0 {
+    return w.managers[len-1]
+  }
+  return nil
+}
+
+
 
 func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) masterUIInterface.Manager {
 
@@ -48,9 +57,5 @@ func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) master
    }
    //fmt.Printf("\n\n\n[filteredManagers size:%v]", len(w.managers))
    w.managers = filteredManagers
-   len := len(filteredManagers)
-   if len > 0 {
-     return filteredManagers[len-1]
-   }
-   return nil
+   return w.Top()
 }

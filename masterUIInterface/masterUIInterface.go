@@ -7,7 +7,7 @@ import (
 type MasterUIInterface interface {
 	SetCurrentViewOnTop(*gocui.Gui, string) error
 	GetCurrentView(g *gocui.Gui) *gocui.View
-	CloseView(Manager, string ) error
+	CloseView(Manager) error
 	LayoutManager() LayoutManagerInterface
 }
 

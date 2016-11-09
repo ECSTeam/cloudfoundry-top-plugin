@@ -76,7 +76,7 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 }
 
 func (w *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
-  if err := w.masterUI.CloseView(w, w.name); err != nil {
+  if err := w.masterUI.CloseView(w); err != nil {
     return err
   }
   w.appListView.RefreshDisplay(g)

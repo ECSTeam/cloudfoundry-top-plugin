@@ -46,7 +46,7 @@ func (w *FilterWidget) Layout(g *gocui.Gui) error {
 }
 
 func (w *FilterWidget) closeFilterWidget(g *gocui.Gui, v *gocui.View) error {
-  if err := w.masterUI.CloseView(w, w.name); err != nil {
+  if err := w.masterUI.CloseView(w); err != nil {
     return err
   }
 	return nil

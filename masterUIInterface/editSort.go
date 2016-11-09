@@ -250,7 +250,7 @@ func (w *EditSortView) applySort(g *gocui.Gui) {
 
 func (w *EditSortView) closeView(g *gocui.Gui, v *gocui.View) error {
   w.listWidget.enableSortEdit(false)
-  if err := w.masterUI.CloseView(w, w.name); err != nil {
+  if err := w.masterUI.CloseView(w); err != nil {
     return err
   }
 
@@ -263,7 +263,7 @@ func (w *EditSortView) closeView(g *gocui.Gui, v *gocui.View) error {
 
 func (w *EditSortView) cancelView(g *gocui.Gui, v *gocui.View) error {
   w.listWidget.enableSortEdit(false)
-  if err := w.masterUI.CloseView(w, w.name); err != nil {
+  if err := w.masterUI.CloseView(w); err != nil {
     return err
   }
   w.listWidget.displayView.SetDisplayPaused(w.priorStateOfDisplayPaused)

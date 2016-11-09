@@ -89,9 +89,6 @@ func (ui *MasterUI) initGui() {
 	defer g.Close()
   debug.Init(g)
 
-  //g.SetManagerFunc(ui.layout)
-  //filter := appStats.NewFilterWidget("filterWidget", 10, 10, "Example text")
-
 
   g.SetManager(ui.layoutManager)
 
@@ -120,6 +117,13 @@ func (ui *MasterUI) initGui() {
     log.Panicln(err)
   }
 
+	if err := g.SetKeybinding("appListView", 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+			 intervalWidget := NewEditIntervalWidget(ui, "editIntervalWidget", 30, 6)
+			 return intervalWidget.Init(g)
+	}); err != nil {
+		log.Panicln(err)
+	}
+
   go ui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
@@ -127,10 +131,10 @@ func (ui *MasterUI) initGui() {
 
 }
 
-func (ui *MasterUI) CloseView(m masterUIInterface.Manager, name string ) error {
+func (ui *MasterUI) CloseView(m masterUIInterface.Manager ) error {
 
-  	ui.gui.DeleteView(name)
-    ui.gui.DeleteKeybindings(name)
+  	ui.gui.DeleteView(m.Name())
+    ui.gui.DeleteKeybindings(m.Name())
     nextForFocus := ui.layoutManager.Remove(m)
 
     if err := ui.SetCurrentViewOnTop(ui.gui, nextForFocus.Name()); err != nil {
@@ -220,8 +224,9 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
   runtimeSeconds := Round(time.Now().Sub(ui.router.GetStartTime()), time.Second)
   if runtimeSeconds < time.Second * 30 {
-    fmt.Fprintf(v, util.DIM_GREEN)
-    fmt.Fprintf(v, "Warm-up period: %-10v ", runtimeSeconds)
+    warmUpTimeRemaining := (time.Second * 30) - runtimeSeconds
+		fmt.Fprintf(v, util.DIM_GREEN)
+    fmt.Fprintf(v, "Warm-up period: %-10v ", warmUpTimeRemaining)
     fmt.Fprintf(v, util.CLEAR)
   } else {
     fmt.Fprintf(v, "Stats duration: %-10v ", runtimeSeconds)
