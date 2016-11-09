@@ -6,7 +6,20 @@ const helpText = `
 ** Header information:**
 
   Total events - Total number of events received by the platform
+  Warm-up period - It can take up to 30 seconds to receive all event
+        information before stats are accurate
   Stats duration - Amount of time stats have been collected
+  Target - The target URL of monitored foundation
+  Rsrvd Mem - Total amount of requested memory for all started app instances
+  Rsrvd Disk - Total amount of requested disk for all started app instances
+  Total Apps - Total number of applications deployed to foundation
+  Active Apps - Number of applications that have taken HTTP(S) traffic
+        through the go router in the last 60 seconds
+  Rprt Cntnrs - Number of reporting containers which typically are app
+        instances
+  Used Mem - Amount of memory actually in use by all app instances
+  Used Disk - Amount of disk actually in use by all app instances
+  Used CPU - Amount of CPU consumed by all app instances
 
 ** Application list stats:**
 
@@ -41,7 +54,15 @@ const helpText = `
  unpaused.
 
 ** Filter display:**
- TODO
+ TODO (not implemented yet)
+
+** Refresh screen interval:**
+  TODO (not implemented yet)
+  Press 'i' to set the refresh interval. Default is 1 second.  Valid values
+  are 0.1 - 60.  The refresh interval only effects how often the client
+  screen is refreshed, it has no effect on frequency the platform delivers
+  events. Top uses passive monitoring for stats and increating the refresh
+  interval will not introduce additonal load on the platform.
 
 ** Select application detail:**
  Press UP arrow or DOWN arrow to highlight an application row.
