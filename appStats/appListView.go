@@ -92,7 +92,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
   	if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
-           helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 70,15, helpText)
+           helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75,17, helpText)
            asUI.masterUI.LayoutManager().Add(helpView)
            asUI.masterUI.SetCurrentViewOnTop(g,"helpView")
            return nil

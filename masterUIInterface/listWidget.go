@@ -141,7 +141,7 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
     }
 
 
-    if err := g.SetKeybinding(w.name, 's', gocui.ModNone, w.editSortAction); err != nil {
+    if err := g.SetKeybinding(w.name, 'o', gocui.ModNone, w.editSortAction); err != nil {
       log.Panicln(err)
     }
 

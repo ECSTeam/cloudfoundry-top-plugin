@@ -7,9 +7,10 @@ import (
 	//"github.com/Sirupsen/logrus"
 	//"os"
 
-	//"strings"
+	"strings"
 	"sync"
 	"time"
+	"strconv"
   "net/url"
   //"encoding/json"
   "github.com/jroimartin/gocui"
@@ -33,6 +34,9 @@ type MasterUI struct {
   mu  sync.Mutex // protects ctr
   router *eventrouting.EventRouter
   refreshNow  chan bool
+
+	refreshIntervalMS  time.Duration
+
 }
 
 
@@ -89,6 +93,9 @@ func (ui *MasterUI) initGui() {
 	defer g.Close()
   debug.Init(g)
 
+	// default refresh
+	ui.refreshIntervalMS = 1000 * time.Millisecond
+
 
   g.SetManager(ui.layoutManager)
 
@@ -117,10 +124,7 @@ func (ui *MasterUI) initGui() {
     log.Panicln(err)
   }
 
-	if err := g.SetKeybinding("appListView", 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-			 intervalWidget := NewEditIntervalWidget(ui, "editIntervalWidget", 30, 6)
-			 return intervalWidget.Init(g)
-	}); err != nil {
+	if err := g.SetKeybinding("appListView", 's', gocui.ModNone, ui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
 
@@ -170,6 +174,38 @@ func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
+
+func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
+
+	labelText := "Seconds:"
+	maxLength := 4
+	titleText := "Update refresh interval"
+	helpText := "no help"
+
+	valueText := strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", ui.refreshIntervalMS.Seconds()), "0"), ".")
+
+	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w *masterUIInterface.InputDialogWidget, inputValue string) error {
+		f, err := strconv.ParseFloat(inputValue, 64)
+		if (err != nil) {
+			return err
+		}
+		if f < float64(0.1) {
+			return nil
+		}
+		ui.refreshIntervalMS = time.Duration(f * 1000) * time.Millisecond
+		ui.RefeshNow()
+		return w.CloseWidget(g, v)
+	}
+
+	intervalWidget := masterUIInterface.NewInputDialogWidget(ui,
+		"editIntervalWidget", 30, 6, labelText, maxLength, titleText, helpText,
+		valueText, applyCallbackFunc)
+	return intervalWidget.Init(g)
+
+}
+
+
+
 func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
   ui.router.Clear()
   ui.appListView.ClearStats(g, v)
@@ -189,9 +225,8 @@ func (ui *MasterUI) counter(g *gocui.Gui) {
 		select {
 		case <-ui.refreshNow:
       ui.updateDisplay(g)
-      //ui.refeshDisplay(g)
-		case <-time.After(1000 * time.Millisecond):
-      ui.updateDisplay(g)
+		case <-time.After(ui.refreshIntervalMS):
+		  ui.updateDisplay(g)
 		}
 	}
 }

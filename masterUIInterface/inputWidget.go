@@ -7,6 +7,10 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w *InputDialogWidget, inputValue string) error
+type cancelCallbackFunc func(g *gocui.Gui, v *gocui.View) error
+
+
 type Label struct {
   parentUI Manager
 	name string
@@ -45,13 +49,8 @@ func (l *Label) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-
-type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, inputValue string) error
-type cancelCallbackFunc func(g *gocui.Gui, v *gocui.View) error
-
-
 type Input struct {
-  parentUI Manager
+  parentUI *InputDialogWidget
   name      string
   offsetX, offsetY int
 	width, height int
@@ -63,7 +62,7 @@ type Input struct {
 }
 
 func NewInput(
-  parentUI Manager,
+  parentUI *InputDialogWidget,
   name string,
   offsetX, offsetY,
   width,
@@ -124,13 +123,15 @@ func (i *Input) Layout(g *gocui.Gui) error {
 
 
 func (w *Input) cancelValueAction(g *gocui.Gui, v *gocui.View) error {
-  g.Cursor = false
   return w.cancelCallbackFunc(g, v)
 }
 
 func (w *Input) applyValueAction(g *gocui.Gui, v *gocui.View) error {
-  g.Cursor = false
-  return w.applyCallbackFunc(g, v, w.getValue(v))
+  err := w.applyCallbackFunc(g, v, w.parentUI, w.getValue(v))
+  if err != nil {
+    // TODO: Display error
+  }
+  return nil
 }
 
 func (w *Input) getValue(v *gocui.View) string {
