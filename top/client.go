@@ -59,7 +59,7 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 
 func (c *Client) Start() {
 
-  debug := c.options.Debug
+  isDebug := c.options.Debug
 	conn := c.cliConnection
 
 	isLoggedIn, err := conn.IsLoggedIn()
@@ -98,7 +98,7 @@ func (c *Client) Start() {
 
 	subscriptionID := "TopPlugin_" + pseudo_uuid()
 	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
-	if debug {
+	if isDebug {
 		//dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
 		c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:"+subscriptionID)
 		c.ui.Say("Hit Ctrl+c to exit")
@@ -113,6 +113,8 @@ func (c *Client) Start() {
 
 	ui := NewMasterUI(c.cliConnection)
 	c.router = ui.GetRouter()
+
+	debug.Info("Top started at "+time.Now().Format("01-02-2006 15:04:05"))
 
 	go c.routeEvent()
 	ui.Start()
@@ -139,14 +141,14 @@ func (c *Client) handleError(err error) {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
 		msg := fmt.Sprintf("Normal Websocket Closure: %v", err)
 		//fmt.Printf(msg)
-		debug.Debug(msg)
+		debug.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
 		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
-		debug.Debug(msg)
+		debug.Error(msg)
 		//fmt.Printf("Disconnected because nozzle couldn't keep up. Please try scaling up the nozzle.", nil)
 	default:
 		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
-		debug.Debug(msg)
+		debug.Error(msg)
 	}
 	//fmt.Printf("Closing connection with traffic controller due to %v", err)
 	//dopplerConnection.Close()

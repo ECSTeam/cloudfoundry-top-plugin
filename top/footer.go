@@ -2,6 +2,7 @@ package top
 
 import (
 	"fmt"
+  "errors"
   "github.com/jroimartin/gocui"
 )
 
@@ -23,7 +24,7 @@ func (w *FooterWidget) Layout(g *gocui.Gui) error {
 	v, err := g.SetView(w.name, 0, maxY-w.height, maxX-1, maxY)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+			return errors.New(w.name+" layout error:" + err.Error())
 		}
     v.Frame = false
     v.Title = "Footer"

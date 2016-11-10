@@ -4,6 +4,7 @@ import (
 	"fmt"
   //"strings"
   "log"
+  "errors"
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
   "github.com/kkellner/cloudfoundry-top-plugin/util"
@@ -44,7 +45,7 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(w.name+" layout error:" + err.Error())
 		}
     v.Title = "App Details (press 'q' to quit view)"
     v.Frame = true

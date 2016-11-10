@@ -9,6 +9,7 @@ import (
 	"time"
 	"strconv"
   "net/url"
+	//"github.com/go-errors/errors"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
   "github.com/kkellner/cloudfoundry-top-plugin/appStats"
@@ -41,16 +42,16 @@ func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
     refreshNow:   make(chan bool),
   }
 
-  headerView := NewHeaderWidget(ui, "summaryView", 4)
-  footerView := NewFooterWidget("footerView", 4)
+	headerView := NewHeaderWidget(ui, "summaryView", 4)
+	footerView := NewFooterWidget("footerView", 4)
 
   appListView := appStats.NewAppListView(ui, "appListView", 5, 4, ui.cliConnection)
   ui.appListView = appListView
   ui.router = eventrouting.NewEventRouter(appListView.GetCurrentProcessor())
 
   ui.layoutManager = NewLayoutManager()
+	ui.layoutManager.Add(footerView)
   ui.layoutManager.Add(headerView)
-  ui.layoutManager.Add(footerView)
   ui.layoutManager.Add(appListView)
 
   return ui
@@ -120,6 +121,7 @@ func (ui *MasterUI) initGui() {
 
   go ui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		//log.Panicln(err.(*errors.Error).ErrorStack())
 		log.Panicln(err)
 	}
 

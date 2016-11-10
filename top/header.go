@@ -2,6 +2,7 @@ package top
 
 import (
 	//"fmt"
+  "errors"
   "github.com/jroimartin/gocui"
 )
 
@@ -24,7 +25,7 @@ func (w *HeaderWidget) Layout(g *gocui.Gui) error {
 	_, err := g.SetView(w.name, 0, 0, maxX-1, w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(w.name+" layout error:" + err.Error())
 		}
 		//fmt.Fprint(v, w.body)
 	}

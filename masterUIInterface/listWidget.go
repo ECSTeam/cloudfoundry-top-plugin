@@ -3,7 +3,7 @@ package masterUIInterface
 import (
   "log"
   "fmt"
-  //"errors"
+  "errors"
   "bytes"
   "strconv"
 	"github.com/jroimartin/gocui"
@@ -119,11 +119,14 @@ func (w *ListWidget) Name() string {
 
 func (w *ListWidget) Layout(g *gocui.Gui) error {
   maxX, maxY := g.Size()
-
-	v, err := g.SetView(w.name, 0, w.topMargin, maxX-1, maxY-w.bottomMargin)
+  bottom := maxY-w.bottomMargin
+  if (w.topMargin >= bottom) {
+    bottom = w.topMargin + 1
+  }
+	v, err := g.SetView(w.name, 0, w.topMargin, maxX-1, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(w.name+" (ListWidget) layout error:" + err.Error())
 		}
     v.Title = w.Title
     v.Frame = true

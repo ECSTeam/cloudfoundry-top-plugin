@@ -103,11 +103,14 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
     if err := g.SetKeybinding(asUI.name, 'd', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
-          msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
-          //msg := "test"
+          //msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
+          /*
+          msg := "test"
           for i:=0;i<10;i++ {
-            debug.Debug(msg)
+            debug.Error(msg)
           }
+          */
+          debug.Open()
           return nil
       }); err != nil {
   		log.Panicln(err)

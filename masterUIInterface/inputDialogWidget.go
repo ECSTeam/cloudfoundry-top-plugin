@@ -2,6 +2,7 @@ package masterUIInterface
 
 import (
 	"fmt"
+  "errors"
   //"strings"
   //"log"
   "github.com/jroimartin/gocui"
@@ -77,7 +78,7 @@ func (w *InputDialogWidget) Layout(g *gocui.Gui) error {
 	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(w.name+" layout error:" + err.Error())
 		}
     v.Title = ""
     v.Frame = true

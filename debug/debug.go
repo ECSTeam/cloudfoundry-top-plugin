@@ -5,40 +5,57 @@ import (
   "log"
   "time"
   "strings"
+  "errors"
   "github.com/jroimartin/gocui"
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 
 var (
-	 gui *gocui.Gui
-   debugWidget *DebugWidget
+  debugLines []string
+	gui *gocui.Gui
+  debugWidget *DebugWidget
 )
 
 func Debug(msg string)  {
+  logMsg(msg)
+}
 
+func Info(msg string)  {
+  logMsg(msg)
+}
+
+func Warn(msg string)  {
+  logMsg(msg)
+}
+
+func Error(msg string)  {
+  logMsg(msg)
+  Open()
+}
+
+func Open() {
   if gui != nil {
     gui.Execute(func(gui *gocui.Gui) error {
-      msg := strings.Replace(msg, "\n"," | ",-1)
-
-      line := fmt.Sprintf("%v %v", time.Now().Format("15:04:05"), msg)
-      debugWidget.debugLines = append(debugWidget.debugLines, line)
-
       _, maxY := gui.Size()
       top := 4
       bottom := maxY - 2
       height := bottom - top - 1
-      //height = 10
-      viewOffset := len(debugWidget.debugLines) - height
+      viewOffset := len(debugLines) - height
       if (viewOffset < 0) {
         viewOffset = 0
       }
       debugWidget.viewOffset = viewOffset
-
       openView()
       return nil
-  	})
+    })
   }
+}
+
+func logMsg(msg string)  {
+  msg = strings.Replace(msg, "\n"," | ",-1)
+  line := fmt.Sprintf("%v %v", time.Now().Format("15:04:05"), msg)
+  debugLines = append(debugLines, line)
 }
 
 type DebugWidget struct {
@@ -48,7 +65,6 @@ type DebugWidget struct {
   width int
   viewOffset int
   horizonalOffset int
-  debugLines []string
 }
 
 func InitDebug(g *gocui.Gui, masterUI masterUIInterface.MasterUIInterface) {
@@ -82,10 +98,13 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
   w.height = bottom - top - 1
   w.width = right - left
 
+  if (top >= bottom) {
+    bottom = top + 1
+  }
 	v, err := g.SetView(w.name, left, top, right, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(w.name+" layout error:" + err.Error())
 		}
     v.Title = "DEBUG (press ENTER to close, DOWN/UP arrow to scroll)"
     v.Frame = true
@@ -128,8 +147,8 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 	} else {
     v.Clear()
     h := w.height
-    for index:=w.viewOffset; (index-w.viewOffset)<(h) && index < len(w.debugLines);index++ {
-      debugLine := w.debugLines[index]
+    for index:=w.viewOffset; (index-w.viewOffset)<(h) && index < len(debugLines);index++ {
+      debugLine := debugLines[index]
       if w.horizonalOffset < len(debugLine) {
         debugLine = debugLine[w.horizonalOffset:len(debugLine)]
       } else {
@@ -182,7 +201,7 @@ func (w *DebugWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
 
 func (w *DebugWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
   h := w.height
-  if w.viewOffset < len(w.debugLines) && (len(w.debugLines) - h) > w.viewOffset {
+  if w.viewOffset < len(debugLines) && (len(debugLines) - h) > w.viewOffset {
     w.viewOffset++
   }
 	return nil

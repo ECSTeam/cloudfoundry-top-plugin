@@ -2,6 +2,7 @@ package masterUIInterface
 
 import (
 	"fmt"
+  "errors"
 	"strings"
 
 	"github.com/jroimartin/gocui"
@@ -35,13 +36,13 @@ func (l *Label) Layout(g *gocui.Gui) error {
   l.parentUI.Layout(g)
   x0, y0, _, _, err := g.ViewPosition(l.parentUI.Name())
   if err != nil {
-    return err
+    return errors.New(l.name+" layout error:" + err.Error())
   }
 
 	v, err := g.SetView(l.name, x0+l.offsetX, y0+l.offsetY, x0+l.offsetX+l.width, y0+l.offsetY+l.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return err
+      return errors.New(l.name+" layout error:" + err.Error())
 		}
 		v.Frame = false
 		fmt.Fprint(v, l.labelText)
