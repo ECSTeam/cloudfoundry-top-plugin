@@ -4,6 +4,7 @@ import (
   "fmt"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
+  "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
 const MEGABYTE  = (1024 * 1024)
@@ -110,8 +111,7 @@ func GetTotalDiskAllStartedApps() float64 {
 func LoadAppCache(cliConnection plugin.CliConnection) {
   data, err := getAppMetadata(cliConnection)
   if err != nil {
-    //TODO: DO something cleaner with this error
-    fmt.Printf("*** app metadata error: %v\n", err.Error())
+    debug.Warn(fmt.Sprintf("*** app metadata error: %v\n", err.Error()))
     return
   }
   appsMetadataCache = data
@@ -126,7 +126,7 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
     var appResp AppResponse
     err := json.Unmarshal(outputBytes, &appResp)
     if err != nil {
-          //fmt.Printf("app unmarshal error: %v\n", err.Error())
+          debug.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v\n", url, string(outputBytes[:])))
           return appsMetadata, err
     }
     for _, app := range appResp.Resources {

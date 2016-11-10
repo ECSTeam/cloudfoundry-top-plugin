@@ -4,25 +4,32 @@ import (
   "strconv"
   "strings"
   "time"
+  "fmt"
   "errors"
   "reflect"
   "github.com/cloudfoundry/cli/plugin"
+  "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
 type handleResponseFunc func(outputBytes []byte) (interface{}, error)
 
 
 func callRetriableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
-  retryDelay := 500 * time.Millisecond
+  retryDelayMS := 500
   maxRetries := 5
   for retryCount:=0;retryCount<maxRetries;retryCount++ {
     err := callAPI(cliConnection, url, handleResponse)
     if err == nil {
       return nil
     }
-    time.Sleep(retryDelay)
+    msg := fmt.Sprintf("metadata.callApi>callRetriableAPI try#%v url:%v Error:%v", retryCount, url, err.Error())
+    debug.Warn(msg)
+    sleepTime := time.Duration(retryDelayMS * maxRetries) * time.Millisecond
+    time.Sleep(sleepTime)
   }
-  return errors.New("Error calling "+url+" after "+strconv.Itoa(maxRetries) +" attempts")
+  msg := "Error calling "+url+" after "+strconv.Itoa(maxRetries) +" attempts"
+  debug.Warn(msg)
+  return errors.New(msg)
 }
 
 

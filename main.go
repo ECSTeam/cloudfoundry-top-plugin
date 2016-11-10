@@ -18,11 +18,11 @@ type TopCmd struct {
 
 func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
-		Name: "TopPlugin",
+		Name: "top",
 		Version: plugin.VersionType{
 			Major: 0,
-			Minor: 5,
-			Build: 9,
+			Minor: 6,
+			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,

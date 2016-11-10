@@ -4,6 +4,7 @@ import (
   "fmt"
   "encoding/json"
   "github.com/cloudfoundry/cli/plugin"
+  "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
 type OrgResponse struct {
@@ -56,8 +57,8 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
     var response OrgResponse
     err := json.Unmarshal(outputBytes, &response)
     if err != nil {
-          //fmt.Printf("org unmarshal error: %v\n", err.Error())
-          return metadata, err
+      debug.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v\n", url, string(outputBytes[:])))
+      return metadata, err
     }
     for _, item := range response.Resources {
       item.Entity.Guid = item.Meta.Guid

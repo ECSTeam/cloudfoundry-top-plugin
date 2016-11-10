@@ -7,5 +7,5 @@ if [ $? != 0 ]; then
    printf "Error when executing compile\n"
    exit 1
 fi
-cf uninstall-plugin TopPlugin
+cf uninstall-plugin top
 cf install-plugin -f ./top-plugin-osx

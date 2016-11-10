@@ -101,6 +101,10 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
   		log.Panicln(err)
   	}
 
+    if err := g.SetKeybinding(asUI.name, 'r', gocui.ModNone, asUI.refreshMetadata); err != nil {
+      log.Panicln(err)
+    }
+
     if err := g.SetKeybinding(asUI.name, 'd', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
           //msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
@@ -121,16 +125,13 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
            asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
            asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
            asUI.masterUI.SetCurrentViewOnTop(g,"appDetailView")
-           //asUI.refreshDisplay(g)
            return nil
       }); err != nil {
   		log.Panicln(err)
   	}
 
   }
-
   return asUI.appListWidget.Layout(g)
-
 }
 
 func (asUI *AppListView) columnDefinitions() []*masterUIInterface.ListColumn {
@@ -387,8 +388,6 @@ func (asUI *AppListView) column5XX() *masterUIInterface.ListColumn {
   return c
 }
 
-
-
 func (asUI *AppListView) Start() {
   go asUI.loadCacheAtStartup()
 }
@@ -398,7 +397,14 @@ func (asUI *AppListView) loadCacheAtStartup() {
   asUI.seedStatsFromMetadata()
 }
 
+func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
+  go asUI.loadCacheAtStartup()
+  return nil
+}
+
 func (asUI *AppListView) seedStatsFromMetadata() {
+
+  debug.Info("appListView>seedStatsFromMetadata")
 
   asUI.currentProcessor.mu.Lock()
   defer asUI.currentProcessor.mu.Unlock()
@@ -431,6 +437,7 @@ func (asUI *AppListView) GetDisplayPaused() bool {
 }
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
+  debug.Info("appListView>ClearStats")
   asUI.currentProcessor.Clear()
   asUI.updateData()
   asUI.seedStatsFromMetadata()
@@ -562,6 +569,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 }
 
 func (asUI *AppListView) loadMetadata() {
+  debug.Info("appListView>loadMetadata")
   metadata.LoadAppCache(asUI.cliConnection)
   metadata.LoadSpaceCache(asUI.cliConnection)
   metadata.LoadOrgCache(asUI.cliConnection)
