@@ -10,6 +10,7 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
+const MAX_LOG_FILES = 1000
 
 var (
   debugLines []string
@@ -56,6 +57,9 @@ func logMsg(msg string)  {
   msg = strings.Replace(msg, "\n"," | ",-1)
   line := fmt.Sprintf("%v %v", time.Now().Format("15:04:05"), msg)
   debugLines = append(debugLines, line)
+  if len(debugLines) > MAX_LOG_FILES {
+    debugLines = debugLines[:len(debugLines)-1]
+  }
 }
 
 type DebugWidget struct {

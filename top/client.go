@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"time"
 	//"errors"
-
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -140,21 +139,15 @@ func (c *Client) handleError(err error) {
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
 		msg := fmt.Sprintf("Normal Websocket Closure: %v", err)
-		//fmt.Printf(msg)
 		debug.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
+		msg := fmt.Sprintf("Disconnected because nozzle couldn't keep up (CloseError): %v", err)
 		debug.Error(msg)
-		//fmt.Printf("Disconnected because nozzle couldn't keep up. Please try scaling up the nozzle.", nil)
 	default:
-		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
+		msg := fmt.Sprintf("Error reading firehose: %v", err)
 		debug.Error(msg)
 	}
-	//fmt.Printf("Closing connection with traffic controller due to %v", err)
-	//dopplerConnection.Close()
-
 }
-
 
 type ConsoleDebugPrinter struct {
 	ui terminal.UI

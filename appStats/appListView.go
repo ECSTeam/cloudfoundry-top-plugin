@@ -110,8 +110,8 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
           //msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
           /*
           msg := "test"
-          for i:=0;i<10;i++ {
-            debug.Error(msg)
+          for i:=0;i<50;i++ {
+            debug.Info(msg)
           }
           */
           debug.Open()
