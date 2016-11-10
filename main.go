@@ -22,7 +22,7 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 		Version: plugin.VersionType{
 			Major: 0,
 			Minor: 5,
-			Build: 8,
+			Build: 9,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
@@ -67,7 +67,6 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 			c.ui.Warn(err.Error())
 			return
 		}
-
 		options.AppGUID = appModel.Guid
 	default:
 		return
@@ -118,7 +117,6 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 	*/
-
 
 	client := top.NewClient(cliConnection, options, c.ui)
 	client.Start()

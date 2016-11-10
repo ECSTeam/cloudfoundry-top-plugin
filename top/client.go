@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"crypto/tls"
 	"time"
+	//"errors"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/noaa/consumer"
@@ -14,7 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
-	//"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 
 )
 
@@ -48,25 +49,7 @@ var (
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
 
-	dopplerEndpoint, err := cliConnection.DopplerEndpoint()
-	if err != nil {
-		ui.Failed(err.Error())
-	}
-
-
-	authToken, err := cliConnection.AccessToken()
-	if err != nil {
-		ui.Failed(err.Error())
-	}
-
-	apiEndpoint, err = cliConnection.ApiEndpoint()
-	if err != nil {
-		ui.Failed(err.Error())
-	}
-
 	return &Client{
-		dopplerEndpoint: dopplerEndpoint,
-		authToken:       authToken,
 		options:         options,
 		ui:              ui,
 		cliConnection:   cliConnection,
@@ -74,48 +57,59 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 
 }
 
-
-
 func (c *Client) Start() {
 
-	skipVerifySSL, err := c.cliConnection.IsSSLDisabled()
+  debug := c.options.Debug
+	conn := c.cliConnection
+
+	isLoggedIn, err := conn.IsLoggedIn()
+	if err !=nil {
+		c.ui.Failed(err.Error())
+		return
+	}
+	if !isLoggedIn {
+		c.ui.Failed("Must login first")
+		return
+	}
+
+	c.authToken, err = conn.AccessToken()
 	if err != nil {
-		fmt.Errorf("couldn't check if ssl verification is disabled: %s", err)
+		c.ui.Failed(err.Error())
 		return
 	}
 
-	isLoggedIn, err := c.cliConnection.IsLoggedIn()
-	if err !=nil && isLoggedIn {
-		fmt.Errorf("Must login first")
+	c.dopplerEndpoint, err = conn.DopplerEndpoint()
+	if err != nil {
+		c.ui.Failed(err.Error())
 		return
 	}
 
+	apiEndpoint, err = conn.ApiEndpoint()
+	if err != nil {
+		c.ui.Failed(err.Error())
+		return
+	}
 
-	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
-	if c.options.Debug {
-		dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
+	skipVerifySSL, err := conn.IsSSLDisabled()
+	if err != nil {
+		c.ui.Failed("couldn't check if ssl verification is disabled: " + err.Error())
+		return
 	}
 
 	subscriptionID := "TopPlugin_" + pseudo_uuid()
-	c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:"+subscriptionID)
+	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
+	if debug {
+		//dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
+		c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:"+subscriptionID)
+		c.ui.Say("Hit Ctrl+c to exit")
+	}
 
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
-	dopplerConnection.SetIdleTimeout(30 * time.Second)
+	dopplerConnection.SetIdleTimeout(15 * time.Second)
 
-
-	// consumer.Stream(appGuid, authToken)
-	// consumer.ContainerEnvelopes(appId, authToken)
-	// consumer.Firehose(appId, authToken)
-	//c.messages, c.errors = dopplerConnection.FirehoseWithoutReconnect(subscriptionID, c.authToken)
 	c.messages, c.errors = dopplerConnection.Firehose(subscriptionID, c.authToken)
-
 	defer dopplerConnection.Close()
-	c.ui.Say("Hit Ctrl+c to exit")
-
-
-	//c.router = eventrouting.NewEventRouter(appStatsUI.GetProcessor())
-	//go c.routeEvent()
 
 	ui := NewMasterUI(c.cliConnection)
 	c.router = ui.GetRouter()
@@ -123,8 +117,6 @@ func (c *Client) Start() {
 	go c.routeEvent()
 	ui.Start()
 
-
-	dopplerConnection.Close()
 }
 
 
@@ -145,12 +137,16 @@ func (c *Client) handleError(err error) {
 
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
-		fmt.Printf("Normal Websocket Closure: %v", err)
+		msg := fmt.Sprintf("Normal Websocket Closure: %v", err)
+		//fmt.Printf(msg)
+		debug.Debug(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		fmt.Printf("Error while reading from the firehose: %v", err)
-		fmt.Printf("Disconnected because nozzle couldn't keep up. Please try scaling up the nozzle.", nil)
+		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
+		debug.Debug(msg)
+		//fmt.Printf("Disconnected because nozzle couldn't keep up. Please try scaling up the nozzle.", nil)
 	default:
-		fmt.Printf("Error while reading from the firehose: %v", err)
+		msg := fmt.Sprintf("Error while reading from the firehose: %v", err)
+		debug.Debug(msg)
 	}
 	//fmt.Printf("Closing connection with traffic controller due to %v", err)
 	//dopplerConnection.Close()

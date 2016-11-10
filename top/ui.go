@@ -5,14 +5,10 @@ import (
 	"fmt"
   "log"
 	//"github.com/Sirupsen/logrus"
-	//"os"
-
 	"strings"
-	"sync"
 	"time"
 	"strconv"
   "net/url"
-  //"encoding/json"
   "github.com/jroimartin/gocui"
   "github.com/cloudfoundry/cli/plugin"
   "github.com/kkellner/cloudfoundry-top-plugin/appStats"
@@ -29,29 +25,24 @@ type MasterUI struct {
   gui             *gocui.Gui
   cliConnection   plugin.CliConnection
 
-  appListView      *appStats.AppListView
+  appListView     *appStats.AppListView
 
-  mu  sync.Mutex // protects ctr
-  router *eventrouting.EventRouter
-  refreshNow  chan bool
-
+  router					*eventrouting.EventRouter
+  refreshNow			chan bool
 	refreshIntervalMS  time.Duration
 
 }
 
 
 func NewMasterUI(cliConnection plugin.CliConnection ) *MasterUI {
-  //detailUI := appStats.NewAppStatsUI(cliConnection)
 
   ui := &MasterUI {
-    //detailUI:      detailUI,
     cliConnection: cliConnection,
     refreshNow:   make(chan bool),
   }
 
   headerView := NewHeaderWidget(ui, "summaryView", 4)
   footerView := NewFooterWidget("footerView", 4)
-
 
   appListView := appStats.NewAppListView(ui, "appListView", 5, 4, ui.cliConnection)
   ui.appListView = appListView
@@ -91,13 +82,12 @@ func (ui *MasterUI) initGui() {
   ui.gui = g
   g.InputEsc = true
 	defer g.Close()
-  debug.Init(g)
+	g.SetManager(ui.layoutManager)
 
-	// default refresh
+	debug.InitDebug(g, ui)
+
+	// default refresh to 1 second
 	ui.refreshIntervalMS = 1000 * time.Millisecond
-
-
-  g.SetManager(ui.layoutManager)
 
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, ui.quit); err != nil {
 		log.Panicln(err)
@@ -149,12 +139,9 @@ func (ui *MasterUI) CloseView(m masterUIInterface.Manager ) error {
 
 
 func (ui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui, name string) (error) {
-  //log.Panicln(fmt.Sprintf("DEBUG: %v", name))
   if _, err := g.SetCurrentView(name); err != nil {
 		return err
 	}
-  //log.Panicln(fmt.Sprintf("DEBUG2: %v", name))
-
   if _, err := g.SetViewOnTop(name); err != nil {
     return err
   }
@@ -169,8 +156,6 @@ func (ui *MasterUI) GetCurrentView(g *gocui.Gui) *gocui.View {
 
 
 func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
-  //TODO: Where should this close go?
-	//dopplerConnection.Close()
 	return gocui.ErrQuit
 }
 
@@ -201,9 +186,7 @@ func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 		"editIntervalWidget", 30, 6, labelText, maxLength, titleText, helpText,
 		valueText, applyCallbackFunc)
 	return intervalWidget.Init(g)
-
 }
-
 
 
 func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {

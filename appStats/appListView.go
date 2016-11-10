@@ -15,6 +15,7 @@ import (
   "github.com/kkellner/cloudfoundry-top-plugin/metadata"
   "github.com/kkellner/cloudfoundry-top-plugin/helpView"
   "github.com/kkellner/cloudfoundry-top-plugin/util"
+  "github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
 type AppListView struct {
@@ -96,6 +97,18 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
            asUI.masterUI.LayoutManager().Add(helpView)
            asUI.masterUI.SetCurrentViewOnTop(g,"helpView")
            return nil
+      }); err != nil {
+  		log.Panicln(err)
+  	}
+
+    if err := g.SetKeybinding(asUI.name, 'd', gocui.ModNone,
+      func(g *gocui.Gui, v *gocui.View) error {
+          msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
+          //msg := "test"
+          for i:=0;i<10;i++ {
+            debug.Debug(msg)
+          }
+          return nil
       }); err != nil {
   		log.Panicln(err)
   	}

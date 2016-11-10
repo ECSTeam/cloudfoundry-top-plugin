@@ -15,6 +15,7 @@ type LayoutManagerInterface interface {
 	Contains(Manager) bool
 	Add(Manager)
 	Remove(Manager) Manager
+	Top() Manager
 }
 
 type Manager interface {
