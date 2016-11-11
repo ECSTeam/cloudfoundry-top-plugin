@@ -105,7 +105,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
       log.Panicln(err)
     }
 
-    if err := g.SetKeybinding(asUI.name, 'd', gocui.ModNone,
+    if err := g.SetKeybinding(asUI.name, 'D', gocui.ModNone,
       func(g *gocui.Gui, v *gocui.View) error {
           //msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
           /*

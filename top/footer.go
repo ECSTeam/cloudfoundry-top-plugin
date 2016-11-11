@@ -28,9 +28,9 @@ func (w *FooterWidget) Layout(g *gocui.Gui) error {
 		}
     v.Frame = false
     v.Title = "Footer"
-    fmt.Fprintln(v, "UP/DOWN arrow to highlight row, ENTER to select highlighted row")
-    //fmt.Fprintln(v, "s:sort f:filter(todo) p:pause i:interval(todo)")
-    fmt.Fprint(v, "h:help c:clear q:quit space:refresh o:order p:pause s:sleep f:filter(todo)")
+    fmt.Fprintln(v, "h:help UP/DOWN arrow to highlight row, ENTER to select highlighted row")
+    //fmt.Fprint(v, "h:help c:clear q:quit space:refresh o:order p:pause s:sleep f:filter(todo)")
+    fmt.Fprint(v, "LEFT/RIGHT arrow to scroll columns h:help")
 	}
 	return nil
 }
