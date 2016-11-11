@@ -5,6 +5,8 @@ must be logged in as 'admin' for this plugin to function.  The live statistics
 include application stats and route stats.  The primary source of information
 that the top plugin uses is from monitoring firehose.
 
+![Screenshot](screenshots/screencast1.gif?raw=true)
+
 ## Application Stats
 
 Provide details about applications running on the platform including the following
@@ -33,12 +35,11 @@ Not yet implemented - This will show statistics based on routes (domain/host/pat
 
 # Installation
 
-
 * **Download the binary file for your target OS from the latest [release](https://github.com/kkellner/cloudfoundry-top-plugin/releases/latest)**
-* If you've already installed the plugin and are updating, you must first run cf uninstall-plugin TopPlugin
-* Then install the plugin with cf install-plugin top-plugin-darwin   (or top-plugin-linux or top-plugin.exe)
-* If you get a permission error run: chmod +x top-plugin-darwin (or top-plugin-linux) on the binary
-* Verify the plugin installed by looking for it with cf plugins
+* If you've already installed the plugin and are updating, you must first run `cf uninstall-plugin TopPlugin`
+* Then install the plugin with `cf install-plugin top-plugin-darwin`  (or `top-plugin-linux` or `top-plugin.exe`)
+* If you get a permission error run: `chmod +x top-plugin-darwin` (or `top-plugin-linux`) on the binary
+* Verify the plugin installed by looking for it with `cf plugins`
 
 TODO: Register plugin with the community cloud foundry plugins website (https://plugins.cloudfoundry.org/)
 <!---
@@ -47,10 +48,32 @@ cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
 cf install-plugin ./top-plugin-osx
 ```
 -->
+## Assign needed permissions
+
+To use this plugin you must be logged in as 'admin' or assign two permissions
+to an existing PCF user.  To assign needed permissions:
+
+Install the uaac client CLI if you do not already have it:
+```
+gem install cf-uaac
+```
+
+Login and add permission two permisson.  Note that the UAA password is NOT the
+"Admin Credentials", the password is found in the ERT under Credentails tab,
+look for password for "Admin Client Credentials".
+
+```
+uaac token client get admin -s [UAA Admin Client Credentials]  
+uaac member add cloud_controller.admin [username]
+uaac member add doppler.firehose [username]
+```
+Note: The change in permissions does not take effect until user username performs
+a logout and login.
+
 
 # Usage
 
-User must be logged in as admin.
+User must be logged in as admin or pcf user with permissions as described above.
 ```
 cf top
 ```

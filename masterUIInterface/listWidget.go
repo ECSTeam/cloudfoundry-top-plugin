@@ -35,6 +35,8 @@ type ListColumn struct {
   displayFunc getRowDisplayFunc
 }
 
+const LOCK_COLUMNS = 1
+
 type ListWidget struct {
   masterUI MasterUIInterface
 	name string
@@ -44,10 +46,10 @@ type ListWidget struct {
   Title string
 
   displayView DisplayViewInterface
-  //displayItems []DisplayItemInterface
 
   highlightKey string
-  displayIndexOffset int
+  displayRowIndexOffset int
+  displayColIndexOffset int
 
   GetRowKey  getRowKeyFunc
   PreRowDisplayFunc  getRowDisplayFunc
@@ -142,6 +144,12 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
     if err := g.SetKeybinding(w.name, gocui.KeyPgup, gocui.ModNone, w.pageUpAction); err != nil {
       log.Panicln(err)
     }
+    if err := g.SetKeybinding(w.name, gocui.KeyArrowRight, gocui.ModNone, w.arrowRight); err != nil {
+      log.Panicln(err)
+    }
+    if err := g.SetKeybinding(w.name, gocui.KeyArrowLeft, gocui.ModNone, w.arrowLeft); err != nil {
+      log.Panicln(err)
+    }
 
 
     if err := g.SetKeybinding(w.name, 'o', gocui.ModNone, w.editSortAction); err != nil {
@@ -208,10 +216,11 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
   listSize := asUI.GetListSize()
 
   if listSize>0 {
-    stopRowIndex := maxRows + asUI.displayIndexOffset
+    stopRowIndex := maxRows + asUI.displayRowIndexOffset
     asUI.writeHeader(v)
+    // Loop through all rows
     for i:=0;i<listSize && i<stopRowIndex;i++ {
-      if i < asUI.displayIndexOffset {
+      if i < asUI.displayRowIndexOffset {
         continue
       }
       asUI.writeRowData(v, i)
@@ -234,7 +243,11 @@ func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
     fmt.Fprint(v, asUI.PreRowDisplayFunc(rowIndex, isSelected))
   }
 
-  for _, column := range asUI.columns {
+  // Loop through all columns
+  for colIndex, column := range asUI.columns {
+    if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
+      continue
+    }
     fmt.Fprint(v, column.displayFunc(rowIndex, isSelected))
     fmt.Fprint(v," ")
   }
@@ -244,7 +257,11 @@ func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
 
 func (asUI *ListWidget) writeHeader(v *gocui.View) {
 
-  for _, column := range asUI.columns {
+  // Loop through all columns (for headers)
+  for colIndex, column := range asUI.columns {
+    if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
+      continue
+    }
     editSortColumn := false
     if asUI.editSort && asUI.editSortColumnId == column.id {
       editSortColumn = true
@@ -265,6 +282,24 @@ func (asUI *ListWidget) writeHeader(v *gocui.View) {
   fmt.Fprintf(v, "\n")
 }
 
+func (asUI *ListWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {
+  asUI.displayColIndexOffset++
+  minColumnsToLeaveOnRight := 2
+  maxOffset := len(asUI.columns) - (minColumnsToLeaveOnRight + LOCK_COLUMNS)
+  if asUI.displayColIndexOffset > maxOffset {
+    asUI.displayColIndexOffset = maxOffset
+  }
+  return asUI.RefreshDisplay(g)
+}
+
+func (asUI *ListWidget) arrowLeft(g *gocui.Gui, v *gocui.View) error {
+  asUI.displayColIndexOffset--
+  if asUI.displayColIndexOffset < 0 {
+    asUI.displayColIndexOffset = 0
+  }
+  return asUI.RefreshDisplay(g)
+}
+
 func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
   listSize := asUI.GetListSize()
   callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
@@ -276,8 +311,8 @@ func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
       if (offset > listSize - viewSize) {
         offset = listSize - viewSize
       }
-      if (asUI.displayIndexOffset > offset || rowIndex > asUI.displayIndexOffset+viewSize) {
-        asUI.displayIndexOffset = offset
+      if (asUI.displayRowIndexOffset > offset || rowIndex > asUI.displayRowIndexOffset+viewSize) {
+        asUI.displayRowIndexOffset = offset
       }
       return true
     }
@@ -293,8 +328,8 @@ func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
     if rowIndex+1 < listSize {
       _, viewY := v.Size()
       offset := (rowIndex+2) - (viewY-1)
-      if (offset>asUI.displayIndexOffset || rowIndex < asUI.displayIndexOffset) {
-        asUI.displayIndexOffset = offset
+      if (offset>asUI.displayRowIndexOffset || rowIndex < asUI.displayRowIndexOffset) {
+        asUI.displayRowIndexOffset = offset
       }
       asUI.highlightKey = asUI.GetRowKey(rowIndex+1)
       return true
@@ -325,7 +360,6 @@ func (asUI *ListWidget) moveHighlight(g *gocui.Gui, v *gocui.View, callback chan
   }
   return asUI.RefreshDisplay(g)
 
-  return nil
 }
 
 
@@ -335,16 +369,16 @@ func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
       _, viewY := v.Size()
       viewSize := viewY-1
       offset := 0
-      if rowIndex == asUI.displayIndexOffset {
+      if rowIndex == asUI.displayRowIndexOffset {
         offset = rowIndex - viewSize
       } else {
-        offset = rowIndex - (rowIndex - asUI.displayIndexOffset)
+        offset = rowIndex - (rowIndex - asUI.displayRowIndexOffset)
       }
       if offset < 0 {
         offset = 0
       }
-      if (offset < asUI.displayIndexOffset) {
-        asUI.displayIndexOffset = offset
+      if (offset < asUI.displayRowIndexOffset) {
+        asUI.displayRowIndexOffset = offset
       }
       asUI.highlightKey = asUI.GetRowKey(offset)
       return true
@@ -361,16 +395,16 @@ func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
       _, viewY := v.Size()
       viewSize := viewY-1
       offset := 0
-      if rowIndex == (asUI.displayIndexOffset + viewSize - 1) {
+      if rowIndex == (asUI.displayRowIndexOffset + viewSize - 1) {
         offset = rowIndex + viewSize
       } else {
-        offset = rowIndex + (viewSize - (rowIndex - asUI.displayIndexOffset)) - 1
+        offset = rowIndex + (viewSize - (rowIndex - asUI.displayRowIndexOffset)) - 1
       }
       if offset > listSize-1 {
         offset = listSize - 1
       }
-      if (offset > (asUI.displayIndexOffset + viewSize)) {
-        asUI.displayIndexOffset = offset - viewSize + 1
+      if (offset > (asUI.displayRowIndexOffset + viewSize)) {
+        asUI.displayRowIndexOffset = offset - viewSize + 1
       }
       asUI.highlightKey = asUI.GetRowKey(offset)
       return true
