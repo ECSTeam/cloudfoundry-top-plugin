@@ -60,6 +60,8 @@ cat
 
 if [[ "$1" = "release" ]] ; then
 
+	git commit -am "Build version $TAG"
+
 	$GOPATH/bin/github-release release \
     --tag $TAG \
     --name "Cloud Foundry top plugin $TAG" \
