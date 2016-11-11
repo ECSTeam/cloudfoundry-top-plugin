@@ -1,8 +1,9 @@
 # top-plugin
 
 Plugin for showing live statistics of the targeted cloud foundry foundation.  You
-must be logged in as 'admin' for this plugin to function.  The live statistics
-include application stats and route stats.  The primary source of information
+must be logged in as 'admin' or assign permissions to PCF user as described in the
+installation below for this plugin to function.  The live statistics include
+application stats and route stats. The primary source of information
 that the top plugin uses is from monitoring firehose.
 
 ![Screenshot](screenshots/screencast1.gif?raw=true)
@@ -12,11 +13,23 @@ that the top plugin uses is from monitoring firehose.
 Provide details about applications running on the platform including the following
 stats:
 
-* HTTP(s) request/responses - Total counts, response time, status code, request rate that are routed through the gorouter
-application.
-* Containers - Number of reporting containers per application
-* CPU% - Total CPU percent used by all instances of a given application
-* Logs - Total log events that have occurred by all instances of a given application
+* APPLICATION - Application name
+* SPACE - Space name
+* ORG - Organization name
+* RCR - Total reporting Containers
+* CPU% - Total CPU percent consumed by all containers
+* MEM - Total memory used by all containers
+* DISK - Total disk used by all containers
+* RESP - Avg response time in milliseconds over last 60 seconds
+* LOGS - Total number of log events
+* L1 - HTTP(S) request/responses in last 1 second
+* L10 - HTTP(S) request/responses in last 10 seconds
+* L60 - HTTP(S) request/responses in last 60 seconds
+* HTTP - All of the HTTP(S) responses
+* 2XX - HTTP(S) responses with status code 200-299
+* 3XX - HTTP(S) responses with status code 300-399
+* 4XX - HTTP(S) responses with status code 400-499
+* 5XX - HTTP(S) responses with status code 500-599
 
 ### Application details
 
@@ -27,7 +40,6 @@ A specific application can be selected to show details of a specific application
 * Disk - Per container (application instance) disk used
 * Log Stdout - Per container (application instance) stdout log events
 * Log Stderr - Per container (application instance) stderr log events
-
 
 ## Route Stats (TODO - not implemented yet)
 
@@ -58,8 +70,8 @@ Install the uaac client CLI if you do not already have it:
 gem install cf-uaac
 ```
 
-Login and add permission two permisson.  Note that the UAA password is NOT the
-"Admin Credentials", the password is found in the ERT under Credentails tab,
+Login and add two permission.  Note that the UAA password is NOT the
+"Admin Credentials", the password is found in the ERT under Credentials tab,
 look for password for "Admin Client Credentials".
 
 ```
@@ -93,7 +105,3 @@ OPTIONS:
    -debug                 -d, enable debugging
    -cygwin                -c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )
 ```
-
-# Background
-
-This plugin is based on the firehose plugin: https://github.com/cloudfoundry/firehose-plugin
