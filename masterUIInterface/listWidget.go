@@ -174,7 +174,7 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
     }
 
 	}
-	return nil
+	return w.RefreshDisplay(g)
 }
 
 func (asUI *ListWidget) HighlightKey() string {
@@ -217,13 +217,13 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
   if listSize>0 {
     stopRowIndex := maxRows + asUI.displayRowIndexOffset
-    asUI.writeHeader(v)
+    asUI.writeHeader(g, v)
     // Loop through all rows
     for i:=0;i<listSize && i<stopRowIndex;i++ {
       if i < asUI.displayRowIndexOffset {
         continue
       }
-      asUI.writeRowData(v, i)
+      asUI.writeRowData(g, v, i)
     }
   } else {
 		fmt.Fprintf(v, " \n No data yet...")
@@ -232,7 +232,7 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
   return nil
 }
 
-func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
+func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) {
   isSelected := false
   if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
     fmt.Fprintf(v, util.REVERSE_GREEN)
@@ -245,6 +245,9 @@ func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
 
   // Loop through all columns
   for colIndex, column := range asUI.columns {
+    if (colIndex > asUI.lastColumnCanDisplay(g,v)) {
+      break
+    }
     if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
       continue
     }
@@ -255,10 +258,13 @@ func (asUI *ListWidget) writeRowData(v *gocui.View, rowIndex int) {
   fmt.Fprintf(v, util.CLEAR)
 }
 
-func (asUI *ListWidget) writeHeader(v *gocui.View) {
+func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 
   // Loop through all columns (for headers)
   for colIndex, column := range asUI.columns {
+    if (colIndex > asUI.lastColumnCanDisplay(g,v)) {
+      break
+    }
     if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
       continue
     }
@@ -282,12 +288,35 @@ func (asUI *ListWidget) writeHeader(v *gocui.View) {
   fmt.Fprintf(v, "\n")
 }
 
+func (asUI *ListWidget) lastColumnCanDisplay(g *gocui.Gui, v *gocui.View) int {
+  maxX, _ := v.Size()
+  totalWidth := 0
+  lastColumnCanDisplay := len(asUI.columns) - 1
+  for colIndex, column := range asUI.columns {
+    if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
+      continue
+    }
+    totalWidth = totalWidth + column.size
+    if totalWidth > maxX {
+      lastColumnCanDisplay = colIndex - 1
+      break
+    }
+    // Add one for the space after the column name
+    totalWidth = totalWidth + 1
+  }
+  if lastColumnCanDisplay < 0 {
+    // Must display at least 1 column
+    lastColumnCanDisplay = 0
+  }
+  //writeFooter(g, fmt.Sprintf("\r ** maxX:%v lastColumnCanDisplay:%v totalWidth:%v", maxX,lastColumnCanDisplay,totalWidth))
+  return lastColumnCanDisplay
+}
+
 func (asUI *ListWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {
-  asUI.displayColIndexOffset++
-  minColumnsToLeaveOnRight := 2
-  maxOffset := len(asUI.columns) - (minColumnsToLeaveOnRight + LOCK_COLUMNS)
-  if asUI.displayColIndexOffset > maxOffset {
-    asUI.displayColIndexOffset = maxOffset
+  lastColumnCanDisplay := asUI.lastColumnCanDisplay(g,v)
+  //writeFooter(g, fmt.Sprintf("\r ** lastColumnCanDisplay:%v ", lastColumnCanDisplay))
+  if lastColumnCanDisplay < len(asUI.columns) - 1 {
+    asUI.displayColIndexOffset++
   }
   return asUI.RefreshDisplay(g)
 }

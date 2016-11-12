@@ -61,6 +61,7 @@ cat
 if [[ "$1" = "release" ]] ; then
 
 	git commit -am "Build version $TAG"
+	git push
 
 	$GOPATH/bin/github-release release \
     --tag $TAG \
