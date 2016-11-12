@@ -260,9 +260,11 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 
 func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 
+  lastColumnCanDisplay := asUI.lastColumnCanDisplay(g,v)
+
   // Loop through all columns (for headers)
   for colIndex, column := range asUI.columns {
-    if (colIndex > asUI.lastColumnCanDisplay(g,v)) {
+    if (colIndex > lastColumnCanDisplay) {
       break
     }
     if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
@@ -312,12 +314,53 @@ func (asUI *ListWidget) lastColumnCanDisplay(g *gocui.Gui, v *gocui.View) int {
   return lastColumnCanDisplay
 }
 
+func (asUI *ListWidget) columnOffsetFromVisability(g *gocui.Gui, v *gocui.View, findColumnId string) int {
+  lastColumnCanDisplay := asUI.lastColumnCanDisplay(g,v)
+  firstDisplayedColumnIndex := -1
+  foundColumnIndex := 0
+  // Loop through all columns (for headers)
+  for colIndex, column := range asUI.columns {
+    //if (colIndex > lastColumnCanDisplay) {
+    //  break
+    //}
+    if colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
+      //continue
+    } else {
+      if firstDisplayedColumnIndex == -1 {
+        firstDisplayedColumnIndex = colIndex
+      }
+    }
+    if findColumnId == column.id {
+      foundColumnIndex = colIndex
+    }
+  }
+  /*
+  writeFooter(g,
+    fmt.Sprintf("\r ** lastColumnCanDisplay:%v firstDisplayedColumnIndex:%v foundColumnIndex:%v",
+    lastColumnCanDisplay, firstDisplayedColumnIndex,foundColumnIndex))
+    */
+  if foundColumnIndex < firstDisplayedColumnIndex {
+    // Return negative offset from visability on left
+    return foundColumnIndex - firstDisplayedColumnIndex
+  } else if foundColumnIndex > lastColumnCanDisplay {
+    // Return positive offset from visability on right
+    return foundColumnIndex - lastColumnCanDisplay
+  }
+  return 0
+}
+
 func (asUI *ListWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {
   lastColumnCanDisplay := asUI.lastColumnCanDisplay(g,v)
-  //writeFooter(g, fmt.Sprintf("\r ** lastColumnCanDisplay:%v ", lastColumnCanDisplay))
   if lastColumnCanDisplay < len(asUI.columns) - 1 {
     asUI.displayColIndexOffset++
   }
+
+  //writeFooter(g, fmt.Sprintf("\r ** columnOffsetFromVisability:%v ", asUI.columnOffsetFromVisability(g,v,asUI.editSortColumnId)))
+  // TODO: Remove this
+  writeFooter(g,
+    fmt.Sprintf("\r ** columnOffsetFromVisability:%v ",
+    asUI.columnOffsetFromVisability(g,v,asUI.editSortColumnId)))
+
   return asUI.RefreshDisplay(g)
 }
 
@@ -326,6 +369,12 @@ func (asUI *ListWidget) arrowLeft(g *gocui.Gui, v *gocui.View) error {
   if asUI.displayColIndexOffset < 0 {
     asUI.displayColIndexOffset = 0
   }
+
+  // TODO: Remove this
+  writeFooter(g,
+    fmt.Sprintf("\r ** columnOffsetFromVisability:%v ",
+    asUI.columnOffsetFromVisability(g,v,asUI.editSortColumnId)))
+
   return asUI.RefreshDisplay(g)
 }
 
