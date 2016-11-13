@@ -529,6 +529,6 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 	return asUI.RefreshDisplay(g)
 }
 
-func (asUI *ListWidget) enableSortEdit(enable bool) {
+func (asUI *ListWidget) enableSelectColumnMode(enable bool) {
 	asUI.selectColumnMode = enable
 }
