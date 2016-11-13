@@ -103,8 +103,8 @@ func (w *EditSortView) Layout(g *gocui.Gui) error {
 		}
 
 		// If the current selected column is not within view, then select first column
-		if !w.listWidget.isColumnVisable(g, w.listWidget.editSortColumnId) {
-			w.listWidget.editSortColumnId = w.listWidget.columns[0].id
+		if !w.listWidget.isColumnVisable(g, w.listWidget.selectedColumnId) {
+			w.listWidget.selectedColumnId = w.listWidget.columns[0].id
 		}
 
 		if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
@@ -153,7 +153,7 @@ func (w *EditSortView) RefreshDisplay(g *gocui.Gui) error {
 }
 
 func (w *EditSortView) keyArrowRightAction(g *gocui.Gui, v *gocui.View) error {
-	columnId := w.listWidget.editSortColumnId
+	columnId := w.listWidget.selectedColumnId
 	columns := w.listWidget.columns
 	columnsLen := len(columns)
 	for i, col := range columns {
@@ -163,12 +163,12 @@ func (w *EditSortView) keyArrowRightAction(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 	//writeFooter(g, fmt.Sprintf("\r columnId: %v", columnId) )
-	w.listWidget.editSortColumnId = columnId
+	w.listWidget.selectedColumnId = columnId
 	return w.listWidget.scollSelectedColumnIntoView(g)
 }
 
 func (w *EditSortView) keyArrowLeftAction(g *gocui.Gui, v *gocui.View) error {
-	columnId := w.listWidget.editSortColumnId
+	columnId := w.listWidget.selectedColumnId
 	columns := w.listWidget.columns
 	for i, col := range columns {
 		if col.id == columnId && i > 0 {
@@ -177,7 +177,7 @@ func (w *EditSortView) keyArrowLeftAction(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 	//writeFooter(g, fmt.Sprintf("\r columnId: %v", columnId) )
-	w.listWidget.editSortColumnId = columnId
+	w.listWidget.selectedColumnId = columnId
 	return w.listWidget.scollSelectedColumnIntoView(g)
 }
 
@@ -215,7 +215,7 @@ func (w *EditSortView) keyDeleteAction(g *gocui.Gui, v *gocui.View) error {
 func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
 	sc := w.sortColumns[w.sortPosition]
-	columnId := w.listWidget.editSortColumnId
+	columnId := w.listWidget.selectedColumnId
 	if sc == nil {
 		sc = &SortColumn{
 			id:          columnId,

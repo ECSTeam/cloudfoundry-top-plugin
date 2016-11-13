@@ -59,8 +59,8 @@ type ListWidget struct {
 	columns   []*ListColumn
 	columnMap map[string]*ListColumn
 
-	editSort         bool
-	editSortColumnId string
+	selectColumnMode bool
+	selectedColumnId string
 
 	sortColumns []*SortColumn
 }
@@ -268,7 +268,7 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 			continue
 		}
 		editSortColumn := false
-		if asUI.editSort && asUI.editSortColumnId == column.id {
+		if asUI.selectColumnMode && asUI.selectedColumnId == column.id {
 			editSortColumn = true
 			fmt.Fprintf(v, util.REVERSE_WHITE)
 		}
@@ -318,7 +318,7 @@ func (asUI *ListWidget) lastColumnCanDisplay(g *gocui.Gui, ifDisplayColIndexOffs
 }
 
 func (asUI *ListWidget) scollSelectedColumnIntoView(g *gocui.Gui) error {
-	offsetFromView, indexOfSelectedCol := asUI.columnOffsetFromVisability(g, asUI.editSortColumnId)
+	offsetFromView, indexOfSelectedCol := asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
 
 	if offsetFromView < 0 {
 		asUI.displayColIndexOffset = asUI.displayColIndexOffset + offsetFromView
@@ -329,23 +329,13 @@ func (asUI *ListWidget) scollSelectedColumnIntoView(g *gocui.Gui) error {
 			newDisplayOffset++
 		}
 		asUI.displayColIndexOffset = newDisplayOffset
-
-		writeFooter(g,
-			fmt.Sprintf("\r ** offsetFromView:%v indexOfSelectedCol:%v newDisplayOffset:%v",
-				offsetFromView, indexOfSelectedCol, newDisplayOffset))
 	}
-
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** editSortColumnId:%v displayColIndexOffset:%v offset:%v",
-				asUI.editSortColumnId, asUI.displayColIndexOffset, offset))
-	*/
 	return asUI.RefreshDisplay(g)
 
 }
 
 func (asUI *ListWidget) isColumnVisable(g *gocui.Gui, findColumnId string) bool {
-	offsetFromView, _ := asUI.columnOffsetFromVisability(g, asUI.editSortColumnId)
+	offsetFromView, _ := asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
 	return offsetFromView == 0
 }
 
@@ -371,11 +361,6 @@ func (asUI *ListWidget) columnOffsetFromVisability(g *gocui.Gui, findColumnId st
 			foundColumnIndex = colIndex
 		}
 	}
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** lastColumnCanDisplay:%v firstDisplayedColumnIndex:%v foundColumnIndex:%v",
-				lastColumnCanDisplay, firstDisplayedColumnIndex, foundColumnIndex))
-	*/
 	if foundColumnIndex < firstDisplayedColumnIndex {
 		// Return negative offset from visability on left
 		return foundColumnIndex - firstDisplayedColumnIndex, foundColumnIndex
@@ -391,20 +376,7 @@ func (asUI *ListWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {
 	if lastColumnCanDisplay < len(asUI.columns)-1 {
 		asUI.displayColIndexOffset++
 	}
-
-	//writeFooter(g, fmt.Sprintf("\r ** columnOffsetFromVisability:%v ", asUI.columnOffsetFromVisability(g,v,asUI.editSortColumnId)))
-	// TODO: Remove this
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** columnOffsetFromVisability:%v ",
-				asUI.columnOffsetFromVisability(g, v, asUI.editSortColumnId)))
-	*/
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** editSortColumnId:%v displayColIndexOffset:%v offset:%v",
-				asUI.editSortColumnId, asUI.displayColIndexOffset, asUI.columnOffsetFromVisability(g, v, asUI.editSortColumnId)))
-	*/
-	asUI.columnOffsetFromVisability(g, asUI.editSortColumnId)
+	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
 
 	return asUI.RefreshDisplay(g)
 }
@@ -414,19 +386,7 @@ func (asUI *ListWidget) arrowLeft(g *gocui.Gui, v *gocui.View) error {
 	if asUI.displayColIndexOffset < 0 {
 		asUI.displayColIndexOffset = 0
 	}
-
-	// TODO: Remove this
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** columnOffsetFromVisability:%v ",
-				asUI.columnOffsetFromVisability(g, v, asUI.editSortColumnId)))
-	*/
-	/*
-		writeFooter(g,
-			fmt.Sprintf("\r ** editSortColumnId:%v displayColIndexOffset:%v offset:%v",
-				asUI.editSortColumnId, asUI.displayColIndexOffset, asUI.columnOffsetFromVisability(g, v, asUI.editSortColumnId)))
-	*/
-	asUI.columnOffsetFromVisability(g, asUI.editSortColumnId)
+	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
 	return asUI.RefreshDisplay(g)
 }
 
@@ -558,9 +518,9 @@ func (asUI *ListWidget) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) er
 
 func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 
-	asUI.editSort = true
-	if asUI.editSortColumnId == "" {
-		asUI.editSortColumnId = asUI.columns[0].id
+	asUI.selectColumnMode = true
+	if asUI.selectedColumnId == "" {
+		asUI.selectedColumnId = asUI.columns[0].id
 	}
 
 	editView := NewEditSortView(asUI.masterUI, asUI.name+".editView", asUI)
@@ -570,5 +530,5 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *ListWidget) enableSortEdit(enable bool) {
-	asUI.editSort = enable
+	asUI.selectColumnMode = enable
 }
