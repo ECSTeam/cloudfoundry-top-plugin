@@ -36,8 +36,8 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 				UsageDetails: plugin.Usage{
 					Usage: "cf top",
 					Options: map[string]string{
-						"debug":           "-d, enable debugging",
-						"cygwin":          "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
+						"debug":  "-d, enable debugging",
+						"cygwin": "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
 						//"filter":          "-f, specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop",
 						//"subscription-id": "-s, specify subscription id for distributing firehose output between clients",
 					},
@@ -112,10 +112,10 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 	*/
 
 	/*
-	if strings.ToLower(osType) == "cygwin" {
-		c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top'")
-		return
-	}
+		if strings.ToLower(osType) == "cygwin" {
+			c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top'")
+			return
+		}
 	*/
 
 	client := top.NewClient(cliConnection, options, c.ui)
@@ -147,19 +147,19 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 		cygwin = fc.Bool("cygwin")
 	}
 	/*
-	if fc.IsSet("no-filter") {
-		noFilter = fc.Bool("no-filter")
-	}
-	if fc.IsSet("filter") {
-		filter = fc.String("filter")
-	}
-	if fc.IsSet("subscription-id") {
-		subscriptionId = fc.String("subscription-id")
-	}
+		if fc.IsSet("no-filter") {
+			noFilter = fc.Bool("no-filter")
+		}
+		if fc.IsSet("filter") {
+			filter = fc.String("filter")
+		}
+		if fc.IsSet("subscription-id") {
+			subscriptionId = fc.String("subscription-id")
+		}
 	*/
 	return &top.ClientOptions{
 		Debug:          debug,
-		Cygwin:					cygwin,
+		Cygwin:         cygwin,
 		NoFilter:       noFilter,
 		Filter:         filter,
 		SubscriptionID: subscriptionId,

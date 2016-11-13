@@ -70,13 +70,13 @@ func (i *Input) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) 
 	ox, _ := v.Origin()
 	limit := ox+cx+1 > i.maxLength
 	switch {
-  //case key == gocui.KeyArrowRight:
-  //case key == gocui.KeyDelete:
-  //  fallthrough
-  //case key == gocui.KeyInsert:
-  //  fallthrough
-  //case key == gocui.KeyArrowLeft:
-  //  fallthrough
+	//case key == gocui.KeyArrowRight:
+	//case key == gocui.KeyDelete:
+	//  fallthrough
+	//case key == gocui.KeyInsert:
+	//  fallthrough
+	//case key == gocui.KeyArrowLeft:
+	//  fallthrough
 	case ch != 0 && mod == 0 && !limit:
 		v.EditWrite(ch)
 	case key == gocui.KeySpace && !limit:
