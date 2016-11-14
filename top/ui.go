@@ -16,6 +16,7 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
+	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -179,10 +180,10 @@ func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 		ui.refreshIntervalMS = time.Duration(f*1000) * time.Millisecond
 		ui.RefeshNow()
 
-		return w.(*masterUIInterface.InputDialogWidget).CloseWidget(g, v)
+		return w.(*uiCommon.InputDialogWidget).CloseWidget(g, v)
 	}
 
-	intervalWidget := masterUIInterface.NewInputDialogWidget(ui,
+	intervalWidget := uiCommon.NewInputDialogWidget(ui,
 		"editIntervalWidget", 30, 6, labelText, maxLength, titleText, helpText,
 		valueText, applyCallbackFunc)
 	return intervalWidget.Init(g)

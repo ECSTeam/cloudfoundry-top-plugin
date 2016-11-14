@@ -1,24 +1,25 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"fmt"
 	"regexp"
 
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 type EditFilterView struct {
 	*EditColumnViewAbs
 
-	labelWidget Manager
-	inputWidget Manager
+	labelWidget masterUIInterface.Manager
+	inputWidget masterUIInterface.Manager
 
 	oldFilterColumnMap map[string]*FilterColumn
 
 	editField bool
 }
 
-func NewEditFilterView(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditFilterView {
+func NewEditFilterView(masterUI masterUIInterface.MasterUIInterface, name string, listWidget *ListWidget) *EditFilterView {
 	w := &EditFilterView{EditColumnViewAbs: NewEditColumnViewAbs(masterUI, name, listWidget)}
 	w.width = 55
 	w.height = 14
@@ -76,7 +77,9 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 	fmt.Fprintf(v, " Filter: %v\n\n", filterText)
 
 	if w.editField {
-		fmt.Fprintf(v, "\n\n")
+		fmt.Fprintf(v, "\n\n RegEx examples:\n")
+		fmt.Fprintf(v, " AppA or AppB: appa|appb\n")
+		fmt.Fprintf(v, " Starts with 'p' end with 'ch': p([a-z]*)ch\n")
 	} else {
 		fmt.Fprintln(v, " RIGHT or LEFT arrow - select column")
 		fmt.Fprintln(v, " SPACE - select column to edit")
@@ -87,7 +90,7 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 	return nil
 }
 
-func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr Manager, inputValue string) error {
+func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
 
 	parentView, err := g.View(w.name)
 	if err != nil {
@@ -118,9 +121,16 @@ func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr Man
 
 func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
+	selectedColId := w.listWidget.selectedColumnId
+	filter := w.listWidget.filterColumnMap[selectedColId]
+	filterText := ""
+	if filter != nil {
+		filterText = filter.filterText
+	}
+
 	labelText := "Filter"
-	maxLength := 10
-	valueText := ""
+	maxLength := 30
+	valueText := filterText
 	topMargin := 4
 
 	w.labelWidget = NewLabel(w, "label", 1, topMargin, labelText)
@@ -129,6 +139,7 @@ func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 		//return w.CloseWidget(g, v)
 		return nil
 	}
+
 	w.inputWidget = NewInput(w, "input", len(labelText)+2, topMargin, maxLength+2,
 		maxLength, valueText,
 		w.applyValueCallback,

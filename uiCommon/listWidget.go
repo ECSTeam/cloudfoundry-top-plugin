@@ -1,4 +1,4 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"bytes"
@@ -8,8 +8,10 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/Knetic/govaluate"
 	"github.com/jroimartin/gocui"
-	//"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -32,6 +34,7 @@ const (
 
 type getRowKeyFunc func(index int) string
 type getRowDisplayFunc func(index int, isSelected bool) string
+type getRowRawValueFunc func(index int) string
 type getDisplayHeaderFunc func() string
 
 type getListSizeFunc func() int
@@ -41,23 +44,32 @@ type DisplayViewInterface interface {
 	RefreshDisplay(g *gocui.Gui) error
 	SetDisplayPaused(paused bool)
 	GetDisplayPaused() bool
-	SortData()
+	FilterAndSortData()
 }
+
+type ColumnType int
+
+const (
+	ALPHANUMERIC ColumnType = iota
+	NUMERIC
+)
 
 type ListColumn struct {
 	id                 string
 	label              string
 	size               int
+	columnType         ColumnType
 	leftJustifyLabel   bool
 	sortFunc           util.LessFunc
 	defaultReverseSort bool
 	displayFunc        getRowDisplayFunc
+	rawValueFunc       getRowRawValueFunc
 }
 
 const LOCK_COLUMNS = 1
 
 type ListWidget struct {
-	masterUI     MasterUIInterface
+	masterUI     masterUIInterface.MasterUIInterface
 	name         string
 	topMargin    int
 	bottomMargin int
@@ -102,24 +114,28 @@ func NewSortColumn(id string, reverseSort bool) *SortColumn {
 func NewListColumn(
 	id, label string,
 	size int,
+	columnType ColumnType,
 	leftJustifyLabel bool,
 	sortFunc util.LessFunc,
 	defaultReverseSort bool,
-	displayFunc getRowDisplayFunc) *ListColumn {
+	displayFunc getRowDisplayFunc,
+	rawValueFunc getRowRawValueFunc) *ListColumn {
 	column := &ListColumn{
 		id:                 id,
 		label:              label,
 		size:               size,
+		columnType:         columnType,
 		leftJustifyLabel:   leftJustifyLabel,
 		sortFunc:           sortFunc,
 		defaultReverseSort: defaultReverseSort,
 		displayFunc:        displayFunc,
+		rawValueFunc:       rawValueFunc,
 	}
 
 	return column
 }
 
-func NewListWidget(masterUI MasterUIInterface, name string,
+func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	topMargin, bottomMargin int, displayView DisplayViewInterface,
 	columns []*ListColumn) *ListWidget {
 	w := &ListWidget{
@@ -208,6 +224,85 @@ func (asUI *ListWidget) HighlightKey() string {
 	return asUI.highlightKey
 }
 
+func (asUI *ListWidget) GetFilterColumnMap() map[string]*FilterColumn {
+	return asUI.filterColumnMap
+}
+
+func (asUI *ListWidget) FilterRow(rowIndex int) bool {
+	for _, column := range asUI.columns {
+		filter := asUI.filterColumnMap[column.id]
+		if filter != nil && filter.filterText != "" {
+			if !asUI.filterRow(rowIndex, column, filter) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (asUI *ListWidget) filterRow(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+	debug.Debug("filterRow")
+	switch column.columnType {
+	case ALPHANUMERIC:
+		return asUI.filterRowAlpha(rowIndex, column, filter)
+	case NUMERIC:
+		return asUI.filterRowNumeric(rowIndex, column, filter)
+
+	}
+	return false
+}
+
+func (asUI *ListWidget) filterRowNumeric(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+	varName := "VALUE"
+	expressionStr := filter.filterText
+	if expressionStr == "" {
+		return true
+	}
+	expressionStr = varName + " " + expressionStr
+	value := column.rawValueFunc(rowIndex)
+	floatValue, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		debug.Debug("Error in ParseFloat: " + value + " Error:" + err.Error())
+		return true
+	}
+
+	debug.Debug("expressionStr:" + expressionStr)
+	expression, err := govaluate.NewEvaluableExpression(expressionStr)
+	if err != nil {
+		debug.Debug("Error in express: " + expressionStr + " Error:" + err.Error())
+		return true
+	}
+
+	parameters := make(map[string]interface{}, 8)
+	parameters[varName] = floatValue
+
+	result, err := expression.Evaluate(parameters)
+	if err != nil {
+		debug.Debug("Error in Evaluate: " + expressionStr + " Error:" + err.Error())
+		return true
+	}
+
+	// result is now set to "false", the bool value.
+	return result.(bool)
+}
+
+func (asUI *ListWidget) filterRowAlpha(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+	debug.Debug("filterRowAlpha")
+	regex := filter.compiledRegex
+	if regex == nil {
+		compiledRegex, err := regexp.Compile(filter.filterText)
+		if err != nil {
+			// Better to error on the side of showing the row
+			return true
+		}
+		filter.compiledRegex = compiledRegex
+		regex = compiledRegex
+	}
+	value := column.rawValueFunc(rowIndex)
+
+	return regex.MatchString(value)
+}
+
 func (asUI *ListWidget) SetSortColumns(sortColumns []*SortColumn) {
 	asUI.sortColumns = sortColumns
 }
@@ -226,8 +321,12 @@ func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
 	return sortFunctions
 }
 
-func (asUI *ListWidget) SortData() {
-	asUI.displayView.SortData()
+func (asUI *ListWidget) GetColumns() []*ListColumn {
+	return asUI.columns
+}
+
+func (asUI *ListWidget) FilterAndSortData() {
+	asUI.displayView.FilterAndSortData()
 }
 
 func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {

@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
-	//"sort"
-	//"strconv"
+
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
 	//"github.com/mohae/deepcopy"
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/helpView"
@@ -33,7 +34,7 @@ type AppListView struct {
 	filterAppName string
 
 	appDetailView *AppDetailView
-	appListWidget *masterUIInterface.ListWidget
+	appListWidget *uiCommon.ListWidget
 
 	displayPaused bool
 }
@@ -62,19 +63,19 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	if asUI.appListWidget == nil {
 
-		appListWidget := masterUIInterface.NewListWidget(asUI.masterUI, asUI.name,
+		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
 			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions())
 		appListWidget.Title = "App List"
 		appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
 		appListWidget.GetListSize = asUI.GetListSize
 		appListWidget.GetRowKey = asUI.GetRowKey
 
-		defaultSortColums := []*masterUIInterface.SortColumn{
-			masterUIInterface.NewSortColumn("CPU", true),
-			masterUIInterface.NewSortColumn("L60", true),
-			masterUIInterface.NewSortColumn("appName", false),
-			masterUIInterface.NewSortColumn("spaceName", false),
-			masterUIInterface.NewSortColumn("orgName", false),
+		defaultSortColums := []*uiCommon.SortColumn{
+			uiCommon.NewSortColumn("CPU", true),
+			uiCommon.NewSortColumn("L60", true),
+			uiCommon.NewSortColumn("appName", false),
+			uiCommon.NewSortColumn("spaceName", false),
+			uiCommon.NewSortColumn("orgName", false),
 		}
 		appListWidget.SetSortColumns(defaultSortColums)
 
@@ -134,8 +135,8 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 	return asUI.appListWidget.Layout(g)
 }
 
-func (asUI *AppListView) columnDefinitions() []*masterUIInterface.ListColumn {
-	columns := make([]*masterUIInterface.ListColumn, 0)
+func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
+	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, asUI.columnAppName())
 	columns = append(columns, asUI.columnSpaceName())
 	columns = append(columns, asUI.columnOrgName())
@@ -163,13 +164,13 @@ func (asUI *AppListView) columnDefinitions() []*masterUIInterface.ListColumn {
 
 func formatDisplayData(value string, size int) string {
 	if len(value) > size {
-		value = value[0:size-1] + masterUIInterface.Ellipsis
+		value = value[0:size-1] + uiCommon.Ellipsis
 	}
 	format := fmt.Sprintf("%%-%v.%vv", size, size)
 	return fmt.Sprintf(format, value)
 }
 
-func (asUI *AppListView) columnAppName() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).AppName, c2.(*AppStats).AppName)
@@ -179,11 +180,16 @@ func (asUI *AppListView) columnAppName() *masterUIInterface.ListColumn {
 		//return fmt.Sprintf("%-50.50v", appStats.AppName)
 		return formatDisplayData(appStats.AppName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("appName", "APPLICATION", defaultColSize, true, appNameSortFunc, false, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return appStats.AppName
+	}
+	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnSpaceName() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).SpaceName, c2.(*AppStats).SpaceName)
@@ -193,11 +199,16 @@ func (asUI *AppListView) columnSpaceName() *masterUIInterface.ListColumn {
 		//return fmt.Sprintf("%-10.10v", appStats.SpaceName)
 		return formatDisplayData(appStats.SpaceName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("spaceName", "SPACE", defaultColSize, true, appNameSortFunc, false, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return appStats.SpaceName
+	}
+	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnOrgName() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).OrgName, c2.(*AppStats).OrgName)
@@ -207,11 +218,16 @@ func (asUI *AppListView) columnOrgName() *masterUIInterface.ListColumn {
 		//return fmt.Sprintf("%-10.10v", appStats.OrgName)
 		return formatDisplayData(appStats.OrgName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("orgName", "ORG", defaultColSize, true, appNameSortFunc, false, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return appStats.OrgName
+	}
+	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnReportingContainers() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalReportingContainers < c2.(*AppStats).TotalReportingContainers
 	}
@@ -219,11 +235,16 @@ func (asUI *AppListView) columnReportingContainers() *masterUIInterface.ListColu
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%3v", appStats.TotalReportingContainers)
 	}
-	c := masterUIInterface.NewListColumn("reportingContainers", "RCR", 3, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return strconv.Itoa(appStats.TotalReportingContainers)
+	}
+	c := uiCommon.NewListColumn("reportingContainers", "RCR", 3,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnTotalCpu() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalCpuPercentage < c2.(*AppStats).TotalCpuPercentage
 	}
@@ -237,11 +258,16 @@ func (asUI *AppListView) columnTotalCpu() *masterUIInterface.ListColumn {
 		}
 		return fmt.Sprintf("%6v", totalCpuInfo)
 	}
-	c := masterUIInterface.NewListColumn("CPU", "CPU%", 6, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
+	}
+	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnTotalMemoryUsed() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalUsedMemory < c2.(*AppStats).TotalUsedMemory
 	}
@@ -255,11 +281,16 @@ func (asUI *AppListView) columnTotalMemoryUsed() *masterUIInterface.ListColumn {
 		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
-	c := masterUIInterface.NewListColumn("MEM", "MEM", 9, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
+	}
+	c := uiCommon.NewListColumn("MEM", "MEM", 9,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnTotalDiskUsed() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalUsedDisk < c2.(*AppStats).TotalUsedDisk
 	}
@@ -273,11 +304,16 @@ func (asUI *AppListView) columnTotalDiskUsed() *masterUIInterface.ListColumn {
 		}
 		return fmt.Sprintf("%9v", totalDiskInfo)
 	}
-	c := masterUIInterface.NewListColumn("DISK", "DISK", 9, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
+	}
+	c := uiCommon.NewListColumn("DISK", "DISK", 9,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnAvgResponseTimeL60Info() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.AvgResponseL60Time < c2.(*AppStats).TotalTraffic.AvgResponseL60Time
 	}
@@ -290,11 +326,16 @@ func (asUI *AppListView) columnAvgResponseTimeL60Info() *masterUIInterface.ListC
 		}
 		return fmt.Sprintf("%6v", avgResponseTimeL60Info)
 	}
-	c := masterUIInterface.NewListColumn("avgResponseTimeL60", "RESP", 6, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.AvgResponseL60Time)
+	}
+	c := uiCommon.NewListColumn("avgResponseTimeL60", "RESP", 6,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnLogCount() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnLogCount() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalLogCount < c2.(*AppStats).TotalLogCount
 	}
@@ -302,11 +343,16 @@ func (asUI *AppListView) columnLogCount() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%11v", util.Format(appStats.TotalLogCount))
 	}
-	c := masterUIInterface.NewListColumn("totalLogCount", "LOGS", 11, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalLogCount)
+	}
+	c := uiCommon.NewListColumn("totalLogCount", "LOGS", 11,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnL1() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnL1() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.EventL1Rate < c2.(*AppStats).TotalTraffic.EventL1Rate
 	}
@@ -314,11 +360,16 @@ func (asUI *AppListView) columnL1() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL1Rate)
 	}
-	c := masterUIInterface.NewListColumn("L1", "L1", 5, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL1Rate)
+	}
+	c := uiCommon.NewListColumn("L1", "L1", 5,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnL10() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnL10() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.EventL10Rate < c2.(*AppStats).TotalTraffic.EventL10Rate
 	}
@@ -326,11 +377,16 @@ func (asUI *AppListView) columnL10() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL10Rate)
 	}
-	c := masterUIInterface.NewListColumn("L10", "L10", 5, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL10Rate)
+	}
+	c := uiCommon.NewListColumn("L10", "L10", 5,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnL60() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnL60() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.EventL60Rate < c2.(*AppStats).TotalTraffic.EventL60Rate
 	}
@@ -338,11 +394,16 @@ func (asUI *AppListView) columnL60() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%5d", appStats.TotalTraffic.EventL60Rate)
 	}
-	c := masterUIInterface.NewListColumn("L60", "L60", 5, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL60Rate)
+	}
+	c := uiCommon.NewListColumn("L60", "L60", 5,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) columnHTTP() *masterUIInterface.ListColumn {
+func (asUI *AppListView) columnHTTP() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.HttpAllCount < c2.(*AppStats).TotalTraffic.HttpAllCount
 	}
@@ -350,10 +411,15 @@ func (asUI *AppListView) columnHTTP() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%8d", appStats.TotalTraffic.HttpAllCount)
 	}
-	c := masterUIInterface.NewListColumn("http", "HTTP", 8, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
+	}
+	c := uiCommon.NewListColumn("http", "HTTP", 8,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
-func (asUI *AppListView) column2XX() *masterUIInterface.ListColumn {
+func (asUI *AppListView) column2XX() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.Http2xxCount < c2.(*AppStats).TotalTraffic.Http2xxCount
 	}
@@ -361,10 +427,15 @@ func (asUI *AppListView) column2XX() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%8d", appStats.TotalTraffic.Http2xxCount)
 	}
-	c := masterUIInterface.NewListColumn("2XX", "2XX", 8, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.Http2xxCount)
+	}
+	c := uiCommon.NewListColumn("2XX", "2XX", 8,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
-func (asUI *AppListView) column3XX() *masterUIInterface.ListColumn {
+func (asUI *AppListView) column3XX() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.Http3xxCount < c2.(*AppStats).TotalTraffic.Http3xxCount
 	}
@@ -372,11 +443,16 @@ func (asUI *AppListView) column3XX() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%8d", appStats.TotalTraffic.Http3xxCount)
 	}
-	c := masterUIInterface.NewListColumn("3XX", "3XX", 8, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.Http3xxCount)
+	}
+	c := uiCommon.NewListColumn("3XX", "3XX", 8,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) column4XX() *masterUIInterface.ListColumn {
+func (asUI *AppListView) column4XX() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.Http4xxCount < c2.(*AppStats).TotalTraffic.Http4xxCount
 	}
@@ -384,11 +460,16 @@ func (asUI *AppListView) column4XX() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%8d", appStats.TotalTraffic.Http4xxCount)
 	}
-	c := masterUIInterface.NewListColumn("4XX", "4XX", 8, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.Http4xxCount)
+	}
+	c := uiCommon.NewListColumn("4XX", "4XX", 8,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
-func (asUI *AppListView) column5XX() *masterUIInterface.ListColumn {
+func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*AppStats).TotalTraffic.Http5xxCount < c2.(*AppStats).TotalTraffic.Http5xxCount
 	}
@@ -396,7 +477,12 @@ func (asUI *AppListView) column5XX() *masterUIInterface.ListColumn {
 		appStats := asUI.displayedSortedStatList[statIndex]
 		return fmt.Sprintf("%8d", appStats.TotalTraffic.Http5xxCount)
 	}
-	c := masterUIInterface.NewListColumn("5XX", "5XX", 8, false, appNameSortFunc, true, displayFunc)
+	rawValueFunc := func(statIndex int) string {
+		appStats := asUI.displayedSortedStatList[statIndex]
+		return fmt.Sprintf("%v", appStats.TotalTraffic.Http5xxCount)
+	}
+	c := uiCommon.NewListColumn("5XX", "5XX", 8,
+		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
@@ -467,17 +553,38 @@ func (asUI *AppListView) updateData() {
 	asUI.mu.Lock()
 	processorCopy := asUI.currentProcessor.Clone()
 	asUI.displayedProcessor = processorCopy
-	asUI.SortData()
+	asUI.FilterAndSortData()
 	asUI.mu.Unlock()
 }
 
-func (asUI *AppListView) SortData() {
+func (asUI *AppListView) FilterAndSortData() {
 	if len(asUI.displayedProcessor.AppMap) > 0 {
-		sortFunctions := asUI.appListWidget.GetSortFunctions()
-		asUI.displayedSortedStatList = getSortedStats(asUI.displayedProcessor.AppMap, sortFunctions)
+		statsMap := asUI.displayedProcessor.AppMap
+		stats := populateNamesIfNeeded(statsMap)
+		asUI.displayedSortedStatList = stats
+		stats = asUI.filterData(stats)
+		stats = asUI.sortData(stats)
+		asUI.displayedSortedStatList = stats
 	} else {
 		asUI.displayedSortedStatList = nil
 	}
+
+}
+
+func (asUI *AppListView) filterData(stats []*AppStats) []*AppStats {
+	filteredStats := make([]*AppStats, 0, len(stats))
+	for rowIndex, s := range stats {
+		if asUI.appListWidget.FilterRow(rowIndex) {
+			filteredStats = append(filteredStats, s)
+		}
+	}
+	return filteredStats
+}
+
+func (asUI *AppListView) sortData(stats []*AppStats) []*AppStats {
+	sortFunctions := asUI.appListWidget.GetSortFunctions()
+	stats = getSortedStats(stats, sortFunctions)
+	return stats
 }
 
 func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {

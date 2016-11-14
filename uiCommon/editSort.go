@@ -1,9 +1,10 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"fmt"
 
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -21,7 +22,7 @@ type EditSortView struct {
 	oldSortColumns []*SortColumn
 }
 
-func NewEditSortView(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditSortView {
+func NewEditSortView(masterUI masterUIInterface.MasterUIInterface, name string, listWidget *ListWidget) *EditSortView {
 	w := &EditSortView{EditColumnViewAbs: NewEditColumnViewAbs(masterUI, name, listWidget)}
 	w.width = 55
 	w.height = 14
@@ -181,7 +182,7 @@ func (w *EditSortView) applySort(g *gocui.Gui) {
 		}
 	}
 	w.listWidget.sortColumns = useSortColumns
-	w.listWidget.SortData()
+	w.listWidget.FilterAndSortData()
 	w.RefreshDisplay(g)
 }
 
@@ -192,6 +193,6 @@ func (w *EditSortView) applyActionCallback(g *gocui.Gui, v *gocui.View) error {
 
 func (w *EditSortView) cancelActionCallback(g *gocui.Gui, v *gocui.View) error {
 	w.listWidget.sortColumns = w.oldSortColumns
-	w.listWidget.SortData()
+	w.listWidget.FilterAndSortData()
 	return nil
 }

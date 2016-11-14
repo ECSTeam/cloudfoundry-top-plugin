@@ -1,4 +1,4 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"errors"
@@ -6,20 +6,21 @@ import (
 	"strings"
 
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
-type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w Manager, inputValue string) error
+type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w masterUIInterface.Manager, inputValue string) error
 type cancelCallbackFunc func(g *gocui.Gui, v *gocui.View) error
 
 type Label struct {
-	parentUI         Manager
+	parentUI         masterUIInterface.Manager
 	name             string
 	offsetX, offsetY int
 	width, height    int
 	labelText        string
 }
 
-func NewLabel(parentUI Manager, name string, offsetX, offsetY int, labelText string) *Label {
+func NewLabel(parentUI masterUIInterface.Manager, name string, offsetX, offsetY int, labelText string) *Label {
 	//lines := strings.Split(body, "\n")
 	width := len(labelText) + 1
 	return &Label{parentUI: parentUI, name: name,
@@ -50,7 +51,7 @@ func (l *Label) Layout(g *gocui.Gui) error {
 }
 
 type Input struct {
-	parentUI           Manager
+	parentUI           masterUIInterface.Manager
 	name               string
 	offsetX, offsetY   int
 	width, height      int
@@ -62,7 +63,7 @@ type Input struct {
 }
 
 func NewInput(
-	parentUI Manager,
+	parentUI masterUIInterface.Manager,
 	name string,
 	offsetX, offsetY,
 	width,

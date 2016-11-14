@@ -1,4 +1,4 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"errors"
@@ -6,22 +6,24 @@ import (
 	//"strings"
 	//"log"
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 // InputDialogWidget used for displaying a label and input field
 type InputDialogWidget struct {
-	masterUI  MasterUIInterface
+	masterUI  masterUIInterface.MasterUIInterface
 	name      string
 	width     int
 	height    int
 	titleText string
 	helpText  string
 
-	labelWidget Manager
-	inputWidget Manager
+	labelWidget masterUIInterface.Manager
+	inputWidget masterUIInterface.Manager
 }
 
-func NewInputDialogWidget(masterUI MasterUIInterface,
+func NewInputDialogWidget(
+	masterUI masterUIInterface.MasterUIInterface,
 	name string,
 	width, height int,
 	labelText string, maxLength int,

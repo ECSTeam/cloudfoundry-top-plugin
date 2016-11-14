@@ -3,13 +3,17 @@ package appStats
 //package main
 
 import (
-	//"fmt"
+
 	//"time"
 	//"sort"
 	//"strings"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
+)
+
+const (
+	UnknownName = "unknown"
 )
 
 type Traffic struct {
@@ -78,10 +82,9 @@ func NewTraffic() *Traffic {
 	return stats
 }
 
-// Take the stats map and generated a reverse sorted list base on attribute X
-func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc) []*AppStats {
+func populateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
 
-	s := make([]util.Sortable, 0, len(statsMap))
+	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {
 		appMetadata := metadata.FindAppMetadata(d.AppId)
 		appName := appMetadata.Name
@@ -90,29 +93,48 @@ func getSortedStats(statsMap map[string]*AppStats, sortFunctions []util.LessFunc
 		}
 		d.AppName = appName
 
-		spaceMetadata := metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
-		spaceName := spaceMetadata.Name
-		if spaceName == "" {
-			spaceName = "unknown"
+		var spaceMetadata metadata.Space
+		spaceName := d.SpaceName
+		if spaceName == "" || spaceName == UnknownName {
+			spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+			spaceName = spaceMetadata.Name
+			if spaceName == "" {
+				spaceName = UnknownName
+			}
+			d.SpaceName = spaceName
 		}
-		d.SpaceName = spaceName
 
-		orgMetadata := metadata.FindOrgMetadata(spaceMetadata.OrgGuid)
-		orgName := orgMetadata.Name
-		if orgName == "" {
-			orgName = "unknown"
+		orgName := d.OrgName
+		if orgName == "" || orgName == UnknownName {
+			if &spaceMetadata == nil {
+				spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+			}
+			orgMetadata := metadata.FindOrgMetadata(spaceMetadata.OrgGuid)
+			orgName = orgMetadata.Name
+			if orgName == "" {
+				orgName = UnknownName
+			}
+			d.OrgName = orgName
 		}
-		d.OrgName = orgName
-
 		s = append(s, d)
 	}
+	return s
+}
 
-	util.OrderedBy(sortFunctions).Sort(s)
+// Take the stats map and generated a reverse sorted list base on attribute X
+func getSortedStats(stats []*AppStats, sortFunctions []util.LessFunc) []*AppStats {
 
-	s2 := make([]*AppStats, len(s))
-	for i, d := range s {
+	sortStats := make([]util.Sortable, 0, len(stats))
+	//debug.Debug(fmt.Sprintf("sortStats size before:%v", len(sortStats)))
+	for _, s := range stats {
+		sortStats = append(sortStats, s)
+	}
+	//debug.Debug(fmt.Sprintf("sortStats size after:%v", len(sortStats)))
+	util.OrderedBy(sortFunctions).Sort(sortStats)
+
+	s2 := make([]*AppStats, len(sortStats))
+	for i, d := range sortStats {
 		s2[i] = d.(*AppStats)
 	}
-
 	return s2
 }

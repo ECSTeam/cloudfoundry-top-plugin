@@ -1,4 +1,4 @@
-package masterUIInterface
+package uiCommon
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
 
 type initialLayoutCallbackFunc func(g *gocui.Gui, v *gocui.View) error
@@ -15,7 +16,7 @@ type applyActionCallbackFunc func(g *gocui.Gui, v *gocui.View) error
 type cancelActionCallbackFunc func(g *gocui.Gui, v *gocui.View) error
 
 type EditColumnViewAbs struct {
-	masterUI         MasterUIInterface
+	masterUI         masterUIInterface.MasterUIInterface
 	name             string
 	width            int
 	height           int
@@ -32,7 +33,7 @@ type EditColumnViewAbs struct {
 	priorStateOfDisplayPaused bool
 }
 
-func NewEditColumnViewAbs(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditColumnViewAbs {
+func NewEditColumnViewAbs(masterUI masterUIInterface.MasterUIInterface, name string, listWidget *ListWidget) *EditColumnViewAbs {
 	w := &EditColumnViewAbs{masterUI: masterUI, name: name, listWidget: listWidget}
 	w.priorStateOfDisplayPaused = listWidget.displayView.GetDisplayPaused()
 	listWidget.displayView.SetDisplayPaused(true)

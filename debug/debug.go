@@ -59,7 +59,7 @@ func logMsg(msg string) {
 	line := fmt.Sprintf("%v %v", time.Now().Format("15:04:05"), msg)
 	debugLines = append(debugLines, line)
 	if len(debugLines) > MAX_LOG_FILES {
-		debugLines = debugLines[:len(debugLines)-1]
+		debugLines = debugLines[1:]
 	}
 }
 
@@ -170,6 +170,7 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 
 func (w *DebugWidget) closeDebugWidget(g *gocui.Gui, v *gocui.View) error {
 	g.Highlight = false
+	g.SelBgColor = gocui.ColorBlack
 	if err := w.masterUI.CloseView(w); err != nil {
 		return err
 	}
