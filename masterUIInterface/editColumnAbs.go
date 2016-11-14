@@ -112,7 +112,6 @@ func (w *EditColumnViewAbs) RefreshDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(v, "Hello")
 	if w.refreshDisplayCallbackFunc != nil {
 		w.refreshDisplayCallbackFunc(g, v)
 	}
@@ -158,6 +157,7 @@ func (w *EditColumnViewAbs) keyArrowRightAction(g *gocui.Gui, v *gocui.View) err
 	}
 	//writeFooter(g, fmt.Sprintf("\r columnId: %v", columnId) )
 	w.listWidget.selectedColumnId = columnId
+	w.RefreshDisplay(g)
 	return w.listWidget.scollSelectedColumnIntoView(g)
 }
 
@@ -172,5 +172,6 @@ func (w *EditColumnViewAbs) keyArrowLeftAction(g *gocui.Gui, v *gocui.View) erro
 	}
 	//writeFooter(g, fmt.Sprintf("\r columnId: %v", columnId) )
 	w.listWidget.selectedColumnId = columnId
+	w.RefreshDisplay(g)
 	return w.listWidget.scollSelectedColumnIntoView(g)
 }

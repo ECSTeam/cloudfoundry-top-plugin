@@ -168,7 +168,7 @@ func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 
 	valueText := strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", ui.refreshIntervalMS.Seconds()), "0"), ".")
 
-	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w *masterUIInterface.InputDialogWidget, inputValue string) error {
+	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w masterUIInterface.Manager, inputValue string) error {
 		f, err := strconv.ParseFloat(inputValue, 64)
 		if err != nil {
 			return err
@@ -178,7 +178,8 @@ func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 		}
 		ui.refreshIntervalMS = time.Duration(f*1000) * time.Millisecond
 		ui.RefeshNow()
-		return w.CloseWidget(g, v)
+
+		return w.(*masterUIInterface.InputDialogWidget).CloseWidget(g, v)
 	}
 
 	intervalWidget := masterUIInterface.NewInputDialogWidget(ui,
@@ -192,6 +193,7 @@ func (ui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
 	ui.appListView.ClearStats(g, v)
 	ui.updateDisplay(g)
 	return nil
+
 }
 
 func (ui *MasterUI) RefeshNow() {

@@ -8,7 +8,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w *InputDialogWidget, inputValue string) error
+type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w Manager, inputValue string) error
 type cancelCallbackFunc func(g *gocui.Gui, v *gocui.View) error
 
 type Label struct {
@@ -50,7 +50,7 @@ func (l *Label) Layout(g *gocui.Gui) error {
 }
 
 type Input struct {
-	parentUI           *InputDialogWidget
+	parentUI           Manager
 	name               string
 	offsetX, offsetY   int
 	width, height      int
@@ -62,7 +62,7 @@ type Input struct {
 }
 
 func NewInput(
-	parentUI *InputDialogWidget,
+	parentUI Manager,
 	name string,
 	offsetX, offsetY,
 	width,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 
 	"github.com/jroimartin/gocui"
@@ -80,11 +81,18 @@ type ListWidget struct {
 	selectedColumnId string
 
 	sortColumns []*SortColumn
+
+	filterColumnMap map[string]*FilterColumn
 }
 
 type SortColumn struct {
 	id          string
 	reverseSort bool
+}
+
+type FilterColumn struct {
+	filterText    string
+	compiledRegex *regexp.Regexp
 }
 
 func NewSortColumn(id string, reverseSort bool) *SortColumn {
@@ -115,13 +123,14 @@ func NewListWidget(masterUI MasterUIInterface, name string,
 	topMargin, bottomMargin int, displayView DisplayViewInterface,
 	columns []*ListColumn) *ListWidget {
 	w := &ListWidget{
-		masterUI:     masterUI,
-		name:         name,
-		topMargin:    topMargin,
-		bottomMargin: bottomMargin,
-		displayView:  displayView,
-		columns:      columns,
-		columnMap:    make(map[string]*ListColumn),
+		masterUI:        masterUI,
+		name:            name,
+		topMargin:       topMargin,
+		bottomMargin:    bottomMargin,
+		displayView:     displayView,
+		columns:         columns,
+		columnMap:       make(map[string]*ListColumn),
+		filterColumnMap: make(map[string]*FilterColumn),
 	}
 	for _, col := range columns {
 		w.columnMap[col.id] = col
