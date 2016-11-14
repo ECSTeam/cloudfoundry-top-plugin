@@ -14,14 +14,12 @@ import (
 
 const (
 	// Unicode characters: http://graphemica.com/unicode/characters/page/34
-	DownArrow     = string('\U00002193')
-	UpArrow       = string('\U00002191')
-	DownArrowTiny = string('\U0000A71C')
-	UpArrowTiny   = string('\U0000A71B')
-
-	TriangleUp   = string('\U000025B4')
-	TriangleDown = string('\U000025BE')
-
+	DownArrow       = string('\U00002193')
+	UpArrow         = string('\U00002191')
+	DownArrowTiny   = string('\U0000A71C')
+	UpArrowTiny     = string('\U0000A71B')
+	TriangleUp      = string('\U000025B4')
+	TriangleDown    = string('\U000025BE')
 	RightArrow      = string('\U00002192')
 	LeftArrow       = string('\U00002190')
 	InfoIcon        = string('\U00002139')
