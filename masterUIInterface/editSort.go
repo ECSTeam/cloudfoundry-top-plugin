@@ -16,10 +16,9 @@ const (
 type EditSortView struct {
 	*EditColumnViewAbs
 
-	sortPosition              int
-	sortColumns               []*SortColumn
-	oldSortColumns            []*SortColumn
-	priorStateOfDisplayPaused bool
+	sortPosition   int
+	sortColumns    []*SortColumn
+	oldSortColumns []*SortColumn
 }
 
 func NewEditSortView(masterUI MasterUIInterface, name string, listWidget *ListWidget) *EditSortView {

@@ -80,14 +80,16 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 		asUI.appListWidget = appListWidget
 
-		if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-			filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
-			asUI.masterUI.LayoutManager().Add(filter)
-			asUI.masterUI.SetCurrentViewOnTop(g, "filterWidget")
-			return nil
-		}); err != nil {
-			log.Panicln(err)
-		}
+		/*
+			if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+				filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
+				asUI.masterUI.LayoutManager().Add(filter)
+				asUI.masterUI.SetCurrentViewOnTop(g, "filterWidget")
+				return nil
+			}); err != nil {
+				log.Panicln(err)
+			}
+		*/
 
 		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
 			func(g *gocui.Gui, v *gocui.View) error {

@@ -170,6 +170,10 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 			log.Panicln(err)
 		}
 
+		if err := g.SetKeybinding(w.name, 'f', gocui.ModNone, w.editFilterAction); err != nil {
+			log.Panicln(err)
+		}
+
 		if err := g.SetKeybinding(w.name, 'p', gocui.ModNone, w.toggleDisplayPauseAction); err != nil {
 			log.Panicln(err)
 		}
@@ -548,16 +552,25 @@ func (asUI *ListWidget) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) er
 
 }
 
-func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
-
+func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {
+	editViewName := asUI.name + ".editFilterView"
 	asUI.selectColumnMode = true
 	if asUI.selectedColumnId == "" {
 		asUI.selectedColumnId = asUI.columns[0].id
 	}
+	filterView := NewEditFilterView(asUI.masterUI, editViewName, asUI)
+	asUI.masterUI.LayoutManager().Add(filterView)
+	return asUI.RefreshDisplay(g)
+}
 
-	editView := NewEditSortView(asUI.masterUI, asUI.name+".editView", asUI)
+func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
+	editViewName := asUI.name + ".editSortView"
+	asUI.selectColumnMode = true
+	if asUI.selectedColumnId == "" {
+		asUI.selectedColumnId = asUI.columns[0].id
+	}
+	editView := NewEditSortView(asUI.masterUI, editViewName, asUI)
 	asUI.masterUI.LayoutManager().Add(editView)
-	asUI.masterUI.SetCurrentViewOnTop(g, "editView")
 	return asUI.RefreshDisplay(g)
 }
 
