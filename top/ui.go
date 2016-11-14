@@ -219,7 +219,7 @@ func (ui *MasterUI) updateDisplay(g *gocui.Gui) {
 	})
 }
 
-func (ui *MasterUI) refeshDisplay(g *gocui.Gui) {
+func (ui *MasterUI) refeshDisplayX(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
 		ui.updateHeaderDisplay(g)
 		ui.appListView.RefreshDisplay(g)

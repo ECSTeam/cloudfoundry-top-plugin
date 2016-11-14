@@ -2,25 +2,26 @@ package eventrouting
 
 import (
 	//"fmt"
-	"github.com/cloudfoundry/sonde-go/events"
 	"sync"
 	"time"
+
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
 )
 
 type EventRouter struct {
-	eventCount 				int64
-	startTime					time.Time
-	mutex             *sync.Mutex
-	processor 			  *appStats.AppStatsEventProcessor
-	errors 						<-chan error
-	messages 					<-chan *events.Envelope
+	eventCount int64
+	startTime  time.Time
+	mutex      *sync.Mutex
+	processor  *appStats.AppStatsEventProcessor
+	errors     <-chan error
+	messages   <-chan *events.Envelope
 }
 
 func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
-	return &EventRouter {
-		processor:					processor,
-		startTime:				time.Now(),
+	return &EventRouter{
+		processor: processor,
+		startTime: time.Now(),
 	}
 
 }
@@ -37,7 +38,6 @@ func (er *EventRouter) Clear() {
 	er.eventCount = 0
 	er.startTime = time.Now()
 }
-
 
 func (er *EventRouter) Route(msg *events.Envelope) {
 	er.eventCount++

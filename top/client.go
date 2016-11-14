@@ -1,21 +1,18 @@
 package top
 
-
 import (
-
-	"fmt"
 	"crypto/tls"
+	"fmt"
 	"time"
 	//"errors"
 	"github.com/cloudfoundry/cli/cf/terminal"
+	"github.com/cloudfoundry/cli/plugin"
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/cloudfoundry/cli/plugin"
 	"github.com/gorilla/websocket"
 
-	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
-
+	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 )
 
 type Client struct {
@@ -24,45 +21,44 @@ type Client struct {
 	options         *ClientOptions
 	ui              terminal.UI
 	cliConnection   plugin.CliConnection
-	eventrouting 		*eventrouting.EventRouter
-	errors 					<-chan error
-	messages 				<-chan *events.Envelope
-	router					*eventrouting.EventRouter
+	eventrouting    *eventrouting.EventRouter
+	errors          <-chan error
+	messages        <-chan *events.Envelope
+	router          *eventrouting.EventRouter
 }
 
 type ClientOptions struct {
 	AppGUID        string
 	Debug          bool
-	Cygwin				 bool
+	Cygwin         bool
 	NoFilter       bool
 	Filter         string
 	SubscriptionID string
 }
 
-
 var (
 	dopplerConnection *consumer.Consumer
-	apiEndpoint string
+	apiEndpoint       string
 	//appStatsUI *appStats.AppStatsUI
 )
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
 
 	return &Client{
-		options:         options,
-		ui:              ui,
-		cliConnection:   cliConnection,
+		options:       options,
+		ui:            ui,
+		cliConnection: cliConnection,
 	}
 
 }
 
 func (c *Client) Start() {
 
-  isDebug := c.options.Debug
+	isDebug := c.options.Debug
 	conn := c.cliConnection
 
 	isLoggedIn, err := conn.IsLoggedIn()
-	if err !=nil {
+	if err != nil {
 		c.ui.Failed(err.Error())
 		return
 	}
@@ -99,7 +95,7 @@ func (c *Client) Start() {
 	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 	if isDebug {
 		//dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
-		c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:"+subscriptionID)
+		c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:" + subscriptionID)
 		c.ui.Say("Hit Ctrl+c to exit")
 	}
 
@@ -113,13 +109,12 @@ func (c *Client) Start() {
 	ui := NewMasterUI(c.cliConnection)
 	c.router = ui.GetRouter()
 
-	debug.Info("Top started at "+time.Now().Format("01-02-2006 15:04:05"))
+	debug.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
 	go c.routeEvent()
 	ui.Start()
 
 }
-
 
 func (c *Client) routeEvent() error {
 
