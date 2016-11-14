@@ -159,40 +159,53 @@ func (asUI *AppListView) columnDefinitions() []*masterUIInterface.ListColumn {
 	return columns
 }
 
+func formatDisplayData(value string, size int) string {
+	if len(value) > size {
+		value = value[0:size-1] + masterUIInterface.Ellipsis
+	}
+	format := fmt.Sprintf("%%-%v.%vv", size, size)
+	return fmt.Sprintf(format, value)
+}
+
 func (asUI *AppListView) columnAppName() *masterUIInterface.ListColumn {
+	defaultColSize := 50
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).AppName, c2.(*AppStats).AppName)
 	}
-
 	displayFunc := func(statIndex int, isSelected bool) string {
 		appStats := asUI.displayedSortedStatList[statIndex]
-		return fmt.Sprintf("%-50.50v", appStats.AppName)
+		//return fmt.Sprintf("%-50.50v", appStats.AppName)
+		return formatDisplayData(appStats.AppName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("appName", "APPLICATION", 50, true, appNameSortFunc, false, displayFunc)
+	c := masterUIInterface.NewListColumn("appName", "APPLICATION", defaultColSize, true, appNameSortFunc, false, displayFunc)
 	return c
 }
 
 func (asUI *AppListView) columnSpaceName() *masterUIInterface.ListColumn {
+	defaultColSize := 10
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).SpaceName, c2.(*AppStats).SpaceName)
 	}
 	displayFunc := func(statIndex int, isSelected bool) string {
 		appStats := asUI.displayedSortedStatList[statIndex]
-		return fmt.Sprintf("%-10.10v", appStats.SpaceName)
+		//return fmt.Sprintf("%-10.10v", appStats.SpaceName)
+		return formatDisplayData(appStats.SpaceName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("spaceName", "SPACE", 10, true, appNameSortFunc, false, displayFunc)
+	c := masterUIInterface.NewListColumn("spaceName", "SPACE", defaultColSize, true, appNameSortFunc, false, displayFunc)
 	return c
 }
 
 func (asUI *AppListView) columnOrgName() *masterUIInterface.ListColumn {
+	defaultColSize := 10
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*AppStats).OrgName, c2.(*AppStats).OrgName)
 	}
 	displayFunc := func(statIndex int, isSelected bool) string {
 		appStats := asUI.displayedSortedStatList[statIndex]
-		return fmt.Sprintf("%-10.10v", appStats.OrgName)
+		//return fmt.Sprintf("%-10.10v", appStats.OrgName)
+		return formatDisplayData(appStats.OrgName, defaultColSize)
 	}
-	c := masterUIInterface.NewListColumn("orgName", "ORG", 10, true, appNameSortFunc, false, displayFunc)
+	c := masterUIInterface.NewListColumn("orgName", "ORG", defaultColSize, true, appNameSortFunc, false, displayFunc)
 	return c
 }
 

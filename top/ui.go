@@ -71,7 +71,7 @@ func (ui *MasterUI) Start() {
 
 func (ui *MasterUI) initGui() {
 
-	g, err := gocui.NewGui()
+	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
 	}

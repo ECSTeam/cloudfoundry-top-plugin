@@ -12,6 +12,25 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
+const (
+	// Unicode characters: http://graphemica.com/unicode/characters/page/34
+	DownArrow     = string('\U00002193')
+	UpArrow       = string('\U00002191')
+	DownArrowTiny = string('\U0000A71C')
+	UpArrowTiny   = string('\U0000A71B')
+
+	TriangleUp   = string('\U000025B4')
+	TriangleDown = string('\U000025BE')
+
+	RightArrow      = string('\U00002192')
+	LeftArrow       = string('\U00002190')
+	InfoIcon        = string('\U00002139')
+	Ellipsis        = string('\U00002026')
+	TwoDot          = string('\U00002025')
+	OneDot          = string('\U00002024')
+	CircleBackslash = string('\U000020E0')
+)
+
 type getRowKeyFunc func(index int) string
 type getRowDisplayFunc func(index int, isSelected bool) string
 type getDisplayHeaderFunc func() string
@@ -279,7 +298,22 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		}
 		buffer.WriteString(strconv.Itoa(column.size))
 		buffer.WriteString("v ")
-		fmt.Fprintf(v, buffer.String(), column.label)
+
+		label := column.label
+		// TODO: Dynamically add this
+		//label = label + RightArrow
+		//xxx
+		sortCol := asUI.sortColumns[0]
+		if sortCol != nil && sortCol.id == column.id {
+			if sortCol.reverseSort {
+				label = label + DownArrow
+			} else {
+				label = label + UpArrow
+			}
+		}
+
+		fmt.Fprintf(v, buffer.String(), label)
+
 		if editSortColumn {
 			fmt.Fprintf(v, util.CLEAR)
 		}

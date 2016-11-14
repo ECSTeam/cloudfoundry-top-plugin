@@ -7,7 +7,11 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
-const MAX_SORT_COLUMNS = 5
+const (
+	MAX_SORT_COLUMNS = 5
+	AscendingText    = "( " + UpArrow + " ascending )"
+	DescendingText   = "( " + DownArrow + " descending )"
+)
 
 type EditSortView struct {
 	*EditColumnViewAbs
@@ -98,9 +102,9 @@ func (w *EditSortView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) error
 		}
 		displayName := "--none--"
 		if sc != nil {
-			sortDirection := "(ascending)"
+			sortDirection := AscendingText
 			if sc.reverseSort {
-				sortDirection = "(descending)"
+				sortDirection = DescendingText
 			}
 			columnLabel := w.listWidget.columnMap[sc.id].label
 			displayName = fmt.Sprintf("%-13v %v", columnLabel, sortDirection)
@@ -114,6 +118,9 @@ func (w *EditSortView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) error
 }
 
 func (w *EditSortView) keyArrowDownAction(g *gocui.Gui, v *gocui.View) error {
+	if w.sortColumns[w.sortPosition] == nil {
+		return nil
+	}
 	if w.sortPosition+1 < MAX_SORT_COLUMNS {
 		w.sortPosition++
 	}
@@ -128,9 +135,7 @@ func (w *EditSortView) keyArrowUpAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *EditSortView) keyDeleteAction(g *gocui.Gui, v *gocui.View) error {
-	//writeFooter(g, fmt.Sprintf("\r DELETE") )
 	w.sortColumns[w.sortPosition] = nil
-
 	pos := 0
 	for _, sc := range w.sortColumns {
 		if sc != nil {
@@ -141,7 +146,8 @@ func (w *EditSortView) keyDeleteAction(g *gocui.Gui, v *gocui.View) error {
 	for i := pos; i < len(w.sortColumns); i++ {
 		w.sortColumns[i] = nil
 	}
-	return w.RefreshDisplay(g)
+	w.applySort(g)
+	return nil
 }
 
 func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
@@ -163,10 +169,7 @@ func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 		}
 
 	}
-
-	//writeFooter(g, fmt.Sprintf("\r sc: %+v", sc) )
 	w.applySort(g)
-
 	return nil
 }
 
