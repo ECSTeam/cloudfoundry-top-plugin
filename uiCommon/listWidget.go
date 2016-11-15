@@ -677,10 +677,8 @@ func writeFooter(g *gocui.Gui, msg string) {
 }
 
 func (asUI *ListWidget) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error {
-
 	asUI.displayView.SetDisplayPaused(!asUI.displayView.GetDisplayPaused())
 	return asUI.displayView.RefreshDisplay(g)
-
 }
 
 func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {

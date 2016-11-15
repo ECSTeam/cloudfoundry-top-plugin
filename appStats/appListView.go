@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
@@ -102,7 +104,9 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 			}); err != nil {
 			log.Panicln(err)
 		}
-
+		if err := g.SetKeybinding(asUI.name, 'c', gocui.ModNone, asUI.copyAction); err != nil {
+			log.Panicln(err)
+		}
 		if err := g.SetKeybinding(asUI.name, 'r', gocui.ModNone, asUI.refreshMetadata); err != nil {
 			log.Panicln(err)
 		}
@@ -535,6 +539,55 @@ func (asUI *AppListView) SetDisplayPaused(paused bool) {
 
 func (asUI *AppListView) GetDisplayPaused() bool {
 	return asUI.displayPaused
+}
+
+func (w *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
+
+	selectedAppId := w.appListWidget.HighlightKey()
+	if selectedAppId == "" {
+		// Nothing selected
+		return nil
+	}
+	menuItems := make([]*uiCommon.MenuItem, 0, 5)
+	menuItems = append(menuItems, uiCommon.NewMenuItem("cftarget", "cf target"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("cfapp", "cf app"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("cfscale", "cf scale"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("appguid", "app guid"))
+	clipboardView := uiCommon.NewSelectMenuWidget(w.masterUI, "clipboardView", "Copy to Clipboard", menuItems, w.clipboardCallback)
+
+	w.masterUI.LayoutManager().Add(clipboardView)
+	w.masterUI.SetCurrentViewOnTop(g, "clipboardView")
+
+	//return asUI.displayView.RefreshDisplay(g)
+	return nil
+}
+
+func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+
+	clipboardValue := "hello from clipboard" + time.Now().Format("01-02-2006 15:04:05")
+
+	selectedAppId := w.appListWidget.HighlightKey()
+	statsMap := w.displayedProcessor.AppMap
+	appStats := statsMap[selectedAppId]
+	if appStats == nil {
+		// Nothing selected
+		return nil
+	}
+	switch menuId {
+	case "cftarget":
+		clipboardValue = fmt.Sprintf("cf target -o %v -s %v", appStats.OrgName, appStats.SpaceName)
+	case "cfapp":
+		clipboardValue = fmt.Sprintf("cf app %v", appStats.AppName)
+	case "cfscale":
+		clipboardValue = fmt.Sprintf("cf scale %v ", appStats.AppName)
+	case "appguid":
+		clipboardValue = selectedAppId
+	}
+	err := clipboard.WriteAll(clipboardValue)
+	if err != nil {
+		debug.Error("Copy into Clipboard error: " + err.Error())
+	}
+	return nil
 }
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {

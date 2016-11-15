@@ -101,7 +101,7 @@ func (ui *MasterUI) initGui() {
 	    log.Panicln(err)
 	  }
 	*/
-	if err := g.SetKeybinding("appListView", 'c', gocui.ModNone, ui.clearStats); err != nil {
+	if err := g.SetKeybinding("appListView", 'C', gocui.ModNone, ui.clearStats); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
