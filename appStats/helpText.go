@@ -1,7 +1,5 @@
 package appStats
 
-
-
 const helpText = `
 **Header information:**
 
@@ -56,7 +54,8 @@ paused top will continue to capture statstics and display updated
 values when unpaused.
 
 **Filter display: **
-TODO (not implemented yet)
+Press 'f' to show the filter window which allows for filtering
+which rows should be displayed
 
 **Refresh screen interval: **
 Press 's' to set the sleep time between refresh intervals. Default
