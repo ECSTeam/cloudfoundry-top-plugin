@@ -3,6 +3,7 @@ package metadata
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
@@ -64,7 +65,12 @@ var (
 	appsMetadataCache         []App
 	totalMemoryAllStartedApps float64
 	totalDiskAllStartedApps   float64
+	mu                        *sync.Mutex
 )
+
+func init() {
+	mu = &sync.Mutex{}
+}
 
 func AppMetadataSize() int {
 	return len(appsMetadataCache)
@@ -85,23 +91,31 @@ func FindAppMetadata(appId string) App {
 }
 
 func GetTotalMemoryAllStartedApps() float64 {
+	mu.Lock()
+	defer mu.Unlock()
 	if totalMemoryAllStartedApps == 0 {
+		total := float64(0)
 		for _, app := range appsMetadataCache {
 			if app.State == "STARTED" {
-				totalMemoryAllStartedApps = totalMemoryAllStartedApps + ((app.MemoryMB * MEGABYTE) * app.Instances)
+				total = total + ((app.MemoryMB * MEGABYTE) * app.Instances)
 			}
 		}
+		totalMemoryAllStartedApps = total
 	}
 	return totalMemoryAllStartedApps
 }
 
 func GetTotalDiskAllStartedApps() float64 {
+	mu.Lock()
+	defer mu.Unlock()
 	if totalDiskAllStartedApps == 0 {
+		total := float64(0)
 		for _, app := range appsMetadataCache {
 			if app.State == "STARTED" {
-				totalDiskAllStartedApps = totalDiskAllStartedApps + ((app.DiskQuotaMB * MEGABYTE) * app.Instances)
+				total = total + ((app.DiskQuotaMB * MEGABYTE) * app.Instances)
 			}
 		}
+		totalDiskAllStartedApps = total
 	}
 	return totalDiskAllStartedApps
 }
@@ -135,7 +149,10 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 	}
 
 	callRetriableAPI(cliConnection, url, handleRequest)
+
 	// Flush the total counters
+	mu.Lock()
+	defer mu.Unlock()
 	totalMemoryAllStartedApps = 0
 	totalDiskAllStartedApps = 0
 	return appsMetadata, nil

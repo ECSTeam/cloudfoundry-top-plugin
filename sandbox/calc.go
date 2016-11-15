@@ -1,21 +1,26 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
-	"github.com/Knetic/govaluate"
+	"github.com/jroimartin/gocui"
 )
 
-func main() {
+func mainX() {
+	g, err := gocui.NewGui(gocui.Output256)
 
-	expression, err := govaluate.NewEvaluableExpression("foo > 0")
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer g.Close()
 
-	parameters := make(map[string]interface{}, 8)
-	parameters["foo"] = "2"
+	g.SetManagerFunc(layout)
 
-	result, err := expression.Evaluate(parameters)
-	// result is now set to "false", the bool value.
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
 
-	fmt.Printf("err: %v\n", err)
-	fmt.Printf("result: %v\n", result)
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		log.Panicln(err)
+	}
 }

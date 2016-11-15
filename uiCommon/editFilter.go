@@ -87,7 +87,7 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 		case ALPHANUMERIC:
 			fmt.Fprintf(v, "\n\n RegEx examples:\n")
 			fmt.Fprintf(v, " AppA or AppB: appa|appb\n")
-			fmt.Fprintf(v, " Starts with 'ap' end with 'ch': ^ap\n")
+			fmt.Fprintf(v, " Starts with 'ap': ^ap\n")
 		case NUMERIC:
 			fmt.Fprintf(v, "\n\n Expression examples:\n")
 			fmt.Fprintf(v, " Greater then: >0.15\n")

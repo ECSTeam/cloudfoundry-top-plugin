@@ -108,6 +108,19 @@ type FilterColumn struct {
 	compiledRegex *regexp.Regexp
 }
 
+var (
+	normalHeaderColor string
+)
+
+func init() {
+	if util.IsMSWindows() {
+		// Windows cmd.exe supports only 8 colors
+		normalHeaderColor = util.DIM_WHITE
+	} else {
+		normalHeaderColor = util.WHITE_TEXT_SOFT_BG
+	}
+}
+
 func NewSortColumn(id string, reverseSort bool) *SortColumn {
 	return &SortColumn{id: id, reverseSort: reverseSort}
 }
@@ -334,8 +347,10 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 	maxRows := maxY - 1
 
 	title := asUI.Title
-	if asUI.GetListSize() != asUI.GetUnfilteredListSize() {
-		title = title + " (filtered)"
+	displayListSize := asUI.GetListSize()
+	unfilteredListSize := asUI.GetUnfilteredListSize()
+	if displayListSize != unfilteredListSize {
+		title = fmt.Sprintf("%v (filter showing %v of %v)", title, displayListSize, unfilteredListSize)
 	}
 	v.Title = title
 
@@ -393,6 +408,8 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 
 	lastColumnCanDisplay := asUI.lastColumnCanDisplay(g, asUI.displayColIndexOffset)
 
+	fmt.Fprintf(v, "%v", normalHeaderColor)
+
 	// Loop through all columns (for headers)
 	for colIndex, column := range asUI.columns {
 		if colIndex > lastColumnCanDisplay {
@@ -430,9 +447,10 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		fmt.Fprintf(v, buffer.String(), label)
 
 		if editSortColumn {
-			fmt.Fprintf(v, util.CLEAR)
+			fmt.Fprintf(v, normalHeaderColor)
 		}
 	}
+	fmt.Fprintf(v, util.CLEAR)
 	fmt.Fprintf(v, "\n")
 }
 

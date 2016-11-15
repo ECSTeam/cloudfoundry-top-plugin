@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/kkellner/cloudfoundry-top-plugin/top"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 	"github.com/simonleung8/flags"
 )
 
@@ -78,12 +79,9 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 
-	if !options.Cygwin && strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") {
-		shell := os.Getenv("SHELL")
-		if len(shell) > 0 {
-			c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top -cygwin'")
-			return
-		}
+	if !options.Cygwin && util.IsCygwin() {
+		c.ui.Failed("The cf top plugin will not run under cygwin.  Use this to run: 'cmd /c start cf top -cygwin'")
+		return
 	}
 
 	/***********************************************************

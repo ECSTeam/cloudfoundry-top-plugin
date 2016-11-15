@@ -93,8 +93,8 @@ func SetFocus(name string) func(g *gocui.Gui) error {
 	}
 }
 
-func mainX() {
-	g, err := gocui.NewGui()
+func mainX2() {
+	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -116,6 +116,6 @@ func mainX() {
 	}
 }
 
-func quit(g *gocui.Gui, v *gocui.View) error {
+func quit2(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
