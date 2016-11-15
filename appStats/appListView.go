@@ -68,6 +68,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 		appListWidget.Title = "App List"
 		appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
 		appListWidget.GetListSize = asUI.GetListSize
+		appListWidget.GetUnfilteredListSize = asUI.GetUnfilteredListSize
 		appListWidget.GetRowKey = asUI.GetRowKey
 
 		defaultSortColums := []*uiCommon.SortColumn{
@@ -123,9 +124,11 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 		if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
 			func(g *gocui.Gui, v *gocui.View) error {
-				asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
-				asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
-				asUI.masterUI.SetCurrentViewOnTop(g, "appDetailView")
+				if asUI.appListWidget.HighlightKey() != "" {
+					asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
+					asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
+					asUI.masterUI.SetCurrentViewOnTop(g, "appDetailView")
+				}
 				return nil
 			}); err != nil {
 			log.Panicln(err)
@@ -607,6 +610,10 @@ func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 
 func (asUI *AppListView) GetListSize() int {
 	return len(asUI.displayedSortedStatList)
+}
+
+func (asUI *AppListView) GetUnfilteredListSize() int {
+	return len(asUI.displayedProcessor.AppMap)
 }
 
 func (asUI *AppListView) GetRowKey(statIndex int) string {

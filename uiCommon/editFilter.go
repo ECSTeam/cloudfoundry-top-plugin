@@ -1,11 +1,15 @@
 package uiCommon
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 
+	"github.com/Knetic/govaluate"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type EditFilterView struct {
@@ -57,7 +61,9 @@ func (w *EditFilterView) initialLayoutCallback(g *gocui.Gui, v *gocui.View) erro
 	if err := g.SetKeybinding(w.name, gocui.KeySpace, gocui.ModNone, w.keySpaceAction); err != nil {
 		return err
 	}
-
+	if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.clearFilterAction); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -69,7 +75,7 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 	col := w.listWidget.columnMap[selectedColId]
 	filter := w.listWidget.filterColumnMap[selectedColId]
 	filterText := "--none--"
-	if filter != nil {
+	if filter != nil && filter.filterText != "" {
 		filterText = filter.filterText
 	}
 
@@ -77,34 +83,56 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 	fmt.Fprintf(v, " Filter: %v\n\n", filterText)
 
 	if w.editField {
-		fmt.Fprintf(v, "\n\n RegEx examples:\n")
-		fmt.Fprintf(v, " AppA or AppB: appa|appb\n")
-		fmt.Fprintf(v, " Starts with 'p' end with 'ch': p([a-z]*)ch\n")
+		switch col.columnType {
+		case ALPHANUMERIC:
+			fmt.Fprintf(v, "\n\n RegEx examples:\n")
+			fmt.Fprintf(v, " AppA or AppB: appa|appb\n")
+			fmt.Fprintf(v, " Starts with 'p' end with 'ch': p([a-z]*)ch\n")
+		case NUMERIC:
+			fmt.Fprintf(v, "\n\n Expression examples:\n")
+			fmt.Fprintf(v, " Greater then: >0.15\n")
+			fmt.Fprintf(v, " Equals: ==2   Note the double equals\n")
+		}
 	} else {
-		fmt.Fprintln(v, " RIGHT or LEFT arrow - select column")
-		fmt.Fprintln(v, " SPACE - select column to edit")
-		fmt.Fprintln(v, " ENTER - apply filter")
-		fmt.Fprintln(v, "")
+		fmt.Fprintln(v, " RIGHT or LEFT arrow - highlight column")
+		fmt.Fprintln(v, " SPACE - select column to edit filter")
+		fmt.Fprintln(v, " ENTER - apply filter, ESC to cancel")
+		fmt.Fprintln(v, " 'c' - clear all filters")
 	}
 
 	return nil
 }
 
+func (w *EditFilterView) getSelectedColumn() *ListColumn {
+	selectedColId := w.listWidget.selectedColumnId
+	col := w.listWidget.columnMap[selectedColId]
+	return col
+}
+
 func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
 
-	parentView, err := g.View(w.name)
-	if err != nil {
-		return err
+	col := w.getSelectedColumn()
+	var err error
+	switch col.columnType {
+	case ALPHANUMERIC:
+		err = w.applyAlphaFilter(g, v, mgr, inputValue)
+	case NUMERIC:
+		inputValue = w.adjustExpression(inputValue)
+		err = w.applyNumericFilter(g, v, mgr, inputValue)
 	}
 
-	compiledRegex, err := regexp.Compile(inputValue)
 	if err != nil {
+		parentView, err2 := g.View(w.name)
+		if err2 != nil {
+			return err2
+		}
+		fmt.Fprintf(parentView, "%v", util.BRIGHT_RED)
 		fmt.Fprintf(parentView, "\r Error: %v", err)
+		fmt.Fprintf(parentView, "%v", util.CLEAR)
 		return nil
 	}
-
 	selectedColId := w.listWidget.selectedColumnId
-	filter := &FilterColumn{filterText: inputValue, compiledRegex: compiledRegex}
+	filter := &FilterColumn{filterText: inputValue}
 	w.listWidget.filterColumnMap[selectedColId] = filter
 
 	g.Cursor = false
@@ -115,6 +143,63 @@ func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr mas
 		return err
 	}
 	w.editField = false
+	w.listWidget.FilterAndSortData()
+	w.RefreshDisplay(g)
+	return nil
+}
+
+func (w *EditFilterView) applyNumericFilter(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
+
+	varName := "VALUE"
+	if inputValue == "" {
+		return nil
+	}
+	inputValue = varName + " " + inputValue
+
+	expression, err := govaluate.NewEvaluableExpression(inputValue)
+	if err != nil {
+		return err
+	}
+
+	parameters := make(map[string]interface{}, 8)
+	parameters[varName] = 1.0
+
+	result, err := expression.Evaluate(parameters)
+	if err != nil {
+		return err
+	}
+	if reflect.TypeOf(result) != reflect.TypeOf(true) {
+		err := errors.New("Expression does not result in boolean result")
+		return err
+	}
+	return nil
+}
+
+// Prefix floats with 0 if not digit before decimal  (e.g, .1 becomes 0.1)
+func (w *EditFilterView) adjustExpression(value string) string {
+	const regex = `[^\d]\.[\d]+`
+	//value := strings.Replace(value, "=", "==", -1)
+	r := regexp.MustCompile(regex)
+	index := r.FindStringSubmatchIndex(value)
+	if len(index) > 0 {
+		firstPart := value[0 : index[0]+1]
+		lastPart := value[index[0]+1 : len(value)]
+		value = firstPart + "0" + lastPart
+	}
+	return value
+}
+
+func (w *EditFilterView) applyAlphaFilter(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
+	_, err := regexp.Compile(inputValue)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (w *EditFilterView) clearFilterAction(g *gocui.Gui, v *gocui.View) error {
+	w.listWidget.filterColumnMap = make(map[string]*FilterColumn)
+	w.listWidget.FilterAndSortData()
 	w.RefreshDisplay(g)
 	return nil
 }
@@ -128,7 +213,7 @@ func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 		filterText = filter.filterText
 	}
 
-	labelText := "Filter"
+	labelText := "Filter:"
 	maxLength := 30
 	valueText := filterText
 	topMargin := 4

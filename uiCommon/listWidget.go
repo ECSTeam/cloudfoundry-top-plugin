@@ -38,6 +38,7 @@ type getRowRawValueFunc func(index int) string
 type getDisplayHeaderFunc func() string
 
 type getListSizeFunc func() int
+
 type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool
 
 type DisplayViewInterface interface {
@@ -82,9 +83,10 @@ type ListWidget struct {
 	displayRowIndexOffset int
 	displayColIndexOffset int
 
-	GetRowKey         getRowKeyFunc
-	PreRowDisplayFunc getRowDisplayFunc
-	GetListSize       getListSizeFunc
+	GetRowKey             getRowKeyFunc
+	PreRowDisplayFunc     getRowDisplayFunc
+	GetListSize           getListSizeFunc
+	GetUnfilteredListSize getListSizeFunc
 
 	columns   []*ListColumn
 	columnMap map[string]*ListColumn
@@ -338,10 +340,16 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 	_, maxY := v.Size()
 	maxRows := maxY - 1
 
+	title := asUI.Title
+	if asUI.GetListSize() != asUI.GetUnfilteredListSize() {
+		title = title + " (filtered)"
+	}
+	v.Title = title
+
 	v.Clear()
 	listSize := asUI.GetListSize()
 
-	if listSize > 0 {
+	if listSize > 0 || asUI.selectColumnMode {
 		stopRowIndex := maxRows + asUI.displayRowIndexOffset
 		asUI.writeHeader(g, v)
 		// Loop through all rows
@@ -352,7 +360,11 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 			asUI.writeRowData(g, v, i)
 		}
 	} else {
-		fmt.Fprintf(v, " \n No data yet...")
+		if asUI.GetUnfilteredListSize() > 0 {
+			fmt.Fprintf(v, " \n No data to display because of filters")
+		} else {
+			fmt.Fprintf(v, " \n No data yet...")
+		}
 	}
 
 	return nil

@@ -88,11 +88,11 @@ func (w *EditSortView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) error
 
 	v.Clear()
 	fmt.Fprintln(v, " ")
-	fmt.Fprintln(v, "  RIGHT or LEFT arrow - select sort column")
+	fmt.Fprintln(v, "  RIGHT or LEFT arrow - highlight sort column")
 	fmt.Fprintln(v, "  DOWN or UP arrow - select sort position")
 	fmt.Fprintln(v, "  SPACE - select column and toggle sort direction")
 	fmt.Fprintln(v, "  DELETE - remove sort from position")
-	fmt.Fprintln(v, "  ENTER - apply sort")
+	fmt.Fprintln(v, "  ENTER - apply sort, ESC to cancel")
 	fmt.Fprintln(v, "")
 
 	for i, sc := range w.sortColumns {
