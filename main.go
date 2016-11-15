@@ -22,7 +22,7 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 		Version: plugin.VersionType{
 			Major: 0,
 			Minor: 6,
-			Build: 2,
+			Build: 3,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
