@@ -10,7 +10,6 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
@@ -243,7 +242,6 @@ func (asUI *ListWidget) FilterRow(rowIndex int) bool {
 }
 
 func (asUI *ListWidget) filterRow(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
-	debug.Debug("filterRow")
 	switch column.columnType {
 	case ALPHANUMERIC:
 		return asUI.filterRowAlpha(rowIndex, column, filter)
@@ -264,14 +262,11 @@ func (asUI *ListWidget) filterRowNumeric(rowIndex int, column *ListColumn, filte
 	value := column.rawValueFunc(rowIndex)
 	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
-		debug.Debug("Error in ParseFloat: " + value + " Error:" + err.Error())
 		return true
 	}
 
-	debug.Debug("expressionStr:" + expressionStr)
 	expression, err := govaluate.NewEvaluableExpression(expressionStr)
 	if err != nil {
-		debug.Debug("Error in express: " + expressionStr + " Error:" + err.Error())
 		return true
 	}
 
@@ -280,19 +275,17 @@ func (asUI *ListWidget) filterRowNumeric(rowIndex int, column *ListColumn, filte
 
 	result, err := expression.Evaluate(parameters)
 	if err != nil {
-		debug.Debug("Error in Evaluate: " + expressionStr + " Error:" + err.Error())
 		return true
 	}
-
-	// result is now set to "false", the bool value.
 	return result.(bool)
 }
 
 func (asUI *ListWidget) filterRowAlpha(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
-	debug.Debug("filterRowAlpha")
 	regex := filter.compiledRegex
 	if regex == nil {
-		compiledRegex, err := regexp.Compile(filter.filterText)
+		// make regex case insenstive
+		filterText := "(?i)" + filter.filterText
+		compiledRegex, err := regexp.Compile(filterText)
 		if err != nil {
 			// Better to error on the side of showing the row
 			return true

@@ -87,7 +87,7 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 		case ALPHANUMERIC:
 			fmt.Fprintf(v, "\n\n RegEx examples:\n")
 			fmt.Fprintf(v, " AppA or AppB: appa|appb\n")
-			fmt.Fprintf(v, " Starts with 'p' end with 'ch': p([a-z]*)ch\n")
+			fmt.Fprintf(v, " Starts with 'ap' end with 'ch': ^ap\n")
 		case NUMERIC:
 			fmt.Fprintf(v, "\n\n Expression examples:\n")
 			fmt.Fprintf(v, " Greater then: >0.15\n")
@@ -143,8 +143,7 @@ func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr mas
 		return err
 	}
 	w.editField = false
-	w.listWidget.FilterAndSortData()
-	w.RefreshDisplay(g)
+	w.applyFilterAndRefresh(g, v)
 	return nil
 }
 
@@ -199,9 +198,15 @@ func (w *EditFilterView) applyAlphaFilter(g *gocui.Gui, v *gocui.View, mgr maste
 
 func (w *EditFilterView) clearFilterAction(g *gocui.Gui, v *gocui.View) error {
 	w.listWidget.filterColumnMap = make(map[string]*FilterColumn)
-	w.listWidget.FilterAndSortData()
-	w.RefreshDisplay(g)
+	w.applyFilterAndRefresh(g, v)
 	return nil
+}
+
+func (w *EditFilterView) applyFilterAndRefresh(g *gocui.Gui, v *gocui.View) error {
+	w.listWidget.displayRowIndexOffset = 0
+	w.listWidget.highlightKey = ""
+	w.listWidget.FilterAndSortData()
+	return w.RefreshDisplay(g)
 }
 
 func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {

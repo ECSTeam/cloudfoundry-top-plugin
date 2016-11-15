@@ -135,8 +135,9 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 	}
 
 	callRetriableAPI(cliConnection, url, handleRequest)
-	// Flush the total memory counter
+	// Flush the total counters
 	totalMemoryAllStartedApps = 0
+	totalDiskAllStartedApps = 0
 	return appsMetadata, nil
 
 }

@@ -183,6 +183,7 @@ func (w *EditSortView) applySort(g *gocui.Gui) {
 	}
 	w.listWidget.sortColumns = useSortColumns
 	w.listWidget.FilterAndSortData()
+	w.listWidget.displayRowIndexOffset = 0
 	w.RefreshDisplay(g)
 }
 

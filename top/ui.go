@@ -238,7 +238,7 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	}
 	v.Clear()
 
-	fmt.Fprintf(v, "Total events: %-13v", util.Format(ui.router.GetEventCount()))
+	fmt.Fprintf(v, "Total events: %-15v", util.Format(ui.router.GetEventCount()))
 
 	runtimeSeconds := Round(time.Now().Sub(ui.router.GetStartTime()), time.Second)
 	if runtimeSeconds < time.Second*30 {
@@ -250,7 +250,7 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "Stats duration: %-10v ", runtimeSeconds)
 	}
 
-	fmt.Fprintf(v, "%v\n", time.Now().Format("01-02-2006 15:04:05"))
+	fmt.Fprintf(v, "   %v\n", time.Now().Format("01-02-2006 15:04:05"))
 
 	apiEndpoint, err := ui.cliConnection.ApiEndpoint()
 	if err != nil {

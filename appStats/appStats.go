@@ -7,6 +7,8 @@ import (
 	//"time"
 	//"sort"
 	//"strings"
+	"time"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
@@ -38,6 +40,7 @@ type Traffic struct {
 
 type ContainerStats struct {
 	ContainerMetric *events.ContainerMetric
+	LastUpdate      time.Time
 	OutCount        int64
 	ErrCount        int64
 }

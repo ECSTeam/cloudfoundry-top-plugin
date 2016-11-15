@@ -92,8 +92,16 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 		totalUsedMemory := uint64(0)
 		totalUsedDisk := uint64(0)
 		totalReportingContainers := 0
-		for _, cs := range appStat.ContainerArray {
+
+		now := time.Now()
+		for containerIndex, cs := range appStat.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
+				// If we haven't gotten a container update recently, ignore the old value
+				if now.Sub(cs.LastUpdate) > time.Second*40 {
+					clonedAppStat.ContainerArray[containerIndex] = nil
+					continue
+				}
+
 				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
 				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
 				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
@@ -200,7 +208,7 @@ func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
 	appStats := ap.getAppStats(appId)
 	instNum := int(*containerMetric.InstanceIndex)
 	containerStats := ap.getContainerStats(appStats, instNum)
-
+	containerStats.LastUpdate = time.Now()
 	containerStats.ContainerMetric = containerMetric
 
 }
