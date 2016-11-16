@@ -135,6 +135,9 @@ func (w *EditSortView) keyArrowUpAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *EditSortView) keyDeleteAction(g *gocui.Gui, v *gocui.View) error {
+	if w.sortPosition == 0 && w.sortColumns[0] == nil {
+		return nil
+	}
 	w.sortColumns[w.sortPosition] = nil
 	pos := 0
 	for _, sc := range w.sortColumns {

@@ -432,15 +432,15 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		buffer.WriteString("v ")
 
 		label := column.label
-		// TODO: Dynamically add this
-		//label = label + RightArrow
-		//xxx
-		sortCol := asUI.sortColumns[0]
-		if sortCol != nil && sortCol.id == column.id {
-			if sortCol.reverseSort {
-				label = label + DownArrow
-			} else {
-				label = label + UpArrow
+
+		if len(asUI.sortColumns) > 0 {
+			sortCol := asUI.sortColumns[0]
+			if sortCol != nil && sortCol.id == column.id {
+				if sortCol.reverseSort {
+					label = label + DownArrow
+				} else {
+					label = label + UpArrow
+				}
 			}
 		}
 
