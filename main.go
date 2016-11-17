@@ -33,7 +33,7 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 		Commands: []plugin.Command{
 			{
 				Name:     "top",
-				HelpText: "Displays top stats",
+				HelpText: "Displays top stats - by Kurt Kellner of ECS Team",
 				UsageDetails: plugin.Usage{
 					Usage: "cf top",
 					Options: map[string]string{
