@@ -17,14 +17,13 @@ import (
 type AppStatsEventProcessor struct {
 	AppMap      map[string]*AppStats
 	TotalEvents int64
-	mu          *sync.Mutex
+	mu          sync.Mutex
 }
 
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
 	return &AppStatsEventProcessor{
 		AppMap:      make(map[string]*AppStats),
 		TotalEvents: 0,
-		mu:          &sync.Mutex{},
 	}
 }
 

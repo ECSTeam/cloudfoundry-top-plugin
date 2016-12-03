@@ -7,25 +7,32 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type EventRouter struct {
-	eventCount int64
-	startTime  time.Time
-	mu         sync.Mutex
-	processor  *appStats.AppStatsEventProcessor
+	eventCount       int64
+	eventRateCounter *util.RateCounter
+
+	startTime time.Time
+	mu        sync.Mutex
+	processor *appStats.AppStatsEventProcessor
 }
 
 func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
 	return &EventRouter{
-		processor: processor,
-		startTime: time.Now(),
+		processor:        processor,
+		startTime:        time.Now(),
+		eventRateCounter: util.NewRateCounter(time.Second),
 	}
-
 }
 
 func (er *EventRouter) GetEventCount() int64 {
 	return er.eventCount
+}
+
+func (er *EventRouter) GetEventRate() int {
+	return er.eventRateCounter.Rate()
 }
 
 func (er *EventRouter) GetStartTime() time.Time {
@@ -41,10 +48,6 @@ func (er *EventRouter) Route(instanceId int, msg *events.Envelope) {
 	er.mu.Lock()
 	defer er.mu.Unlock()
 	er.eventCount++
-	//eventType := msg.GetEventType()
+	er.eventRateCounter.Incr()
 	er.processor.Process(instanceId, msg)
-}
-
-func (er *EventRouter) GetTotalEventCount() int64 {
-	return er.eventCount
 }
