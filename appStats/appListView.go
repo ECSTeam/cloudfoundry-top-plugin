@@ -261,7 +261,13 @@ func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalCpuInfo = fmt.Sprintf("%6v", "--")
 		} else {
-			totalCpuInfo = fmt.Sprintf("%6.2f", appStats.TotalCpuPercentage)
+			if appStats.TotalCpuPercentage >= 100.0 {
+				totalCpuInfo = fmt.Sprintf("%6.0f", appStats.TotalCpuPercentage)
+			} else if appStats.TotalCpuPercentage >= 10.0 {
+				totalCpuInfo = fmt.Sprintf("%6.1f", appStats.TotalCpuPercentage)
+			} else {
+				totalCpuInfo = fmt.Sprintf("%6.2f", appStats.TotalCpuPercentage)
+			}
 		}
 		return fmt.Sprintf("%6v", totalCpuInfo)
 	}

@@ -15,16 +15,15 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 )
 
+const NozzleInstances = 4
+
 type Client struct {
-	dopplerEndpoint string
-	authToken       string
-	options         *ClientOptions
-	ui              terminal.UI
-	cliConnection   plugin.CliConnection
-	eventrouting    *eventrouting.EventRouter
-	errors          <-chan error
-	messages        <-chan *events.Envelope
-	router          *eventrouting.EventRouter
+	authToken     string
+	options       *ClientOptions
+	ui            terminal.UI
+	cliConnection plugin.CliConnection
+	eventrouting  *eventrouting.EventRouter
+	router        *eventrouting.EventRouter
 }
 
 type ClientOptions struct {
@@ -35,12 +34,6 @@ type ClientOptions struct {
 	Filter         string
 	SubscriptionID string
 }
-
-var (
-	dopplerConnection *consumer.Consumer
-	apiEndpoint       string
-	//appStatsUI *appStats.AppStatsUI
-)
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
 
@@ -54,7 +47,7 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 
 func (c *Client) Start() {
 
-	isDebug := c.options.Debug
+	//isDebug := c.options.Debug
 	conn := c.cliConnection
 
 	isLoggedIn, err := conn.IsLoggedIn()
@@ -73,58 +66,61 @@ func (c *Client) Start() {
 		return
 	}
 
-	c.dopplerEndpoint, err = conn.DopplerEndpoint()
-	if err != nil {
-		c.ui.Failed(err.Error())
-		return
-	}
+	ui := NewMasterUI(conn)
+	c.router = ui.GetRouter()
 
-	apiEndpoint, err = conn.ApiEndpoint()
+	debug.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
+
+	subscriptionID := "TopPlugin_" + pseudo_uuid()
+	c.createNozzles(subscriptionID)
+
+	ui.Start()
+
+}
+
+func (c *Client) createNozzles(subscriptionID string) {
+	for i := 0; i < NozzleInstances; i++ {
+		go c.createNozzle(subscriptionID, i)
+	}
+}
+
+func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
+
+	conn := c.cliConnection
+
+	dopplerEndpoint, err := conn.DopplerEndpoint()
 	if err != nil {
 		c.ui.Failed(err.Error())
-		return
+		return err
 	}
 
 	skipVerifySSL, err := conn.IsSSLDisabled()
 	if err != nil {
 		c.ui.Failed("couldn't check if ssl verification is disabled: " + err.Error())
-		return
+		return err
 	}
 
-	subscriptionID := "TopPlugin_" + pseudo_uuid()
-	dopplerConnection = consumer.New(c.dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
-	if isDebug {
-		//dopplerConnection.SetDebugPrinter(ConsoleDebugPrinter{ui: c.ui})
-		c.ui.Say("Starting the nozzle for monitoring.  subscriptionID:" + subscriptionID)
-		c.ui.Say("Hit Ctrl+c to exit")
-	}
+	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
 	dopplerConnection.SetIdleTimeout(15 * time.Second)
 
-	c.messages, c.errors = dopplerConnection.Firehose(subscriptionID, c.authToken)
+	messages, errors := dopplerConnection.Firehose(subscriptionID, c.authToken)
 	defer dopplerConnection.Close()
 
-	ui := NewMasterUI(c.cliConnection)
-	c.router = ui.GetRouter()
-
-	debug.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
-
-	go c.routeEvent()
-	ui.Start()
-
+	c.routeEvents(messages, errors, instanceId)
+	return nil
 }
 
-func (c *Client) routeEvent() error {
-
+func (c *Client) routeEvents(messages <-chan *events.Envelope, errors <-chan error, instanceId int) {
 	for {
 		select {
-		case envelope := <-c.messages:
+		case envelope := <-messages:
+			//debug.Debug(fmt.Sprintf("id: %v event:%v", instanceId, envelope))
 			c.router.Route(envelope)
-		case err := <-c.errors:
+		case err := <-errors:
 			c.handleError(err)
-			//return err
 		}
 	}
 }
@@ -142,13 +138,4 @@ func (c *Client) handleError(err error) {
 		msg := fmt.Sprintf("Error reading firehose: %v", err)
 		debug.Error(msg)
 	}
-}
-
-type ConsoleDebugPrinter struct {
-	ui terminal.UI
-}
-
-func (p ConsoleDebugPrinter) Print(title, dump string) {
-	p.ui.Say(title)
-	p.ui.Say(dump)
 }

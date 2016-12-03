@@ -65,11 +65,11 @@ var (
 	appsMetadataCache         []App
 	totalMemoryAllStartedApps float64
 	totalDiskAllStartedApps   float64
-	mu                        *sync.Mutex
+	mu                        sync.Mutex
 )
 
 func init() {
-	mu = &sync.Mutex{}
+	//mu = &sync.Mutex{}
 }
 
 func AppMetadataSize() int {
@@ -93,6 +93,7 @@ func FindAppMetadata(appId string) App {
 func GetTotalMemoryAllStartedApps() float64 {
 	mu.Lock()
 	defer mu.Unlock()
+	//debug.Debug("entering GetTotalMemoryAllStartedApps")
 	if totalMemoryAllStartedApps == 0 {
 		total := float64(0)
 		for _, app := range appsMetadataCache {
@@ -102,12 +103,14 @@ func GetTotalMemoryAllStartedApps() float64 {
 		}
 		totalMemoryAllStartedApps = total
 	}
+	//debug.Debug("leaving GetTotalMemoryAllStartedApps")
 	return totalMemoryAllStartedApps
 }
 
 func GetTotalDiskAllStartedApps() float64 {
 	mu.Lock()
 	defer mu.Unlock()
+	//debug.Debug("entering GetTotalDiskAllStartedApps")
 	if totalDiskAllStartedApps == 0 {
 		total := float64(0)
 		for _, app := range appsMetadataCache {
@@ -117,6 +120,7 @@ func GetTotalDiskAllStartedApps() float64 {
 		}
 		totalDiskAllStartedApps = total
 	}
+	//debug.Debug("leaving GetTotalDiskAllStartedApps")
 	return totalDiskAllStartedApps
 }
 

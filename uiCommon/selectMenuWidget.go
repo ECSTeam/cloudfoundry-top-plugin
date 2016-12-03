@@ -50,7 +50,7 @@ func NewSelectMenuWidget(
 	}
 
 	w.width = w.getMaxMenuLabelSize() + 14
-	w.height = len(menuItems) + 4
+	w.height = len(menuItems) + 3
 
 	return w
 }
@@ -61,7 +61,9 @@ func (w *SelectMenuWidget) Name() string {
 
 func (w *SelectMenuWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
+	right := maxX/2 - (w.width / 2)
+	top := maxY/2 - (w.height / 2)
+	v, err := g.SetView(w.name, right, top, right+w.width, top+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())

@@ -164,8 +164,16 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
 		ap.containerMetricEvent(msg)
 	case events.Envelope_LogMessage:
 		ap.logMessageEvent(msg)
+	case events.Envelope_CounterEvent:
+		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" && msg.GetOrigin() == "DopplerServer" {
+			ap.droppedMessages(msg)
+		}
 	}
 
+}
+
+func (ap *AppStatsEventProcessor) droppedMessages(msg *events.Envelope) {
+	debug.Error("We've intercepted an upstream message which indicates that the nozzle or the TrafficController is not keeping up.")
 }
 
 func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {

@@ -12,10 +12,8 @@ import (
 type EventRouter struct {
 	eventCount int64
 	startTime  time.Time
-	mutex      *sync.Mutex
+	mu         sync.Mutex
 	processor  *appStats.AppStatsEventProcessor
-	errors     <-chan error
-	messages   <-chan *events.Envelope
 }
 
 func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
@@ -40,6 +38,8 @@ func (er *EventRouter) Clear() {
 }
 
 func (er *EventRouter) Route(msg *events.Envelope) {
+	er.mu.Lock()
+	defer er.mu.Unlock()
 	er.eventCount++
 	//eventType := msg.GetEventType()
 	er.processor.Process(msg)

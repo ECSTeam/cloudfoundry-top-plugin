@@ -7,7 +7,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-func main() {
+func mainX5() {
 	g, err := gocui.NewGui(gocui.Output256)
 
 	if err != nil {
