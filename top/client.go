@@ -15,7 +15,7 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 )
 
-const NozzleInstances = 4
+//const NozzleInstances = 2
 
 type Client struct {
 	authToken     string
@@ -27,12 +27,10 @@ type Client struct {
 }
 
 type ClientOptions struct {
-	AppGUID        string
-	Debug          bool
-	Cygwin         bool
-	NoFilter       bool
-	Filter         string
-	SubscriptionID string
+	AppGUID string
+	Debug   bool
+	Cygwin  bool
+	Nozzles int
 }
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
@@ -42,7 +40,6 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 		ui:            ui,
 		cliConnection: cliConnection,
 	}
-
 }
 
 func (c *Client) Start() {
@@ -72,16 +69,17 @@ func (c *Client) Start() {
 	debug.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
 	subscriptionID := "TopPlugin_" + pseudo_uuid()
-	c.createNozzles(subscriptionID)
+	go c.createNozzles(subscriptionID)
 
 	ui.Start()
 
 }
 
 func (c *Client) createNozzles(subscriptionID string) {
-	for i := 0; i < NozzleInstances; i++ {
+	for i := 0; i < c.options.Nozzles; i++ {
 		go c.createNozzle(subscriptionID, i)
 	}
+	debug.Info(fmt.Sprintf("Created %v nozzles", c.options.Nozzles))
 }
 
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
@@ -109,33 +107,33 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	messages, errors := dopplerConnection.Firehose(subscriptionID, c.authToken)
 	defer dopplerConnection.Close()
 
-	c.routeEvents(messages, errors, instanceId)
+	c.routeEvents(instanceId, messages, errors)
 	return nil
 }
 
-func (c *Client) routeEvents(messages <-chan *events.Envelope, errors <-chan error, instanceId int) {
+func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, errors <-chan error) {
 	for {
 		select {
 		case envelope := <-messages:
 			//debug.Debug(fmt.Sprintf("id: %v event:%v", instanceId, envelope))
-			c.router.Route(envelope)
+			c.router.Route(instanceId, envelope)
 		case err := <-errors:
-			c.handleError(err)
+			c.handleError(instanceId, err)
 		}
 	}
 }
 
-func (c *Client) handleError(err error) {
+func (c *Client) handleError(instanceId int, err error) {
 
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
-		msg := fmt.Sprintf("Normal Websocket Closure: %v", err)
+		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceId, err)
 		debug.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		msg := fmt.Sprintf("Disconnected because nozzle couldn't keep up (CloseError): %v", err)
+		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceId, err)
 		debug.Error(msg)
 	default:
-		msg := fmt.Sprintf("Error reading firehose: %v", err)
+		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceId, err)
 		debug.Error(msg)
 	}
 }

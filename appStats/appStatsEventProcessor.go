@@ -1,20 +1,17 @@
 package appStats
 
 import (
-	"math"
-	//"math/rand"
+	"encoding/binary"
 	"fmt"
+	"math"
 	"strconv"
 	"sync"
 	"time"
-	//"log"
-	"encoding/binary"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/mohae/deepcopy"
-	//"github.com/paulbellamy/ratecounter"  // Uses a goroutine per call - not memory frendly
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
+	"github.com/mohae/deepcopy"
 )
 
 type AppStatsEventProcessor struct {
@@ -151,7 +148,7 @@ func (ap *AppStatsEventProcessor) Clear() {
 	ap.TotalEvents = 0
 }
 
-func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
+func (ap *AppStatsEventProcessor) Process(instanceId int, msg *events.Envelope) {
 
 	ap.mu.Lock()
 	defer ap.mu.Unlock()
@@ -166,14 +163,18 @@ func (ap *AppStatsEventProcessor) Process(msg *events.Envelope) {
 		ap.logMessageEvent(msg)
 	case events.Envelope_CounterEvent:
 		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" && msg.GetOrigin() == "DopplerServer" {
-			ap.droppedMessages(msg)
+			ap.droppedMessages(instanceId, msg)
 		}
 	}
 
 }
 
-func (ap *AppStatsEventProcessor) droppedMessages(msg *events.Envelope) {
-	debug.Error("We've intercepted an upstream message which indicates that the nozzle or the TrafficController is not keeping up.")
+func (ap *AppStatsEventProcessor) droppedMessages(instanceId int, msg *events.Envelope) {
+	delta := msg.GetCounterEvent().GetDelta()
+	total := msg.GetCounterEvent().GetTotal()
+	text := fmt.Sprintf("Nozzle #%v - Upstream message indicates the nozzle or the TrafficController is not keeping up. Dropped delta: %v, total: %v",
+		instanceId, delta, total)
+	debug.Error(text)
 }
 
 func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {

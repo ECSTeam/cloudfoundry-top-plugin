@@ -37,12 +37,12 @@ func (er *EventRouter) Clear() {
 	er.startTime = time.Now()
 }
 
-func (er *EventRouter) Route(msg *events.Envelope) {
+func (er *EventRouter) Route(instanceId int, msg *events.Envelope) {
 	er.mu.Lock()
 	defer er.mu.Unlock()
 	er.eventCount++
 	//eventType := msg.GetEventType()
-	er.processor.Process(msg)
+	er.processor.Process(instanceId, msg)
 }
 
 func (er *EventRouter) GetTotalEventCount() int64 {

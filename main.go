@@ -3,8 +3,7 @@ package main
 import (
 	"os"
 	"strings"
-	//"fmt"
-	//"runtime"
+
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
@@ -37,10 +36,9 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 				UsageDetails: plugin.Usage{
 					Usage: "cf top",
 					Options: map[string]string{
-						"debug":  "-d, enable debugging",
-						"cygwin": "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
-						//"filter":          "-f, specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop",
-						//"subscription-id": "-s, specify subscription id for distributing firehose output between clients",
+						"debug":   "-d, enable debugging",
+						"cygwin":  "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
+						"nozzles": "-n, specify the number of nozzle instances (default: 2)",
 					},
 				},
 			},
@@ -123,16 +121,13 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	var debug bool
 	var cygwin bool
-	var noFilter bool
-	var filter string
-	var subscriptionId string
+	var nozzles int
 
 	fc := flags.New()
 	fc.NewBoolFlag("debug", "d", "used for debugging")
 	fc.NewBoolFlag("cygwin", "c", "force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )")
-	//fc.NewBoolFlag("no-filter", "n", "no firehose filter. Display all messages")
+	fc.NewIntFlagWithDefault("nozzles", "n", "number of nozzles", 2)
 	//fc.NewStringFlag("filter", "f", "specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop")
-	//fc.NewStringFlag("subscription-id", "s", "specify subscription id for distributing firehose output between clients")
 	err := fc.Parse(args[1:]...)
 
 	if err != nil {
@@ -144,22 +139,17 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	if fc.IsSet("cygwin") {
 		cygwin = fc.Bool("cygwin")
 	}
+
+	nozzles = fc.Int("nozzles")
+
 	/*
-		if fc.IsSet("no-filter") {
-			noFilter = fc.Bool("no-filter")
-		}
 		if fc.IsSet("filter") {
 			filter = fc.String("filter")
 		}
-		if fc.IsSet("subscription-id") {
-			subscriptionId = fc.String("subscription-id")
-		}
 	*/
 	return &top.ClientOptions{
-		Debug:          debug,
-		Cygwin:         cygwin,
-		NoFilter:       noFilter,
-		Filter:         filter,
-		SubscriptionID: subscriptionId,
+		Debug:   debug,
+		Cygwin:  cygwin,
+		Nozzles: nozzles,
 	}
 }
