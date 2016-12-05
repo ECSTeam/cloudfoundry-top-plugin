@@ -152,7 +152,7 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 		return appResp, nil
 	}
 
-	callRetriableAPI(cliConnection, url, handleRequest)
+	callAPI(cliConnection, url, handleRequest)
 
 	// Flush the total counters
 	mu.Lock()

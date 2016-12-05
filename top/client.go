@@ -15,8 +15,6 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 )
 
-//const NozzleInstances = 2
-
 type Client struct {
 	authToken     string
 	options       *ClientOptions

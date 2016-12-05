@@ -6,36 +6,23 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 )
 
-type handleResponseFunc func(outputBytes []byte) (interface{}, error)
+var (
+	curlMutex sync.Mutex
+)
 
-func callRetriableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
-	retryDelayMS := 500
-	maxRetries := 5
-	for retryCount := 0; retryCount < maxRetries; retryCount++ {
-		err := callAPI(cliConnection, url, handleResponse)
-		if err == nil {
-			return nil
-		}
-		msg := fmt.Sprintf("metadata.callApi>callRetriableAPI try#%v url:%v Error:%v", retryCount, url, err.Error())
-		debug.Warn(msg)
-		sleepTime := time.Duration(retryDelayMS*maxRetries) * time.Millisecond
-		time.Sleep(sleepTime)
-	}
-	msg := "Error calling " + url + " after " + strconv.Itoa(maxRetries) + " attempts"
-	debug.Warn(msg)
-	return errors.New(msg)
-}
+type handleResponseFunc func(outputBytes []byte) (interface{}, error)
 
 func callAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
 	nextUrl := url
 	for nextUrl != "" {
-		output, err := cliConnection.CliCommandWithoutTerminalOutput("curl", nextUrl)
+		output, err := callCurlRetryable(cliConnection, nextUrl)
 		if err != nil {
 			return err
 		}
@@ -48,6 +35,32 @@ func callAPI(cliConnection plugin.CliConnection, url string, handleResponse hand
 		nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 	}
 	return nil
+}
+
+func callCurlRetryable(cliConnection plugin.CliConnection, url string) ([]string, error) {
+	retryDelayMS := 500
+	maxRetries := 5
+	for retryCount := 0; retryCount < maxRetries; retryCount++ {
+		output, err := callCurl(cliConnection, url)
+		if err == nil {
+			return output, nil
+		}
+		msg := fmt.Sprintf("metadata.callApi>callCurlRetryable try#%v url:%v Error:%v", retryCount, url, err.Error())
+		debug.Warn(msg)
+		sleepTime := time.Duration(retryDelayMS*maxRetries) * time.Millisecond
+		time.Sleep(sleepTime)
+	}
+	msg := "metadata.callApi>callCurlRetryable. Error calling " + url + " after " + strconv.Itoa(maxRetries) + " attempts"
+	debug.Warn(msg)
+	return nil, errors.New(msg)
+}
+
+// Having issues calling cli CURL from multiple threads -- response text seems to get merged
+// so lets just single thread the curl calls for now
+func callCurl(cliConnection plugin.CliConnection, url string) ([]string, error) {
+	curlMutex.Lock()
+	defer curlMutex.Unlock()
+	return cliConnection.CliCommandWithoutTerminalOutput("curl", url)
 }
 
 func GetStringValueByFieldName(n interface{}, field_name string) (string, bool) {

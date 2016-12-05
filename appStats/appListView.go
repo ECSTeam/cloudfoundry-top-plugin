@@ -729,24 +729,43 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 		}
 	}
 
-	fmt.Fprintf(v, "\r")
-	fmt.Fprintf(v, "Total Apps: %-5v ", len(asUI.displayedSortedStatList))
-	// Active apps are apps that have had go-rounter traffic in last 60 seconds
-	fmt.Fprintf(v, "Active Apps: %-4v ", totalActiveApps)
-	// Reporting containers are containers that reported metrics in last 90 seconds
-	fmt.Fprintf(v, "Rprt Cntnrs: %-4v ", totalReportingAppInstances)
-
 	totalUsedMemoryAppInstancesDisplay := "--"
 	totalUsedDiskAppInstancesDisplay := "--"
 	totalCpuPercentageDisplay := "--"
 	if totalReportingAppInstances > 0 {
 		totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).String()
 		totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).String()
-		totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", totalCpuPercentage)
+		if totalCpuPercentage >= 100 {
+			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", totalCpuPercentage)
+		} else {
+			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", totalCpuPercentage)
+		}
 	}
-	fmt.Fprintf(v, "Used Mem:  %8v ", totalUsedMemoryAppInstancesDisplay)
-	fmt.Fprintf(v, "Used Disk:  %8v ", totalUsedDiskAppInstancesDisplay)
-	fmt.Fprintf(v, "Used CPU: %-8v ", totalCpuPercentageDisplay)
+
+	fmt.Fprintf(v, "\r")
+
+	// Active apps are apps that have had go-rounter traffic in last 60 seconds
+	// Reporting containers are containers that reported metrics in last 90 seconds
+	fmt.Fprintf(v, "CPU:%9v Used,%9v Max,   Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
+		totalCpuPercentageDisplay, "n/a", len(asUI.displayedSortedStatList), totalActiveApps, totalReportingAppInstances)
+
+	displayTotalMem := "--"
+	totalMem := metadata.GetTotalMemoryAllStartedApps()
+	if totalMem > 0 {
+		displayTotalMem = util.ByteSize(totalMem).String()
+	}
+	fmt.Fprintf(v, "Mem:%9v Used,", totalUsedMemoryAppInstancesDisplay)
+	// Total quota memory of all running app instances
+	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", "n/a", displayTotalMem)
+
+	displayTotalDisk := "--"
+	totalDisk := metadata.GetTotalDiskAllStartedApps()
+	if totalMem > 0 {
+		displayTotalDisk = util.ByteSize(totalDisk).String()
+	}
+
+	fmt.Fprintf(v, "Dsk:%9v Used,", totalUsedDiskAppInstancesDisplay)
+	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", "n/a", displayTotalDisk)
 
 	return nil
 }

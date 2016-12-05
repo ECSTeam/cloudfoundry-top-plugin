@@ -15,7 +15,6 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
-	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
@@ -30,6 +29,9 @@ type MasterUI struct {
 	router            *eventrouting.EventRouter
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
+
+	headerSize int
+	footerSize int
 }
 
 func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
@@ -38,11 +40,13 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 		cliConnection: cliConnection,
 		refreshNow:    make(chan bool),
 	}
+	ui.headerSize = 6
+	ui.footerSize = 4
 
-	headerView := NewHeaderWidget(ui, "summaryView", 4)
-	footerView := NewFooterWidget("footerView", 4)
+	headerView := NewHeaderWidget(ui, "summaryView", ui.headerSize)
+	footerView := NewFooterWidget("footerView", ui.footerSize)
 
-	appListView := appStats.NewAppListView(ui, "appListView", 5, 4, ui.cliConnection)
+	appListView := appStats.NewAppListView(ui, "appListView", ui.headerSize+1, ui.footerSize, ui.cliConnection)
 	ui.appListView = appListView
 	ui.router = eventrouting.NewEventRouter(appListView.GetCurrentProcessor())
 
@@ -270,24 +274,8 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	}
 
 	targetDisplay := fmt.Sprintf("%v@%v", username, url.Host)
-	fmt.Fprintf(v, "Target: %-45.45v ", targetDisplay)
+	fmt.Fprintf(v, "Target: %-45.45v\n", targetDisplay)
 
-	displayTotalMem := "--"
-	totalMem := metadata.GetTotalMemoryAllStartedApps()
-	if totalMem > 0 {
-		displayTotalMem = util.ByteSize(totalMem).String()
-	}
-	// Total quota memory of all running app instances
-	fmt.Fprintf(v, "Rsrvd Mem: %8v ", displayTotalMem)
-
-	displayTotalDisk := "--"
-	totalDisk := metadata.GetTotalDiskAllStartedApps()
-	if totalMem > 0 {
-		displayTotalDisk = util.ByteSize(totalDisk).String()
-	}
-
-	fmt.Fprintf(v, "Rsrvd Disk: %8v ", displayTotalDisk)
-	fmt.Fprintf(v, "\n")
 	return nil
 }
 

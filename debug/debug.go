@@ -1,12 +1,14 @@
 package debug
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 )
@@ -145,6 +147,9 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.testMsg); err != nil {
 			log.Panicln(err)
 		}
+		if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.copyClipboardAction); err != nil {
+			log.Panicln(err)
+		}
 
 		if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
 			log.Panicln(err)
@@ -179,6 +184,23 @@ func (w *DebugWidget) closeDebugWidget(g *gocui.Gui, v *gocui.View) error {
 
 func (w *DebugWidget) testMsg(g *gocui.Gui, v *gocui.View) error {
 	Debug("hello")
+	return nil
+}
+
+func (w *DebugWidget) copyClipboardAction(g *gocui.Gui, v *gocui.View) error {
+
+	var buffer bytes.Buffer
+	for index := 0; index < len(debugLines); index++ {
+		debugLine := debugLines[index]
+		line := fmt.Sprintf("[%03v] %v\n", index, debugLine)
+		buffer.WriteString(line)
+	}
+	clipboardValue := buffer.String()
+
+	err := clipboard.WriteAll(clipboardValue)
+	if err != nil {
+		Error("Copy into Clipboard error: " + err.Error())
+	}
 	return nil
 }
 

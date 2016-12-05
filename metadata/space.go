@@ -43,8 +43,7 @@ func FindSpaceMetadata(spaceGuid string) Space {
 func LoadSpaceCache(cliConnection plugin.CliConnection) {
 	data, err := getSpaceMetadata(cliConnection)
 	if err != nil {
-		//TODO: DO something cleaner with this error
-		fmt.Printf("*** space metadata error: %v\n", err.Error())
+		debug.Warn(fmt.Sprintf("*** space metadata error: %v\n", err.Error()))
 		return
 	}
 	spacesMetadataCache = data
@@ -69,7 +68,7 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 		return response, nil
 	}
 
-	callRetriableAPI(cliConnection, url, handleRequest)
+	callAPI(cliConnection, url, handleRequest)
 
 	return metadata, nil
 

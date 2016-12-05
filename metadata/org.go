@@ -40,8 +40,7 @@ func FindOrgMetadata(orgGuid string) Org {
 func LoadOrgCache(cliConnection plugin.CliConnection) {
 	data, err := getOrgMetadata(cliConnection)
 	if err != nil {
-		//TODO: DO something cleaner with this error
-		fmt.Printf("*** org metadata error: %v\n", err.Error())
+		debug.Warn(fmt.Sprintf("*** org metadata error: %v\n", err.Error()))
 		return
 	}
 	orgsMetadataCache = data
@@ -66,7 +65,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 		return response, nil
 	}
 
-	callRetriableAPI(cliConnection, url, handleRequest)
+	callAPI(cliConnection, url, handleRequest)
 
 	return metadata, nil
 
