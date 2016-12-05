@@ -14,6 +14,8 @@ import (
 	"github.com/mohae/deepcopy"
 )
 
+const StaleContainerSeconds = 80
+
 type AppStatsEventProcessor struct {
 	AppMap      map[string]*AppStats
 	TotalEvents int64
@@ -93,7 +95,7 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 		for containerIndex, cs := range appStat.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				// If we haven't gotten a container update recently, ignore the old value
-				if now.Sub(cs.LastUpdate) > time.Second*40 {
+				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
 					clonedAppStat.ContainerArray[containerIndex] = nil
 					continue
 				}
@@ -161,7 +163,8 @@ func (ap *AppStatsEventProcessor) Process(instanceId int, msg *events.Envelope) 
 	case events.Envelope_LogMessage:
 		ap.logMessageEvent(msg)
 	case events.Envelope_CounterEvent:
-		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" && msg.GetOrigin() == "DopplerServer" {
+		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" &&
+			(msg.GetOrigin() == "DopplerServer" || msg.GetOrigin() == "doppler") {
 			ap.droppedMessages(instanceId, msg)
 		}
 	}
