@@ -274,7 +274,7 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	}
 
 	targetDisplay := fmt.Sprintf("%v@%v", username, url.Host)
-	fmt.Fprintf(v, "Target: %-45.45v\n", targetDisplay)
+	fmt.Fprintf(v, "Target: %-78.78v\n", targetDisplay)
 
 	return nil
 }

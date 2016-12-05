@@ -37,7 +37,7 @@ func NewEditColumnViewAbs(masterUI masterUIInterface.MasterUIInterface, name str
 	w := &EditColumnViewAbs{masterUI: masterUI, name: name, listWidget: listWidget}
 	w.priorStateOfDisplayPaused = listWidget.displayView.GetDisplayPaused()
 	listWidget.displayView.SetDisplayPaused(true)
-	w.minTopViewMargin = 8
+	w.minTopViewMargin = 9
 	return w
 }
 

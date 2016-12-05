@@ -3,28 +3,31 @@ package appStats
 const helpText = `
 **Header information:**
 
-  Total events   - Total number of events received by the platform.
-  Warm-up period - It can take up to 30 seconds to receive all event
-                   information before stats are accurate.
-  Stats duration - Amount of time stats have been collected.
-  Target         - The target URL of monitored foundation.
-  Rsrvd Mem      - Total amount of requested memory for all started
-                   app instances.
-  Rsrvd Disk     - Total amount of requested disk for all started
-                   app instances.
-  Total Apps     - Total number of applications deployed to
-                   foundation.
-  Active Apps    - Number of applications that have taken HTTP(S)
-                   traffic through the go router in the last 60
-                   seconds.
-  Rprt Cntnrs    - Number of reporting containers which typically
-                   are app instances.
-  Used Mem       - Amount of memory actually in use by all app
-                   instances.
-  Used Disk      - Amount of disk actually in use by all app
-                   instances.
-  Used CPU       - Amount of CPU consumed by all app instances.
-
+  Evnts        - Total number of events received by the platform.
+  Warm-up      - It can take up to 30 seconds to receive all event
+                 information before stats are accurate.
+  Duration     - Amount of time stats have been collected.
+  Target       - The target URL of monitored foundation.
+  CPU (Used)   - Amount of CPU consumed by all app instances.
+  CPU (Max)    - Sum of CPU capacity across all cells.
+  Mem (Used)   - Amount of memory actually in use by all app
+                 instances.
+  Mem (Max)    - Sum of memory capacity across all cells.
+  Mem (Rsrvd)  - Total amount of requested memory for all started
+                 app instances.
+  Dsk (Used)   - Amount of disk actually in use by all app
+                 instances.
+  Dsk (Max)    - Sum of disk capacity across all cells.
+  Dsk (Rsrvd)  - Total amount of requested disk for all started
+                 app instances.
+  Apps (total) - Total number of applications deployed to
+                 foundation.
+  Apps (Actv)  - Number of applications that have taken HTTP(S)
+                 traffic through the go router in the last 60
+                 seconds.
+  Cntnrs       - Number of reporting containers which typically
+                 are app instances.
+ 
 **Application list stats:**
 
   APPLICATION - Application name
@@ -44,6 +47,10 @@ const helpText = `
   3XX - Count of HTTP(S) responses with status code 300-399
   4XX - Count of HTTP(S) responses with status code 400-499
   5XX - Count of HTTP(S) responses with status code 500-599
+
+NOTE: The HTTP counters are based on traffic through the 
+gorouter.  Applications that talk directly container-to-
+container will now show up in the HTTP counters.
 
 **Order / Sort display: **
 Press 'o' to show the sort order window allowing multi-column
