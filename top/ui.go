@@ -19,6 +19,8 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
+const WarmUpSeconds = 60
+
 type MasterUI struct {
 	layoutManager *LayoutManager
 	gui           *gocui.Gui
@@ -247,8 +249,8 @@ func (ui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%-28v", eventsText)
 
 	runtimeSeconds := Round(time.Now().Sub(ui.router.GetStartTime()), time.Second)
-	if runtimeSeconds < time.Second*30 {
-		warmUpTimeRemaining := (time.Second * 30) - runtimeSeconds
+	if runtimeSeconds < time.Second*WarmUpSeconds {
+		warmUpTimeRemaining := (time.Second * WarmUpSeconds) - runtimeSeconds
 		fmt.Fprintf(v, util.DIM_GREEN)
 		fmt.Fprintf(v, " Warm-up: %-10v ", warmUpTimeRemaining)
 		fmt.Fprintf(v, util.CLEAR)

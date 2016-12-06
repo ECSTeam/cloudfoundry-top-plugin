@@ -742,12 +742,34 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 		}
 	}
 
+	cellTotalCPUs := 0
+	capacityTotalMemory := int64(0)
+	capacityTotalDisk := int64(0)
+	for _, cellStats := range asUI.displayedProcessor.CellMap {
+		cellTotalCPUs = cellTotalCPUs + cellStats.NumOfCpus
+		capacityTotalMemory = capacityTotalMemory + cellStats.CapacityTotalMemory
+		capacityTotalDisk = capacityTotalDisk + cellStats.CapacityTotalDisk
+	}
+
+	cellTotalCapacityDisplay := "--"
+	if cellTotalCPUs > 0 {
+		cellTotalCapacityDisplay = fmt.Sprintf("%v%%", (cellTotalCPUs * 100))
+	}
+
+	capacityTotalMemoryDisplay := "--"
+	if capacityTotalMemory > 0 {
+		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalMemory))
+	}
+	capacityTotalDiskDisplay := "--"
+	if capacityTotalDisk > 0 {
+		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalDisk))
+	}
 	fmt.Fprintf(v, "\r")
 
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
 	fmt.Fprintf(v, "CPU:%9v Used,%9v Max,   Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
-		totalCpuPercentageDisplay, "n/a", len(asUI.displayedSortedStatList), totalActiveApps, totalReportingAppInstances)
+		totalCpuPercentageDisplay, cellTotalCapacityDisplay, len(asUI.displayedSortedStatList), totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"
 	totalMem := metadata.GetTotalMemoryAllStartedApps()
@@ -756,7 +778,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	}
 	fmt.Fprintf(v, "Mem:%9v Used,", totalUsedMemoryAppInstancesDisplay)
 	// Total quota memory of all running app instances
-	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", "n/a", displayTotalMem)
+	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
 	displayTotalDisk := "--"
 	totalDisk := metadata.GetTotalDiskAllStartedApps()
@@ -765,7 +787,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	}
 
 	fmt.Fprintf(v, "Dsk:%9v Used,", totalUsedDiskAppInstancesDisplay)
-	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", "n/a", displayTotalDisk)
+	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
 
 	return nil
 }

@@ -18,6 +18,7 @@ const StaleContainerSeconds = 80
 
 type AppStatsEventProcessor struct {
 	AppMap      map[string]*AppStats
+	CellMap     map[string]*CellStats
 	TotalEvents int64
 	mu          sync.Mutex
 }
@@ -25,8 +26,33 @@ type AppStatsEventProcessor struct {
 func NewAppStatsEventProcessor() *AppStatsEventProcessor {
 	return &AppStatsEventProcessor{
 		AppMap:      make(map[string]*AppStats),
+		CellMap:     make(map[string]*CellStats),
 		TotalEvents: 0,
 	}
+}
+
+func (ap *AppStatsEventProcessor) Process(instanceId int, msg *events.Envelope) {
+
+	ap.mu.Lock()
+	defer ap.mu.Unlock()
+
+	eventType := msg.GetEventType()
+	switch eventType {
+	case events.Envelope_HttpStartStop:
+		ap.httpStartStopEvent(msg)
+	case events.Envelope_ContainerMetric:
+		ap.containerMetricEvent(msg)
+	case events.Envelope_LogMessage:
+		ap.logMessageEvent(msg)
+	case events.Envelope_ValueMetric:
+		ap.valueMetricEvent(msg)
+	case events.Envelope_CounterEvent:
+		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" &&
+			(msg.GetOrigin() == "DopplerServer" || msg.GetOrigin() == "doppler") {
+			ap.droppedMessages(instanceId, msg)
+		}
+	}
+
 }
 
 func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
@@ -146,29 +172,8 @@ func (ap *AppStatsEventProcessor) Clear() {
 	defer ap.mu.Unlock()
 
 	ap.AppMap = make(map[string]*AppStats)
+	ap.CellMap = make(map[string]*CellStats)
 	ap.TotalEvents = 0
-}
-
-func (ap *AppStatsEventProcessor) Process(instanceId int, msg *events.Envelope) {
-
-	ap.mu.Lock()
-	defer ap.mu.Unlock()
-
-	eventType := msg.GetEventType()
-	switch eventType {
-	case events.Envelope_HttpStartStop:
-		ap.httpStartStopEvent(msg)
-	case events.Envelope_ContainerMetric:
-		ap.containerMetricEvent(msg)
-	case events.Envelope_LogMessage:
-		ap.logMessageEvent(msg)
-	case events.Envelope_CounterEvent:
-		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" &&
-			(msg.GetOrigin() == "DopplerServer" || msg.GetOrigin() == "doppler") {
-			ap.droppedMessages(instanceId, msg)
-		}
-	}
-
 }
 
 func (ap *AppStatsEventProcessor) droppedMessages(instanceId int, msg *events.Envelope) {
@@ -210,6 +215,54 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
 
 }
 
+func (ap *AppStatsEventProcessor) valueMetricEvent(msg *events.Envelope) {
+
+	// Can we assume that all rep orgins are cflinuxfs2 diego cells? Might be a bad idea
+	if msg.GetOrigin() == "rep" {
+		ip := msg.GetIp()
+		cellStats := ap.getCellStats(ip)
+		valueMetric := msg.GetValueMetric()
+		value := ap.getMetricValue(valueMetric)
+		name := valueMetric.GetName()
+		switch name {
+		case "numCPUS":
+			cellStats.NumOfCpus = int(value)
+		case "CapacityTotalMemory":
+			cellStats.CapacityTotalMemory = int64(value)
+		case "CapacityRemainingMemory":
+			cellStats.CapacityRemainingMemory = int64(value)
+		case "CapacityTotalDisk":
+			cellStats.CapacityTotalDisk = int64(value)
+		case "CapacityRemainingDisk":
+			cellStats.CapacityRemainingDisk = int64(value)
+		case "CapacityTotalContainers":
+			cellStats.CapacityTotalContainers = int(value)
+		case "CapacityRemainingContainers":
+			cellStats.CapacityRemainingContainers = int(value)
+		case "ContainerCount":
+			cellStats.ContainerCount = int(value)
+		}
+	}
+
+}
+
+func (ap *AppStatsEventProcessor) getMetricValue(valueMetric *events.ValueMetric) float64 {
+
+	value := valueMetric.GetValue()
+	switch valueMetric.GetUnit() {
+	case "KiB":
+		value = value * 1024
+	case "MiB":
+		value = value * 1024 * 1024
+	case "GiB":
+		value = value * 1024 * 1024 * 1024
+	case "TiB":
+		value = value * 1024 * 1024 * 1024 * 1024
+	}
+
+	return value
+}
+
 func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
 
 	containerMetric := msg.GetContainerMetric()
@@ -232,6 +285,16 @@ func (ap *AppStatsEventProcessor) getAppStats(appId string) *AppStats {
 		ap.AppMap[appId] = appStats
 	}
 	return appStats
+}
+
+func (ap *AppStatsEventProcessor) getCellStats(cellIp string) *CellStats {
+	cellStats := ap.CellMap[cellIp]
+	if cellStats == nil {
+		// New cell we haven't seen yet
+		cellStats = NewCellStats(cellIp)
+		ap.CellMap[cellIp] = cellStats
+	}
+	return cellStats
 }
 
 func (ap *AppStatsEventProcessor) getContainerStats(appStats *AppStats, instIndex int) *ContainerStats {
