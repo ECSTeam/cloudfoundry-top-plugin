@@ -77,7 +77,7 @@ func (c *Client) createNozzles(subscriptionID string) {
 	for i := 0; i < c.options.Nozzles; i++ {
 		go c.createNozzle(subscriptionID, i)
 	}
-	toplog.Info(fmt.Sprintf("Created %v nozzles", c.options.Nozzles))
+	toplog.Info(fmt.Sprintf("Created %v nozzle instances", c.options.Nozzles))
 }
 
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {

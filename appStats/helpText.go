@@ -25,7 +25,7 @@ const helpText = `
   Apps (Actv)  - Number of applications that have taken HTTP(S)
                  traffic through the go router in the last 60
                  seconds.
-  Cntnrs       - Number of reporting containers which typically
+  Cntrs        - Number of reporting containers which typically
                  are app instances.
  
 **Application list stats:**
@@ -39,10 +39,10 @@ const helpText = `
   DISK - Total disk used by all containers
   RESP - Avg response time in milliseconds over last 60 seconds
   LOGS - Total number of log events for all instance of app
-  L1 - Number of HTTP(S) request/responses in last 1 second
-  L10 - Number of HTTP(S) request/responses in last 10 seconds
-  L60 - Number of HTTP(S) request/responses in last 60 seconds
-  HTTP - Count of all of the HTTP(S) responses
+  REQ/1 - Number of HTTP(S) request/responses in last 1 second
+  REQ/10 - Number of HTTP(S) request/responses in last 10 seconds
+  REQ/60 - Number of HTTP(S) request/responses in last 60 seconds
+  TOT-REQ - Count of all of the HTTP(S) request/responses
   2XX - Count of HTTP(S) responses with status code 200-299
   3XX - Count of HTTP(S) responses with status code 300-399
   4XX - Count of HTTP(S) responses with status code 400-499
@@ -50,7 +50,7 @@ const helpText = `
 
 NOTE: The HTTP counters are based on traffic through the 
 gorouter.  Applications that talk directly container-to-
-container will now show up in the HTTP counters.
+container will not show up in the REQ/nXX counters.
 
 **Order / Sort display: **
 Press 'o' to show the sort order window allowing multi-column
@@ -104,9 +104,9 @@ Press SPACE to force an immediate screen refresh
 **Quit: **
 Press 'q' to quit application
 
-**Debug: **
-Press shift-D to open debug window.  This shows internal top
-logging events.  This window will open automatically if any error
+**Log Window: **
+Press shift-D to open log window.  This shows internal top
+logging messages.  This window will open automatically if any error
 message is logged (e.g., connection timeouts)
 
 `
