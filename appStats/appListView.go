@@ -13,9 +13,10 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
 	//"github.com/mohae/deepcopy"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+
 	"github.com/kkellner/cloudfoundry-top-plugin/helpView"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
@@ -117,10 +118,10 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 				/*
 				   msg := "test"
 				   for i:=0;i<50;i++ {
-				     debug.Info(msg)
+				     toplog.Info(msg)
 				   }
 				*/
-				debug.Open()
+				toplog.Open()
 				return nil
 			}); err != nil {
 			log.Panicln(err)
@@ -290,7 +291,7 @@ func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalMemInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedMemory))
+			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedMemory).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
@@ -313,7 +314,7 @@ func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalDiskInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalDiskInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedDisk))
+			totalDiskInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedDisk).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalDiskInfo)
 	}
@@ -515,7 +516,7 @@ func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *AppListView) seedStatsFromMetadata() {
 
-	debug.Info("appListView>seedStatsFromMetadata")
+	toplog.Info("appListView>seedStatsFromMetadata")
 
 	asUI.currentProcessor.mu.Lock()
 	defer asUI.currentProcessor.mu.Unlock()
@@ -591,13 +592,13 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 	}
 	err := clipboard.WriteAll(clipboardValue)
 	if err != nil {
-		debug.Error("Copy into Clipboard error: " + err.Error())
+		toplog.Error("Copy into Clipboard error: " + err.Error())
 	}
 	return nil
 }
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
-	debug.Info("appListView>ClearStats")
+	toplog.Info("appListView>ClearStats")
 	asUI.currentProcessor.Clear()
 	asUI.updateData()
 	asUI.seedStatsFromMetadata()
@@ -733,8 +734,8 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	totalUsedDiskAppInstancesDisplay := "--"
 	totalCpuPercentageDisplay := "--"
 	if totalReportingAppInstances > 0 {
-		totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).String()
-		totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).String()
+		totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).StringWithPrecision(0)
+		totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).StringWithPrecision(0)
 		if totalCpuPercentage >= 100 {
 			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", totalCpuPercentage)
 		} else {
@@ -758,42 +759,42 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 
 	capacityTotalMemoryDisplay := "--"
 	if capacityTotalMemory > 0 {
-		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalMemory))
+		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalMemory).StringWithPrecision(0))
 	}
 	capacityTotalDiskDisplay := "--"
 	if capacityTotalDisk > 0 {
-		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalDisk))
+		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalDisk).StringWithPrecision(0))
 	}
 	fmt.Fprintf(v, "\r")
 
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
-	fmt.Fprintf(v, "CPU:%9v Used,%9v Max,   Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
+	fmt.Fprintf(v, "CPU:%6v Used,%6v Max,   Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
 		totalCpuPercentageDisplay, cellTotalCapacityDisplay, len(asUI.displayedSortedStatList), totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"
 	totalMem := metadata.GetTotalMemoryAllStartedApps()
 	if totalMem > 0 {
-		displayTotalMem = util.ByteSize(totalMem).String()
+		displayTotalMem = util.ByteSize(totalMem).StringWithPrecision(0)
 	}
-	fmt.Fprintf(v, "Mem:%9v Used,", totalUsedMemoryAppInstancesDisplay)
+	fmt.Fprintf(v, "Mem:%6v Used,", totalUsedMemoryAppInstancesDisplay)
 	// Total quota memory of all running app instances
-	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
+	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
 	displayTotalDisk := "--"
 	totalDisk := metadata.GetTotalDiskAllStartedApps()
 	if totalMem > 0 {
-		displayTotalDisk = util.ByteSize(totalDisk).String()
+		displayTotalDisk = util.ByteSize(totalDisk).StringWithPrecision(0)
 	}
 
-	fmt.Fprintf(v, "Dsk:%9v Used,", totalUsedDiskAppInstancesDisplay)
-	fmt.Fprintf(v, "%9v Max,%9v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
+	fmt.Fprintf(v, "Dsk:%6v Used,", totalUsedDiskAppInstancesDisplay)
+	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
 
 	return nil
 }
 
 func (asUI *AppListView) loadMetadata() {
-	debug.Info("appListView>loadMetadata")
+	toplog.Info("appListView>loadMetadata")
 	metadata.LoadAppCache(asUI.cliConnection)
 	metadata.LoadSpaceCache(asUI.cliConnection)
 	metadata.LoadOrgCache(asUI.cliConnection)

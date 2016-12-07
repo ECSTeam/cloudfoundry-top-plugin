@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 )
 
 type SpaceResponse struct {
@@ -43,7 +43,7 @@ func FindSpaceMetadata(spaceGuid string) Space {
 func LoadSpaceCache(cliConnection plugin.CliConnection) {
 	data, err := getSpaceMetadata(cliConnection)
 	if err != nil {
-		debug.Warn(fmt.Sprintf("*** space metadata error: %v\n", err.Error()))
+		toplog.Warn(fmt.Sprintf("*** space metadata error: %v", err.Error()))
 		return
 	}
 	spacesMetadataCache = data
@@ -58,7 +58,7 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 		var response SpaceResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			debug.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v\n", url, string(outputBytes[:])))
+			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
 			return metadata, err
 		}
 		for _, item := range response.Resources {

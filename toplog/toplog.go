@@ -1,4 +1,4 @@
-package debug
+package toplog
 
 import (
 	"bytes"
@@ -15,6 +15,15 @@ import (
 
 const MAX_LOG_FILES = 1000
 
+type LogLevel string
+
+const (
+	DebugLevel LogLevel = "D"
+	InfoLevel           = "I"
+	WarnLevel           = "W"
+	ErrorLevel          = "E"
+)
+
 var (
 	debugLines  []string
 	gui         *gocui.Gui
@@ -22,19 +31,19 @@ var (
 )
 
 func Debug(msg string) {
-	logMsg(msg)
+	logMsg(DebugLevel, msg)
 }
 
 func Info(msg string) {
-	logMsg(msg)
+	logMsg(InfoLevel, msg)
 }
 
 func Warn(msg string) {
-	logMsg(msg)
+	logMsg(WarnLevel, msg)
 }
 
 func Error(msg string) {
-	logMsg(msg)
+	logMsg(ErrorLevel, msg)
 	Open()
 }
 
@@ -56,9 +65,9 @@ func Open() {
 	}
 }
 
-func logMsg(msg string) {
+func logMsg(level LogLevel, msg string) {
 	msg = strings.Replace(msg, "\n", " | ", -1)
-	line := fmt.Sprintf("%v %v", time.Now().Format("15:04:05"), msg)
+	line := fmt.Sprintf("%v %v %v", time.Now().Format("15:04:05"), level, msg)
 	debugLines = append(debugLines, line)
 	if len(debugLines) > MAX_LOG_FILES {
 		debugLines = debugLines[1:]
@@ -75,7 +84,7 @@ type DebugWidget struct {
 }
 
 func InitDebug(g *gocui.Gui, masterUI masterUIInterface.MasterUIInterface) {
-	debugWidget = NewDebugWidget(masterUI, "debugView")
+	debugWidget = NewDebugWidget(masterUI, "logView")
 	gui = g
 }
 
@@ -100,6 +109,9 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	left := 5
 	right := maxX - 5
+	if right <= left {
+		right = left + 1
+	}
 	top := 4
 	bottom := maxY - 2
 	w.height = bottom - top - 1
@@ -113,7 +125,7 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
-		v.Title = "DEBUG (press ENTER to close, DOWN/UP arrow to scroll)"
+		v.Title = "Log (press ENTER to close, DOWN/UP arrow to scroll)"
 		v.Frame = true
 		v.Autoscroll = false
 		v.Wrap = false
@@ -121,7 +133,7 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		g.SelBgColor = gocui.ColorRed
 		g.Highlight = true
 
-		fmt.Fprintf(v, "Debug window\n")
+		//fmt.Fprintf(v, "Debug window\n")
 
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeDebugWidget); err != nil {
 			return err

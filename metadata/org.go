@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 )
 
 type OrgResponse struct {
@@ -40,7 +40,7 @@ func FindOrgMetadata(orgGuid string) Org {
 func LoadOrgCache(cliConnection plugin.CliConnection) {
 	data, err := getOrgMetadata(cliConnection)
 	if err != nil {
-		debug.Warn(fmt.Sprintf("*** org metadata error: %v\n", err.Error()))
+		toplog.Warn(fmt.Sprintf("*** org metadata error: %v", err.Error()))
 		return
 	}
 	orgsMetadataCache = data
@@ -55,7 +55,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 		var response OrgResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			debug.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v\n", url, string(outputBytes[:])))
+			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
 			return metadata, err
 		}
 		for _, item := range response.Resources {

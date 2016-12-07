@@ -11,8 +11,8 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gorilla/websocket"
 
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 )
 
 type Client struct {
@@ -64,7 +64,7 @@ func (c *Client) Start() {
 	ui := NewMasterUI(conn)
 	c.router = ui.GetRouter()
 
-	debug.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
+	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
 	subscriptionID := "TopPlugin_" + pseudo_uuid()
 	go c.createNozzles(subscriptionID)
@@ -77,7 +77,7 @@ func (c *Client) createNozzles(subscriptionID string) {
 	for i := 0; i < c.options.Nozzles; i++ {
 		go c.createNozzle(subscriptionID, i)
 	}
-	debug.Info(fmt.Sprintf("Created %v nozzles", c.options.Nozzles))
+	toplog.Info(fmt.Sprintf("Created %v nozzles", c.options.Nozzles))
 }
 
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
@@ -113,7 +113,7 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 	for {
 		select {
 		case envelope := <-messages:
-			//debug.Debug(fmt.Sprintf("id: %v event:%v", instanceId, envelope))
+			//toplog.Debug(fmt.Sprintf("id: %v event:%v", instanceId, envelope))
 			c.router.Route(instanceId, envelope)
 		case err := <-errors:
 			c.handleError(instanceId, err)
@@ -126,12 +126,12 @@ func (c *Client) handleError(instanceId int, err error) {
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
 		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceId, err)
-		debug.Error(msg)
+		toplog.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
 		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceId, err)
-		debug.Error(msg)
+		toplog.Error(msg)
 	default:
 		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceId, err)
-		debug.Error(msg)
+		toplog.Error(msg)
 	}
 }

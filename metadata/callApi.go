@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 )
 
 var (
@@ -46,12 +46,12 @@ func callCurlRetryable(cliConnection plugin.CliConnection, url string) ([]string
 			return output, nil
 		}
 		msg := fmt.Sprintf("metadata.callApi>callCurlRetryable try#%v url:%v Error:%v", retryCount, url, err.Error())
-		debug.Warn(msg)
+		toplog.Warn(msg)
 		sleepTime := time.Duration(retryDelayMS*maxRetries) * time.Millisecond
 		time.Sleep(sleepTime)
 	}
 	msg := "metadata.callApi>callCurlRetryable. Error calling " + url + " after " + strconv.Itoa(maxRetries) + " attempts"
-	debug.Warn(msg)
+	toplog.Warn(msg)
 	return nil, errors.New(msg)
 }
 

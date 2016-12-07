@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
 )
@@ -181,7 +181,7 @@ func (ap *AppStatsEventProcessor) droppedMessages(instanceId int, msg *events.En
 	total := msg.GetCounterEvent().GetTotal()
 	text := fmt.Sprintf("Nozzle #%v - Upstream message indicates the nozzle or the TrafficController is not keeping up. Dropped delta: %v, total: %v",
 		instanceId, delta, total)
-	debug.Error(text)
+	toplog.Error(text)
 }
 
 func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
@@ -348,12 +348,9 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 	if httpStartStopEvent.GetPeerType() == events.PeerType_Client &&
 		appUUID != nil &&
 		instId != "" {
-
-		//debug.Debug(fmt.Sprintf("index: %v\n", instIndex))
-		//debug.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
-
+		//toplog.Debug(fmt.Sprintf("index: %v\n", instIndex))
+		//toplog.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
 		//fmt.Printf("index: %v\n", instIndex)
-
 		ap.TotalEvents++
 		appId := formatUUID(appUUID)
 		//c.ui.Say("**** appId:%v ****", appId)
@@ -386,7 +383,7 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 	} else {
 		statusCode := httpStartStopEvent.GetStatusCode()
 		if statusCode == 4040 {
-			debug.Debug(fmt.Sprintf("event:%v\n", msg))
+			toplog.Debug(fmt.Sprintf("event:%v\n", msg))
 		}
 	}
 }

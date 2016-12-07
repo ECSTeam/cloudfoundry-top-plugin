@@ -12,9 +12,9 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
@@ -87,7 +87,7 @@ func (ui *MasterUI) initGui() {
 	defer g.Close()
 	g.SetManager(ui.layoutManager)
 
-	debug.InitDebug(g, ui)
+	toplog.InitDebug(g, ui)
 
 	// default refresh to 1 second
 	ui.refreshIntervalMS = 1000 * time.Millisecond

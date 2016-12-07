@@ -2,21 +2,23 @@ package eventrouting
 
 import (
 	//"fmt"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type EventRouter struct {
 	eventCount       int64
 	eventRateCounter *util.RateCounter
-
-	startTime time.Time
-	mu        sync.Mutex
-	processor *appStats.AppStatsEventProcessor
+	eventRatePeak    int
+	startTime        time.Time
+	mu               sync.Mutex
+	processor        *appStats.AppStatsEventProcessor
 }
 
 func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
@@ -31,8 +33,17 @@ func (er *EventRouter) GetEventCount() int64 {
 	return er.eventCount
 }
 
+func (er *EventRouter) GetEventRatePeak() int {
+	return er.eventRatePeak
+}
+
 func (er *EventRouter) GetEventRate() int {
-	return er.eventRateCounter.Rate()
+	rate := er.eventRateCounter.Rate()
+	if rate > er.eventRatePeak {
+		er.eventRatePeak = rate
+		toplog.Info(fmt.Sprintf("New event rate per second peak: %v", rate))
+	}
+	return rate
 }
 
 func (er *EventRouter) GetStartTime() time.Time {
@@ -41,6 +52,7 @@ func (er *EventRouter) GetStartTime() time.Time {
 
 func (er *EventRouter) Clear() {
 	er.eventCount = 0
+	er.eventRatePeak = 0
 	er.startTime = time.Now()
 }
 

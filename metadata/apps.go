@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/kkellner/cloudfoundry-top-plugin/debug"
+	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 )
 
 const MEGABYTE = (1024 * 1024)
@@ -93,7 +93,7 @@ func FindAppMetadata(appId string) App {
 func GetTotalMemoryAllStartedApps() float64 {
 	mu.Lock()
 	defer mu.Unlock()
-	//debug.Debug("entering GetTotalMemoryAllStartedApps")
+	//toplog.Debug("entering GetTotalMemoryAllStartedApps")
 	if totalMemoryAllStartedApps == 0 {
 		total := float64(0)
 		for _, app := range appsMetadataCache {
@@ -103,14 +103,14 @@ func GetTotalMemoryAllStartedApps() float64 {
 		}
 		totalMemoryAllStartedApps = total
 	}
-	//debug.Debug("leaving GetTotalMemoryAllStartedApps")
+	//toplog.Debug("leaving GetTotalMemoryAllStartedApps")
 	return totalMemoryAllStartedApps
 }
 
 func GetTotalDiskAllStartedApps() float64 {
 	mu.Lock()
 	defer mu.Unlock()
-	//debug.Debug("entering GetTotalDiskAllStartedApps")
+	//toplog.Debug("entering GetTotalDiskAllStartedApps")
 	if totalDiskAllStartedApps == 0 {
 		total := float64(0)
 		for _, app := range appsMetadataCache {
@@ -120,14 +120,14 @@ func GetTotalDiskAllStartedApps() float64 {
 		}
 		totalDiskAllStartedApps = total
 	}
-	//debug.Debug("leaving GetTotalDiskAllStartedApps")
+	//toplog.Debug("leaving GetTotalDiskAllStartedApps")
 	return totalDiskAllStartedApps
 }
 
 func LoadAppCache(cliConnection plugin.CliConnection) {
 	data, err := getAppMetadata(cliConnection)
 	if err != nil {
-		debug.Warn(fmt.Sprintf("*** app metadata error: %v\n", err.Error()))
+		toplog.Warn(fmt.Sprintf("*** app metadata error: %v", err.Error()))
 		return
 	}
 	appsMetadataCache = data
@@ -142,7 +142,7 @@ func getAppMetadata(cliConnection plugin.CliConnection) ([]App, error) {
 		var appResp AppResponse
 		err := json.Unmarshal(outputBytes, &appResp)
 		if err != nil {
-			debug.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v\n", url, string(outputBytes[:])))
+			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
 			return appsMetadata, err
 		}
 		for _, app := range appResp.Resources {
