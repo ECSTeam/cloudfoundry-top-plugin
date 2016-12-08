@@ -14,7 +14,6 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
-	//"github.com/mohae/deepcopy"
 
 	"github.com/kkellner/cloudfoundry-top-plugin/helpView"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
@@ -27,13 +26,11 @@ type AppListView struct {
 	topMargin    int
 	bottomMargin int
 
-	currentProcessor        *AppStatsEventProcessor
-	displayedProcessor      *AppStatsEventProcessor
-	displayedSortedStatList []*AppStats
+	currentProcessor   *AppStatsEventProcessor
+	displayedProcessor *AppStatsEventProcessor
 
 	cliConnection plugin.CliConnection
 	mu            sync.Mutex
-	filterAppName string
 
 	appDetailView *AppDetailView
 	appListWidget *uiCommon.ListWidget
@@ -65,13 +62,14 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	if asUI.appListWidget == nil {
 
+		statList := asUI.postProcessData(asUI.displayedProcessor.AppMap)
+		listData := asUI.convertToListData(statList)
+
 		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions())
+			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions(),
+			listData)
 		appListWidget.Title = "App List"
 		appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
-		appListWidget.GetListSize = asUI.GetListSize
-		appListWidget.GetUnfilteredListSize = asUI.GetUnfilteredListSize
-		appListWidget.GetRowKey = asUI.GetRowKey
 
 		defaultSortColums := []*uiCommon.SortColumn{
 			uiCommon.NewSortColumn("CPU", true),
@@ -83,18 +81,6 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 		appListWidget.SetSortColumns(defaultSortColums)
 
 		asUI.appListWidget = appListWidget
-
-		/*
-			if err := g.SetKeybinding(asUI.name, 'f', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-				filter := NewFilterWidget(asUI.masterUI, "filterWidget", 30, 10)
-				asUI.masterUI.LayoutManager().Add(filter)
-				asUI.masterUI.SetCurrentViewOnTop(g, "filterWidget")
-				return nil
-			}); err != nil {
-				log.Panicln(err)
-			}
-		*/
-
 		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
 			func(g *gocui.Gui, v *gocui.View) error {
 				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, helpText)
@@ -140,6 +126,14 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	}
 	return asUI.appListWidget.Layout(g)
+}
+
+func (asUI *AppListView) convertToListData(statsList []*AppStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, len(statsList))
+	for i, d := range statsList {
+		listData[i] = d
+	}
+	return listData
 }
 
 func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
@@ -241,8 +235,6 @@ func (w *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 
 	w.masterUI.LayoutManager().Add(clipboardView)
 	w.masterUI.SetCurrentViewOnTop(g, "clipboardView")
-
-	//return asUI.displayView.RefreshDisplay(g)
 	return nil
 }
 
@@ -289,42 +281,24 @@ func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 	return asUI.RefreshDisplay(g)
 }
 
+// XXX
 func (asUI *AppListView) updateData() {
 	asUI.mu.Lock()
+	defer asUI.mu.Unlock()
 	processorCopy := asUI.currentProcessor.Clone()
 	asUI.displayedProcessor = processorCopy
-	asUI.FilterAndSortData()
-	asUI.mu.Unlock()
+	statList := asUI.postProcessData(processorCopy.AppMap)
+	listData := asUI.convertToListData(statList)
+	asUI.appListWidget.SetListData(listData)
 }
 
-func (asUI *AppListView) FilterAndSortData() {
-	if len(asUI.displayedProcessor.AppMap) > 0 {
-		statsMap := asUI.displayedProcessor.AppMap
+func (asUI *AppListView) postProcessData(statsMap map[string]*AppStats) []*AppStats {
+	if len(statsMap) > 0 {
 		stats := populateNamesIfNeeded(statsMap)
-		asUI.displayedSortedStatList = stats
-		stats = asUI.filterData(stats)
-		stats = asUI.sortData(stats)
-		asUI.displayedSortedStatList = stats
+		return stats
 	} else {
-		asUI.displayedSortedStatList = nil
+		return nil
 	}
-
-}
-
-func (asUI *AppListView) filterData(stats []*AppStats) []*AppStats {
-	filteredStats := make([]*AppStats, 0, len(stats))
-	for rowIndex, s := range stats {
-		if asUI.appListWidget.FilterRow(rowIndex) {
-			filteredStats = append(filteredStats, s)
-		}
-	}
-	return filteredStats
-}
-
-func (asUI *AppListView) sortData(stats []*AppStats) []*AppStats {
-	sortFunctions := asUI.appListWidget.GetSortFunctions()
-	stats = getSortedStats(stats, sortFunctions)
-	return stats
 }
 
 func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
@@ -345,20 +319,8 @@ func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 	return asUI.updateHeader(g)
 }
 
-func (asUI *AppListView) GetListSize() int {
-	return len(asUI.displayedSortedStatList)
-}
-
-func (asUI *AppListView) GetUnfilteredListSize() int {
-	return len(asUI.displayedProcessor.AppMap)
-}
-
-func (asUI *AppListView) GetRowKey(statIndex int) string {
-	return asUI.displayedSortedStatList[statIndex].AppId
-}
-
-func (asUI *AppListView) PreRowDisplay(statIndex int, isSelected bool) string {
-	appStats := asUI.displayedSortedStatList[statIndex]
+func (asUI *AppListView) PreRowDisplay(data uiCommon.IData, isSelected bool) string {
+	appStats := data.(*AppStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
 		fmt.Fprintf(v, util.BRIGHT_WHITE)
@@ -371,7 +333,6 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	//return asUI.updateHeader(g)
 	return err
 }
 
@@ -393,7 +354,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	totalUsedMemoryAppInstances := uint64(0)
 	totalUsedDiskAppInstances := uint64(0)
 	totalCpuPercentage := float64(0)
-	for _, appStats := range asUI.displayedSortedStatList {
+	for _, appStats := range asUI.displayedProcessor.AppMap {
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				totalReportingAppInstances++
@@ -447,7 +408,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
 	fmt.Fprintf(v, "CPU:%6v Used,%6v Max,         Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
-		totalCpuPercentageDisplay, cellTotalCapacityDisplay, len(asUI.displayedSortedStatList), totalActiveApps, totalReportingAppInstances)
+		totalCpuPercentageDisplay, cellTotalCapacityDisplay, len(asUI.displayedProcessor.AppMap), totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"
 	totalMem := metadata.GetTotalMemoryAllStartedApps()

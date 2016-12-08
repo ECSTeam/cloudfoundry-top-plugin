@@ -24,16 +24,26 @@ func (p *Person) display() string {
 func main() {
 	fmt.Printf("start\n")
 
-	personArray := make([]IData, 0, 10)
+	//personArray := make([]IData, 0, 10)
+	personArray := make([]*Person, 0, 10)
 	personArray = append(personArray, &Person{name: "one", age: 1})
 	personArray = append(personArray, &Person{name: "two", age: 2})
 	personArray = append(personArray, &Person{name: "three", age: 3})
 
 	displayFunc := func(dataRow IData) string {
+		//fmt.Printf("%v\n", dataRow)
 		person := dataRow.(*Person)
 		return fmt.Sprintf("name:%v age:%v", person.name, person.age)
 	}
-	loop(personArray, displayFunc)
+
+	fmt.Printf("len: %v\n", len(personArray))
+	displayDataArray := make([]IData, len(personArray))
+	for i, d := range personArray {
+		displayDataArray[i] = d
+		//fmt.Printf("i=%v, d=%v\n", i, d)
+	}
+
+	loop(displayDataArray, displayFunc)
 }
 
 func loop(dataArray []IData, displayFunc displayFunc) {

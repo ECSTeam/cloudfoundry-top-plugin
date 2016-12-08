@@ -75,6 +75,10 @@ func NewAppStats(appId string) *AppStats {
 	return stats
 }
 
+func (as *AppStats) Id() string {
+	return as.AppId
+}
+
 func NewContainerStats() *ContainerStats {
 	stats := &ContainerStats{}
 	return stats
@@ -122,22 +126,4 @@ func populateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
 		s = append(s, d)
 	}
 	return s
-}
-
-// Take the stats map and generated a reverse sorted list base on attribute X
-func getSortedStats(stats []*AppStats, sortFunctions []util.LessFunc) []*AppStats {
-
-	sortStats := make([]util.Sortable, 0, len(stats))
-	//debug.Debug(fmt.Sprintf("sortStats size before:%v", len(sortStats)))
-	for _, s := range stats {
-		sortStats = append(sortStats, s)
-	}
-	//debug.Debug(fmt.Sprintf("sortStats size after:%v", len(sortStats)))
-	util.OrderedBy(sortFunctions).Sort(sortStats)
-
-	s2 := make([]*AppStats, len(sortStats))
-	for i, d := range sortStats {
-		s2[i] = d.(*AppStats)
-	}
-	return s2
 }

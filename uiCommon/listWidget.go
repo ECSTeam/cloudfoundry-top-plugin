@@ -31,12 +31,9 @@ const (
 	CircleBackslash = string('\U000020E0')
 )
 
-type getRowKeyFunc func(index int) string
-type getRowDisplayFunc func(index int, isSelected bool) string
-type getRowRawValueFunc func(index int) string
+type getRowDisplayFunc func(data IData, isSelected bool) string
+type getRowRawValueFunc func(data IData) string
 type getDisplayHeaderFunc func() string
-
-type getListSizeFunc func() int
 
 type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool
 
@@ -44,7 +41,6 @@ type DisplayViewInterface interface {
 	RefreshDisplay(g *gocui.Gui) error
 	SetDisplayPaused(paused bool)
 	GetDisplayPaused() bool
-	FilterAndSortData()
 }
 
 type ColumnType int
@@ -68,6 +64,10 @@ type ListColumn struct {
 
 const LOCK_COLUMNS = 1
 
+type IData interface {
+	Id() string
+}
+
 type ListWidget struct {
 	masterUI     masterUIInterface.MasterUIInterface
 	name         string
@@ -82,10 +82,9 @@ type ListWidget struct {
 	displayRowIndexOffset int
 	displayColIndexOffset int
 
-	GetRowKey             getRowKeyFunc
-	PreRowDisplayFunc     getRowDisplayFunc
-	GetListSize           getListSizeFunc
-	GetUnfilteredListSize getListSizeFunc
+	PreRowDisplayFunc  getRowDisplayFunc
+	listData           []IData
+	unfilteredListData []IData
 
 	columns   []*ListColumn
 	columnMap map[string]*ListColumn
@@ -151,7 +150,7 @@ func NewListColumn(
 
 func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	topMargin, bottomMargin int, displayView DisplayViewInterface,
-	columns []*ListColumn) *ListWidget {
+	columns []*ListColumn, listData []IData) *ListWidget {
 	w := &ListWidget{
 		masterUI:        masterUI,
 		name:            name,
@@ -161,6 +160,7 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 		columns:         columns,
 		columnMap:       make(map[string]*ListColumn),
 		filterColumnMap: make(map[string]*FilterColumn),
+		listData:        listData,
 	}
 	for _, col := range columns {
 		w.columnMap[col.id] = col
@@ -242,11 +242,48 @@ func (asUI *ListWidget) GetFilterColumnMap() map[string]*FilterColumn {
 	return asUI.filterColumnMap
 }
 
-func (asUI *ListWidget) FilterRow(rowIndex int) bool {
+func (asUI *ListWidget) SetListData(listData []IData) {
+	asUI.unfilteredListData = listData
+	asUI.FilterAndSortData()
+}
+
+func (asUI *ListWidget) FilterAndSortData() {
+	filteredData := asUI.filterData(asUI.unfilteredListData)
+	asUI.listData = asUI.sortData(filteredData)
+}
+
+func (asUI *ListWidget) sortData(listData []IData) []IData {
+	sortFunctions := asUI.GetSortFunctions()
+	sortData := make([]util.Sortable, 0, len(listData))
+	//toplog.Debug(fmt.Sprintf("sortStats size before:%v", len(sortStats)))
+	for _, data := range listData {
+		sortData = append(sortData, data)
+	}
+	//toplog.Debug(fmt.Sprintf("sortStats size after:%v", len(sortStats)))
+	util.OrderedBy(sortFunctions).Sort(sortData)
+
+	s2 := make([]IData, len(sortData))
+	for i, d := range sortData {
+		s2[i] = d.(IData)
+	}
+	return s2
+}
+
+func (asUI *ListWidget) filterData(listData []IData) []IData {
+	filteredList := make([]IData, 0, len(listData))
+	for _, data := range listData {
+		if asUI.FilterRow(data) {
+			filteredList = append(filteredList, data)
+		}
+	}
+	return filteredList
+}
+
+func (asUI *ListWidget) FilterRow(data IData) bool {
 	for _, column := range asUI.columns {
 		filter := asUI.filterColumnMap[column.id]
 		if filter != nil && filter.filterText != "" {
-			if !asUI.filterRow(rowIndex, column, filter) {
+			if !asUI.filterRow(data, column, filter) {
 				return false
 			}
 		}
@@ -254,25 +291,25 @@ func (asUI *ListWidget) FilterRow(rowIndex int) bool {
 	return true
 }
 
-func (asUI *ListWidget) filterRow(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+func (asUI *ListWidget) filterRow(data IData, column *ListColumn, filter *FilterColumn) bool {
 	switch column.columnType {
 	case ALPHANUMERIC:
-		return asUI.filterRowAlpha(rowIndex, column, filter)
+		return asUI.filterRowAlpha(data, column, filter)
 	case NUMERIC:
-		return asUI.filterRowNumeric(rowIndex, column, filter)
+		return asUI.filterRowNumeric(data, column, filter)
 
 	}
 	return false
 }
 
-func (asUI *ListWidget) filterRowNumeric(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+func (asUI *ListWidget) filterRowNumeric(data IData, column *ListColumn, filter *FilterColumn) bool {
 	varName := "VALUE"
 	expressionStr := filter.filterText
 	if expressionStr == "" {
 		return true
 	}
 	expressionStr = varName + " " + expressionStr
-	value := column.rawValueFunc(rowIndex)
+	value := column.rawValueFunc(data)
 	floatValue, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return true
@@ -293,7 +330,7 @@ func (asUI *ListWidget) filterRowNumeric(rowIndex int, column *ListColumn, filte
 	return result.(bool)
 }
 
-func (asUI *ListWidget) filterRowAlpha(rowIndex int, column *ListColumn, filter *FilterColumn) bool {
+func (asUI *ListWidget) filterRowAlpha(data IData, column *ListColumn, filter *FilterColumn) bool {
 	regex := filter.compiledRegex
 	if regex == nil {
 		// make regex case insenstive
@@ -306,7 +343,7 @@ func (asUI *ListWidget) filterRowAlpha(rowIndex int, column *ListColumn, filter 
 		filter.compiledRegex = compiledRegex
 		regex = compiledRegex
 	}
-	value := column.rawValueFunc(rowIndex)
+	value := column.rawValueFunc(data)
 
 	return regex.MatchString(value)
 }
@@ -333,10 +370,6 @@ func (asUI *ListWidget) GetColumns() []*ListColumn {
 	return asUI.columns
 }
 
-func (asUI *ListWidget) FilterAndSortData() {
-	asUI.displayView.FilterAndSortData()
-}
-
 func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
 	v, err := g.View(asUI.name)
@@ -347,15 +380,15 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 	maxRows := maxY - 1
 
 	title := asUI.Title
-	displayListSize := asUI.GetListSize()
-	unfilteredListSize := asUI.GetUnfilteredListSize()
+	displayListSize := len(asUI.listData)
+	unfilteredListSize := len(asUI.unfilteredListData)
 	if displayListSize != unfilteredListSize {
 		title = fmt.Sprintf("%v (filter showing %v of %v)", title, displayListSize, unfilteredListSize)
 	}
 	v.Title = title
 
 	v.Clear()
-	listSize := asUI.GetListSize()
+	listSize := len(asUI.listData)
 
 	if listSize > 0 || asUI.selectColumnMode {
 		stopRowIndex := maxRows + asUI.displayRowIndexOffset
@@ -368,7 +401,7 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 			asUI.writeRowData(g, v, i)
 		}
 	} else {
-		if asUI.GetUnfilteredListSize() > 0 {
+		if len(asUI.unfilteredListData) > 0 {
 			fmt.Fprintf(v, " \n No data to display because of filters")
 		} else {
 			fmt.Fprintf(v, " \n No data yet...")
@@ -380,13 +413,15 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
 func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) {
 	isSelected := false
-	if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
+	//if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
+	if asUI.listData[rowIndex].Id() == asUI.highlightKey {
 		fmt.Fprintf(v, util.REVERSE_GREEN)
 		isSelected = true
 	}
 
 	if asUI.PreRowDisplayFunc != nil {
-		fmt.Fprint(v, asUI.PreRowDisplayFunc(rowIndex, isSelected))
+		//fmt.Fprint(v, asUI.PreRowDisplayFunc(rowIndex, isSelected))
+		fmt.Fprint(v, asUI.PreRowDisplayFunc(asUI.listData[rowIndex], isSelected))
 	}
 
 	// Loop through all columns
@@ -397,7 +432,8 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
 			continue
 		}
-		fmt.Fprint(v, column.displayFunc(rowIndex, isSelected))
+		//fmt.Fprint(v, column.displayFunc(rowIndex, isSelected))
+		fmt.Fprint(v, column.displayFunc(asUI.listData[rowIndex], isSelected))
 		fmt.Fprint(v, " ")
 	}
 	fmt.Fprintf(v, "\n")
@@ -558,7 +594,7 @@ func (asUI *ListWidget) arrowLeft(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
-	listSize := asUI.GetListSize()
+	listSize := len(asUI.listData)
 	callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
 		if rowIndex > 0 {
 			_, viewY := v.Size()
@@ -580,7 +616,7 @@ func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
 
-	listSize := asUI.GetListSize()
+	listSize := len(asUI.listData)
 	callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
 		if rowIndex+1 < listSize {
 			_, viewY := v.Size()
@@ -588,7 +624,7 @@ func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
 			if offset > asUI.displayRowIndexOffset || rowIndex < asUI.displayRowIndexOffset {
 				asUI.displayRowIndexOffset = offset
 			}
-			asUI.highlightKey = asUI.GetRowKey(rowIndex + 1)
+			asUI.highlightKey = asUI.listData[rowIndex+1].Id()
 			return true
 		}
 		return false
@@ -598,20 +634,20 @@ func (asUI *ListWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *ListWidget) moveHighlight(g *gocui.Gui, v *gocui.View, callback changeSelectionCallbackFunc) error {
 
-	listSize := asUI.GetListSize()
+	listSize := len(asUI.listData)
 	if asUI.highlightKey == "" {
 		if listSize > 0 {
-			asUI.highlightKey = asUI.GetRowKey(0)
+			asUI.highlightKey = asUI.listData[0].Id()
 		}
 	} else {
 		lastKey := ""
 		for rowIndex := 0; rowIndex < listSize; rowIndex++ {
-			if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
+			if asUI.listData[rowIndex].Id() == asUI.highlightKey {
 				if callback(g, v, rowIndex, lastKey) {
 					break
 				}
 			}
-			lastKey = asUI.GetRowKey(rowIndex)
+			lastKey = asUI.listData[rowIndex].Id()
 		}
 	}
 	return asUI.RefreshDisplay(g)
@@ -635,7 +671,7 @@ func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
 			if offset < asUI.displayRowIndexOffset {
 				asUI.displayRowIndexOffset = offset
 			}
-			asUI.highlightKey = asUI.GetRowKey(offset)
+			asUI.highlightKey = asUI.listData[offset].Id()
 			return true
 		}
 		return false
@@ -644,7 +680,7 @@ func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
-	listSize := asUI.GetListSize()
+	listSize := len(asUI.listData)
 	callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
 		if rowIndex+1 < listSize {
 			_, viewY := v.Size()
@@ -661,7 +697,7 @@ func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
 			if offset > (asUI.displayRowIndexOffset + viewSize) {
 				asUI.displayRowIndexOffset = offset - viewSize + 1
 			}
-			asUI.highlightKey = asUI.GetRowKey(offset)
+			asUI.highlightKey = asUI.listData[offset].Id()
 			return true
 		}
 		return false
