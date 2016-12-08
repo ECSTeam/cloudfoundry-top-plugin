@@ -75,9 +75,21 @@ func (c *Client) Start() {
 
 func (c *Client) createNozzles(subscriptionID string) {
 	for i := 0; i < c.options.Nozzles; i++ {
-		go c.createNozzle(subscriptionID, i)
+		go c.createAndKeepAliveNozzle(subscriptionID, i)
 	}
-	toplog.Info(fmt.Sprintf("Created %v nozzle instances", c.options.Nozzles))
+	toplog.Info(fmt.Sprintf("Starting %v nozzle instances", c.options.Nozzles))
+}
+
+func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int) error {
+
+	for {
+		err := c.createNozzle(subscriptionID, instanceId)
+		if err != nil {
+			break
+		}
+		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. It will be restarted", instanceId))
+	}
+	return nil
 }
 
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
@@ -105,6 +117,8 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	messages, errors := dopplerConnection.Firehose(subscriptionID, c.authToken)
 	defer dopplerConnection.Close()
 
+	toplog.Info(fmt.Sprintf("Nozzle #%v - Started", instanceId))
+
 	c.routeEvents(instanceId, messages, errors)
 	return nil
 }
@@ -117,6 +131,13 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 			c.router.Route(instanceId, envelope)
 		case err := <-errors:
 			c.handleError(instanceId, err)
+			// TODO: DO I need to break out of for loop on any error?
+			// It sees like a nozzle does not recover from errors --
+			// at least it didn't when this error occured:
+			//  "read tcp xx.xx.xx.xx:nnn->xx.xx.xx.xx:nnn: i/o timeout"
+			// TODO: If we do break out of for loop on error, we need to do something
+			// from caller to reopen a new nozzle instance assuming we are not shutting down
+			return
 		}
 	}
 }

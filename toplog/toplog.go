@@ -67,7 +67,7 @@ func Open() {
 
 func logMsg(level LogLevel, msg string) {
 	msg = strings.Replace(msg, "\n", " | ", -1)
-	line := fmt.Sprintf("%v %v %v", time.Now().Format("15:04:05"), level, msg)
+	line := fmt.Sprintf("%v %v %v", time.Now().Format("2006-01-02 15:04:05"), level, msg)
 	debugLines = append(debugLines, line)
 	if len(debugLines) > MAX_LOG_FILES {
 		debugLines = debugLines[1:]
