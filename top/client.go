@@ -13,6 +13,7 @@ import (
 
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui"
 )
 
 type Client struct {
@@ -61,7 +62,7 @@ func (c *Client) Start() {
 		return
 	}
 
-	ui := NewMasterUI(conn)
+	ui := ui.NewMasterUI(conn)
 	c.router = ui.GetRouter()
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))

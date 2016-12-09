@@ -305,7 +305,7 @@ func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
 
 func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 
-	v, err := g.View("summaryView")
+	v, err := g.View("headerView")
 	if err != nil {
 		return err
 	}
