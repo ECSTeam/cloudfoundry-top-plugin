@@ -1,4 +1,4 @@
-package appStats
+package appView
 
 import (
 	"bytes"
@@ -11,12 +11,12 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
-	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
 
-	"github.com/kkellner/cloudfoundry-top-plugin/helpView"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/helpView"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 

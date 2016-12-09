@@ -3,7 +3,7 @@ package top
 import (
 	//"fmt"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 type LayoutManager struct {

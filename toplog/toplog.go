@@ -10,7 +10,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 const MAX_LOG_FILES = 1000

@@ -1,11 +1,11 @@
-package appStats
+package appView
 
 import (
 	"fmt"
 	"strconv"
 
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
-	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 

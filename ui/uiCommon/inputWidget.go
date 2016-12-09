@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 type applyCallbackFunc func(g *gocui.Gui, v *gocui.View, w masterUIInterface.Manager, inputValue string) error

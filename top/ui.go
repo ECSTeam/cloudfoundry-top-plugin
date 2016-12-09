@@ -12,12 +12,12 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
-	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/appView"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -28,7 +28,7 @@ type MasterUI struct {
 	gui           *gocui.Gui
 	cliConnection plugin.CliConnection
 
-	appListView *appStats.AppListView
+	appListView *appView.AppListView
 
 	router            *eventrouting.EventRouter
 	refreshNow        chan bool
@@ -52,7 +52,7 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 
 	eventProcessor := eventdata.NewEventProcessor(ui.cliConnection)
 	ui.router = eventrouting.NewEventRouter(eventProcessor)
-	appListView := appStats.NewAppListView(ui, "appListView", ui.headerSize+1, ui.footerSize, eventProcessor)
+	appListView := appView.NewAppListView(ui, "appListView", ui.headerSize+1, ui.footerSize, eventProcessor)
 	ui.appListView = appListView
 
 	ui.layoutManager = NewLayoutManager()

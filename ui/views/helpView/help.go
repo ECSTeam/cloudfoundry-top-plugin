@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 type HelpView struct {

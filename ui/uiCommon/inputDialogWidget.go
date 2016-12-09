@@ -6,7 +6,7 @@ import (
 	//"strings"
 	//"log"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 // InputDialogWidget used for displaying a label and input field

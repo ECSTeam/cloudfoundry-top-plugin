@@ -1,4 +1,4 @@
-package appStats
+package appView
 
 const helpText = `
 **Header information:**

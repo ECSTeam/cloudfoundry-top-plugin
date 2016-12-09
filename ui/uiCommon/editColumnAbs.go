@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 type initialLayoutCallbackFunc func(g *gocui.Gui, v *gocui.View) error

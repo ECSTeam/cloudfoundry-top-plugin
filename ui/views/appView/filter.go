@@ -1,13 +1,12 @@
-package appStats
+package appView
 
 import (
-	"fmt"
-	//"strings"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
 type FilterWidget struct {
