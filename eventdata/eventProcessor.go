@@ -18,68 +18,68 @@ type EventProcessor struct {
 	eventRatePeak      int
 	startTime          time.Time
 	mu                 sync.Mutex
-	currentProcessor   *AppStatsEventProcessor
-	displayedProcessor *AppStatsEventProcessor
+	currentEventData   *EventData
+	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
 }
 
 func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 
-	currentProcessor := NewAppStatsEventProcessor()
-	displayedProcessor := NewAppStatsEventProcessor()
+	currentEventData := NewEventData()
+	displayedEventData := NewEventData()
 
 	return &EventProcessor{
-		currentProcessor:   currentProcessor,
-		displayedProcessor: displayedProcessor,
+		currentEventData:   currentEventData,
+		displayedEventData: displayedEventData,
 		cliConnection:      cliConnection,
 		startTime:          time.Now(),
 		eventRateCounter:   util.NewRateCounter(time.Second),
 	}
 }
 
-func (self *EventProcessor) Process(instanceId int, msg *events.Envelope) {
-	self.currentProcessor.Process(instanceId, msg)
+func (ep *EventProcessor) Process(instanceId int, msg *events.Envelope) {
+	ep.currentEventData.Process(instanceId, msg)
 }
 
-func (self *EventProcessor) GetCurrentProcessor() *AppStatsEventProcessor {
-	return self.currentProcessor
+func (ep *EventProcessor) GetCurrentEventData() *EventData {
+	return ep.currentEventData
 }
 
-func (self *EventProcessor) GetDisplayedProcessor() *AppStatsEventProcessor {
-	return self.displayedProcessor
+func (ep *EventProcessor) GetDisplayedEventData() *EventData {
+	return ep.displayedEventData
 }
 
-func (self *EventProcessor) UpdateData() {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	processorCopy := self.currentProcessor.Clone()
-	self.displayedProcessor = processorCopy
+func (ep *EventProcessor) UpdateData() {
+	ep.mu.Lock()
+	defer ep.mu.Unlock()
+	processorCopy := ep.currentEventData.Clone()
+	ep.displayedEventData = processorCopy
 }
 
-func (self *EventProcessor) LoadMetadata() {
+func (ep *EventProcessor) LoadMetadata() {
 	toplog.Info("EventProcessor>loadMetadata")
-	metadata.LoadAppCache(self.cliConnection)
-	metadata.LoadSpaceCache(self.cliConnection)
-	metadata.LoadOrgCache(self.cliConnection)
+	metadata.LoadAppCache(ep.cliConnection)
+	metadata.LoadSpaceCache(ep.cliConnection)
+	metadata.LoadOrgCache(ep.cliConnection)
 }
 
-func (self *EventProcessor) Start() {
-	go self.LoadCacheAndSeeData()
+func (ep *EventProcessor) Start() {
+	go ep.LoadCacheAndSeeData()
 }
 
-func (self *EventProcessor) LoadCacheAndSeeData() {
-	self.LoadMetadata()
-	self.SeedStatsFromMetadata()
+func (ep *EventProcessor) LoadCacheAndSeeData() {
+	ep.LoadMetadata()
+	ep.SeedStatsFromMetadata()
 }
 
-func (asUI *EventProcessor) SeedStatsFromMetadata() {
+func (ep *EventProcessor) SeedStatsFromMetadata() {
 
-	toplog.Info("AppStatsEventProcessor>seedStatsFromMetadata")
+	toplog.Info("EventProcessor>seedStatsFromMetadata")
 
-	asUI.mu.Lock()
-	defer asUI.mu.Unlock()
+	ep.mu.Lock()
+	defer ep.mu.Unlock()
 
-	currentStatsMap := asUI.currentProcessor.AppMap
+	currentStatsMap := ep.currentEventData.AppMap
 	for _, app := range metadata.AllApps() {
 		appId := app.Guid
 		appStats := currentStatsMap[appId]

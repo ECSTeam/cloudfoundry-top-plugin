@@ -53,7 +53,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	if asUI.appListWidget == nil {
 
-		statList := asUI.postProcessData(asUI.eventProcessor.GetDisplayedProcessor().AppMap)
+		statList := asUI.postProcessData(asUI.GetDisplayedEventData().AppMap)
 		listData := asUI.convertToListData(statList)
 
 		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
@@ -167,12 +167,12 @@ func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (asUI *AppListView) GetCurrentProcessor() *eventdata.AppStatsEventProcessor {
-	return asUI.eventProcessor.GetCurrentProcessor()
+func (asUI *AppListView) GetCurrentEventData() *eventdata.EventData {
+	return asUI.eventProcessor.GetCurrentEventData()
 }
 
-func (asUI *AppListView) GetDisplayedProcessor() *eventdata.AppStatsEventProcessor {
-	return asUI.eventProcessor.GetDisplayedProcessor()
+func (asUI *AppListView) GetDisplayedEventData() *eventdata.EventData {
+	return asUI.eventProcessor.GetDisplayedEventData()
 }
 
 func (asUI *AppListView) SetDisplayPaused(paused bool) {
@@ -210,7 +210,7 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 	clipboardValue := "hello from clipboard" + time.Now().Format("01-02-2006 15:04:05")
 
 	selectedAppId := w.appListWidget.HighlightKey()
-	statsMap := w.eventProcessor.GetDisplayedProcessor().AppMap
+	statsMap := w.GetDisplayedEventData().AppMap
 	appStats := statsMap[selectedAppId]
 	if appStats == nil {
 		// Nothing selected
@@ -235,7 +235,7 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 	toplog.Info("appListView>ClearStats")
-	asUI.eventProcessor.GetCurrentProcessor().Clear()
+	asUI.GetCurrentEventData().Clear()
 	asUI.eventProcessor.UpdateData()
 	asUI.eventProcessor.SeedStatsFromMetadata()
 	return nil
@@ -252,7 +252,7 @@ func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 func (asUI *AppListView) updateData() {
 
 	asUI.eventProcessor.UpdateData()
-	processor := asUI.eventProcessor.GetDisplayedProcessor()
+	processor := asUI.GetDisplayedEventData()
 	statList := asUI.postProcessData(processor.AppMap)
 	listData := asUI.convertToListData(statList)
 	asUI.appListWidget.SetListData(listData)
@@ -321,7 +321,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	totalUsedMemoryAppInstances := uint64(0)
 	totalUsedDiskAppInstances := uint64(0)
 	totalCpuPercentage := float64(0)
-	for _, appStats := range asUI.eventProcessor.GetDisplayedProcessor().AppMap {
+	for _, appStats := range asUI.GetDisplayedEventData().AppMap {
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				totalReportingAppInstances++
@@ -351,7 +351,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	cellTotalCPUs := 0
 	capacityTotalMemory := int64(0)
 	capacityTotalDisk := int64(0)
-	for _, cellStats := range asUI.eventProcessor.GetDisplayedProcessor().CellMap {
+	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
 		cellTotalCPUs = cellTotalCPUs + cellStats.NumOfCpus
 		capacityTotalMemory = capacityTotalMemory + cellStats.CapacityTotalMemory
 		capacityTotalDisk = capacityTotalDisk + cellStats.CapacityTotalDisk
@@ -376,7 +376,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	// Reporting containers are containers that reported metrics in last 90 seconds
 	fmt.Fprintf(v, "CPU:%6v Used,%6v Max,         Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
 		totalCpuPercentageDisplay, cellTotalCapacityDisplay,
-		len(asUI.eventProcessor.GetDisplayedProcessor().AppMap),
+		len(asUI.GetDisplayedEventData().AppMap),
 		totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"

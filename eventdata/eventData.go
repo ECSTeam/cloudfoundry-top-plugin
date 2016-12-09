@@ -16,53 +16,53 @@ import (
 
 const StaleContainerSeconds = 80
 
-type AppStatsEventProcessor struct {
+type EventData struct {
 	AppMap      map[string]*AppStats
 	CellMap     map[string]*CellStats
 	TotalEvents int64
 	mu          sync.Mutex
 }
 
-func NewAppStatsEventProcessor() *AppStatsEventProcessor {
-	return &AppStatsEventProcessor{
+func NewEventData() *EventData {
+	return &EventData{
 		AppMap:      make(map[string]*AppStats),
 		CellMap:     make(map[string]*CellStats),
 		TotalEvents: 0,
 	}
 }
 
-func (ap *AppStatsEventProcessor) Process(instanceId int, msg *events.Envelope) {
+func (ed *EventData) Process(instanceId int, msg *events.Envelope) {
 
-	ap.mu.Lock()
-	defer ap.mu.Unlock()
+	ed.mu.Lock()
+	defer ed.mu.Unlock()
 
 	eventType := msg.GetEventType()
 	switch eventType {
 	case events.Envelope_HttpStartStop:
-		ap.httpStartStopEvent(msg)
+		ed.httpStartStopEvent(msg)
 	case events.Envelope_ContainerMetric:
-		ap.containerMetricEvent(msg)
+		ed.containerMetricEvent(msg)
 	case events.Envelope_LogMessage:
-		ap.logMessageEvent(msg)
+		ed.logMessageEvent(msg)
 	case events.Envelope_ValueMetric:
-		ap.valueMetricEvent(msg)
+		ed.valueMetricEvent(msg)
 	case events.Envelope_CounterEvent:
 		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" &&
 			(msg.GetOrigin() == "DopplerServer" || msg.GetOrigin() == "doppler") {
-			ap.droppedMessages(instanceId, msg)
+			ed.droppedMessages(instanceId, msg)
 		}
 	}
 
 }
 
-func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
+func (ed *EventData) Clone() *EventData {
 
-	ap.mu.Lock()
-	defer ap.mu.Unlock()
+	ed.mu.Lock()
+	defer ed.mu.Unlock()
 
-	clone := deepcopy.Copy(ap).(*AppStatsEventProcessor)
+	clone := deepcopy.Copy(ed).(*EventData)
 
-	for _, appStat := range ap.AppMap {
+	for _, appStat := range ed.AppMap {
 
 		clonedAppStat := clone.AppMap[appStat.AppId]
 
@@ -76,7 +76,7 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 		responseL60TimeArray := make([]*util.AvgTracker, 0)
 		responseL10TimeArray := make([]*util.AvgTracker, 0)
 		responseL1TimeArray := make([]*util.AvgTracker, 0)
-		totalTraffic := NewTraffic()
+		totalTraffic := NewTrafficStats()
 
 		for instanceId, containerTraffic := range appStat.ContainerTrafficMap {
 
@@ -162,21 +162,21 @@ func (ap *AppStatsEventProcessor) Clone() *AppStatsEventProcessor {
 	return clone
 }
 
-func (ap *AppStatsEventProcessor) GetTotalEvents() int64 {
-	return ap.TotalEvents
+func (ed *EventData) GetTotalEvents() int64 {
+	return ed.TotalEvents
 }
 
-func (ap *AppStatsEventProcessor) Clear() {
+func (ed *EventData) Clear() {
 
-	ap.mu.Lock()
-	defer ap.mu.Unlock()
+	ed.mu.Lock()
+	defer ed.mu.Unlock()
 
-	ap.AppMap = make(map[string]*AppStats)
-	ap.CellMap = make(map[string]*CellStats)
-	ap.TotalEvents = 0
+	ed.AppMap = make(map[string]*AppStats)
+	ed.CellMap = make(map[string]*CellStats)
+	ed.TotalEvents = 0
 }
 
-func (ap *AppStatsEventProcessor) droppedMessages(instanceId int, msg *events.Envelope) {
+func (ed *EventData) droppedMessages(instanceId int, msg *events.Envelope) {
 	delta := msg.GetCounterEvent().GetDelta()
 	total := msg.GetCounterEvent().GetTotal()
 	text := fmt.Sprintf("Nozzle #%v - Upstream message indicates the nozzle or the TrafficController is not keeping up. Dropped delta: %v, total: %v",
@@ -184,18 +184,18 @@ func (ap *AppStatsEventProcessor) droppedMessages(instanceId int, msg *events.En
 	toplog.Error(text)
 }
 
-func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
+func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 
 	logMessage := msg.GetLogMessage()
 	appId := logMessage.GetAppId()
 
-	appStats := ap.getAppStats(appId)
+	appStats := ed.getAppStats(appId)
 
 	switch logMessage.GetSourceType() {
 	case "APP":
 		instNum, err := strconv.Atoi(*logMessage.SourceInstance)
 		if err == nil {
-			containerStats := ap.getContainerStats(appStats, instNum)
+			containerStats := ed.getContainerStats(appStats, instNum)
 			switch *logMessage.MessageType {
 			case events.LogMessage_OUT:
 				containerStats.OutCount++
@@ -215,14 +215,14 @@ func (ap *AppStatsEventProcessor) logMessageEvent(msg *events.Envelope) {
 
 }
 
-func (ap *AppStatsEventProcessor) valueMetricEvent(msg *events.Envelope) {
+func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 
 	// Can we assume that all rep orgins are cflinuxfs2 diego cells? Might be a bad idea
 	if msg.GetOrigin() == "rep" {
 		ip := msg.GetIp()
-		cellStats := ap.getCellStats(ip)
+		cellStats := ed.getCellStats(ip)
 		valueMetric := msg.GetValueMetric()
-		value := ap.getMetricValue(valueMetric)
+		value := ed.getMetricValue(valueMetric)
 		name := valueMetric.GetName()
 		switch name {
 		case "numCPUS":
@@ -246,7 +246,7 @@ func (ap *AppStatsEventProcessor) valueMetricEvent(msg *events.Envelope) {
 
 }
 
-func (ap *AppStatsEventProcessor) getMetricValue(valueMetric *events.ValueMetric) float64 {
+func (ed *EventData) getMetricValue(valueMetric *events.ValueMetric) float64 {
 
 	value := valueMetric.GetValue()
 	switch valueMetric.GetUnit() {
@@ -263,41 +263,41 @@ func (ap *AppStatsEventProcessor) getMetricValue(valueMetric *events.ValueMetric
 	return value
 }
 
-func (ap *AppStatsEventProcessor) containerMetricEvent(msg *events.Envelope) {
+func (ed *EventData) containerMetricEvent(msg *events.Envelope) {
 
 	containerMetric := msg.GetContainerMetric()
 
 	appId := containerMetric.GetApplicationId()
 
-	appStats := ap.getAppStats(appId)
+	appStats := ed.getAppStats(appId)
 	instNum := int(*containerMetric.InstanceIndex)
-	containerStats := ap.getContainerStats(appStats, instNum)
+	containerStats := ed.getContainerStats(appStats, instNum)
 	containerStats.LastUpdate = time.Now()
 	containerStats.ContainerMetric = containerMetric
 
 }
 
-func (ap *AppStatsEventProcessor) getAppStats(appId string) *AppStats {
-	appStats := ap.AppMap[appId]
+func (ed *EventData) getAppStats(appId string) *AppStats {
+	appStats := ed.AppMap[appId]
 	if appStats == nil {
 		// New app we haven't seen yet
 		appStats = NewAppStats(appId)
-		ap.AppMap[appId] = appStats
+		ed.AppMap[appId] = appStats
 	}
 	return appStats
 }
 
-func (ap *AppStatsEventProcessor) getCellStats(cellIp string) *CellStats {
-	cellStats := ap.CellMap[cellIp]
+func (ed *EventData) getCellStats(cellIp string) *CellStats {
+	cellStats := ed.CellMap[cellIp]
 	if cellStats == nil {
 		// New cell we haven't seen yet
 		cellStats = NewCellStats(cellIp)
-		ap.CellMap[cellIp] = cellStats
+		ed.CellMap[cellIp] = cellStats
 	}
 	return cellStats
 }
 
-func (ap *AppStatsEventProcessor) getContainerStats(appStats *AppStats, instIndex int) *ContainerStats {
+func (ed *EventData) getContainerStats(appStats *AppStats, instIndex int) *ContainerStats {
 
 	// Save the container data -- by instance id
 	if len(appStats.ContainerArray) <= instIndex {
@@ -319,17 +319,17 @@ func (ap *AppStatsEventProcessor) getContainerStats(appStats *AppStats, instInde
 	return containerStats
 }
 
-func (ap *AppStatsEventProcessor) getContainerTraffic(appStats *AppStats, instId string) *Traffic {
+func (ed *EventData) getContainerTraffic(appStats *AppStats, instId string) *TrafficStats {
 
 	// Save the container data -- by instance id
 
 	if appStats.ContainerTrafficMap == nil {
-		appStats.ContainerTrafficMap = make(map[string]*Traffic)
+		appStats.ContainerTrafficMap = make(map[string]*TrafficStats)
 	}
 
 	containerTraffic := appStats.ContainerTrafficMap[instId]
 	if containerTraffic == nil {
-		containerTraffic = NewTraffic()
+		containerTraffic = NewTrafficStats()
 		appStats.ContainerTrafficMap[instId] = containerTraffic
 		containerTraffic.responseL60Time = util.NewAvgTracker(time.Minute)
 		containerTraffic.responseL10Time = util.NewAvgTracker(time.Second * 10)
@@ -339,7 +339,7 @@ func (ap *AppStatsEventProcessor) getContainerTraffic(appStats *AppStats, instId
 	return containerTraffic
 }
 
-func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
+func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 
 	appUUID := msg.GetHttpStartStop().GetApplicationId()
 	instId := msg.GetHttpStartStop().GetInstanceId()
@@ -351,16 +351,16 @@ func (ap *AppStatsEventProcessor) httpStartStopEvent(msg *events.Envelope) {
 		//toplog.Debug(fmt.Sprintf("index: %v\n", instIndex))
 		//toplog.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
 		//fmt.Printf("index: %v\n", instIndex)
-		ap.TotalEvents++
+		ed.TotalEvents++
 		appId := formatUUID(appUUID)
 		//c.ui.Say("**** appId:%v ****", appId)
 
-		appStats := ap.getAppStats(appId)
+		appStats := ed.getAppStats(appId)
 		if appStats.AppUUID == nil {
 			appStats.AppUUID = appUUID
 		}
 
-		containerTraffic := ap.getContainerTraffic(appStats, instId)
+		containerTraffic := ed.getContainerTraffic(appStats, instId)
 
 		responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
 		containerTraffic.HttpAllCount++

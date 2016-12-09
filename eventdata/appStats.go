@@ -1,45 +1,13 @@
 package eventdata
 
-//package main
-
 import (
-	"time"
-
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
-	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 const (
 	UnknownName = "unknown"
 )
-
-type Traffic struct {
-	responseL60Time    *util.AvgTracker
-	AvgResponseL60Time float64 // updated after a clone of this object
-	EventL60Rate       int     // updated after a clone of this object
-
-	responseL10Time    *util.AvgTracker
-	AvgResponseL10Time float64 // updated after a clone of this object
-	EventL10Rate       int     // updated after a clone of this object
-
-	responseL1Time    *util.AvgTracker
-	AvgResponseL1Time float64 // updated after a clone of this object
-	EventL1Rate       int     // updated after a clone of this object
-
-	HttpAllCount int64
-	Http2xxCount int64
-	Http3xxCount int64
-	Http4xxCount int64
-	Http5xxCount int64
-}
-
-type ContainerStats struct {
-	ContainerMetric *events.ContainerMetric
-	LastUpdate      time.Time
-	OutCount        int64
-	ErrCount        int64
-}
 
 type dataSlice []*AppStats
 
@@ -54,8 +22,8 @@ type AppStats struct {
 	NonContainerErrCount int64
 
 	ContainerArray      []*ContainerStats
-	ContainerTrafficMap map[string]*Traffic
-	TotalTraffic        *Traffic
+	ContainerTrafficMap map[string]*TrafficStats
+	TotalTraffic        *TrafficStats
 
 	TotalCpuPercentage float64 // updated after a clone of this object
 	TotalUsedMemory    uint64  // updated after a clone of this object
@@ -73,16 +41,6 @@ func NewAppStats(appId string) *AppStats {
 
 func (as *AppStats) Id() string {
 	return as.AppId
-}
-
-func NewContainerStats() *ContainerStats {
-	stats := &ContainerStats{}
-	return stats
-}
-
-func NewTraffic() *Traffic {
-	stats := &Traffic{}
-	return stats
 }
 
 func PopulateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
