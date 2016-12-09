@@ -98,7 +98,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 		return nil
 	}
 
-	m := w.appListView.displayedProcessor.AppMap
+	m := w.appListView.GetDisplayedProcessor().AppMap
 	appStats := m[w.appId]
 
 	avgResponseTimeL60Info := "--"

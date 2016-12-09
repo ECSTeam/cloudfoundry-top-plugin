@@ -1,12 +1,8 @@
-package appStats
+package eventdata
 
 //package main
 
 import (
-
-	//"time"
-	//"sort"
-	//"strings"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
@@ -89,7 +85,7 @@ func NewTraffic() *Traffic {
 	return stats
 }
 
-func populateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
+func PopulateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
 
 	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {

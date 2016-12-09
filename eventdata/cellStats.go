@@ -1,4 +1,4 @@
-package appStats
+package eventdata
 
 type CellStats struct {
 	Ip                          string

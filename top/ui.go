@@ -9,9 +9,11 @@ import (
 	"strings"
 	"time"
 	//"github.com/go-errors/errors"
+
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
@@ -48,9 +50,10 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 	headerView := NewHeaderWidget(ui, "summaryView", ui.headerSize)
 	footerView := NewFooterWidget("footerView", ui.footerSize)
 
-	appListView := appStats.NewAppListView(ui, "appListView", ui.headerSize+1, ui.footerSize, ui.cliConnection)
+	eventProcessor := eventdata.NewEventProcessor(ui.cliConnection)
+	ui.router = eventrouting.NewEventRouter(eventProcessor)
+	appListView := appStats.NewAppListView(ui, "appListView", ui.headerSize+1, ui.footerSize, eventProcessor)
 	ui.appListView = appListView
-	ui.router = eventrouting.NewEventRouter(appListView.GetCurrentProcessor())
 
 	ui.layoutManager = NewLayoutManager()
 	ui.layoutManager.Add(footerView)
@@ -72,7 +75,7 @@ func (ui *MasterUI) GetRouter() *eventrouting.EventRouter {
 }
 
 func (ui *MasterUI) Start() {
-	ui.appListView.Start()
+	ui.router.GetProcessor().Start()
 	ui.initGui()
 }
 
@@ -120,6 +123,9 @@ func (ui *MasterUI) initGui() {
 	if err := g.SetKeybinding("appListView", 's', gocui.ModNone, ui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, ui.selectDisplayAction); err != nil {
+		log.Panicln(err)
+	}
 
 	go ui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -164,6 +170,31 @@ func (ui *MasterUI) GetCurrentView(g *gocui.Gui) *gocui.View {
 
 func (ui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
+}
+
+func (ui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
+
+	menuItems := make([]*uiCommon.MenuItem, 0, 5)
+	menuItems = append(menuItems, uiCommon.NewMenuItem("appstats", "App Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "Event Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("cellstats", "Cell Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "Event Rate History"))
+	selectDisplayView := uiCommon.NewSelectMenuWidget(ui, "selectDisplayView", "Select Display", menuItems, ui.selectDisplayCallback)
+
+	ui.LayoutManager().Add(selectDisplayView)
+	ui.SetCurrentViewOnTop(g, "selectDisplayView")
+	return nil
+}
+
+func (ui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+
+	switch menuId {
+	case "appstats":
+	case "eventstats":
+	case "cellstats":
+	case "eventhistory":
+	}
+	return nil
 }
 
 func (ui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {

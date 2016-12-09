@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"time"
-	//"errors"
+
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/cloudfoundry/noaa/consumer"
@@ -82,12 +82,21 @@ func (c *Client) createNozzles(subscriptionID string) {
 
 func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int) error {
 
+	minRetrySeconds := (2 * time.Second)
+
 	for {
+		// This is a blocking call if no error
+		startTime := time.Now()
 		err := c.createNozzle(subscriptionID, instanceId)
 		if err != nil {
 			break
 		}
-		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. It will be restarted", instanceId))
+		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId))
+		lastRetry := time.Now().Sub(startTime)
+		if lastRetry < minRetrySeconds {
+			toplog.Info(fmt.Sprintf("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceId, minRetrySeconds))
+			time.Sleep(minRetrySeconds)
+		}
 	}
 	return nil
 }
@@ -127,16 +136,11 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 	for {
 		select {
 		case envelope := <-messages:
-			//toplog.Debug(fmt.Sprintf("id: %v event:%v", instanceId, envelope))
 			c.router.Route(instanceId, envelope)
 		case err := <-errors:
 			c.handleError(instanceId, err)
-			// TODO: DO I need to break out of for loop on any error?
-			// It sees like a nozzle does not recover from errors --
-			// at least it didn't when this error occured:
-			//  "read tcp xx.xx.xx.xx:nnn->xx.xx.xx.xx:nnn: i/o timeout"
-			// TODO: If we do break out of for loop on error, we need to do something
-			// from caller to reopen a new nozzle instance assuming we are not shutting down
+			// Nozzle connection does not seem to recover from errors well, so
+			// return here so it can be closed and a new instanced opened
 			return
 		}
 	}

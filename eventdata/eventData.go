@@ -1,4 +1,4 @@
-package appStats
+package eventdata
 
 import (
 	"encoding/binary"

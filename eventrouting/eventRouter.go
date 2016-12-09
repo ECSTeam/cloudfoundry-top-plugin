@@ -1,13 +1,12 @@
 package eventrouting
 
 import (
-	//"fmt"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/kkellner/cloudfoundry-top-plugin/appStats"
+	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
@@ -18,15 +17,19 @@ type EventRouter struct {
 	eventRatePeak    int
 	startTime        time.Time
 	mu               sync.Mutex
-	processor        *appStats.AppStatsEventProcessor
+	processor        *eventdata.EventProcessor
 }
 
-func NewEventRouter(processor *appStats.AppStatsEventProcessor) *EventRouter {
+func NewEventRouter(processor *eventdata.EventProcessor) *EventRouter {
 	return &EventRouter{
 		processor:        processor,
 		startTime:        time.Now(),
 		eventRateCounter: util.NewRateCounter(time.Second),
 	}
+}
+
+func (er *EventRouter) GetProcessor() *eventdata.EventProcessor {
+	return er.processor
 }
 
 func (er *EventRouter) GetEventCount() int64 {

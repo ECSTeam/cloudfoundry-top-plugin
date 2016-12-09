@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
-	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/uiCommon"
@@ -21,37 +21,28 @@ import (
 )
 
 type AppListView struct {
-	masterUI     masterUIInterface.MasterUIInterface
-	name         string
-	topMargin    int
-	bottomMargin int
-
-	currentProcessor   *AppStatsEventProcessor
-	displayedProcessor *AppStatsEventProcessor
-
-	cliConnection plugin.CliConnection
-	mu            sync.Mutex
-
-	appDetailView *AppDetailView
-	appListWidget *uiCommon.ListWidget
-
-	displayPaused bool
+	masterUI       masterUIInterface.MasterUIInterface
+	name           string
+	topMargin      int
+	bottomMargin   int
+	eventProcessor *eventdata.EventProcessor
+	mu             sync.Mutex
+	appDetailView  *AppDetailView
+	appListWidget  *uiCommon.ListWidget
+	displayPaused  bool
 }
 
-func NewAppListView(masterUI masterUIInterface.MasterUIInterface, name string, topMargin, bottomMargin int,
-	cliConnection plugin.CliConnection) *AppListView {
-
-	currentProcessor := NewAppStatsEventProcessor()
-	displayedProcessor := NewAppStatsEventProcessor()
+func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
+	name string, topMargin, bottomMargin int,
+	eventProcessor *eventdata.EventProcessor) *AppListView {
 
 	return &AppListView{
-		masterUI:           masterUI,
-		name:               name,
-		topMargin:          topMargin,
-		bottomMargin:       bottomMargin,
-		cliConnection:      cliConnection,
-		currentProcessor:   currentProcessor,
-		displayedProcessor: displayedProcessor}
+		masterUI:       masterUI,
+		name:           name,
+		topMargin:      topMargin,
+		bottomMargin:   bottomMargin,
+		eventProcessor: eventProcessor,
+	}
 }
 
 func (asUI *AppListView) Name() string {
@@ -62,7 +53,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	if asUI.appListWidget == nil {
 
-		statList := asUI.postProcessData(asUI.displayedProcessor.AppMap)
+		statList := asUI.postProcessData(asUI.eventProcessor.GetDisplayedProcessor().AppMap)
 		listData := asUI.convertToListData(statList)
 
 		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
@@ -128,7 +119,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 	return asUI.appListWidget.Layout(g)
 }
 
-func (asUI *AppListView) convertToListData(statsList []*AppStats) []uiCommon.IData {
+func (asUI *AppListView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, len(statsList))
 	for i, d := range statsList {
 		listData[i] = d
@@ -171,41 +162,17 @@ func formatDisplayData(value string, size int) string {
 	return fmt.Sprintf(format, value)
 }
 
-func (asUI *AppListView) Start() {
-	go asUI.loadCacheAtStartup()
-}
-
-func (asUI *AppListView) loadCacheAtStartup() {
-	asUI.loadMetadata()
-	asUI.seedStatsFromMetadata()
-}
-
 func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
-	go asUI.loadCacheAtStartup()
+	go asUI.eventProcessor.LoadCacheAndSeeData()
 	return nil
 }
 
-func (asUI *AppListView) seedStatsFromMetadata() {
-
-	toplog.Info("appListView>seedStatsFromMetadata")
-
-	asUI.currentProcessor.mu.Lock()
-	defer asUI.currentProcessor.mu.Unlock()
-
-	currentStatsMap := asUI.currentProcessor.AppMap
-	for _, app := range metadata.AllApps() {
-		appId := app.Guid
-		appStats := currentStatsMap[appId]
-		if appStats == nil {
-			// New app we haven't seen yet
-			appStats = NewAppStats(appId)
-			currentStatsMap[appId] = appStats
-		}
-	}
+func (asUI *AppListView) GetCurrentProcessor() *eventdata.AppStatsEventProcessor {
+	return asUI.eventProcessor.GetCurrentProcessor()
 }
 
-func (asUI *AppListView) GetCurrentProcessor() *AppStatsEventProcessor {
-	return asUI.currentProcessor
+func (asUI *AppListView) GetDisplayedProcessor() *eventdata.AppStatsEventProcessor {
+	return asUI.eventProcessor.GetDisplayedProcessor()
 }
 
 func (asUI *AppListView) SetDisplayPaused(paused bool) {
@@ -243,7 +210,7 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 	clipboardValue := "hello from clipboard" + time.Now().Format("01-02-2006 15:04:05")
 
 	selectedAppId := w.appListWidget.HighlightKey()
-	statsMap := w.displayedProcessor.AppMap
+	statsMap := w.eventProcessor.GetDisplayedProcessor().AppMap
 	appStats := statsMap[selectedAppId]
 	if appStats == nil {
 		// Nothing selected
@@ -268,9 +235,9 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 
 func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
 	toplog.Info("appListView>ClearStats")
-	asUI.currentProcessor.Clear()
-	asUI.updateData()
-	asUI.seedStatsFromMetadata()
+	asUI.eventProcessor.GetCurrentProcessor().Clear()
+	asUI.eventProcessor.UpdateData()
+	asUI.eventProcessor.SeedStatsFromMetadata()
 	return nil
 }
 
@@ -283,18 +250,18 @@ func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 
 // XXX
 func (asUI *AppListView) updateData() {
-	asUI.mu.Lock()
-	defer asUI.mu.Unlock()
-	processorCopy := asUI.currentProcessor.Clone()
-	asUI.displayedProcessor = processorCopy
-	statList := asUI.postProcessData(processorCopy.AppMap)
+
+	asUI.eventProcessor.UpdateData()
+	processor := asUI.eventProcessor.GetDisplayedProcessor()
+	statList := asUI.postProcessData(processor.AppMap)
 	listData := asUI.convertToListData(statList)
 	asUI.appListWidget.SetListData(listData)
+
 }
 
-func (asUI *AppListView) postProcessData(statsMap map[string]*AppStats) []*AppStats {
+func (asUI *AppListView) postProcessData(statsMap map[string]*eventdata.AppStats) []*eventdata.AppStats {
 	if len(statsMap) > 0 {
-		stats := populateNamesIfNeeded(statsMap)
+		stats := eventdata.PopulateNamesIfNeeded(statsMap)
 		return stats
 	} else {
 		return nil
@@ -320,7 +287,7 @@ func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
 }
 
 func (asUI *AppListView) PreRowDisplay(data uiCommon.IData, isSelected bool) string {
-	appStats := data.(*AppStats)
+	appStats := data.(*eventdata.AppStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
 		fmt.Fprintf(v, util.BRIGHT_WHITE)
@@ -354,7 +321,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	totalUsedMemoryAppInstances := uint64(0)
 	totalUsedDiskAppInstances := uint64(0)
 	totalCpuPercentage := float64(0)
-	for _, appStats := range asUI.displayedProcessor.AppMap {
+	for _, appStats := range asUI.eventProcessor.GetDisplayedProcessor().AppMap {
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				totalReportingAppInstances++
@@ -384,7 +351,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	cellTotalCPUs := 0
 	capacityTotalMemory := int64(0)
 	capacityTotalDisk := int64(0)
-	for _, cellStats := range asUI.displayedProcessor.CellMap {
+	for _, cellStats := range asUI.eventProcessor.GetDisplayedProcessor().CellMap {
 		cellTotalCPUs = cellTotalCPUs + cellStats.NumOfCpus
 		capacityTotalMemory = capacityTotalMemory + cellStats.CapacityTotalMemory
 		capacityTotalDisk = capacityTotalDisk + cellStats.CapacityTotalDisk
@@ -408,7 +375,9 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
 	fmt.Fprintf(v, "CPU:%6v Used,%6v Max,         Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
-		totalCpuPercentageDisplay, cellTotalCapacityDisplay, len(asUI.displayedProcessor.AppMap), totalActiveApps, totalReportingAppInstances)
+		totalCpuPercentageDisplay, cellTotalCapacityDisplay,
+		len(asUI.eventProcessor.GetDisplayedProcessor().AppMap),
+		totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"
 	totalMem := metadata.GetTotalMemoryAllStartedApps()
@@ -429,11 +398,4 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
 
 	return nil
-}
-
-func (asUI *AppListView) loadMetadata() {
-	toplog.Info("appListView>loadMetadata")
-	metadata.LoadAppCache(asUI.cliConnection)
-	metadata.LoadSpaceCache(asUI.cliConnection)
-	metadata.LoadOrgCache(asUI.cliConnection)
 }
