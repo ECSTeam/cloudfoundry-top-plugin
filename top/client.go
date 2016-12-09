@@ -89,6 +89,7 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 		startTime := time.Now()
 		err := c.createNozzle(subscriptionID, instanceId)
 		if err != nil {
+			toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
 			break
 		}
 		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId))
@@ -107,13 +108,13 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	dopplerEndpoint, err := conn.DopplerEndpoint()
 	if err != nil {
-		c.ui.Failed(err.Error())
+		//c.ui.Failed(err.Error())
 		return err
 	}
 
 	skipVerifySSL, err := conn.IsSSLDisabled()
 	if err != nil {
-		c.ui.Failed("couldn't check if ssl verification is disabled: " + err.Error())
+		//c.ui.Failed("couldn't check if ssl verification is disabled: " + err.Error())
 		return err
 	}
 
