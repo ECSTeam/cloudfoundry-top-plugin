@@ -57,6 +57,7 @@ func (er *EventRouter) Clear() {
 	er.eventCount = 0
 	er.eventRatePeak = 0
 	er.startTime = time.Now()
+	er.processor.ClearStats()
 }
 
 func (er *EventRouter) Route(instanceId int, msg *events.Envelope) {

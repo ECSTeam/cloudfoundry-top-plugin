@@ -23,3 +23,9 @@ type Manager interface {
 	Layout(*gocui.Gui) error
 	Name() string
 }
+
+type UpdatableView interface {
+	Layout(*gocui.Gui) error
+	Name() string
+	UpdateDisplay(g *gocui.Gui) error
+}

@@ -90,3 +90,11 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 		}
 	}
 }
+
+func (ep *EventProcessor) ClearStats() error {
+	toplog.Info("EventProcessor>ClearStats")
+	ep.currentEventData.Clear()
+	ep.UpdateData()
+	ep.SeedStatsFromMetadata()
+	return nil
+}

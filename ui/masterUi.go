@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	//"github.com/Sirupsen/logrus"
@@ -28,7 +29,7 @@ type MasterUI struct {
 	gui           *gocui.Gui
 	cliConnection plugin.CliConnection
 
-	appListView *appView.AppListView
+	currentDataView masterUIInterface.UpdatableView
 
 	router            *eventrouting.EventRouter
 	refreshNow        chan bool
@@ -52,13 +53,13 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 
 	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection)
 	mui.router = eventrouting.NewEventRouter(eventProcessor)
-	appListView := appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, eventProcessor)
-	mui.appListView = appListView
+
+	mui.openView("appListView")
 
 	mui.layoutManager = uiCommon.NewLayoutManager()
 	mui.layoutManager.Add(footerView)
 	mui.layoutManager.Add(headerView)
-	mui.layoutManager.Add(appListView)
+	mui.layoutManager.Add(mui.currentDataView)
 
 	return mui
 }
@@ -120,9 +121,12 @@ func (mui *MasterUI) initGui() {
 	if err := g.SetKeybinding("appListView", 's', gocui.ModNone, mui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
-		log.Panicln(err)
-	}
+
+	/*
+		if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
+			log.Panicln(err)
+		}
+	*/
 
 	go mui.counter(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -172,7 +176,7 @@ func (mui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
-	menuItems = append(menuItems, uiCommon.NewMenuItem("appstats", "App Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "Event Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cellstats", "Cell Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "Event Rate History"))
@@ -184,12 +188,20 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (mui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+	mui.CloseView(mui.currentDataView)
+	mui.openView(menuId)
+	mui.layoutManager.Add(mui.currentDataView)
+	return nil
+}
 
-	switch menuId {
-	case "appstats":
-	case "eventstats":
-	case "cellstats":
-	case "eventhistory":
+func (mui *MasterUI) openView(viewName string) error {
+	ep := mui.router.GetProcessor()
+	switch viewName {
+	case "appListView":
+		appListView := appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
+		mui.currentDataView = appListView
+	default:
+		return errors.New("Unable to find view " + viewName)
 	}
 	return nil
 }
@@ -225,10 +237,8 @@ func (mui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 
 func (mui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
 	mui.router.Clear()
-	mui.appListView.ClearStats(g, v)
 	mui.updateDisplay(g)
 	return nil
-
 }
 
 func (mui *MasterUI) RefeshNow() {
@@ -251,15 +261,7 @@ func (mui *MasterUI) counter(g *gocui.Gui) {
 func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
 		mui.updateHeaderDisplay(g)
-		mui.appListView.UpdateDisplay(g)
-		return nil
-	})
-}
-
-func (mui *MasterUI) refeshDisplayX(g *gocui.Gui) {
-	g.Execute(func(g *gocui.Gui) error {
-		mui.updateHeaderDisplay(g)
-		mui.appListView.RefreshDisplay(g)
+		mui.currentDataView.UpdateDisplay(g)
 		return nil
 	})
 }

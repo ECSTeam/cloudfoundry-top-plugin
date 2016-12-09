@@ -233,14 +233,6 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 	return nil
 }
 
-func (asUI *AppListView) ClearStats(g *gocui.Gui, v *gocui.View) error {
-	toplog.Info("appListView>ClearStats")
-	asUI.GetCurrentEventData().Clear()
-	asUI.eventProcessor.UpdateData()
-	asUI.eventProcessor.SeedStatsFromMetadata()
-	return nil
-}
-
 func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
 	if !asUI.displayPaused {
 		asUI.updateData()
