@@ -36,9 +36,10 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 				UsageDetails: plugin.Usage{
 					Usage: "cf top",
 					Options: map[string]string{
-						"debug":   "-d, enable debugging",
-						"cygwin":  "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
-						"nozzles": "-n, specify the number of nozzle instances (default: 2)",
+						"no-top-check": "-ntc, do not check if there are other instances of top running",
+						"cygwin":       "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
+						"nozzles":      "-n, specify the number of nozzle instances (default: 2)",
+						"debug":        "-d, enable debugging",
 					},
 				},
 			},
@@ -120,11 +121,13 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 
 func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	var debug bool
+	var noTopCheck bool
 	var cygwin bool
 	var nozzles int
 
 	fc := flags.New()
 	fc.NewBoolFlag("debug", "d", "used for debugging")
+	fc.NewBoolFlag("no-top-check", "ntc", "Do not check if there are other instances of top running")
 	fc.NewBoolFlag("cygwin", "c", "force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )")
 	fc.NewIntFlagWithDefault("nozzles", "n", "number of nozzles", 2)
 	//fc.NewStringFlag("filter", "f", "specify message filter such as LogMessage, ValueMetric, CounterEvent, HttpStartStop")
@@ -135,6 +138,9 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 	}
 	if fc.IsSet("debug") {
 		debug = fc.Bool("debug")
+	}
+	if fc.IsSet("no-top-check") {
+		noTopCheck = fc.Bool("no-top-check")
 	}
 	if fc.IsSet("cygwin") {
 		cygwin = fc.Bool("cygwin")
@@ -148,8 +154,9 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 		}
 	*/
 	return &top.ClientOptions{
-		Debug:   debug,
-		Cygwin:  cygwin,
-		Nozzles: nozzles,
+		Debug:      debug,
+		NoTopCheck: noTopCheck,
+		Cygwin:     cygwin,
+		Nozzles:    nozzles,
 	}
 }

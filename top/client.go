@@ -1,8 +1,11 @@
 package top
 
 import (
+	"bufio"
 	"crypto/tls"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry/cli/cf/terminal"
@@ -14,6 +17,7 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/eventrouting"
 	"github.com/kkellner/cloudfoundry-top-plugin/toplog"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui"
+	gops "github.com/mitchellh/go-ps"
 )
 
 type Client struct {
@@ -26,10 +30,11 @@ type Client struct {
 }
 
 type ClientOptions struct {
-	AppGUID string
-	Debug   bool
-	Cygwin  bool
-	Nozzles int
+	AppGUID    string
+	Debug      bool
+	NoTopCheck bool
+	Cygwin     bool
+	Nozzles    int
 }
 
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
@@ -41,7 +46,23 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 	}
 }
 
+// Created mine own Ask func instead of the CF provided one because the CF version adds
+// a call to PromptColor(">") which does not work cleanly on MS-Windows
+func (c *Client) Ask(prompt string) string {
+	fmt.Printf("%s ", prompt)
+	rd := bufio.NewReader(os.Stdin)
+	line, err := rd.ReadString('\n')
+	if err == nil {
+		return strings.TrimSpace(line)
+	}
+	return ""
+}
+
 func (c *Client) Start() {
+
+	if !c.options.NoTopCheck && c.shouldExitTop() {
+		return
+	}
 
 	//isDebug := c.options.Debug
 	conn := c.cliConnection
@@ -161,4 +182,60 @@ func (c *Client) handleError(instanceId int, err error) {
 		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceId, err)
 		toplog.Error(msg)
 	}
+}
+
+func (c *Client) shouldExitTop() bool {
+
+	numRunning := c.getNumberOfTopPluginsRunning() - 1
+	if numRunning > 0 {
+		plural := ""
+		if numRunning > 1 {
+			plural = "s"
+		}
+		fmt.Printf("Currently %v instance%v of cf top already running on this OS.\n", numRunning, plural)
+		for {
+			response := c.Ask("Do you want to continue and start top? (y/n)")
+			response = strings.ToLower(response)
+			if response == "y" || response == "yes" {
+				break
+			} else if response == "n" || response == "no" {
+				fmt.Printf("Top will not be started\n")
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Check how many instance of this plugin are running on the currently
+// OS.  This is based on checking the process list for processes that
+// have the same name as our plugin process name.
+func (c *Client) getNumberOfTopPluginsRunning() int {
+
+	p, err := gops.Processes()
+	if err != nil {
+		fmt.Printf("err: %s", err)
+	}
+
+	if len(p) <= 0 {
+		fmt.Printf("should have processes")
+	}
+
+	processName := ""
+	for _, p1 := range p {
+		if os.Getpid() == p1.Pid() {
+			processName = p1.Executable()
+		}
+	}
+
+	numberRunning := 0
+	for _, p1 := range p {
+		if p1.Executable() == processName {
+			//fmt.Printf("Found: %v  PID: %v\n", p1.Executable(), p1.Pid())
+			numberRunning++
+		}
+	}
+
+	//fmt.Printf("Number of programs running with my same name: %v\n", numberRunning)
+	return numberRunning
 }
