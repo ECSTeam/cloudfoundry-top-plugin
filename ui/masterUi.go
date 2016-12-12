@@ -19,6 +19,7 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/appView"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/cellView"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -109,22 +110,33 @@ func (mui *MasterUI) initGui() {
 }
 
 func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
-	if err := g.SetKeybinding("appListView", 'q', gocui.ModNone, mui.quit); err != nil {
+	if err := g.SetKeybinding(viewName, 'q', gocui.ModNone, mui.quit); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("appListView", 'C', gocui.ModNone, mui.clearStats); err != nil {
+	if err := g.SetKeybinding(viewName, 'C', gocui.ModNone, mui.clearStats); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("appListView", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	if err := g.SetKeybinding(viewName, gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		mui.RefeshNow()
 		return nil
 	}); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("appListView", 's', gocui.ModNone, mui.editUpdateInterval); err != nil {
+	if err := g.SetKeybinding(viewName, 's', gocui.ModNone, mui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
+	if err := g.SetKeybinding(viewName, 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(viewName, 'r', gocui.ModNone, mui.refreshMetadata); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := g.SetKeybinding(viewName, 'D', gocui.ModNone,
+		func(g *gocui.Gui, v *gocui.View) error {
+			toplog.Open()
+			return nil
+		}); err != nil {
 		log.Panicln(err)
 	}
 	return nil
@@ -148,19 +160,13 @@ func (mui *MasterUI) CloseViewByName(viewName string) error {
 }
 
 func (mui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui) error {
-
-	g.Execute(func(g *gocui.Gui) error {
-
-		topName := mui.layoutManager.Top().Name()
-		if _, err := g.SetCurrentView(topName); err != nil {
-			return merry.Wrap(err).Appendf("SetCurrentView viewName:[%v]", topName)
-		}
-		if _, err := g.SetViewOnTop(topName); err != nil {
-			return merry.Wrap(err).Appendf("SetViewOnTop viewName:[%v]", topName)
-		}
-		return nil
-	})
-
+	topName := mui.layoutManager.Top().Name()
+	if _, err := g.SetCurrentView(topName); err != nil {
+		return merry.Wrap(err).Appendf("SetCurrentView viewName:[%v]", topName)
+	}
+	if _, err := g.SetViewOnTop(topName); err != nil {
+		return merry.Wrap(err).Appendf("SetViewOnTop viewName:[%v]", topName)
+	}
 	return nil
 }
 
@@ -178,8 +184,8 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "Event Stats"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("cellstats", "Cell Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	mui.LayoutManager().Add(selectDisplayView)
@@ -199,11 +205,14 @@ func (mui *MasterUI) openView(g *gocui.Gui, viewName string) error {
 	switch viewName {
 	case "appListView":
 		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
+	case "cellListView":
+		dataView = cellView.NewCellListView(mui, "cellListView", mui.headerSize+1, mui.footerSize, ep)
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}
 	mui.currentDataView = dataView
 	mui.layoutManager.Add(dataView)
+	dataView.Layout(g)
 	mui.addCommonDataViewKeybindings(g, dataView.Name())
 	return nil
 }
@@ -267,6 +276,11 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 		mui.currentDataView.UpdateDisplay(g)
 		return nil
 	})
+}
+
+func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
+	go mui.router.GetProcessor().LoadCacheAndSeeData()
+	return nil
 }
 
 func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {

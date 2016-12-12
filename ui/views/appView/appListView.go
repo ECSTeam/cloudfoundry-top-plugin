@@ -84,24 +84,6 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(asUI.name, 'c', gocui.ModNone, asUI.copyAction); err != nil {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(asUI.name, 'r', gocui.ModNone, asUI.refreshMetadata); err != nil {
-			log.Panicln(err)
-		}
-
-		if err := g.SetKeybinding(asUI.name, 'D', gocui.ModNone,
-			func(g *gocui.Gui, v *gocui.View) error {
-				//msg := "Test debug message 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 "
-				/*
-				   msg := "test"
-				   for i:=0;i<50;i++ {
-				     toplog.Info(msg)
-				   }
-				*/
-				toplog.Open()
-				return nil
-			}); err != nil {
-			log.Panicln(err)
-		}
 
 		if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
 			func(g *gocui.Gui, v *gocui.View) error {
