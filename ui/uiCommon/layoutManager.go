@@ -2,6 +2,9 @@ package uiCommon
 
 import (
 	//"fmt"
+
+	"log"
+
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
@@ -33,8 +36,17 @@ func (w *LayoutManager) Contains(managerToFind masterUIInterface.Manager) bool {
 	return false
 }
 
-func (w *LayoutManager) Add(m masterUIInterface.Manager) {
-	w.managers = append(w.managers, m)
+func (w *LayoutManager) Add(addMgr masterUIInterface.Manager) {
+
+	// TODO: This is just a development check -- can move later
+
+	for _, m := range w.managers {
+		if m.Name() == addMgr.Name() {
+			log.Panicf("Attempting to add a ui manager named %v and it already exists", m.Name())
+		}
+	}
+
+	w.managers = append(w.managers, addMgr)
 }
 
 func (w *LayoutManager) Top() masterUIInterface.Manager {
@@ -49,7 +61,7 @@ func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) master
 
 	filteredManagers := []masterUIInterface.Manager{}
 	for _, m := range w.managers {
-		if m != managerToRemove {
+		if m.Name() != managerToRemove.Name() {
 			filteredManagers = append(filteredManagers, m)
 		}
 	}

@@ -38,7 +38,7 @@ func (w *FilterWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 
-		if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
+		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
 		}
 

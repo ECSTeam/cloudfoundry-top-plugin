@@ -59,13 +59,13 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 			appInfoWidget := NewAppInfoWidget(w.masterUI, "appInfoWidget", 70, 20)
 			w.masterUI.LayoutManager().Add(appInfoWidget)
-			w.masterUI.SetCurrentViewOnTop(g, "appInfoWidget")
+			w.masterUI.SetCurrentViewOnTop(g)
 			return nil
 		}); err != nil {
 			log.Panicln(err)
 		}
 
-		if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
+		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
 		}
 

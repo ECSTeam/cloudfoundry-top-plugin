@@ -3,7 +3,7 @@ package masterUIInterface
 import "github.com/jroimartin/gocui"
 
 type MasterUIInterface interface {
-	SetCurrentViewOnTop(*gocui.Gui, string) error
+	SetCurrentViewOnTop(*gocui.Gui) error
 	GetCurrentView(g *gocui.Gui) *gocui.View
 	CloseView(Manager) error
 	CloseViewByName(viewName string) error

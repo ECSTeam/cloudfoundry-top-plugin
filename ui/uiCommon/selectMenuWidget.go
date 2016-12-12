@@ -83,7 +83,7 @@ func (w *SelectMenuWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 
-		if err := w.masterUI.SetCurrentViewOnTop(g, w.name); err != nil {
+		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
 		}
 	}
@@ -133,7 +133,6 @@ func (w *SelectMenuWidget) GetMenuSelection() *MenuItem {
 }
 
 func (w *SelectMenuWidget) menuItemSelectedAction(g *gocui.Gui, v *gocui.View) error {
-	// TODO: Callback
 	if w.menuItemSelectedCallback != nil {
 		w.menuItemSelectedCallback(g, v, w.GetMenuSelection().id)
 	}

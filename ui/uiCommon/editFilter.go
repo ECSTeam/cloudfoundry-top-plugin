@@ -235,14 +235,12 @@ func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 		w.applyValueCallback,
 		cancelCallbackFunc)
 
-	w.masterUI.LayoutManager().Add(w)
 	w.masterUI.LayoutManager().Add(w.labelWidget)
 	w.masterUI.LayoutManager().Add(w.inputWidget)
 
-	w.Layout(g)
 	w.labelWidget.Layout(g)
 	w.inputWidget.Layout(g)
-	w.masterUI.SetCurrentViewOnTop(g, "input")
+	w.masterUI.SetCurrentViewOnTop(g)
 	w.editField = true
 
 	w.RefreshDisplay(g)

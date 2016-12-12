@@ -76,7 +76,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 			func(g *gocui.Gui, v *gocui.View) error {
 				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, helpText)
 				asUI.masterUI.LayoutManager().Add(helpView)
-				asUI.masterUI.SetCurrentViewOnTop(g, "helpView")
+				asUI.masterUI.SetCurrentViewOnTop(g)
 				return nil
 			}); err != nil {
 			log.Panicln(err)
@@ -108,7 +108,7 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 				if asUI.appListWidget.HighlightKey() != "" {
 					asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
 					asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
-					asUI.masterUI.SetCurrentViewOnTop(g, "appDetailView")
+					asUI.masterUI.SetCurrentViewOnTop(g)
 				}
 				return nil
 			}); err != nil {
@@ -201,7 +201,7 @@ func (w *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 	clipboardView := uiCommon.NewSelectMenuWidget(w.masterUI, "clipboardView", "Copy to Clipboard", menuItems, w.clipboardCallback)
 
 	w.masterUI.LayoutManager().Add(clipboardView)
-	w.masterUI.SetCurrentViewOnTop(g, "clipboardView")
+	w.masterUI.SetCurrentViewOnTop(g)
 	return nil
 }
 

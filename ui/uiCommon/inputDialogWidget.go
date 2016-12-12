@@ -70,7 +70,7 @@ func (w *InputDialogWidget) Init(g *gocui.Gui) error {
 	w.Layout(g)
 	w.labelWidget.Layout(g)
 	w.inputWidget.Layout(g)
-	return w.masterUI.SetCurrentViewOnTop(g, "input")
+	return w.masterUI.SetCurrentViewOnTop(g)
 }
 
 func (w *InputDialogWidget) Layout(g *gocui.Gui) error {

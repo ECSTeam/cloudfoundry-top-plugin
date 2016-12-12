@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	//"github.com/Sirupsen/logrus"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-	//"github.com/go-errors/errors"
+
+	"github.com/ansel1/merry"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/jroimartin/gocui"
@@ -45,21 +45,9 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 		cliConnection: cliConnection,
 		refreshNow:    make(chan bool),
 	}
-	mui.headerSize = 6
-	mui.footerSize = 4
-
-	headerView := NewHeaderWidget(mui, "headerView", mui.headerSize)
-	footerView := NewFooterWidget("footerView", mui.footerSize)
 
 	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection)
 	mui.router = eventrouting.NewEventRouter(eventProcessor)
-
-	mui.openView("appListView")
-
-	mui.layoutManager = uiCommon.NewLayoutManager()
-	mui.layoutManager.Add(footerView)
-	mui.layoutManager.Add(headerView)
-	mui.layoutManager.Add(mui.currentDataView)
 
 	return mui
 }
@@ -89,9 +77,21 @@ func (mui *MasterUI) initGui() {
 	mui.gui = g
 	g.InputEsc = true
 	defer g.Close()
+
+	mui.layoutManager = uiCommon.NewLayoutManager()
 	g.SetManager(mui.layoutManager)
 
 	toplog.InitDebug(g, mui)
+
+	mui.footerSize = 4
+	footerView := NewFooterWidget("footerView", mui.footerSize)
+	mui.layoutManager.Add(footerView)
+
+	mui.headerSize = 6
+	headerView := NewHeaderWidget(mui, "headerView", mui.headerSize)
+	mui.layoutManager.Add(headerView)
+
+	mui.openView(g, "appListView")
 
 	// default refresh to 1 second
 	mui.refreshIntervalMS = 1000 * time.Millisecond
@@ -100,40 +100,34 @@ func (mui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
+	go mui.counter(g)
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		m := merry.Details(err)
+		log.Panicln(m)
+	}
+
+}
+
+func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
 	if err := g.SetKeybinding("appListView", 'q', gocui.ModNone, mui.quit); err != nil {
 		log.Panicln(err)
 	}
-	/*
-	  if err := g.SetKeybinding("appListView", gocui.KeyEsc, gocui.ModNone, mui.quit); err != nil {
-	    log.Panicln(err)
-	  }
-	*/
 	if err := g.SetKeybinding("appListView", 'C', gocui.ModNone, mui.clearStats); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding("", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	if err := g.SetKeybinding("appListView", gocui.KeySpace, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		mui.RefeshNow()
 		return nil
 	}); err != nil {
 		log.Panicln(err)
 	}
-
 	if err := g.SetKeybinding("appListView", 's', gocui.ModNone, mui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
-
-	/*
-		if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
-			log.Panicln(err)
-		}
-	*/
-
-	go mui.counter(g)
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		//log.Panicln(err.(*errors.Error).ErrorStack())
+	if err := g.SetKeybinding("appListView", 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
 		log.Panicln(err)
 	}
-
+	return nil
 }
 
 func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
@@ -141,9 +135,9 @@ func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
 	mui.gui.DeleteView(m.Name())
 	mui.gui.DeleteKeybindings(m.Name())
 	nextForFocus := mui.layoutManager.Remove(m)
-
-	if err := mui.SetCurrentViewOnTop(mui.gui, nextForFocus.Name()); err != nil {
-		return err
+	nextViewName := nextForFocus.Name()
+	if err := mui.SetCurrentViewOnTop(mui.gui); err != nil {
+		return merry.Wrap(err).Appendf("SetCurrentViewOnTop viewName:[%v]", nextViewName)
 	}
 	return nil
 }
@@ -153,13 +147,20 @@ func (mui *MasterUI) CloseViewByName(viewName string) error {
 	return mui.CloseView(m)
 }
 
-func (mui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui, name string) error {
-	if _, err := g.SetCurrentView(name); err != nil {
-		return err
-	}
-	if _, err := g.SetViewOnTop(name); err != nil {
-		return err
-	}
+func (mui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui) error {
+
+	g.Execute(func(g *gocui.Gui) error {
+
+		topName := mui.layoutManager.Top().Name()
+		if _, err := g.SetCurrentView(topName); err != nil {
+			return merry.Wrap(err).Appendf("SetCurrentView viewName:[%v]", topName)
+		}
+		if _, err := g.SetViewOnTop(topName); err != nil {
+			return merry.Wrap(err).Appendf("SetViewOnTop viewName:[%v]", topName)
+		}
+		return nil
+	})
+
 	return nil
 }
 
@@ -181,28 +182,29 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cellstats", "Cell Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
-
 	mui.LayoutManager().Add(selectDisplayView)
-	mui.SetCurrentViewOnTop(g, "selectDisplayView")
+	mui.SetCurrentViewOnTop(g)
 	return nil
 }
 
 func (mui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 	mui.CloseView(mui.currentDataView)
-	mui.openView(menuId)
-	mui.layoutManager.Add(mui.currentDataView)
+	mui.openView(g, menuId)
 	return nil
 }
 
-func (mui *MasterUI) openView(viewName string) error {
+func (mui *MasterUI) openView(g *gocui.Gui, viewName string) error {
 	ep := mui.router.GetProcessor()
+	var dataView masterUIInterface.UpdatableView
 	switch viewName {
 	case "appListView":
-		appListView := appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
-		mui.currentDataView = appListView
+		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}
+	mui.currentDataView = dataView
+	mui.layoutManager.Add(dataView)
+	mui.addCommonDataViewKeybindings(g, dataView.Name())
 	return nil
 }
 
@@ -232,6 +234,7 @@ func (mui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 	intervalWidget := uiCommon.NewInputDialogWidget(mui,
 		"editIntervalWidget", 30, 6, labelText, maxLength, titleText, helpText,
 		valueText, applyCallbackFunc)
+
 	return intervalWidget.Init(g)
 }
 
