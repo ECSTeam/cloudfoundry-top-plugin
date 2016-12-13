@@ -38,6 +38,8 @@ type MasterUI struct {
 
 	headerSize int
 	footerSize int
+
+	displayMenuId string
 }
 
 func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
@@ -191,12 +193,15 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "TODO: Event Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
+	selectDisplayView.SetMenuId(mui.displayMenuId)
+
 	mui.LayoutManager().Add(selectDisplayView)
 	mui.SetCurrentViewOnTop(g)
 	return nil
 }
 
 func (mui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+	mui.displayMenuId = menuId
 	mui.CloseView(mui.currentDataView)
 	mui.openView(g, menuId)
 	return nil

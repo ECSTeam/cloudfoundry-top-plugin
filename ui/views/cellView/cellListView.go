@@ -5,13 +5,17 @@ import (
 
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
+	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
 )
 
+const MEGABYTE = (1024 * 1024)
+
 type CellListView struct {
-	dataListView *dataView.DataListView
+	*dataView.DataListView
 }
 
 func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
@@ -36,34 +40,19 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.Title = "Cell List"
 	dataListView.HelpText = helpText
 
-	asUI.dataListView = dataListView
+	asUI.DataListView = dataListView
 
 	return asUI
 
 }
 
-func (asUI *CellListView) Layout(g *gocui.Gui) error {
-	return asUI.dataListView.Layout(g)
-}
-func (asUI *CellListView) Name() string {
-	return asUI.dataListView.Name()
-}
-
-func (asUI *CellListView) UpdateDisplay(g *gocui.Gui) error {
-	return asUI.dataListView.UpdateDisplay(g)
-}
-
-func (asUI *CellListView) GetCurrentEventData() *eventdata.EventData {
-	return asUI.dataListView.GetCurrentEventData()
-}
-
-func (asUI *CellListView) GetDisplayedEventData() *eventdata.EventData {
-	return asUI.dataListView.GetDisplayedEventData()
-}
-
 func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, asUI.columnIp())
+
+	columns = append(columns, asUI.columnTotalCpuPercentage())
+	columns = append(columns, asUI.columnTotalReportingContainers())
+
 	columns = append(columns, asUI.columnNumOfCpus())
 	columns = append(columns, asUI.columnCapacityTotalMemory())
 	columns = append(columns, asUI.columnCapacityRemainingMemory())
@@ -76,28 +65,76 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.columnJobName())
 	columns = append(columns, asUI.columnJobIndex())
 
+	columns = append(columns, asUI.columnTotalContainerReservedMemory())
+	columns = append(columns, asUI.columnTotalContainerUsedMemory())
+
+	columns = append(columns, asUI.columnTotalContainerReservedDisk())
+	columns = append(columns, asUI.columnTotalContainerUsedDisk())
+
 	return columns
 }
 
 func (asUI *CellListView) GetListData() []uiCommon.IData {
-	cellList := asUI.postProcessData()
-	listData := asUI.convertToListData(cellList)
+	displayDataList := asUI.postProcessData()
+	listData := asUI.convertToListData(displayDataList)
 	return listData
 }
 
-func (asUI *CellListView) postProcessData() []*eventdata.CellStats {
+func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellStats {
 	cellMap := asUI.GetDisplayedEventData().CellMap
-	cellList := make([]*eventdata.CellStats, 0, len(cellMap))
-	for _, cellStats := range cellMap {
-		cellList = append(cellList, cellStats)
+
+	displayCellMap := make(map[string]*displaydata.DisplayCellStats)
+	for ip, cellStats := range cellMap {
+		displayStat := displaydata.NewDisplayCellStats(cellStats)
+		displayCellMap[ip] = displayStat
 	}
-	return cellList
+
+	appMap := asUI.GetDisplayedEventData().AppMap
+	for _, appStats := range appMap {
+		for _, containerStats := range appStats.ContainerArray {
+			if containerStats != nil {
+				cellStats := displayCellMap[containerStats.Ip]
+
+				if cellStats != nil {
+					logOutCount := containerStats.OutCount
+					cellStats.TotalLogOutCount = cellStats.TotalLogOutCount + logOutCount
+
+					logErrCount := containerStats.ErrCount
+					cellStats.TotalLogErrCount = cellStats.TotalLogErrCount + logErrCount
+
+					if containerStats.ContainerMetric != nil {
+
+						appMetadata := metadata.FindAppMetadata(appStats.AppId)
+
+						cellStats.TotalReportingContainers = cellStats.TotalReportingContainers + 1
+
+						cpuValue := containerStats.ContainerMetric.GetCpuPercentage()
+						cellStats.TotalContainerCpuPercentage = cellStats.TotalContainerCpuPercentage + cpuValue
+
+						//reservedMemoryValue := containerStats.ContainerMetric.GetMemoryBytesQuota()
+						cellStats.TotalContainerReservedMemory = cellStats.TotalContainerReservedMemory + uint64(appMetadata.MemoryMB*MEGABYTE)
+
+						usedMemoryValue := containerStats.ContainerMetric.GetMemoryBytes()
+						cellStats.TotalContainerUsedMemory = cellStats.TotalContainerUsedMemory + usedMemoryValue
+
+						//reservedDiskValue := containerStats.ContainerMetric.GetDiskBytesQuota()
+						cellStats.TotalContainerReservedDisk = cellStats.TotalContainerReservedDisk + uint64(appMetadata.DiskQuotaMB*MEGABYTE)
+
+						usedDiskValue := containerStats.ContainerMetric.GetDiskBytes()
+						cellStats.TotalContainerUsedDisk = cellStats.TotalContainerUsedDisk + usedDiskValue
+					}
+				}
+			}
+		}
+	}
+
+	return displayCellMap
 }
 
-func (asUI *CellListView) convertToListData(statsList []*eventdata.CellStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, len(statsList))
-	for i, d := range statsList {
-		listData[i] = d
+func (asUI *CellListView) convertToListData(displayCellMap map[string]*displaydata.DisplayCellStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, 0, len(displayCellMap))
+	for _, d := range displayCellMap {
+		listData = append(listData, d)
 	}
 	return listData
 }

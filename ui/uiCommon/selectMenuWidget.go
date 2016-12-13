@@ -117,6 +117,17 @@ func (w *SelectMenuWidget) RefreshDisplay(g *gocui.Gui) error {
 	return nil
 }
 
+func (w *SelectMenuWidget) SetMenuId(menuId string) {
+	if menuId != "" {
+		for i, menuItem := range w.menuItems {
+			if menuItem.id == menuId {
+				w.menuPosition = i
+				break
+			}
+		}
+	}
+}
+
 func (w *SelectMenuWidget) getMaxMenuLabelSize() int {
 	maxSize := 0
 	for _, menuItem := range w.menuItems {
