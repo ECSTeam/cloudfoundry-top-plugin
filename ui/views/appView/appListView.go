@@ -53,12 +53,11 @@ func (asUI *AppListView) Layout(g *gocui.Gui) error {
 
 	if asUI.appListWidget == nil {
 
-		statList := asUI.postProcessData(asUI.GetDisplayedEventData().AppMap)
-		listData := asUI.convertToListData(statList)
+		//statList := asUI.postProcessData(asUI.GetDisplayedEventData().AppMap)
+		//listData := asUI.convertToListData(statList)
 
 		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions(),
-			listData)
+			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions())
 		appListWidget.Title = "App List"
 		appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
 
@@ -134,14 +133,6 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.column5XX())
 
 	return columns
-}
-
-func formatDisplayData(value string, size int) string {
-	if len(value) > size {
-		value = value[0:size-1] + uiCommon.Ellipsis
-	}
-	format := fmt.Sprintf("%%-%v.%vv", size, size)
-	return fmt.Sprintf(format, value)
 }
 
 func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {

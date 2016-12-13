@@ -150,7 +150,7 @@ func NewListColumn(
 
 func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	topMargin, bottomMargin int, displayView DisplayViewInterface,
-	columns []*ListColumn, listData []IData) *ListWidget {
+	columns []*ListColumn) *ListWidget {
 	w := &ListWidget{
 		masterUI:        masterUI,
 		name:            name,
@@ -160,7 +160,6 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 		columns:         columns,
 		columnMap:       make(map[string]*ListColumn),
 		filterColumnMap: make(map[string]*FilterColumn),
-		listData:        listData,
 	}
 	for _, col := range columns {
 		w.columnMap[col.id] = col

@@ -2,131 +2,96 @@ package cellView
 
 import (
 	"fmt"
-	"log"
-	"sync"
 
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/helpView"
-	"github.com/kkellner/cloudfoundry-top-plugin/util"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
 )
 
 type CellListView struct {
-	masterUI       masterUIInterface.MasterUIInterface
-	name           string
-	topMargin      int
-	bottomMargin   int
-	eventProcessor *eventdata.EventProcessor
-	mu             sync.Mutex
-	listWidget     *uiCommon.ListWidget
-	displayPaused  bool
+	dataListView *dataView.DataListView
 }
 
 func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	name string, topMargin, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor) *CellListView {
 
-	return &CellListView{
-		masterUI:       masterUI,
-		name:           name,
-		topMargin:      topMargin,
-		bottomMargin:   bottomMargin,
-		eventProcessor: eventProcessor,
-	}
-}
+	asUI := &CellListView{}
 
-func (asUI *CellListView) Name() string {
-	return asUI.name
+	defaultSortColumns := []*uiCommon.SortColumn{
+		uiCommon.NewSortColumn("IP", false),
+		//uiCommon.NewSortColumn("colB", true),
+	}
+
+	dataListView := dataView.NewDataListView(masterUI,
+		name, topMargin, bottomMargin,
+		eventProcessor, asUI.columnDefinitions(),
+		defaultSortColumns)
+
+	dataListView.UpdateHeaderCallback = asUI.updateHeader
+	dataListView.GetListData = asUI.GetListData
+
+	asUI.dataListView = dataListView
+
+	return asUI
+
 }
 
 func (asUI *CellListView) Layout(g *gocui.Gui) error {
+	return asUI.dataListView.Layout(g)
+}
+func (asUI *CellListView) Name() string {
+	return asUI.dataListView.Name()
+}
 
-	if asUI.listWidget == nil {
+func (asUI *CellListView) UpdateDisplay(g *gocui.Gui) error {
+	return asUI.dataListView.UpdateDisplay(g)
+}
 
-		statList := asUI.postProcessData(asUI.GetDisplayedEventData().AppMap)
-		listData := asUI.convertToListData(statList)
+func (asUI *CellListView) GetCurrentEventData() *eventdata.EventData {
+	return asUI.dataListView.GetCurrentEventData()
+}
 
-		listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions(),
-			listData)
-		listWidget.Title = "Cell List"
-		listWidget.PreRowDisplayFunc = asUI.PreRowDisplay
-
-		defaultSortColums := []*uiCommon.SortColumn{
-			uiCommon.NewSortColumn("colA", true),
-			uiCommon.NewSortColumn("colB", true),
-		}
-		listWidget.SetSortColumns(defaultSortColums)
-
-		asUI.listWidget = listWidget
-		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
-			func(g *gocui.Gui, v *gocui.View) error {
-				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, helpText)
-				asUI.masterUI.LayoutManager().Add(helpView)
-				asUI.masterUI.SetCurrentViewOnTop(g)
-				return nil
-			}); err != nil {
-			log.Panicln(err)
-		}
-
-		// TODO
-		/*
-			if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
-				func(g *gocui.Gui, v *gocui.View) error {
-					if asUI.listWidget.HighlightKey() != "" {
-						asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.listWidget.HighlightKey(), asUI)
-						asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
-						asUI.masterUI.SetCurrentViewOnTop(g)
-					}
-					return nil
-				}); err != nil {
-				log.Panicln(err)
-			}
-		*/
-
-	}
-	return asUI.listWidget.Layout(g)
+func (asUI *CellListView) GetDisplayedEventData() *eventdata.EventData {
+	return asUI.dataListView.GetDisplayedEventData()
 }
 
 func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, asUI.columnA())
-	columns = append(columns, asUI.columnB())
+	columns = append(columns, asUI.columnIp())
+	columns = append(columns, asUI.columnNumOfCpus())
+	columns = append(columns, asUI.columnCapacityTotalMemory())
+	columns = append(columns, asUI.columnCapacityRemainingMemory())
+	columns = append(columns, asUI.columnCapacityTotalDisk())
+	columns = append(columns, asUI.columnCapacityRemainingDisk())
+	columns = append(columns, asUI.columnCapacityTotalContainers())
+	columns = append(columns, asUI.columnContainerCount())
+
+	columns = append(columns, asUI.columnDeploymentName())
+	columns = append(columns, asUI.columnJobName())
+	columns = append(columns, asUI.columnJobIndex())
 
 	return columns
 }
 
-func (asUI *CellListView) GetDisplayPaused() bool {
-	return asUI.displayPaused
+func (asUI *CellListView) GetListData() []uiCommon.IData {
+	cellList := asUI.postProcessData()
+	listData := asUI.convertToListData(cellList)
+	return listData
 }
 
-func (asUI *CellListView) SetDisplayPaused(paused bool) {
-	asUI.displayPaused = paused
-	if !paused {
-		asUI.updateData()
+func (asUI *CellListView) postProcessData() []*eventdata.CellStats {
+	cellMap := asUI.GetDisplayedEventData().CellMap
+	cellList := make([]*eventdata.CellStats, 0, len(cellMap))
+	for _, cellStats := range cellMap {
+		cellList = append(cellList, cellStats)
 	}
+	return cellList
 }
 
-func (asUI *CellListView) GetCurrentEventData() *eventdata.EventData {
-	return asUI.eventProcessor.GetCurrentEventData()
-}
-
-func (asUI *CellListView) GetDisplayedEventData() *eventdata.EventData {
-	return asUI.eventProcessor.GetDisplayedEventData()
-}
-
-func (asUI *CellListView) postProcessData(statsMap map[string]*eventdata.AppStats) []*eventdata.AppStats {
-	if len(statsMap) > 0 {
-		stats := eventdata.PopulateNamesIfNeeded(statsMap)
-		return stats
-	} else {
-		return nil
-	}
-}
-
-func (asUI *CellListView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
+func (asUI *CellListView) convertToListData(statsList []*eventdata.CellStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, len(statsList))
 	for i, d := range statsList {
 		listData[i] = d
@@ -134,53 +99,11 @@ func (asUI *CellListView) convertToListData(statsList []*eventdata.AppStats) []u
 	return listData
 }
 
-func (asUI *CellListView) RefreshDisplay(g *gocui.Gui) error {
-	err := asUI.refreshListDisplay(g)
-	if err != nil {
-		return err
-	}
-	return asUI.updateHeader(g)
-}
-
-func (asUI *CellListView) refreshListDisplay(g *gocui.Gui) error {
-	err := asUI.listWidget.RefreshDisplay(g)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (asUI *CellListView) UpdateDisplay(g *gocui.Gui) error {
-	if !asUI.displayPaused {
-		asUI.updateData()
-	}
-	return asUI.RefreshDisplay(g)
-}
-
-// XXX
-func (asUI *CellListView) updateData() {
-	asUI.eventProcessor.UpdateData()
-	processor := asUI.GetDisplayedEventData()
-	statList := asUI.postProcessData(processor.AppMap)
-	listData := asUI.convertToListData(statList)
-	asUI.listWidget.SetListData(listData)
-}
-
 func (asUI *CellListView) PreRowDisplay(data uiCommon.IData, isSelected bool) string {
 	return ""
 }
 
-func (asUI *CellListView) updateHeader(g *gocui.Gui) error {
-
-	v, err := g.View("headerView")
-	if err != nil {
-		return err
-	}
-	if asUI.displayPaused {
-		fmt.Fprintf(v, util.REVERSE_GREEN)
-		fmt.Fprintf(v, "\r Display update paused ")
-		fmt.Fprintf(v, util.CLEAR)
-		return nil
-	}
+func (asUI *CellListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
+	fmt.Fprintf(v, "\nTODO: Show summary Cell stats")
 	return nil
 }

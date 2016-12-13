@@ -221,6 +221,11 @@ func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 	if msg.GetOrigin() == "rep" {
 		ip := msg.GetIp()
 		cellStats := ed.getCellStats(ip)
+
+		cellStats.DeploymentName = msg.GetDeployment()
+		cellStats.JobName = msg.GetJob()
+		cellStats.JobIndex = msg.GetIndex()
+
 		valueMetric := msg.GetValueMetric()
 		value := ed.getMetricValue(valueMetric)
 		name := valueMetric.GetName()
@@ -273,6 +278,7 @@ func (ed *EventData) containerMetricEvent(msg *events.Envelope) {
 	instNum := int(*containerMetric.InstanceIndex)
 	containerStats := ed.getContainerStats(appStats, instNum)
 	containerStats.LastUpdate = time.Now()
+	containerStats.Ip = msg.GetIp()
 	containerStats.ContainerMetric = containerMetric
 
 }

@@ -91,6 +91,9 @@ func (mui *MasterUI) initGui() {
 	mui.headerSize = 6
 	headerView := NewHeaderWidget(mui, "headerView", mui.headerSize)
 	mui.layoutManager.Add(headerView)
+	// We add the common keybindings to the header view in the event
+	// that no DataView is open
+	mui.addCommonDataViewKeybindings(g, "headerView")
 
 	mui.openView(g, "appListView")
 
@@ -185,8 +188,8 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "Event Stats"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "Event Rate History"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "TODO: Event Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	mui.LayoutManager().Add(selectDisplayView)
 	mui.SetCurrentViewOnTop(g)
@@ -214,6 +217,7 @@ func (mui *MasterUI) openView(g *gocui.Gui, viewName string) error {
 	mui.layoutManager.Add(dataView)
 	dataView.Layout(g)
 	mui.addCommonDataViewKeybindings(g, dataView.Name())
+	mui.updateDisplay(g)
 	return nil
 }
 

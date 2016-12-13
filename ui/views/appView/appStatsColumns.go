@@ -16,7 +16,7 @@ func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		appStats := data.(*eventdata.AppStats)
-		return formatDisplayData(appStats.AppName, defaultColSize)
+		return util.FormatDisplayData(appStats.AppName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*eventdata.AppStats)
@@ -34,7 +34,7 @@ func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		appStats := data.(*eventdata.AppStats)
-		return formatDisplayData(appStats.SpaceName, defaultColSize)
+		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*eventdata.AppStats)
@@ -52,7 +52,7 @@ func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		appStats := data.(*eventdata.AppStats)
-		return formatDisplayData(appStats.OrgName, defaultColSize)
+		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*eventdata.AppStats)

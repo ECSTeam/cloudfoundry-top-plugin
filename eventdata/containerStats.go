@@ -7,6 +7,7 @@ import (
 )
 
 type ContainerStats struct {
+	Ip              string
 	ContainerMetric *events.ContainerMetric
 	LastUpdate      time.Time
 	OutCount        int64
