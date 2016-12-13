@@ -70,7 +70,7 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 				w.name, leftMargin, w.topMargin, rightMargin, bottom)
 		}
 		v.Title = "App Details (press 'q' to quit view)"
-		v.Frame = false
+		v.Frame = true
 
 		if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeAppDetailView); err != nil {
 			return err
