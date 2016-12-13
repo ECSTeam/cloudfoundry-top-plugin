@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -16,96 +14,76 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
 
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/helpView"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppListView struct {
-	masterUI       masterUIInterface.MasterUIInterface
-	name           string
-	topMargin      int
-	bottomMargin   int
-	eventProcessor *eventdata.EventProcessor
-	mu             sync.Mutex
-	appDetailView  *AppDetailView
-	appListWidget  *uiCommon.ListWidget
-	displayPaused  bool
+	*dataView.DataListView
+	appDetailView *AppDetailView
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	name string, topMargin, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor) *AppListView {
 
-	return &AppListView{
-		masterUI:       masterUI,
-		name:           name,
-		topMargin:      topMargin,
-		bottomMargin:   bottomMargin,
-		eventProcessor: eventProcessor,
+	asUI := &AppListView{}
+
+	defaultSortColumns := []*uiCommon.SortColumn{
+		uiCommon.NewSortColumn("CPU", true),
+		uiCommon.NewSortColumn("REQ60", true),
+		uiCommon.NewSortColumn("appName", false),
+		uiCommon.NewSortColumn("spaceName", false),
+		uiCommon.NewSortColumn("orgName", false),
 	}
+
+	dataListView := dataView.NewDataListView(masterUI,
+		name, topMargin, bottomMargin,
+		eventProcessor, asUI.columnDefinitions(),
+		defaultSortColumns)
+
+	dataListView.InitializeCallback = asUI.initializeCallback
+	dataListView.PreRowDisplayCallback = asUI.preRowDisplay
+	dataListView.UpdateHeaderCallback = asUI.updateHeader
+	dataListView.GetListData = asUI.GetListData
+
+	dataListView.SetTitle("App List")
+	dataListView.HelpText = helpText
+
+	asUI.DataListView = dataListView
+
+	return asUI
+
 }
 
-func (asUI *AppListView) Name() string {
-	return asUI.name
+func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error {
+
+	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, asUI.copyAction); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
+		log.Panicln(err)
+	}
+
+	return nil
 }
 
-func (asUI *AppListView) Layout(g *gocui.Gui) error {
+func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
+	highlightKey := asUI.GetListWidget().HighlightKey()
+	if asUI.GetListWidget().HighlightKey() != "" {
+		topMargin, bottomMargin := asUI.GetMargins()
 
-	if asUI.appListWidget == nil {
+		asUI.appDetailView = NewAppDetailView(asUI.GetMasterUI(), "appDetailView",
+			topMargin, bottomMargin,
+			asUI.GetEventProcessor(),
+			highlightKey, asUI)
 
-		//statList := asUI.postProcessData(asUI.GetDisplayedEventData().AppMap)
-		//listData := asUI.convertToListData(statList)
-
-		appListWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-			asUI.topMargin, asUI.bottomMargin, asUI, asUI.columnDefinitions())
-		appListWidget.Title = "App List"
-		appListWidget.PreRowDisplayFunc = asUI.PreRowDisplay
-
-		defaultSortColums := []*uiCommon.SortColumn{
-			uiCommon.NewSortColumn("CPU", true),
-			uiCommon.NewSortColumn("REQ60", true),
-			uiCommon.NewSortColumn("appName", false),
-			uiCommon.NewSortColumn("spaceName", false),
-			uiCommon.NewSortColumn("orgName", false),
-		}
-		appListWidget.SetSortColumns(defaultSortColums)
-
-		asUI.appListWidget = appListWidget
-		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
-			func(g *gocui.Gui, v *gocui.View) error {
-				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, helpText)
-				asUI.masterUI.LayoutManager().Add(helpView)
-				asUI.masterUI.SetCurrentViewOnTop(g)
-				return nil
-			}); err != nil {
-			log.Panicln(err)
-		}
-		if err := g.SetKeybinding(asUI.name, 'c', gocui.ModNone, asUI.copyAction); err != nil {
-			log.Panicln(err)
-		}
-
-		if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
-			func(g *gocui.Gui, v *gocui.View) error {
-				if asUI.appListWidget.HighlightKey() != "" {
-					asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.appListWidget.HighlightKey(), asUI)
-					asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
-					asUI.masterUI.SetCurrentViewOnTop(g)
-				}
-				return nil
-			}); err != nil {
-			log.Panicln(err)
-		}
-
+		asUI.GetMasterUI().LayoutManager().Add(asUI.appDetailView)
+		asUI.GetMasterUI().SetCurrentViewOnTop(g)
+		asUI.DataListView.RefreshDisplayCallback = asUI.refreshDetailView
 	}
-	return asUI.appListWidget.Layout(g)
-}
-
-func (asUI *AppListView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, len(statsList))
-	for i, d := range statsList {
-		listData[i] = d
-	}
-	return listData
+	return nil
 }
 
 func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
@@ -135,33 +113,9 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	return columns
 }
 
-func (asUI *AppListView) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
-	go asUI.eventProcessor.LoadCacheAndSeeData()
-	return nil
-}
+func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 
-func (asUI *AppListView) GetCurrentEventData() *eventdata.EventData {
-	return asUI.eventProcessor.GetCurrentEventData()
-}
-
-func (asUI *AppListView) GetDisplayedEventData() *eventdata.EventData {
-	return asUI.eventProcessor.GetDisplayedEventData()
-}
-
-func (asUI *AppListView) SetDisplayPaused(paused bool) {
-	asUI.displayPaused = paused
-	if !paused {
-		asUI.updateData()
-	}
-}
-
-func (asUI *AppListView) GetDisplayPaused() bool {
-	return asUI.displayPaused
-}
-
-func (w *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
-
-	selectedAppId := w.appListWidget.HighlightKey()
+	selectedAppId := asUI.GetListWidget().HighlightKey()
 	if selectedAppId == "" {
 		// Nothing selected
 		return nil
@@ -171,19 +125,20 @@ func (w *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cfapp", "cf app"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cfscale", "cf scale"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appguid", "app guid"))
-	clipboardView := uiCommon.NewSelectMenuWidget(w.masterUI, "clipboardView", "Copy to Clipboard", menuItems, w.clipboardCallback)
+	masterUI := asUI.GetMasterUI()
+	clipboardView := uiCommon.NewSelectMenuWidget(masterUI, "clipboardView", "Copy to Clipboard", menuItems, asUI.clipboardCallback)
 
-	w.masterUI.LayoutManager().Add(clipboardView)
-	w.masterUI.SetCurrentViewOnTop(g)
+	masterUI.LayoutManager().Add(clipboardView)
+	masterUI.SetCurrentViewOnTop(g)
 	return nil
 }
 
-func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 
 	clipboardValue := "hello from clipboard" + time.Now().Format("01-02-2006 15:04:05")
 
-	selectedAppId := w.appListWidget.HighlightKey()
-	statsMap := w.GetDisplayedEventData().AppMap
+	selectedAppId := asUI.GetListWidget().HighlightKey()
+	statsMap := asUI.GetDisplayedEventData().AppMap
 	appStats := statsMap[selectedAppId]
 	if appStats == nil {
 		// Nothing selected
@@ -206,52 +161,47 @@ func (w *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 	return nil
 }
 
-func (asUI *AppListView) UpdateDisplay(g *gocui.Gui) error {
-	if !asUI.displayPaused {
-		asUI.updateData()
-	}
-	return asUI.RefreshDisplay(g)
+func (asUI *AppListView) GetListData() []uiCommon.IData {
+	displayDataList := asUI.postProcessData()
+	listData := asUI.convertToListData(displayDataList)
+	return listData
 }
 
-// XXX
-func (asUI *AppListView) updateData() {
+func (asUI *AppListView) postProcessData() []*eventdata.AppStats {
 
-	asUI.eventProcessor.UpdateData()
-	processor := asUI.GetDisplayedEventData()
-	statList := asUI.postProcessData(processor.AppMap)
-	listData := asUI.convertToListData(statList)
-	asUI.appListWidget.SetListData(listData)
+	// TODO: Move most of the clone() code here
 
-}
-
-func (asUI *AppListView) postProcessData(statsMap map[string]*eventdata.AppStats) []*eventdata.AppStats {
-	if len(statsMap) > 0 {
-		stats := eventdata.PopulateNamesIfNeeded(statsMap)
+	appMap := asUI.GetDisplayedEventData().AppMap
+	if len(appMap) > 0 {
+		stats := eventdata.PopulateNamesIfNeeded(appMap)
 		return stats
 	} else {
 		return nil
 	}
 }
 
-func (asUI *AppListView) RefreshDisplay(g *gocui.Gui) error {
-
-	currentView := asUI.masterUI.GetCurrentView(g)
-	currentName := currentView.Name()
-	if strings.HasPrefix(currentName, asUI.name) {
-		err := asUI.refreshListDisplay(g)
-		if err != nil {
-			return err
-		}
-	} else if asUI.appDetailView != nil && strings.HasPrefix(currentName, asUI.appDetailView.name) {
-		err := asUI.appDetailView.refreshDisplay(g)
-		if err != nil {
-			return err
-		}
+func (asUI *AppListView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, len(statsList))
+	for i, d := range statsList {
+		listData[i] = d
 	}
-	return asUI.updateHeader(g)
+	return listData
 }
 
-func (asUI *AppListView) PreRowDisplay(data uiCommon.IData, isSelected bool) string {
+func (asUI *AppListView) refreshDetailView(g *gocui.Gui) error {
+	err := asUI.appDetailView.refreshDisplay(g)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
+	asUI.DataListView.RefreshDisplayCallback = nil
+	return asUI.RefreshDisplay(g)
+}
+
+func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
 	appStats := data.(*eventdata.AppStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
@@ -260,26 +210,7 @@ func (asUI *AppListView) PreRowDisplay(data uiCommon.IData, isSelected bool) str
 	return v.String()
 }
 
-func (asUI *AppListView) refreshListDisplay(g *gocui.Gui) error {
-	err := asUI.appListWidget.RefreshDisplay(g)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func (asUI *AppListView) updateHeader(g *gocui.Gui) error {
-
-	v, err := g.View("headerView")
-	if err != nil {
-		return err
-	}
-	if asUI.displayPaused {
-		fmt.Fprintf(v, util.REVERSE_GREEN)
-		fmt.Fprintf(v, "\r Display update paused ")
-		fmt.Fprintf(v, util.CLEAR)
-		return nil
-	}
+func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 
 	totalReportingAppInstances := 0
 	totalActiveApps := 0

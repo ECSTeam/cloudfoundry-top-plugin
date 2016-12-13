@@ -1,11 +1,12 @@
 package appView
 
 import (
-	"errors"
 	"fmt"
 	"log"
 
+	"github.com/ansel1/merry"
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
@@ -14,16 +15,38 @@ import (
 const MEGABYTE = (1024 * 1024)
 
 type AppDetailView struct {
-	masterUI    masterUIInterface.MasterUIInterface
-	name        string
-	width       int
-	height      int
-	appId       string
-	appListView *AppListView
+	masterUI       masterUIInterface.MasterUIInterface
+	name           string
+	topMargin      int
+	bottomMargin   int
+	eventProcessor *eventdata.EventProcessor
+	appId          string
+	appListView    *AppListView
 }
 
-func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface, name string, appId string, appListView *AppListView) *AppDetailView {
-	return &AppDetailView{masterUI: masterUI, name: name, appId: appId, appListView: appListView}
+func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface, name string,
+	topMargin, bottomMargin int,
+	eventProcessor *eventdata.EventProcessor,
+	appId string, appListView *AppListView) *AppDetailView {
+
+	asUI := &AppDetailView{}
+
+	/*
+		dataListView := dataView.NewDataListView(masterUI,
+			name, topMargin, bottomMargin,
+			eventProcessor, asUI.columnDefinitions(),
+			defaultSortColumns)
+	*/
+
+	asUI.masterUI = masterUI
+	asUI.name = name
+	asUI.topMargin = topMargin
+	asUI.bottomMargin = bottomMargin
+	asUI.eventProcessor = eventProcessor
+	asUI.appId = appId
+	asUI.appListView = appListView
+
+	return asUI
 }
 
 func (w *AppDetailView) Name() string {
@@ -32,19 +55,19 @@ func (w *AppDetailView) Name() string {
 
 func (w *AppDetailView) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	//topMargin := w.appListView.topMargin+2
-	//bottomMargin := maxY - (w.appListView.bottomMargin+2)
-	//leftMargin := 4
-	//rightMargin := maxX-5
-	topMargin := w.appListView.topMargin
-	bottomMargin := maxY - w.appListView.bottomMargin
+	bottom := maxY - w.bottomMargin
+	if w.topMargin >= bottom {
+		bottom = w.topMargin + 1
+	}
+
 	leftMargin := 0
 	rightMargin := maxX - 1
-	v, err := g.SetView(w.name, leftMargin, topMargin, rightMargin, bottomMargin)
+	v, err := g.SetView(w.name, leftMargin, w.topMargin, rightMargin, bottom)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
-			return errors.New(w.name + " layout error:" + err.Error())
+			return merry.Wrap(err).Appendf("viewName:[%v] left:%v, top:%v, right:%v, bottom: %v",
+				w.name, leftMargin, w.topMargin, rightMargin, bottom)
 		}
 		v.Title = "App Details (press 'q' to quit view)"
 		v.Frame = false
@@ -79,8 +102,7 @@ func (w *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
 	if err := w.masterUI.CloseView(w); err != nil {
 		return err
 	}
-	w.appListView.RefreshDisplay(g)
-	return nil
+	return w.appListView.detailViewClosed(g)
 }
 
 func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
@@ -236,6 +258,5 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))
 	fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
 
-	//return w.appListView.updateHeader(g)
 	return nil
 }

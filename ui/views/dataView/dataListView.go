@@ -14,22 +14,29 @@ import (
 )
 
 type actionCallback func(g *gocui.Gui, v *gocui.View) error
+type initializeCallback func(g *gocui.Gui, viewName string) error
+type preRowDisplayCallback func(data uiCommon.IData, isSelected bool) string
+type refreshDisplayCallback func(g *gocui.Gui) error
+
 type GetListData func() []uiCommon.IData
 
 type DataListView struct {
-	masterUI             masterUIInterface.MasterUIInterface
-	name                 string
-	topMargin            int
-	bottomMargin         int
-	eventProcessor       *eventdata.EventProcessor
-	mu                   sync.Mutex
-	listWidget           *uiCommon.ListWidget
-	displayPaused        bool
-	initialized          bool
-	Title                string
-	HelpText             string
-	UpdateHeaderCallback actionCallback
-	GetListData          GetListData
+	masterUI               masterUIInterface.MasterUIInterface
+	name                   string
+	topMargin              int
+	bottomMargin           int
+	eventProcessor         *eventdata.EventProcessor
+	mu                     sync.Mutex
+	listWidget             *uiCommon.ListWidget
+	displayPaused          bool
+	initialized            bool
+	Title                  string
+	HelpText               string
+	InitializeCallback     initializeCallback
+	UpdateHeaderCallback   actionCallback
+	PreRowDisplayCallback  preRowDisplayCallback
+	RefreshDisplayCallback refreshDisplayCallback
+	GetListData            GetListData
 }
 
 func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
@@ -66,6 +73,18 @@ func (asUI *DataListView) SetTitle(title string) {
 	asUI.listWidget.Title = title
 }
 
+func (asUI *DataListView) GetMargins() (int, int) {
+	return asUI.topMargin, asUI.bottomMargin
+}
+
+func (asUI *DataListView) GetMasterUI() masterUIInterface.MasterUIInterface {
+	return asUI.masterUI
+}
+
+func (asUI *DataListView) GetListWidget() *uiCommon.ListWidget {
+	return asUI.listWidget
+}
+
 func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 	return asUI.eventProcessor
 }
@@ -75,16 +94,7 @@ func (asUI *DataListView) Layout(g *gocui.Gui) error {
 	if !asUI.initialized {
 
 		asUI.initialized = true
-
-		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
-			func(g *gocui.Gui, v *gocui.View) error {
-				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, asUI.HelpText)
-				asUI.masterUI.LayoutManager().Add(helpView)
-				asUI.masterUI.SetCurrentViewOnTop(g)
-				return nil
-			}); err != nil {
-			log.Panicln(err)
-		}
+		asUI.initialize(g)
 
 		// TODO
 		/*
@@ -103,6 +113,21 @@ func (asUI *DataListView) Layout(g *gocui.Gui) error {
 
 	}
 	return asUI.listWidget.Layout(g)
+}
+
+func (asUI *DataListView) initialize(g *gocui.Gui) {
+	if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
+		func(g *gocui.Gui, v *gocui.View) error {
+			helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, asUI.HelpText)
+			asUI.masterUI.LayoutManager().Add(helpView)
+			asUI.masterUI.SetCurrentViewOnTop(g)
+			return nil
+		}); err != nil {
+		log.Panicln(err)
+	}
+	if asUI.InitializeCallback != nil {
+		asUI.InitializeCallback(g, asUI.name)
+	}
 }
 
 func (asUI *DataListView) GetDisplayPaused() bool {
@@ -125,7 +150,12 @@ func (asUI *DataListView) GetDisplayedEventData() *eventdata.EventData {
 }
 
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
-	err := asUI.refreshListDisplay(g)
+	var err error
+	if asUI.RefreshDisplayCallback != nil {
+		err = asUI.RefreshDisplayCallback(g)
+	} else {
+		err = asUI.refreshListDisplay(g)
+	}
 	if err != nil {
 		return err
 	}
@@ -156,6 +186,9 @@ func (asUI *DataListView) updateData() {
 }
 
 func (asUI *DataListView) PreRowDisplay(data uiCommon.IData, isSelected bool) string {
+	if asUI.PreRowDisplayCallback != nil {
+		return asUI.PreRowDisplayCallback(data, isSelected)
+	}
 	return ""
 }
 
@@ -171,6 +204,9 @@ func (asUI *DataListView) updateHeader(g *gocui.Gui) error {
 		fmt.Fprintf(v, util.CLEAR)
 		return nil
 	}
-	return asUI.UpdateHeaderCallback(g, v)
 
+	if asUI.UpdateHeaderCallback != nil {
+		return asUI.UpdateHeaderCallback(g, v)
+	}
+	return nil
 }
