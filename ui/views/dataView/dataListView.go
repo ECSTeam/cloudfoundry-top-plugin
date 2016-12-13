@@ -62,6 +62,10 @@ func (asUI *DataListView) Name() string {
 	return asUI.name
 }
 
+func (asUI *DataListView) SetTitle(title string) {
+	asUI.listWidget.Title = title
+}
+
 func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 	return asUI.eventProcessor
 }

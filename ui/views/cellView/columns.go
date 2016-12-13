@@ -191,7 +191,7 @@ func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
 }
 
 func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
-	defaultColSize := 5
+	defaultColSize := 10
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).DeploymentName, c2.(*displaydata.DisplayCellStats).DeploymentName)
 	}
@@ -209,7 +209,7 @@ func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
 }
 
 func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
-	defaultColSize := 20
+	defaultColSize := 45
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).JobName, c2.(*displaydata.DisplayCellStats).JobName)
 	}
@@ -301,7 +301,6 @@ func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn 
 	return c
 }
 
-// NOTE: Quota info is not coming in the container metric in PCF 1.6
 func (asUI *CellListView) columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayCellStats).TotalContainerReservedMemory < c2.(*displaydata.DisplayCellStats).TotalContainerReservedMemory
@@ -310,17 +309,17 @@ func (asUI *CellListView) columnTotalContainerReservedMemory() *uiCommon.ListCol
 		CellStats := data.(*displaydata.DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerReservedMemory == 0 {
-			display = fmt.Sprintf("%9v", "--")
+			display = fmt.Sprintf("%10v", "--")
 		} else {
-			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.TotalContainerReservedMemory).StringWithPrecision(1))
+			display = fmt.Sprintf("%10v", util.ByteSize(CellStats.TotalContainerReservedMemory).StringWithPrecision(1))
 		}
-		return fmt.Sprintf("%9v", display)
+		return fmt.Sprintf("%10v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		CellStats := data.(*displaydata.DisplayCellStats)
 		return fmt.Sprintf("%v", CellStats.TotalContainerReservedMemory)
 	}
-	c := uiCommon.NewListColumn("RSVD_MEM", "RSVD_MEM", 9,
+	c := uiCommon.NewListColumn("C_RSVD_MEM", "C_RSVD_MEM", 10,
 		uiCommon.NUMERIC, false, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
@@ -348,7 +347,6 @@ func (asUI *CellListView) columnTotalContainerUsedMemory() *uiCommon.ListColumn 
 	return c
 }
 
-// NOTE: Quota info is not coming in the container metric in PCF 1.6
 func (asUI *CellListView) columnTotalContainerReservedDisk() *uiCommon.ListColumn {
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayCellStats).TotalContainerReservedDisk < c2.(*displaydata.DisplayCellStats).TotalContainerReservedDisk

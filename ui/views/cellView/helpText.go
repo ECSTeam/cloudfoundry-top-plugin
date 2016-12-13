@@ -13,13 +13,19 @@ const helpText = `
 **Cell list stats:**
 
   IP - IP address of Cloud Foundry cell
+  CPU%% - Total CPU percent consumed by all containers on cell
+  RCR - Total reporting containers
   CPUS - Number of CPUs in cell VM
   TOT_MEM - Total Memory in cell VM
   FREE_MEM - Free Memory in cell VM available for containers
+  C_RSVD_MEM - Total memory reserved by all containers on cell
+  C_USD_MEM - Total memory actually in use by all containers
   TOT_DISK - Total Disk space in cell VM
   FREE_DISK - Free Disk space in cell VM available for containers
+  C_RSVD_DSK - Total disk reserved by all containers on cell
+  C_USD_DSK - Total disk actually in use by all containers
   MAX_CNTR - Max containers cell can handle
-  CNTRS - Number of containers running on cell
+  CNTRS - Number of containers running on cell reported by cell
   DNAME - BOSH Deployment name
   JOB_NAME - BOSH Job name
   JOB_IDX - BOSH Job index

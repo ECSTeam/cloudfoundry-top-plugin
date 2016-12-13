@@ -37,7 +37,7 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.Title = "Cell List"
+	dataListView.SetTitle("Cell List")
 	dataListView.HelpText = helpText
 
 	asUI.DataListView = dataListView
@@ -54,22 +54,23 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.columnTotalReportingContainers())
 
 	columns = append(columns, asUI.columnNumOfCpus())
+
 	columns = append(columns, asUI.columnCapacityTotalMemory())
 	columns = append(columns, asUI.columnCapacityRemainingMemory())
+	columns = append(columns, asUI.columnTotalContainerReservedMemory())
+	columns = append(columns, asUI.columnTotalContainerUsedMemory())
+
 	columns = append(columns, asUI.columnCapacityTotalDisk())
 	columns = append(columns, asUI.columnCapacityRemainingDisk())
+	columns = append(columns, asUI.columnTotalContainerReservedDisk())
+	columns = append(columns, asUI.columnTotalContainerUsedDisk())
+
 	columns = append(columns, asUI.columnCapacityTotalContainers())
 	columns = append(columns, asUI.columnContainerCount())
 
 	columns = append(columns, asUI.columnDeploymentName())
 	columns = append(columns, asUI.columnJobName())
 	columns = append(columns, asUI.columnJobIndex())
-
-	columns = append(columns, asUI.columnTotalContainerReservedMemory())
-	columns = append(columns, asUI.columnTotalContainerUsedMemory())
-
-	columns = append(columns, asUI.columnTotalContainerReservedDisk())
-	columns = append(columns, asUI.columnTotalContainerUsedDisk())
 
 	return columns
 }
