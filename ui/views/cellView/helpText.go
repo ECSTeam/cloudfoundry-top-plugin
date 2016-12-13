@@ -8,31 +8,24 @@ const helpText = `
                  information before stats are accurate.
   Duration     - Amount of time stats have been collected.
   Target       - The target URL of monitored foundation.
-  CPU (Used)   - Amount of CPU consumed by all app instances.
-  CPU (Max)    - Sum of CPU capacity across all cells.
-  Mem (Used)   - Amount of memory actually in use by all app
-                 instances.
-  Mem (Max)    - Sum of memory capacity across all cells.
-  Mem (Rsrvd)  - Total amount of requested memory for all started
-                 app instances.
-  Dsk (Used)   - Amount of disk actually in use by all app
-                 instances.
-  Dsk (Max)    - Sum of disk capacity across all cells.
-  Dsk (Rsrvd)  - Total amount of requested disk for all started
-                 app instances.
-  Apps (total) - Total number of applications deployed to
-                 foundation.
-  Apps (Actv)  - Number of applications that have taken HTTP(S)
-                 traffic through the go router in the last 60
-                 seconds.
-  Cntrs        - Number of reporting containers which typically
-                 are app instances.
+  
  
 **Cell list stats:**
 
-  COL_A - TODO
-  COL_B - TODO
+  IP - IP address of Cloud Foundry cell
+  CPUS - Number of CPUs in cell VM
+  TOT_MEM - Total Memory in cell VM
+  FREE_MEM - Free Memory in cell VM available for containers
+  TOT_DISK - Total Disk space in cell VM
+  FREE_DISK - Free Disk space in cell VM available for containers
+  MAX_CNTR - Max containers cell can handle
+  CNTRS - Number of containers running on cell
+  DNAME - BOSH Deployment name
+  JOB_NAME - BOSH Job name
+  JOB_IDX - BOSH Job index
   
+**Display: **
+Press 'd' to select data view.
 
 **Order / Sort display: **
 Press 'o' to show the sort order window allowing multi-column
@@ -66,7 +59,7 @@ additonal load on the CF foundation.
 
 **Select detail: **
 Press UP arrow or DOWN arrow to highlight a cell row.
-Press ENTER to select the highlighted cell and show
+TODO: Press ENTER to select the highlighted cell and show
 additional detail.
 
 **Scroll columns into view: **

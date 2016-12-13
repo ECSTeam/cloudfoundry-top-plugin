@@ -2,12 +2,14 @@ package dataView
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/helpView"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
@@ -23,7 +25,9 @@ type DataListView struct {
 	mu                   sync.Mutex
 	listWidget           *uiCommon.ListWidget
 	displayPaused        bool
+	initialized          bool
 	Title                string
+	HelpText             string
 	UpdateHeaderCallback actionCallback
 	GetListData          GetListData
 }
@@ -44,7 +48,6 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 
 	listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
 		asUI.topMargin, asUI.bottomMargin, asUI, columnDefinitions)
-	listWidget.Title = "Cell List"
 	listWidget.PreRowDisplayFunc = asUI.PreRowDisplay
 
 	listWidget.SetSortColumns(defaultSortColumns)
@@ -65,19 +68,19 @@ func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 
 func (asUI *DataListView) Layout(g *gocui.Gui) error {
 
-	if asUI.listWidget == nil {
+	if !asUI.initialized {
 
-		/*
-			if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
-				func(g *gocui.Gui, v *gocui.View) error {
-					helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, helpText)
-					asUI.masterUI.LayoutManager().Add(helpView)
-					asUI.masterUI.SetCurrentViewOnTop(g)
-					return nil
-				}); err != nil {
-				log.Panicln(err)
-			}
-		*/
+		asUI.initialized = true
+
+		if err := g.SetKeybinding(asUI.name, 'h', gocui.ModNone,
+			func(g *gocui.Gui, v *gocui.View) error {
+				helpView := helpView.NewHelpView(asUI.masterUI, "helpView", 75, 17, asUI.HelpText)
+				asUI.masterUI.LayoutManager().Add(helpView)
+				asUI.masterUI.SetCurrentViewOnTop(g)
+				return nil
+			}); err != nil {
+			log.Panicln(err)
+		}
 
 		// TODO
 		/*

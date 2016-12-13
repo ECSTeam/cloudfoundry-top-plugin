@@ -52,6 +52,9 @@ NOTE: The HTTP counters are based on traffic through the
 gorouter.  Applications that talk directly container-to-
 container will not show up in the REQ/nXX counters.
 
+**Display: **
+Press 'd' to select data view.
+
 **Order / Sort display: **
 Press 'o' to show the sort order window allowing multi-column
 sorting of any column.

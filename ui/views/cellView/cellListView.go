@@ -33,6 +33,9 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
+	dataListView.Title = "Cell List"
+	dataListView.HelpText = helpText
+
 	asUI.dataListView = dataListView
 
 	return asUI
