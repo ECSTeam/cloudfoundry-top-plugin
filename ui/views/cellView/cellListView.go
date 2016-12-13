@@ -25,8 +25,8 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &CellListView{}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
+		uiCommon.NewSortColumn("CPU_PERCENT", true),
 		uiCommon.NewSortColumn("IP", false),
-		//uiCommon.NewSortColumn("colB", true),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI,

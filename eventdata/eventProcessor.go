@@ -17,7 +17,7 @@ type EventProcessor struct {
 	eventRateCounter   *util.RateCounter
 	eventRatePeak      int
 	startTime          time.Time
-	mu                 sync.Mutex
+	mu                 *sync.Mutex
 	currentEventData   *EventData
 	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
@@ -25,16 +25,21 @@ type EventProcessor struct {
 
 func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 
-	currentEventData := NewEventData()
-	displayedEventData := NewEventData()
+	mu := &sync.Mutex{}
 
-	return &EventProcessor{
+	currentEventData := NewEventData(mu)
+	displayedEventData := NewEventData(mu)
+
+	ep := &EventProcessor{
+		mu:                 mu,
 		currentEventData:   currentEventData,
 		displayedEventData: displayedEventData,
 		cliConnection:      cliConnection,
 		startTime:          time.Now(),
 		eventRateCounter:   util.NewRateCounter(time.Second),
 	}
+	return ep
+
 }
 
 func (ep *EventProcessor) Process(instanceId int, msg *events.Envelope) {
@@ -50,8 +55,8 @@ func (ep *EventProcessor) GetDisplayedEventData() *EventData {
 }
 
 func (ep *EventProcessor) UpdateData() {
-	ep.mu.Lock()
-	defer ep.mu.Unlock()
+	//ep.mu.Lock()
+	//defer ep.mu.Unlock()
 	processorCopy := ep.currentEventData.Clone()
 	ep.displayedEventData = processorCopy
 }
@@ -86,7 +91,7 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 		if appStats == nil {
 			// New app we haven't seen yet
 			appStats = NewAppStats(appId)
-			currentStatsMap[appId] = appStats
+			currentStatsMap[appId] = appStats // Thread was here at crash
 		}
 	}
 }

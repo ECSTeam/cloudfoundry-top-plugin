@@ -20,14 +20,19 @@ type EventData struct {
 	AppMap      map[string]*AppStats
 	CellMap     map[string]*CellStats
 	TotalEvents int64
-	mu          sync.Mutex
+	mu          *sync.Mutex
 }
 
-func NewEventData() *EventData {
+func NewEventData(mu *sync.Mutex) *EventData {
+
+	// TODO: Figure out why we can't shae the same mutex wihtout deadlock
+	//mu2 := &sync.Mutex{}
+
 	return &EventData{
 		AppMap:      make(map[string]*AppStats),
 		CellMap:     make(map[string]*CellStats),
 		TotalEvents: 0,
+		mu:          mu,
 	}
 }
 
@@ -189,7 +194,7 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 	logMessage := msg.GetLogMessage()
 	appId := logMessage.GetAppId()
 
-	appStats := ed.getAppStats(appId)
+	appStats := ed.getAppStats(appId) // Thread here at crash
 
 	switch logMessage.GetSourceType() {
 	case "APP":
@@ -290,6 +295,7 @@ func (ed *EventData) containerMetricEvent(msg *events.Envelope) {
 }
 
 func (ed *EventData) getAppStats(appId string) *AppStats {
+
 	appStats := ed.AppMap[appId]
 	if appStats == nil {
 		// New app we haven't seen yet

@@ -11,7 +11,7 @@ import (
 func (asUI *CellListView) columnIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).Ip, c2.(*displaydata.DisplayCellStats).Ip)
+		return util.Ip2long(c1.(*displaydata.DisplayCellStats).Ip) < util.Ip2long(c2.(*displaydata.DisplayCellStats).Ip)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
