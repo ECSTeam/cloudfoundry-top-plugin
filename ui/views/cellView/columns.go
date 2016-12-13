@@ -29,7 +29,7 @@ func (asUI *CellListView) columnIp() *uiCommon.ListColumn {
 func (asUI *CellListView) columnNumOfCpus() *uiCommon.ListColumn {
 	defaultColSize := 4
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).NumOfCpus > c2.(*displaydata.DisplayCellStats).NumOfCpus)
+		return (c1.(*displaydata.DisplayCellStats).NumOfCpus < c2.(*displaydata.DisplayCellStats).NumOfCpus)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
@@ -145,7 +145,7 @@ func (asUI *CellListView) columnCapacityRemainingDisk() *uiCommon.ListColumn {
 func (asUI *CellListView) columnCapacityTotalContainers() *uiCommon.ListColumn {
 	defaultColSize := 8
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).CapacityTotalContainers > c2.(*displaydata.DisplayCellStats).CapacityTotalContainers)
+		return (c1.(*displaydata.DisplayCellStats).CapacityTotalContainers < c2.(*displaydata.DisplayCellStats).CapacityTotalContainers)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
@@ -162,14 +162,14 @@ func (asUI *CellListView) columnCapacityTotalContainers() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityTotalContainers)
 	}
 	c := uiCommon.NewListColumn("MAX_CNTR", "MAX_CNTR", defaultColSize,
-		uiCommon.NUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
 func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
 	defaultColSize := 5
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).ContainerCount > c2.(*displaydata.DisplayCellStats).ContainerCount)
+		return (c1.(*displaydata.DisplayCellStats).ContainerCount < c2.(*displaydata.DisplayCellStats).ContainerCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
@@ -186,7 +186,7 @@ func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.ContainerCount)
 	}
 	c := uiCommon.NewListColumn("CNTRS", "CNTRS", defaultColSize,
-		uiCommon.NUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, appNameSortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
@@ -229,7 +229,7 @@ func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
 func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
 	defaultColSize := 7
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).JobIndex > c2.(*displaydata.DisplayCellStats).JobIndex)
+		return (c1.(*displaydata.DisplayCellStats).JobIndex < c2.(*displaydata.DisplayCellStats).JobIndex)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
@@ -238,7 +238,7 @@ func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
-		return cellStats.JobIndex
+		return fmt.Sprintf("%v", cellStats.JobIndex)
 	}
 	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
 		uiCommon.NUMERIC, true, appNameSortFunc, false, displayFunc, rawValueFunc)
@@ -248,7 +248,7 @@ func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
 func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
 	defaultColSize := 6
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage > c2.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage)
+		return (c1.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage < c2.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
@@ -280,7 +280,7 @@ func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
 func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn {
 	defaultColSize := 4
 	appNameSortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).TotalReportingContainers > c2.(*displaydata.DisplayCellStats).TotalReportingContainers)
+		return (c1.(*displaydata.DisplayCellStats).TotalReportingContainers < c2.(*displaydata.DisplayCellStats).TotalReportingContainers)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
