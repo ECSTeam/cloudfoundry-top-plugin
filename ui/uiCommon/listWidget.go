@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/Knetic/govaluate"
+	"github.com/ansel1/merry"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
@@ -356,6 +357,9 @@ func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
 	sortFunctions := make([]util.LessFunc, 0)
 	for _, sortColumn := range asUI.sortColumns {
 		sc := asUI.columnMap[sortColumn.id]
+		if sc == nil {
+			log.Panic(merry.Errorf("Unable to find sort column: %v", sortColumn.id))
+		}
 		sortFunc := sc.sortFunc
 		if sortColumn.reverseSort {
 			sortFunc = util.Reverse(sortFunc)

@@ -22,6 +22,8 @@ type GetListData func() []uiCommon.IData
 
 type DataListView struct {
 	masterUI               masterUIInterface.MasterUIInterface
+	parentView             DataListViewInterface
+	detailView             DataListViewInterface
 	name                   string
 	topMargin              int
 	bottomMargin           int
@@ -40,6 +42,7 @@ type DataListView struct {
 }
 
 func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
+	parentView DataListViewInterface,
 	name string, topMargin, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor,
 	columnDefinitions []*uiCommon.ListColumn,
@@ -47,6 +50,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI := &DataListView{
 		masterUI:       masterUI,
+		parentView:     parentView,
 		name:           name,
 		topMargin:      topMargin,
 		bottomMargin:   bottomMargin,
@@ -79,6 +83,18 @@ func (asUI *DataListView) GetMargins() (int, int) {
 
 func (asUI *DataListView) GetMasterUI() masterUIInterface.MasterUIInterface {
 	return asUI.masterUI
+}
+
+func (asUI *DataListView) GetParentView() DataListViewInterface {
+	return asUI.parentView
+}
+
+func (asUI *DataListView) GetDetailView() DataListViewInterface {
+	return asUI.detailView
+}
+
+func (asUI *DataListView) SetDetailView(detailView DataListViewInterface) {
+	asUI.detailView = detailView
 }
 
 func (asUI *DataListView) GetListWidget() *uiCommon.ListWidget {
@@ -151,6 +167,7 @@ func (asUI *DataListView) GetDisplayedEventData() *eventdata.EventData {
 
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 	var err error
+
 	if asUI.RefreshDisplayCallback != nil {
 		err = asUI.RefreshDisplayCallback(g)
 	} else {
@@ -180,7 +197,6 @@ func (asUI *DataListView) UpdateDisplay(g *gocui.Gui) error {
 // XXX
 func (asUI *DataListView) updateData() {
 	asUI.eventProcessor.UpdateData()
-	//processor := asUI.GetDisplayedEventData()
 	listData := asUI.GetListData()
 	asUI.listWidget.SetListData(listData)
 }

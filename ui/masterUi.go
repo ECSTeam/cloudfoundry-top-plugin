@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -97,7 +98,7 @@ func (mui *MasterUI) initGui() {
 	// that no DataView is open
 	mui.addCommonDataViewKeybindings(g, "headerView")
 
-	mui.openView(g, "appListView")
+	mui.createAndOpenView(g, "appListView")
 
 	// default refresh to 1 second
 	mui.refreshIntervalMS = 1000 * time.Millisecond
@@ -114,10 +115,22 @@ func (mui *MasterUI) initGui() {
 
 }
 
-func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
+// Add keybindings for top level data views -- note must also call addCommonDataViewKeybindings
+// to get a full set of keybindings
+func (mui *MasterUI) addTopLevelDataViewKeybindings(g *gocui.Gui, viewName string) error {
 	if err := g.SetKeybinding(viewName, 'q', gocui.ModNone, mui.quit); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(viewName, 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
+		log.Panicln(err)
+	}
+	return nil
+}
+
+// Add common keybindings for all data views -- note that this does not include
+// keybindings for "top level" data views which are ones that are selectable from
+// the "select view" menu ('d' command)
+func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
 	if err := g.SetKeybinding(viewName, 'C', gocui.ModNone, mui.clearStats); err != nil {
 		log.Panicln(err)
 	}
@@ -130,10 +143,15 @@ func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 	if err := g.SetKeybinding(viewName, 's', gocui.ModNone, mui.editUpdateInterval); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(viewName, 'd', gocui.ModNone, mui.selectDisplayAction); err != nil {
+	if err := g.SetKeybinding(viewName, 'r', gocui.ModNone, mui.refreshMetadata); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(viewName, 'r', gocui.ModNone, mui.refreshMetadata); err != nil {
+
+	if err := g.SetKeybinding(viewName, 'Z', gocui.ModNone,
+		func(g *gocui.Gui, v *gocui.View) error {
+			toplog.Debug(fmt.Sprintf("Top: %v", mui.layoutManager.Top().Name()))
+			return nil
+		}); err != nil {
 		log.Panicln(err)
 	}
 
@@ -152,11 +170,27 @@ func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
 	mui.gui.DeleteView(m.Name())
 	mui.gui.DeleteKeybindings(m.Name())
 	nextForFocus := mui.layoutManager.Remove(m)
+
+	//toplog.Debug(fmt.Sprintf("type:%v", checkIfUpdatableView(nextForFocus)))
+
 	nextViewName := nextForFocus.Name()
 	if err := mui.SetCurrentViewOnTop(mui.gui); err != nil {
 		return merry.Wrap(err).Appendf("SetCurrentViewOnTop viewName:[%v]", nextViewName)
 	}
+
+	if mui.checkIfUpdatableView(nextForFocus) {
+		mui.currentDataView = nextForFocus.(masterUIInterface.UpdatableView)
+	}
+
 	return nil
+}
+
+func (mui *MasterUI) checkIfUpdatableView(x interface{}) bool {
+	// Declare a type object representing UpdatableView
+	updatableView := reflect.TypeOf((*masterUIInterface.UpdatableView)(nil)).Elem()
+	// Get a type object of the pointer on the object represented by the parameter
+	// and see if it implements UpdatableView
+	return reflect.TypeOf(x).Implements(updatableView)
 }
 
 func (mui *MasterUI) CloseViewByName(viewName string) error {
@@ -202,12 +236,20 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 func (mui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 	mui.displayMenuId = menuId
-	mui.CloseView(mui.currentDataView)
-	mui.openView(g, menuId)
+	//mui.CloseView(mui.currentDataView)
+	mui.createAndOpenView(g, menuId)
 	return nil
 }
 
-func (mui *MasterUI) openView(g *gocui.Gui, viewName string) error {
+func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
+
+	if mui.layoutManager.ContainsViewName(viewName) {
+		mui.layoutManager.SetCurrentView(viewName)
+		mui.SetCurrentViewOnTop(g)
+		mui.updateDisplay(g)
+		return nil
+	}
+
 	ep := mui.router.GetProcessor()
 	var dataView masterUIInterface.UpdatableView
 	switch viewName {
@@ -218,6 +260,12 @@ func (mui *MasterUI) openView(g *gocui.Gui, viewName string) error {
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}
+	mui.OpenView(g, dataView)
+	mui.addTopLevelDataViewKeybindings(g, dataView.Name())
+	return nil
+}
+
+func (mui *MasterUI) OpenView(g *gocui.Gui, dataView masterUIInterface.UpdatableView) error {
 	mui.currentDataView = dataView
 	mui.layoutManager.Add(dataView)
 	dataView.Layout(g)
@@ -282,6 +330,7 @@ func (mui *MasterUI) counter(g *gocui.Gui) {
 func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
 		mui.updateHeaderDisplay(g)
+		// xxx
 		mui.currentDataView.UpdateDisplay(g)
 		return nil
 	})

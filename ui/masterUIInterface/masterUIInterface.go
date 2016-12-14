@@ -8,6 +8,7 @@ type MasterUIInterface interface {
 	CloseView(Manager) error
 	CloseViewByName(viewName string) error
 	LayoutManager() LayoutManagerInterface
+	OpenView(g *gocui.Gui, dataView UpdatableView) error
 }
 
 type LayoutManagerInterface interface {

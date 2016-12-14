@@ -29,23 +29,36 @@ func (w *LayoutManager) Layout(g *gocui.Gui) error {
 
 func (w *LayoutManager) Contains(managerToFind masterUIInterface.Manager) bool {
 	for _, m := range w.managers {
-		if m == managerToFind {
+		if m.Name() == managerToFind.Name() {
 			return true
 		}
 	}
 	return false
 }
 
-func (w *LayoutManager) Add(addMgr masterUIInterface.Manager) {
-
-	// TODO: This is just a development check -- can move later
-
+func (w *LayoutManager) ContainsViewName(viewName string) bool {
 	for _, m := range w.managers {
-		if m.Name() == addMgr.Name() {
-			log.Panicf("Attempting to add a ui manager named %v and it already exists", m.Name())
+		if m.Name() == viewName {
+			return true
 		}
 	}
+	return false
+}
 
+func (w *LayoutManager) SetCurrentView(viewName string) bool {
+	// We remove then add the view back to get it to the bottom
+	// of the list so that its considered "top" (or current)
+	mgr := w.GetManagerByViewName(viewName)
+	w.Remove(mgr)
+	w.Add(mgr)
+	return true
+}
+
+func (w *LayoutManager) Add(addMgr masterUIInterface.Manager) {
+	// TODO: This is just a development check -- can move later
+	if w.Contains(addMgr) {
+		log.Panicf("Attempting to add a ui manager named %v and it already exists", addMgr.Name())
+	}
 	w.managers = append(w.managers, addMgr)
 }
 

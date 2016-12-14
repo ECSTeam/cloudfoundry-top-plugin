@@ -1,4 +1,4 @@
-package appView
+package appDetailView
 
 import (
 	"errors"

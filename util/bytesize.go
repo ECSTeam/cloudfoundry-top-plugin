@@ -2,6 +2,8 @@ package util
 
 import "fmt"
 
+const MEGABYTE = (1024 * 1024)
+
 type ByteSize float64
 
 const (

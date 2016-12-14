@@ -1,58 +1,141 @@
-package appView
+package appDetailView
 
 import (
 	"fmt"
 	"log"
 
-	"github.com/ansel1/merry"
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 const MEGABYTE = (1024 * 1024)
 
 type AppDetailView struct {
-	masterUI       masterUIInterface.MasterUIInterface
-	name           string
-	topMargin      int
-	bottomMargin   int
-	eventProcessor *eventdata.EventProcessor
-	appId          string
-	appListView    *AppListView
+	*dataView.DataListView
+	appId              string
+	requestsInfoWidget *RequestsInfoWidget
 }
 
-func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface, name string,
+func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
+	parentView dataView.DataListViewInterface,
+	name string,
 	topMargin, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor,
-	appId string, appListView *AppListView) *AppDetailView {
+	appId string) *AppDetailView {
 
-	asUI := &AppDetailView{}
+	asUI := &AppDetailView{appId: appId}
 
-	/*
-		dataListView := dataView.NewDataListView(masterUI,
-			name, topMargin, bottomMargin,
-			eventProcessor, asUI.columnDefinitions(),
-			defaultSortColumns)
-	*/
+	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget")
+	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
 
-	asUI.masterUI = masterUI
-	asUI.name = name
-	asUI.topMargin = topMargin
-	asUI.bottomMargin = bottomMargin
-	asUI.eventProcessor = eventProcessor
-	asUI.appId = appId
-	asUI.appListView = appListView
+	defaultSortColumns := []*uiCommon.SortColumn{
+	//uiCommon.NewSortColumn("CPU_PERCENT", true),
+	//uiCommon.NewSortColumn("IP", false),
+	}
+
+	dataListView := dataView.NewDataListView(masterUI, parentView,
+		name, topMargin+16, bottomMargin,
+		eventProcessor, asUI.columnDefinitions(),
+		defaultSortColumns)
+
+	//dataListView.UpdateHeaderCallback = asUI.updateHeader
+	dataListView.InitializeCallback = asUI.initializeCallback
+	dataListView.GetListData = asUI.GetListData
+	dataListView.RefreshDisplayCallback = asUI.refreshDisplayX
+
+	//dataListView.SetTitle("App Details (press 'q' to quit view)")
+	dataListView.HelpText = helpText
+
+	asUI.DataListView = dataListView
 
 	return asUI
 }
 
-func (w *AppDetailView) Name() string {
-	return w.name
+func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) error {
+	if err := g.SetKeybinding(viewName, 'q', gocui.ModNone, asUI.closeAppDetailView); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppDetailView); err != nil {
+		log.Panicln(err)
+	}
+	return nil
 }
 
+func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
+	columns := make([]*uiCommon.ListColumn, 0)
+	// TODO: Replace this with container specific columns
+	columns = append(columns, asUI.columnAppName())
+	columns = append(columns, asUI.columnSpaceName())
+	columns = append(columns, asUI.columnOrgName())
+	return columns
+}
+
+func (asUI *AppDetailView) GetListData() []uiCommon.IData {
+	displayDataList := asUI.postProcessData()
+	listData := asUI.convertToListData(displayDataList)
+	return listData
+}
+
+func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStats {
+
+	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
+
+	appMap := asUI.GetDisplayedEventData().AppMap
+	appStats := appMap[asUI.appId]
+	for _, containerStats := range appStats.ContainerArray {
+		if containerStats != nil {
+			containerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+			containerStatsArray = append(containerStatsArray, containerStats)
+		}
+	}
+
+	return containerStatsArray
+}
+
+func (asUI *AppDetailView) convertToListData(containerStatsArray []*displaydata.DisplayContainerStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, 0, len(containerStatsArray))
+	for _, d := range containerStatsArray {
+		listData = append(listData, d)
+	}
+	return listData
+}
+
+/*
+func (asUI *AppDetailView) GetListData() []uiCommon.IData {
+	displayDataList := asUI.postProcessData()
+	listData := asUI.convertToListData(displayDataList)
+	return listData
+}
+
+func (asUI *AppDetailView) postProcessData() []*eventdata.AppStats {
+
+	// TODO: Move most of the clone() code here
+
+	appMap := asUI.GetDisplayedEventData().AppMap
+	if len(appMap) > 0 {
+		stats := eventdata.PopulateNamesIfNeeded(appMap)
+		return stats
+	} else {
+		return nil
+	}
+}
+
+func (asUI *AppDetailView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, len(statsList))
+	for i, d := range statsList {
+		listData[i] = d
+	}
+	return listData
+}
+*/
+
+/*
 func (w *AppDetailView) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	bottom := maxY - w.bottomMargin
@@ -97,17 +180,22 @@ func (w *AppDetailView) Layout(g *gocui.Gui) error {
 	}
 	return nil
 }
+*/
 
-func (w *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
-	if err := w.masterUI.CloseView(w); err != nil {
+func (asUI *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
+	if err := asUI.GetMasterUI().CloseView(asUI); err != nil {
 		return err
 	}
-	return w.appListView.detailViewClosed(g)
+
+	if err := asUI.GetMasterUI().CloseView(asUI.requestsInfoWidget); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
+func (w *AppDetailView) refreshDisplayX(g *gocui.Gui) error {
 
-	v, err := g.View(w.name)
+	v, err := g.View("requestsInfoWidget")
 	if err != nil {
 		return err
 	}
@@ -119,7 +207,8 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 		return nil
 	}
 
-	m := w.appListView.GetDisplayedEventData().AppMap
+	m := w.GetDisplayedEventData().AppMap
+
 	appStats := m[w.appId]
 
 	avgResponseTimeL60Info := "--"
