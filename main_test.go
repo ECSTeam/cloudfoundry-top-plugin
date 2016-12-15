@@ -3,5 +3,5 @@ package main
 import (
   "fmt"
   "sort"
-  "github.com/kkellner/cloudfoundry-top-plugin/appStats"
+  "github.com/ecsteam/cloudfoundry-top-plugin/appStats"
 )

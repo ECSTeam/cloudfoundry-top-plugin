@@ -1,16 +1,32 @@
+// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
+// https://github.com/ECSTeam/cloudfoundry-top-plugin
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package appDetailView
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
-	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
-	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppDetailView struct {
@@ -46,6 +62,7 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
+	dataListView.UpdateHeaderCallback = asUI.updateHeader
 
 	dataListView.SetTitle("Container List")
 	dataListView.HelpText = helpText
@@ -275,5 +292,10 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))
 		fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
 	*/
+	return nil
+}
+
+func (asUI *AppDetailView) updateHeader(g *gocui.Gui, v *gocui.View) error {
+	fmt.Fprintf(v, "\nTODO: Show summary stats")
 	return nil
 }

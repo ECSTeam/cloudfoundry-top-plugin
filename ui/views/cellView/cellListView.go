@@ -1,18 +1,33 @@
+// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
+// https://github.com/ECSTeam/cloudfoundry-top-plugin
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cellView
 
 import (
 	"fmt"
 	"log"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
-	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
-	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/cellDetailView"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
-	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type CellListView struct {

@@ -8,14 +8,14 @@
   - name: Kurt Kellner
     homepage: https://github.com/kkellner
     contact: kkellner@ecsteam.com
-  homepage: https://github.com/kkellner/cloudfoundry-top-plugin
+  homepage: https://github.com/ecsteam/cloudfoundry-top-plugin
   binaries:
   - platform: osx
-    url: https://github.com/kkellner/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
+    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
     checksum: __osx-sha1__
   - platform: win64
-    url: https://github.com/kkellner/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
+    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
     checksum: __win64-sha1__
   - platform: linux64
-    url: https://github.com/kkellner/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
+    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
     checksum: __linux64-sha1__
