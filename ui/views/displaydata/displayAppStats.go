@@ -5,16 +5,16 @@ import "github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 type DisplayAppStats struct {
 	*eventdata.AppStats
 
+	DesiredContainers int
 	//TotalTraffic *eventdata.TrafficStats
 
-	TotalCpuPercentage float64 // updated after a clone of this object
-	TotalUsedMemory    uint64  // updated after a clone of this object
-	TotalUsedDisk      uint64  // updated after a clone of this object
+	TotalCpuPercentage float64
+	TotalUsedMemory    uint64
+	TotalUsedDisk      uint64
 
-	TotalReportingContainers int   //updated after a clone of this object
-	TotalLogStdout           int64 //updated after a clone of this object
-	TotalLogStderr           int64 //updated after a clone of this object
-
+	TotalReportingContainers int
+	TotalLogStdout           int64
+	TotalLogStderr           int64
 }
 
 func NewDisplayAppStats(appStats *eventdata.AppStats) *DisplayAppStats {

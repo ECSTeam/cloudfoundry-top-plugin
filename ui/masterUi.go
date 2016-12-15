@@ -340,6 +340,11 @@ func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (mui *MasterUI) IsWarmupComplete() bool {
+	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
+	return runtimeSeconds > time.Second*WarmUpSeconds
+}
+
 func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
 	v, err := g.View("headerView")

@@ -58,7 +58,8 @@ type App struct {
 	//ExitStatus      string  `json:"exit_status,omitempty"`
 	//ExitDescription string  `json:"exit_description,omitempty"`
 	//ExitReason      string  `json:"reason,omitempty"`
-
+	// "package_updated_at": "2016-11-15T19:56:52Z",
+	PackageUpdatedAt string `json:"package_updated_at"`
 }
 
 var (

@@ -416,14 +416,12 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
 func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) {
 	isSelected := false
-	//if asUI.GetRowKey(rowIndex) == asUI.highlightKey {
 	if asUI.listData[rowIndex].Id() == asUI.highlightKey {
 		fmt.Fprintf(v, util.REVERSE_GREEN)
 		isSelected = true
 	}
 
 	if asUI.PreRowDisplayFunc != nil {
-		//fmt.Fprint(v, asUI.PreRowDisplayFunc(rowIndex, isSelected))
 		fmt.Fprint(v, asUI.PreRowDisplayFunc(asUI.listData[rowIndex], isSelected))
 	}
 
@@ -435,7 +433,6 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
 			continue
 		}
-		//fmt.Fprint(v, column.displayFunc(rowIndex, isSelected))
 		fmt.Fprint(v, column.displayFunc(asUI.listData[rowIndex], isSelected))
 		fmt.Fprint(v, " ")
 	}

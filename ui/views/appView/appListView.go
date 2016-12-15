@@ -24,7 +24,8 @@ const StaleContainerSeconds = 80
 
 type AppListView struct {
 	*dataView.DataListView
-	displayAppStats []*displaydata.DisplayAppStats
+	displayAppStats  []*displaydata.DisplayAppStats
+	isWarmupComplete bool
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
@@ -94,7 +95,9 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.columnSpaceName())
 	columns = append(columns, asUI.columnOrgName())
 
+	columns = append(columns, asUI.columnDesiredInstances())
 	columns = append(columns, asUI.columnReportingContainers())
+
 	columns = append(columns, asUI.columnTotalCpu())
 	columns = append(columns, asUI.columnTotalMemoryUsed())
 	columns = append(columns, asUI.columnTotalDiskUsed())
@@ -179,6 +182,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 	for _, appStats := range appStatsArray {
 		displayAppStats := displaydata.NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
+		appMetadata := metadata.FindAppMetadata(appStats.AppId)
 
 		totalCpuPercentage := 0.0
 		totalUsedMemory := uint64(0)
@@ -216,9 +220,13 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 		displayAppStats.TotalLogStdout = logStdoutCount + appStats.NonContainerStdout
 		displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
 
+		if appMetadata.State == "STARTED" {
+			displayAppStats.DesiredContainers = int(appMetadata.Instances)
+		}
+
 	}
 	asUI.displayAppStats = displayStatsArray
-
+	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
 	return displayStatsArray
 }
 
@@ -238,7 +246,13 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
 	appStats := data.(*displaydata.DisplayAppStats)
 	v := bytes.NewBufferString("")
-	if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
+	if asUI.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
+		if isSelected {
+			fmt.Fprintf(v, util.RED_TEXT_GREEN_BG)
+		} else {
+			fmt.Fprintf(v, util.BRIGHT_RED)
+		}
+	} else if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
 		fmt.Fprintf(v, util.BRIGHT_WHITE)
 	}
 	return v.String()

@@ -73,36 +73,42 @@ func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	appMetadata := metadata.FindAppMetadata(appStats.AppId)
 
-	memoryDisplay := "--"
-	totalMemoryDisplay := "--"
-	totalDiskDisplay := "--"
-	instancesDisplay := "--"
-	diskQuotaDisplay := "--"
 	if appMetadata.Guid != "" {
-		memoryDisplay = util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()
-		diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * util.MEGABYTE).String()
-		instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
-		totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * util.MEGABYTE) * appMetadata.Instances).String()
-		totalDiskDisplay = util.ByteSize((appMetadata.DiskQuotaMB * util.MEGABYTE) * appMetadata.Instances).String()
+		memoryDisplay := util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()
+		diskQuotaDisplay := util.ByteSize(appMetadata.DiskQuotaMB * util.MEGABYTE).String()
+		instancesDisplay := fmt.Sprintf("%v", appMetadata.Instances)
+		totalMemoryDisplay := util.ByteSize((appMetadata.MemoryMB * util.MEGABYTE) * appMetadata.Instances).String()
+		totalDiskDisplay := util.ByteSize((appMetadata.DiskQuotaMB * util.MEGABYTE) * appMetadata.Instances).String()
+		state := appMetadata.State
+		buildpack := appMetadata.Buildpack
+		if buildpack == "" {
+			buildpack = appMetadata.DetectedBuildpack
+		}
+		packageUpdated := appMetadata.PackageUpdatedAt
+
+		fmt.Fprintf(v, " \n")
+		fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
+		fmt.Fprintf(v, " AppId:           %v\n", appStats.AppId)
+		fmt.Fprintf(v, " AppUUID:         %v\n", appStats.AppUUID)
+		fmt.Fprintf(v, " Space:           %v\n", appStats.SpaceName)
+		fmt.Fprintf(v, " Organization:    %v\n", appStats.OrgName)
+		fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
+		fmt.Fprintf(v, " State:           %v\n", state)
+		fmt.Fprintf(v, " Buildpack:       %v\n", buildpack)
+		fmt.Fprintf(v, " Package Updated: %v\n", packageUpdated)
+		fmt.Fprintf(v, "\n Reserved:\n")
+
+		fmt.Fprintf(v, "   Mem per (total):  %8v (%8v)\n", memoryDisplay, totalMemoryDisplay)
+		fmt.Fprintf(v, "   Disk per (total): %8v (%8v)\n", diskQuotaDisplay, totalDiskDisplay)
+
+	} else {
+		fmt.Fprintf(v, " \n Metadata not loaded yet...\n")
 	}
-
-	fmt.Fprintf(v, " \n")
-	fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
-	fmt.Fprintf(v, " AppId:           %v\n", appStats.AppId)
-	fmt.Fprintf(v, " AppUUID:         %v\n", appStats.AppUUID)
-	fmt.Fprintf(v, " Space:           %v\n", appStats.SpaceName)
-	fmt.Fprintf(v, " Organization:    %v\n", appStats.OrgName)
-	fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
-
-	fmt.Fprintf(v, "\n Reserved:\n")
-
-	fmt.Fprintf(v, "   Mem per (total):  %8v (%8v)\n", memoryDisplay, totalMemoryDisplay)
-	fmt.Fprintf(v, "   Disk per (total): %8v (%8v)\n", diskQuotaDisplay, totalDiskDisplay)
 
 	//fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
 	//fmt.Fprintf(v, "%v", util.CLEAR)
 	fmt.Fprintf(v, "\n")
 
-	fmt.Fprintf(v, "\n\n\n\n Press 'x' to exit view")
+	fmt.Fprintf(v, "\n Press 'x' to exit view")
 	return nil
 }

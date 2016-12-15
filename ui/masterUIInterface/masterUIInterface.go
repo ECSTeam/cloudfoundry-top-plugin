@@ -9,6 +9,7 @@ type MasterUIInterface interface {
 	CloseViewByName(viewName string) error
 	LayoutManager() LayoutManagerInterface
 	OpenView(g *gocui.Gui, dataView UpdatableView) error
+	IsWarmupComplete() bool
 }
 
 type LayoutManagerInterface interface {

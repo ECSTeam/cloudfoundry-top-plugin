@@ -80,6 +80,23 @@ func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
 	return c
 }
 
+func (asUI *AppListView) columnDesiredInstances() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*displaydata.DisplayAppStats).DesiredContainers < c2.(*displaydata.DisplayAppStats).DesiredContainers
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		appStats := data.(*displaydata.DisplayAppStats)
+		return fmt.Sprintf("%3v", appStats.DesiredContainers)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayAppStats)
+		return strconv.Itoa(appStats.DesiredContainers)
+	}
+	c := uiCommon.NewListColumn("desiredInstances", "DCR", 3,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
 func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayAppStats).TotalCpuPercentage < c2.(*displaydata.DisplayAppStats).TotalCpuPercentage

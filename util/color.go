@@ -19,6 +19,7 @@ const (
 	REVERSE = ";7m"
 
 	WHITE_TEXT_SOFT_BG = "\x1b[48;5;235m\x1b[37m"
+	RED_TEXT_GREEN_BG  = "\033[31m\033[42m"
 
 	BRIGHT_BLACK    = BLACK + BRIGHT
 	DIM_BLACK       = BLACK + DIM

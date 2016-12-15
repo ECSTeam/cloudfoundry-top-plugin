@@ -15,22 +15,23 @@ import (
 )
 
 type EventData struct {
-	AppMap      map[string]*AppStats
-	CellMap     map[string]*CellStats
-	TotalEvents int64
-	mu          *sync.Mutex
+	AppMap        map[string]*AppStats
+	CellMap       map[string]*CellStats
+	TotalEvents   int64
+	mu            *sync.Mutex
+	logHttpAccess *EventLogHttpAccess
 }
 
 func NewEventData(mu *sync.Mutex) *EventData {
 
-	// TODO: Figure out why we can't shae the same mutex wihtout deadlock
-	//mu2 := &sync.Mutex{}
+	logHttpAccess := NewEventLogHttpAccess()
 
 	return &EventData{
-		AppMap:      make(map[string]*AppStats),
-		CellMap:     make(map[string]*CellStats),
-		TotalEvents: 0,
-		mu:          mu,
+		AppMap:        make(map[string]*AppStats),
+		CellMap:       make(map[string]*CellStats),
+		TotalEvents:   0,
+		mu:            mu,
+		logHttpAccess: logHttpAccess,
 	}
 }
 
@@ -170,9 +171,12 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 			}
 		}
 	case "RTR":
-	// Ignore router log messages
+		// Ignore router log messages
+		// Turns out there is nothing useful in this message
+		//logMsg := logMessage.GetMessage()
+		//ed.handleHttpAccessLogLine(string(logMsg))
 	case "HEALTH":
-	// Ignore health check messages (TODO: Check sourceType of "crashed" messages)
+		// Ignore health check messages (TODO: Check sourceType of "crashed" messages)
 	default:
 		// Non-container log -- staging logs, router logs, etc
 		switch *logMessage.MessageType {
@@ -183,6 +187,10 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		}
 	}
 
+}
+
+func (ed *EventData) handleHttpAccessLogLine(logLine string) {
+	ed.logHttpAccess.parseHttpAccessLogLine(logLine)
 }
 
 func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
