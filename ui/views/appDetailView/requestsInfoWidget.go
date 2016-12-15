@@ -7,6 +7,7 @@ import (
 
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type RequestsInfoWidget struct {
@@ -111,6 +112,8 @@ func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
 	fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
 	fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
-
+	fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+	fmt.Fprintf(v, "  Press 'i' for more app info")
+	fmt.Fprintf(v, "%v", util.CLEAR)
 	return nil
 }

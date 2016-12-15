@@ -74,6 +74,9 @@ func (w *EditColumnViewAbs) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.applyAction); err != nil {
 			return err
 		}
+		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.applyAction); err != nil {
+			return err
+		}
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowRight, gocui.ModNone, w.keyArrowRightAction); err != nil {
 			return err
 		}
