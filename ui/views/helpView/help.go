@@ -54,7 +54,7 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeHelpView); err != nil {
 			return err
 		}
-		if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeHelpView); err != nil {
+		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.closeHelpView); err != nil {
 			return err
 		}
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowUp, gocui.ModNone, w.arrowUp); err != nil {

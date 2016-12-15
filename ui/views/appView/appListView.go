@@ -16,12 +16,15 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/appDetailView"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
+const StaleContainerSeconds = 80
+
 type AppListView struct {
 	*dataView.DataListView
-	//appDetailView *AppDetailView
+	displayAppStats []*displaydata.DisplayAppStats
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
@@ -80,12 +83,7 @@ func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 			asUI.GetEventProcessor(),
 			highlightKey)
 		asUI.SetDetailView(detailView)
-
 		asUI.GetMasterUI().OpenView(g, detailView)
-
-		//asUI.GetMasterUI().LayoutManager().Add(asUI.appDetailView)
-		//asUI.GetMasterUI().SetCurrentViewOnTop(g)
-		//asUI.DataListView.RefreshDisplayCallback = asUI.refreshDetailView
 	}
 	return nil
 }
@@ -172,22 +170,61 @@ func (asUI *AppListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *AppListView) postProcessData() []*eventdata.AppStats {
+func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 
-	// TODO: Move most of the clone() code here
-
+	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
-	if len(appMap) > 0 {
-		stats := eventdata.PopulateNamesFromMap(appMap)
-		return stats
-	} else {
-		return nil
+	appStatsArray := eventdata.PopulateNamesFromMap(appMap)
+
+	for _, appStats := range appStatsArray {
+		displayAppStats := displaydata.NewDisplayAppStats(appStats)
+		displayStatsArray = append(displayStatsArray, displayAppStats)
+
+		totalCpuPercentage := 0.0
+		totalUsedMemory := uint64(0)
+		totalUsedDisk := uint64(0)
+		totalReportingContainers := 0
+
+		now := time.Now()
+		for containerIndex, cs := range appStats.ContainerArray {
+			if cs != nil && cs.ContainerMetric != nil {
+				// If we haven't gotten a container update recently, ignore the old value
+				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
+					appStats.ContainerArray[containerIndex] = nil
+					continue
+				}
+
+				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
+				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
+				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
+				totalReportingContainers++
+			}
+		}
+		displayAppStats.TotalCpuPercentage = totalCpuPercentage
+		displayAppStats.TotalUsedMemory = totalUsedMemory
+		displayAppStats.TotalUsedDisk = totalUsedDisk
+		displayAppStats.TotalReportingContainers = totalReportingContainers
+
+		logStdoutCount := int64(0)
+		logStderrCount := int64(0)
+		for _, cs := range appStats.ContainerArray {
+			if cs != nil {
+				logStdoutCount = logStdoutCount + cs.OutCount
+				logStderrCount = logStderrCount + cs.ErrCount
+			}
+		}
+		displayAppStats.TotalLogStdout = logStdoutCount + appStats.NonContainerStdout
+		displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
+
 	}
+	asUI.displayAppStats = displayStatsArray
+
+	return displayStatsArray
 }
 
-func (asUI *AppListView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, len(statsList))
-	for i, d := range statsList {
+func (asUI *AppListView) convertToListData(statsArray []*displaydata.DisplayAppStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, len(statsArray))
+	for i, d := range statsArray {
 		listData[i] = d
 	}
 	return listData
@@ -199,7 +236,7 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 }
 
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
-	appStats := data.(*eventdata.AppStats)
+	appStats := data.(*displaydata.DisplayAppStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
 		fmt.Fprintf(v, util.BRIGHT_WHITE)
@@ -214,7 +251,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	totalUsedMemoryAppInstances := uint64(0)
 	totalUsedDiskAppInstances := uint64(0)
 	totalCpuPercentage := float64(0)
-	for _, appStats := range asUI.GetDisplayedEventData().AppMap {
+	for _, appStats := range asUI.displayAppStats {
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				totalReportingAppInstances++

@@ -62,10 +62,15 @@ func (asUI *CellDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, appDetailView.ColumnSpaceName())
 	columns = append(columns, appDetailView.ColumnOrgName())
 	columns = append(columns, appDetailView.ColumnTotalCpuPercentage())
+
+	columns = append(columns, appDetailView.ColumnMemoryReserved())
 	columns = append(columns, appDetailView.ColumnMemoryUsed())
 	columns = append(columns, appDetailView.ColumnMemoryFree())
+
+	columns = append(columns, appDetailView.ColumnDiskReserved())
 	columns = append(columns, appDetailView.ColumnDiskUsed())
 	columns = append(columns, appDetailView.ColumnDiskFree())
+
 	columns = append(columns, appDetailView.ColumnLogStdout())
 	columns = append(columns, appDetailView.ColumnLogStderr())
 
@@ -111,8 +116,17 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 					// This is a container on the selected cell
 					displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
 					usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
-					freeMemory := (uint64(appMetadata.MemoryMB) * util.MEGABYTE) - usedMemory
+					reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE
+					freeMemory := reservedMemory - usedMemory
 					displayContainerStats.FreeMemory = freeMemory
+					displayContainerStats.ReservedMemory = reservedMemory
+
+					usedDisk := containerStats.ContainerMetric.GetDiskBytes()
+					reservedDisk := uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE
+					freeDisk := reservedDisk - usedDisk
+					displayContainerStats.FreeDisk = freeDisk
+					displayContainerStats.ReservedDisk = reservedDisk
+
 					containerStatsArray = append(containerStatsArray, displayContainerStats)
 				}
 			}

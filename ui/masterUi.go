@@ -107,7 +107,7 @@ func (mui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
-	go mui.counter(g)
+	go mui.refreshDataAndDisplayThread(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		m := merry.Details(err)
 		log.Panicln(m)
@@ -314,7 +314,7 @@ func (mui *MasterUI) RefeshNow() {
 	mui.refreshNow <- true
 }
 
-func (mui *MasterUI) counter(g *gocui.Gui) {
+func (mui *MasterUI) refreshDataAndDisplayThread(g *gocui.Gui) {
 
 	mui.updateDisplay(g)
 	for {
@@ -330,7 +330,6 @@ func (mui *MasterUI) counter(g *gocui.Gui) {
 func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
 		mui.updateHeaderDisplay(g)
-		// xxx
 		mui.currentDataView.UpdateDisplay(g)
 		return nil
 	})

@@ -150,6 +150,24 @@ func ColumnMemoryFree() *uiCommon.ListColumn {
 	return c
 }
 
+func ColumnMemoryReserved() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*displaydata.DisplayContainerStats).ReservedMemory < c2.(*displaydata.DisplayContainerStats).ReservedMemory
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedMemory).StringWithPrecision(1))
+		return fmt.Sprintf("%9v", memInfo)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.ReservedMemory)
+	}
+	c := uiCommon.NewListColumn("MEM_RSVD", "MEM_RSVD", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
 func ColumnDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayContainerStats).ContainerMetric.GetDiskBytes() < c2.(*displaydata.DisplayContainerStats).ContainerMetric.GetDiskBytes()
@@ -182,6 +200,24 @@ func ColumnDiskFree() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.FreeDisk)
 	}
 	c := uiCommon.NewListColumn("DISK_FREE", "DISK_FREE", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
+func ColumnDiskReserved() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*displaydata.DisplayContainerStats).ReservedDisk < c2.(*displaydata.DisplayContainerStats).ReservedDisk
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedDisk).StringWithPrecision(1))
+		return fmt.Sprintf("%9v", memInfo)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.ReservedDisk)
+	}
+	c := uiCommon.NewListColumn("DISK_RSVD", "DISK_RSVD", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }

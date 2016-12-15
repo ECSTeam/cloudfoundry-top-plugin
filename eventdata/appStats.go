@@ -23,16 +23,9 @@ type AppStats struct {
 
 	ContainerArray      []*ContainerStats
 	ContainerTrafficMap map[string]*TrafficStats
-	TotalTraffic        *TrafficStats
 
-	TotalCpuPercentage float64 // updated after a clone of this object
-	TotalUsedMemory    uint64  // updated after a clone of this object
-	TotalUsedDisk      uint64  // updated after a clone of this object
-
-	TotalReportingContainers int   //updated after a clone of this object
-	TotalLogStdout           int64 //updated after a clone of this object
-	TotalLogStderr           int64 //updated after a clone of this object
-
+	// ISSUE: Must do this at clone time because of AvgTracker counter
+	TotalTraffic *TrafficStats
 }
 
 func NewAppStats(appId string) *AppStats {

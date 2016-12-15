@@ -5,9 +5,11 @@ import "github.com/kkellner/cloudfoundry-top-plugin/eventdata"
 type DisplayContainerStats struct {
 	*eventdata.ContainerStats
 	*eventdata.AppStats
-	FreeMemory uint64
-	FreeDisk   uint64
-	key        string
+	FreeMemory     uint64
+	ReservedMemory uint64
+	FreeDisk       uint64
+	ReservedDisk   uint64
+	key            string
 }
 
 func NewDisplayContainerStats(containerStats *eventdata.ContainerStats, appStats *eventdata.AppStats) *DisplayContainerStats {

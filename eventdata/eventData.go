@@ -14,8 +14,6 @@ import (
 	"github.com/mohae/deepcopy"
 )
 
-const StaleContainerSeconds = 80
-
 type EventData struct {
 	AppMap      map[string]*AppStats
 	CellMap     map[string]*CellStats
@@ -77,7 +75,6 @@ func (ed *EventData) Clone() *EventData {
 		http4xxCount := int64(0)
 		http5xxCount := int64(0)
 
-		//trafficMapSize := len(appStat.ContainerTrafficMap)
 		responseL60TimeArray := make([]*util.AvgTracker, 0)
 		responseL10TimeArray := make([]*util.AvgTracker, 0)
 		responseL1TimeArray := make([]*util.AvgTracker, 0)
@@ -113,46 +110,7 @@ func (ed *EventData) Clone() *EventData {
 			responseL10TimeArray = append(responseL10TimeArray, containerTraffic.responseL10Time)
 			responseL1TimeArray = append(responseL1TimeArray, containerTraffic.responseL1Time)
 
-			//fmt.Printf("\n **** instanceId: %v\n", instanceId)
-
 		}
-
-		totalCpuPercentage := 0.0
-		totalUsedMemory := uint64(0)
-		totalUsedDisk := uint64(0)
-		totalReportingContainers := 0
-
-		now := time.Now()
-		for containerIndex, cs := range appStat.ContainerArray {
-			if cs != nil && cs.ContainerMetric != nil {
-				// If we haven't gotten a container update recently, ignore the old value
-				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
-					clonedAppStat.ContainerArray[containerIndex] = nil
-					continue
-				}
-
-				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
-				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
-				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
-				totalReportingContainers++
-			}
-		}
-		clonedAppStat.TotalCpuPercentage = totalCpuPercentage
-		clonedAppStat.TotalUsedMemory = totalUsedMemory
-		clonedAppStat.TotalUsedDisk = totalUsedDisk
-		clonedAppStat.TotalReportingContainers = totalReportingContainers
-
-		logStdoutCount := int64(0)
-		logStderrCount := int64(0)
-		for _, cs := range appStat.ContainerArray {
-			if cs != nil {
-				logStdoutCount = logStdoutCount + cs.OutCount
-				logStderrCount = logStderrCount + cs.ErrCount
-			}
-		}
-
-		clonedAppStat.TotalLogStdout = logStdoutCount + appStat.NonContainerStdout
-		clonedAppStat.TotalLogStderr = logStderrCount + appStat.NonContainerStderr
 
 		totalTraffic.AvgResponseL60Time = util.AvgMultipleTrackers(responseL60TimeArray)
 		totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)

@@ -109,11 +109,15 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 		if containerStats != nil {
 			displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
 			usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
-			freeMemory := (uint64(appMetadata.MemoryMB) * util.MEGABYTE) - usedMemory
+			reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE
+			freeMemory := reservedMemory - usedMemory
 			displayContainerStats.FreeMemory = freeMemory
+			displayContainerStats.ReservedMemory = reservedMemory
 			usedDisk := containerStats.ContainerMetric.GetDiskBytes()
-			freeDisk := (uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE) - usedDisk
+			reservedDisk := uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE
+			freeDisk := reservedDisk - usedDisk
 			displayContainerStats.FreeDisk = freeDisk
+			displayContainerStats.ReservedDisk = reservedDisk
 			displayStatsArray = append(displayStatsArray, displayContainerStats)
 		}
 	}

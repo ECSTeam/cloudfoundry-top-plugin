@@ -111,5 +111,6 @@ func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
 	fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
 	fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
+
 	return nil
 }
