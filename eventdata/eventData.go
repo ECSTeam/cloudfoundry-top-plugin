@@ -142,14 +142,17 @@ func (ed *EventData) Clone() *EventData {
 		clonedAppStat.TotalUsedDisk = totalUsedDisk
 		clonedAppStat.TotalReportingContainers = totalReportingContainers
 
-		logCount := int64(0)
+		logStdoutCount := int64(0)
+		logStderrCount := int64(0)
 		for _, cs := range appStat.ContainerArray {
 			if cs != nil {
-				logCount = logCount + cs.OutCount + cs.ErrCount
+				logStdoutCount = logStdoutCount + cs.OutCount
+				logStderrCount = logStderrCount + cs.ErrCount
 			}
 		}
 
-		clonedAppStat.TotalLogCount = logCount + appStat.NonContainerOutCount + appStat.NonContainerErrCount
+		clonedAppStat.TotalLogStdout = logStdoutCount + appStat.NonContainerStdout
+		clonedAppStat.TotalLogStderr = logStderrCount + appStat.NonContainerStderr
 
 		totalTraffic.AvgResponseL60Time = util.AvgMultipleTrackers(responseL60TimeArray)
 		totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)
@@ -208,13 +211,17 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 				containerStats.ErrCount++
 			}
 		}
+	case "RTR":
+	// Ignore router log messages
+	case "HEALTH":
+	// Ignore health check messages (TODO: Check sourceType of "crashed" messages)
 	default:
-		// Non-container -- staging logs?
+		// Non-container log -- staging logs, router logs, etc
 		switch *logMessage.MessageType {
 		case events.LogMessage_OUT:
-			appStats.NonContainerOutCount++
+			appStats.NonContainerStdout++
 		case events.LogMessage_ERR:
-			appStats.NonContainerErrCount++
+			appStats.NonContainerStderr++
 		}
 	}
 
@@ -330,7 +337,7 @@ func (ed *EventData) getContainerStats(appStats *AppStats, instIndex int) *Conta
 
 	if containerStats == nil {
 		// New app we haven't seen yet
-		containerStats = NewContainerStats()
+		containerStats = NewContainerStats(instIndex)
 		appStats.ContainerArray[instIndex] = containerStats
 
 	}

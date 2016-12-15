@@ -7,6 +7,7 @@ import (
 )
 
 type ContainerStats struct {
+	ContainerIndex  int
 	Ip              string
 	ContainerMetric *events.ContainerMetric
 	LastUpdate      time.Time
@@ -14,7 +15,7 @@ type ContainerStats struct {
 	ErrCount        int64
 }
 
-func NewContainerStats() *ContainerStats {
-	stats := &ContainerStats{}
+func NewContainerStats(containerIndex int) *ContainerStats {
+	stats := &ContainerStats{ContainerIndex: containerIndex}
 	return stats
 }

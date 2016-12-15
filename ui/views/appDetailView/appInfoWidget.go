@@ -6,18 +6,21 @@ import (
 	"log"
 
 	"github.com/jroimartin/gocui"
+	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type AppInfoWidget struct {
-	masterUI masterUIInterface.MasterUIInterface
-	name     string
-	width    int
-	height   int
+	masterUI   masterUIInterface.MasterUIInterface
+	name       string
+	width      int
+	height     int
+	detailView *AppDetailView
 }
 
-func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, width, height int) *AppInfoWidget {
-	return &AppInfoWidget{masterUI: masterUI, name: name, width: width, height: height}
+func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {
+	return &AppInfoWidget{masterUI: masterUI, name: name, width: width, height: height, detailView: detailView}
 }
 
 func (w *AppInfoWidget) Name() string {
@@ -31,18 +34,20 @@ func (w *AppInfoWidget) Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
-		v.Title = "App Info (press ENTER to close)"
+		v.Title = "App Information"
 		v.Frame = true
-		fmt.Fprintln(v, "Future home of app info")
-		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeAppInfoWidget); err != nil {
+		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.closeAppInfoWidget); err != nil {
 			return err
 		}
-
+		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeAppInfoWidget); err != nil {
+			return err
+		}
 		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
 		}
 
 	}
+	w.refreshDisplay(g)
 	return nil
 }
 
@@ -50,5 +55,54 @@ func (w *AppInfoWidget) closeAppInfoWidget(g *gocui.Gui, v *gocui.View) error {
 	if err := w.masterUI.CloseView(w); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
+
+	v, err := g.View(w.name)
+	if err != nil {
+		return err
+	}
+
+	v.Clear()
+
+	m := w.detailView.GetDisplayedEventData().AppMap
+
+	appStats := m[w.detailView.appId]
+
+	appMetadata := metadata.FindAppMetadata(appStats.AppId)
+
+	memoryDisplay := "--"
+	totalMemoryDisplay := "--"
+	totalDiskDisplay := "--"
+	instancesDisplay := "--"
+	diskQuotaDisplay := "--"
+	if appMetadata.Guid != "" {
+		memoryDisplay = util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()
+		diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * util.MEGABYTE).String()
+		instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
+		totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * util.MEGABYTE) * appMetadata.Instances).String()
+		totalDiskDisplay = util.ByteSize((appMetadata.DiskQuotaMB * util.MEGABYTE) * appMetadata.Instances).String()
+	}
+
+	fmt.Fprintf(v, " \n")
+	fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
+	fmt.Fprintf(v, " AppId:           %v\n", appStats.AppId)
+	fmt.Fprintf(v, " AppUUID:         %v\n", appStats.AppUUID)
+	fmt.Fprintf(v, " Space:           %v\n", appStats.SpaceName)
+	fmt.Fprintf(v, " Organization:    %v\n", appStats.OrgName)
+	fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
+
+	fmt.Fprintf(v, "\n Reserved:\n")
+
+	fmt.Fprintf(v, "   Mem per (total):  %8v (%8v)\n", memoryDisplay, totalMemoryDisplay)
+	fmt.Fprintf(v, "   Disk per (total): %8v (%8v)\n", diskQuotaDisplay, totalDiskDisplay)
+
+	//fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+	//fmt.Fprintf(v, "%v", util.CLEAR)
+	fmt.Fprintf(v, "\n")
+
+	fmt.Fprintf(v, "\n\n\n\n Press 'x' to exit view")
 	return nil
 }

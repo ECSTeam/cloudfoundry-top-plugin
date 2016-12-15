@@ -6,10 +6,13 @@ import (
 
 	"github.com/jroimartin/gocui"
 	"github.com/kkellner/cloudfoundry-top-plugin/eventdata"
+	"github.com/kkellner/cloudfoundry-top-plugin/metadata"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/appDetailView"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
 
 type CellDetailView struct {
@@ -27,11 +30,12 @@ func NewCellDetailView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		//uiCommon.NewSortColumn("CPU", true),
-		//uiCommon.NewSortColumn("REQ60", true),
+		uiCommon.NewSortColumn("CPU_PERCENT", true),
 		uiCommon.NewSortColumn("appName", false),
 		uiCommon.NewSortColumn("spaceName", false),
-		uiCommon.NewSortColumn("orgName", false)}
+		uiCommon.NewSortColumn("orgName", false),
+		uiCommon.NewSortColumn("IDX", false),
+	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
 		name, topMargin, bottomMargin,
@@ -42,7 +46,7 @@ func NewCellDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Cell Detail - Container List")
+	dataListView.SetTitle(fmt.Sprintf("Cell %v Detail - Container List", cellIp))
 	dataListView.HelpText = helpText
 
 	asUI.DataListView = dataListView
@@ -53,15 +57,24 @@ func NewCellDetailView(masterUI masterUIInterface.MasterUIInterface,
 
 func (asUI *CellDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, asUI.columnAppName())
-	columns = append(columns, asUI.columnSpaceName())
-	columns = append(columns, asUI.columnOrgName())
+	columns = append(columns, appDetailView.ColumnAppName())
+	columns = append(columns, appDetailView.ColumnContainerIndex())
+	columns = append(columns, appDetailView.ColumnSpaceName())
+	columns = append(columns, appDetailView.ColumnOrgName())
+	columns = append(columns, appDetailView.ColumnTotalCpuPercentage())
+	columns = append(columns, appDetailView.ColumnMemoryUsed())
+	columns = append(columns, appDetailView.ColumnMemoryFree())
+	columns = append(columns, appDetailView.ColumnDiskUsed())
+	columns = append(columns, appDetailView.ColumnDiskFree())
+	columns = append(columns, appDetailView.ColumnLogStdout())
+	columns = append(columns, appDetailView.ColumnLogStderr())
+
 	return columns
 }
 
 func (asUI *CellDetailView) initializeCallback(g *gocui.Gui, viewName string) error {
 	// TODO: This needs to be handled in dataListView someplace for child (detailed) views as all of them will need a back action
-	if err := g.SetKeybinding(viewName, 'q', gocui.ModNone, asUI.closeAppDetailView); err != nil {
+	if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, asUI.closeAppDetailView); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppDetailView); err != nil {
@@ -89,14 +102,18 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.PopulateNamesIfNeeded(appMap)
+	appStatsArray := eventdata.PopulateNamesFromMap(appMap)
 	for _, appStats := range appStatsArray {
+		appMetadata := metadata.FindAppMetadata(appStats.AppId)
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil {
 				if containerStats.Ip == asUI.cellIp {
 					// This is a container on the selected cell
-					containerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
-					containerStatsArray = append(containerStatsArray, containerStats)
+					displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+					usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
+					freeMemory := (uint64(appMetadata.MemoryMB) * util.MEGABYTE) - usedMemory
+					displayContainerStats.FreeMemory = freeMemory
+					containerStatsArray = append(containerStatsArray, displayContainerStats)
 				}
 			}
 		}

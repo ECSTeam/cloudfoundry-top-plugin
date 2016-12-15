@@ -102,7 +102,8 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.columnTotalDiskUsed())
 
 	columns = append(columns, asUI.columnAvgResponseTimeL60Info())
-	columns = append(columns, asUI.columnLogCount())
+	columns = append(columns, asUI.columnLogStdout())
+	columns = append(columns, asUI.columnLogStderr())
 
 	columns = append(columns, asUI.columnReq1())
 	columns = append(columns, asUI.columnReq10())
@@ -177,7 +178,7 @@ func (asUI *AppListView) postProcessData() []*eventdata.AppStats {
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	if len(appMap) > 0 {
-		stats := eventdata.PopulateNamesIfNeeded(appMap)
+		stats := eventdata.PopulateNamesFromMap(appMap)
 		return stats
 	} else {
 		return nil
@@ -191,16 +192,6 @@ func (asUI *AppListView) convertToListData(statsList []*eventdata.AppStats) []ui
 	}
 	return listData
 }
-
-/*
-func (asUI *AppListView) refreshDetailView(g *gocui.Gui) error {
-	err := asUI.appDetailView.refreshDisplay(g)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-*/
 
 func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 	asUI.DataListView.RefreshDisplayCallback = nil

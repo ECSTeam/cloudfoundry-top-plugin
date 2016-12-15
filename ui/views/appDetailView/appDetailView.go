@@ -1,7 +1,6 @@
 package appDetailView
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/jroimartin/gocui"
@@ -13,8 +12,6 @@ import (
 	"github.com/kkellner/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/kkellner/cloudfoundry-top-plugin/util"
 )
-
-const MEGABYTE = (1024 * 1024)
 
 type AppDetailView struct {
 	*dataView.DataListView
@@ -31,25 +28,26 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI := &AppDetailView{appId: appId}
 
-	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget")
+	requestViewHeight := 5
+
+	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget", requestViewHeight, asUI)
 	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-	//uiCommon.NewSortColumn("CPU_PERCENT", true),
-	//uiCommon.NewSortColumn("IP", false),
+		uiCommon.NewSortColumn("IDX", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
-		name, topMargin+16, bottomMargin,
+		name, topMargin+requestViewHeight+1, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
 	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
-	dataListView.RefreshDisplayCallback = asUI.refreshDisplayX
+	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
 
-	//dataListView.SetTitle("App Details (press 'q' to quit view)")
+	dataListView.SetTitle("Container List")
 	dataListView.HelpText = helpText
 
 	asUI.DataListView = dataListView
@@ -58,21 +56,36 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 }
 
 func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) error {
-	if err := g.SetKeybinding(viewName, 'q', gocui.ModNone, asUI.closeAppDetailView); err != nil {
+	if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, asUI.closeAppDetailView); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppDetailView); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
+		log.Panicln(err)
+	}
+	return nil
+}
+
+func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
+	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), "appInfoWidget", 70, 20, asUI)
+	asUI.GetMasterUI().LayoutManager().Add(appInfoWidget)
+	asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	return nil
 }
 
 func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	// TODO: Replace this with container specific columns
-	columns = append(columns, asUI.columnAppName())
-	columns = append(columns, asUI.columnSpaceName())
-	columns = append(columns, asUI.columnOrgName())
+	columns = append(columns, ColumnContainerIndex())
+	columns = append(columns, ColumnTotalCpuPercentage())
+	columns = append(columns, ColumnMemoryUsed())
+	columns = append(columns, ColumnMemoryFree())
+	columns = append(columns, ColumnDiskUsed())
+	columns = append(columns, ColumnDiskFree())
+	columns = append(columns, ColumnLogStdout())
+	columns = append(columns, ColumnLogStderr())
+
 	return columns
 }
 
@@ -84,18 +97,27 @@ func (asUI *AppDetailView) GetListData() []uiCommon.IData {
 
 func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStats {
 
-	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
+	displayStatsArray := make([]*displaydata.DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStats := appMap[asUI.appId]
+
+	eventdata.PopulateNamesIfNeeded(appStats)
+	appMetadata := metadata.FindAppMetadata(appStats.AppId)
+
 	for _, containerStats := range appStats.ContainerArray {
 		if containerStats != nil {
-			containerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
-			containerStatsArray = append(containerStatsArray, containerStats)
+			displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+			usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
+			freeMemory := (uint64(appMetadata.MemoryMB) * util.MEGABYTE) - usedMemory
+			displayContainerStats.FreeMemory = freeMemory
+			usedDisk := containerStats.ContainerMetric.GetDiskBytes()
+			freeDisk := (uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE) - usedDisk
+			displayContainerStats.FreeDisk = freeDisk
+			displayStatsArray = append(displayStatsArray, displayContainerStats)
 		}
 	}
-
-	return containerStatsArray
+	return displayStatsArray
 }
 
 func (asUI *AppDetailView) convertToListData(containerStatsArray []*displaydata.DisplayContainerStats) []uiCommon.IData {
@@ -193,159 +215,61 @@ func (asUI *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error
 	return nil
 }
 
-func (w *AppDetailView) refreshDisplayX(g *gocui.Gui) error {
+func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 
-	v, err := g.View("requestsInfoWidget")
-	if err != nil {
-		return err
-	}
+	// HTTP request stats -- These stands are also on the appListView so we need them in a detail view??
+	/*
+		fmt.Fprintf(v, "\n")
+		fmt.Fprintf(v, "HTTP(S) status code:\n")
+		fmt.Fprintf(v, "  2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
+		fmt.Fprintf(v, "  3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
+		fmt.Fprintf(v, "  4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
+		fmt.Fprintf(v, "  5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
+		fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+		fmt.Fprintf(v, "  All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
+		fmt.Fprintf(v, "%v", util.CLEAR)
+	*/
 
-	v.Clear()
-
-	if w.appId == "" {
-		fmt.Fprintln(v, "No application selected")
-		return nil
-	}
-
-	m := w.GetDisplayedEventData().AppMap
-
-	appStats := m[w.appId]
-
-	avgResponseTimeL60Info := "--"
-	if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
-		avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
-		avgResponseTimeL60Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
-	}
-
-	avgResponseTimeL10Info := "--"
-	if appStats.TotalTraffic.AvgResponseL10Time >= 0 {
-		avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL10Time / 1000000
-		avgResponseTimeL10Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
-	}
-
-	avgResponseTimeL1Info := "--"
-	if appStats.TotalTraffic.AvgResponseL1Time >= 0 {
-		avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL1Time / 1000000
-		avgResponseTimeL1Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
-	}
-
-	appMetadata := metadata.FindAppMetadata(appStats.AppId)
-
-	memoryDisplay := "--"
-	totalMemoryDisplay := "--"
-	totalDiskDisplay := "--"
-	instancesDisplay := "--"
-	diskQuotaDisplay := "--"
-	if appMetadata.Guid != "" {
-		memoryDisplay = util.ByteSize(appMetadata.MemoryMB * MEGABYTE).String()
-		diskQuotaDisplay = util.ByteSize(appMetadata.DiskQuotaMB * MEGABYTE).String()
-		instancesDisplay = fmt.Sprintf("%v", appMetadata.Instances)
-		totalMemoryDisplay = util.ByteSize((appMetadata.MemoryMB * MEGABYTE) * appMetadata.Instances).String()
-		totalDiskDisplay = util.ByteSize((appMetadata.DiskQuotaMB * MEGABYTE) * appMetadata.Instances).String()
-	}
-
-	fmt.Fprintf(v, " \n")
-	fmt.Fprintf(v, "App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
-	fmt.Fprintf(v, "AppId:           %v\n", appStats.AppId)
-	fmt.Fprintf(v, "AppUUID:         %v\n", appStats.AppUUID)
-	fmt.Fprintf(v, "Space:           %v\n", appStats.SpaceName)
-	fmt.Fprintf(v, "Organization:    %v\n", appStats.OrgName)
-	fmt.Fprintf(v, "Desired insts:   %v\n", instancesDisplay)
-	fmt.Fprintf(v, "Rsrvd mem per (all):  %8v (%8v)\n", memoryDisplay, totalMemoryDisplay)
-	fmt.Fprintf(v, "Rsrvd disk per (all): %8v (%8v)\n", diskQuotaDisplay, totalDiskDisplay)
-	//fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-	//fmt.Fprintf(v, "%v", util.CLEAR)
-	fmt.Fprintf(v, "\n")
-
-	fmt.Fprintf(v, "%22v", "")
-	fmt.Fprintf(v, "    1sec   10sec   60sec\n")
-
-	fmt.Fprintf(v, "%22v", "HTTP(S) Event Rate:")
-	fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL1Rate)
-	fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL10Rate)
-	fmt.Fprintf(v, "%8v\n", appStats.TotalTraffic.EventL60Rate)
-
-	fmt.Fprintf(v, "%22v", "Avg Rspnse Time(ms):")
-	fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
-	fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
-	fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
-
-	fmt.Fprintf(v, "\n")
-	fmt.Fprintf(v, "HTTP(S) status code:\n")
-	fmt.Fprintf(v, "  2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
-	fmt.Fprintf(v, "  3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
-	fmt.Fprintf(v, "  4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
-	fmt.Fprintf(v, "  5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
-	fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-	fmt.Fprintf(v, "  All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
-	fmt.Fprintf(v, "%v", util.CLEAR)
-
-	fmt.Fprintf(v, "\nContainer Info:\n")
-	fmt.Fprintf(v, "%5v", "INST")
-	fmt.Fprintf(v, "%8v", "CPU%")
-	fmt.Fprintf(v, "%12v", "MEM USED")
-	fmt.Fprintf(v, "%12v", "MEM FREE")
-	fmt.Fprintf(v, "%12v", "DISK USED")
-	fmt.Fprintf(v, "%12v", "DISK FREE")
-	fmt.Fprintf(v, "%12v", "STDOUT")
-	fmt.Fprintf(v, "%12v", "STDERR")
-	fmt.Fprintf(v, "\n")
-
-	totalCpuPercentage := 0.0
-	totalMemory := uint64(0)
-	totalDisk := uint64(0)
-	reportingAppInstances := 0
-	totalLogCount := int64(0)
-	for i, ca := range appStats.ContainerArray {
-		if ca != nil {
-
-			fmt.Fprintf(v, "%5v", i)
-			if ca.ContainerMetric != nil {
-				cpuPercentage := *ca.ContainerMetric.CpuPercentage
-				totalCpuPercentage = totalCpuPercentage + cpuPercentage
-				memory := *ca.ContainerMetric.MemoryBytes
-				totalMemory = totalMemory + memory
-				disk := *ca.ContainerMetric.DiskBytes
-				totalDisk = totalDisk + disk
-				fmt.Fprintf(v, "%8.2f", cpuPercentage)
-				fmt.Fprintf(v, "%12v", util.ByteSize(memory))
-				fmt.Fprintf(v, "%12v", util.ByteSize((uint64(appMetadata.MemoryMB)*MEGABYTE)-memory))
-				fmt.Fprintf(v, "%12v", util.ByteSize(disk))
-				fmt.Fprintf(v, "%12v", util.ByteSize((uint64(appMetadata.DiskQuotaMB)*MEGABYTE)-disk))
-			} else {
-				fmt.Fprintf(v, "%8v", "--")
-				fmt.Fprintf(v, "%12v", "--")
-				fmt.Fprintf(v, "%12v", "--")
-				fmt.Fprintf(v, "%12v", "--")
-				fmt.Fprintf(v, "%12v", "--")
+	// App totals -- this is avaiable on appListView, do we need it here??
+	/*
+			totalCpuPercentage := 0.0
+			totalMemory := uint64(0)
+			totalDisk := uint64(0)
+			reportingAppInstances := 0
+			totalLogCount := int64(0)
+			for _, ca := range appStats.ContainerArray {
+				if ca != nil {
+					if ca.ContainerMetric != nil {
+						cpuPercentage := *ca.ContainerMetric.CpuPercentage
+						totalCpuPercentage = totalCpuPercentage + cpuPercentage
+						memory := *ca.ContainerMetric.MemoryBytes
+						totalMemory = totalMemory + memory
+						disk := *ca.ContainerMetric.DiskBytes
+						totalDisk = totalDisk + disk
+					}
+					totalLogCount = totalLogCount + (ca.OutCount + ca.ErrCount)
+					reportingAppInstances++
+				}
 			}
 
-			fmt.Fprintf(v, "%12v", util.Format(ca.OutCount))
-			fmt.Fprintf(v, "%12v", util.Format(ca.ErrCount))
-			totalLogCount = totalLogCount + (ca.OutCount + ca.ErrCount)
+			if reportingAppInstances == 0 {
+				fmt.Fprintf(v, "%6v", "\n Waiting for container metrics...")
+			} else {
+				if totalMemory > 0 {
+					fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
+					fmt.Fprintf(v, "Total")
+					fmt.Fprintf(v, "%8.2f", totalCpuPercentage)
+					fmt.Fprintf(v, "%12v", util.ByteSize(totalMemory))
+					fmt.Fprintf(v, "%12v", util.ByteSize(totalDisk))
+					fmt.Fprintf(v, "%v", util.CLEAR)
+				}
+			}
+			fmt.Fprintf(v, "\n\n")
 
-			fmt.Fprintf(v, "\n")
-			reportingAppInstances++
-		}
-	}
-	//fmt.Fprintf(v, "\n")
-	if reportingAppInstances == 0 {
-		fmt.Fprintf(v, "%6v", "\n Waiting for container metrics...")
-	} else {
-		if totalMemory > 0 {
-			fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-			fmt.Fprintf(v, "Total")
-			fmt.Fprintf(v, "%8.2f", totalCpuPercentage)
-			fmt.Fprintf(v, "%12v", util.ByteSize(totalMemory))
-			fmt.Fprintf(v, "%12v", util.ByteSize(totalDisk))
-			fmt.Fprintf(v, "%v", util.CLEAR)
-		}
-	}
-	fmt.Fprintf(v, "\n\n")
-	totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
-	fmt.Fprintf(v, "Non container logs - Stdout: %-12v ", util.Format(appStats.NonContainerOutCount))
-	fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))
-	fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
-
+		totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
+		fmt.Fprintf(v, "Non container logs - Stdout: %-12v ", util.Format(appStats.NonContainerOutCount))
+		fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))
+		fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
+	*/
 	return nil
 }

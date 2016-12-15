@@ -18,8 +18,8 @@ type AppStats struct {
 	SpaceName string
 	OrgName   string
 
-	NonContainerOutCount int64
-	NonContainerErrCount int64
+	NonContainerStdout int64
+	NonContainerStderr int64
 
 	ContainerArray      []*ContainerStats
 	ContainerTrafficMap map[string]*TrafficStats
@@ -30,7 +30,9 @@ type AppStats struct {
 	TotalUsedDisk      uint64  // updated after a clone of this object
 
 	TotalReportingContainers int   //updated after a clone of this object
-	TotalLogCount            int64 //updated after a clone of this object
+	TotalLogStdout           int64 //updated after a clone of this object
+	TotalLogStderr           int64 //updated after a clone of this object
+
 }
 
 func NewAppStats(appId string) *AppStats {
@@ -43,7 +45,41 @@ func (as *AppStats) Id() string {
 	return as.AppId
 }
 
-func PopulateNamesIfNeeded(statsMap map[string]*AppStats) []*AppStats {
+func PopulateNamesIfNeeded(appStats *AppStats) {
+	appMetadata := metadata.FindAppMetadata(appStats.AppId)
+	appName := appMetadata.Name
+	if appName == "" {
+		appName = appStats.AppId
+	}
+	appStats.AppName = appName
+
+	var spaceMetadata metadata.Space
+	spaceName := appStats.SpaceName
+	if spaceName == "" || spaceName == UnknownName {
+		spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+		spaceName = spaceMetadata.Name
+		if spaceName == "" {
+			spaceName = UnknownName
+		}
+		appStats.SpaceName = spaceName
+	}
+
+	orgName := appStats.OrgName
+	if orgName == "" || orgName == UnknownName {
+		if &spaceMetadata == nil {
+			spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+		}
+		orgMetadata := metadata.FindOrgMetadata(spaceMetadata.OrgGuid)
+		orgName = orgMetadata.Name
+		if orgName == "" {
+			orgName = UnknownName
+		}
+		appStats.OrgName = orgName
+	}
+
+}
+
+func PopulateNamesFromMap(statsMap map[string]*AppStats) []*AppStats {
 
 	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {
