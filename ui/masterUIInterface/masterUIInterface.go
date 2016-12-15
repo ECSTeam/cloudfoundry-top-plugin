@@ -14,6 +14,7 @@ type MasterUIInterface interface {
 
 type LayoutManagerInterface interface {
 	Contains(Manager) bool
+	ContainsViewName(viewName string) bool
 	Add(Manager)
 	Remove(Manager) Manager
 	Top() Manager

@@ -43,7 +43,7 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 		v.Frame = true
 
 		if w.displayText == "" {
-			re := regexp.MustCompile(`\*\*(.*)\*\*`)
+			re := regexp.MustCompile(`\*\*([^\*]*)*\*\*`)
 			w.displayText = re.ReplaceAllString(w.helpText, "\033[37;1m${1}\033[0m")
 		}
 

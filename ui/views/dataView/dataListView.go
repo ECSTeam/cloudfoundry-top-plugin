@@ -73,6 +73,19 @@ func (asUI *DataListView) Name() string {
 	return asUI.name
 }
 
+func (asUI *DataListView) GetTopMargin() int {
+	return asUI.topMargin
+}
+
+func (asUI *DataListView) SetTopMargin(topMargin int) {
+	asUI.topMargin = topMargin
+	asUI.SetTopMarginOnListWidget(topMargin)
+}
+
+func (asUI *DataListView) SetTopMarginOnListWidget(topMargin int) {
+	asUI.listWidget.SetTopMargin(topMargin)
+}
+
 func (asUI *DataListView) SetTitle(title string) {
 	asUI.listWidget.Title = title
 }
@@ -106,27 +119,9 @@ func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 }
 
 func (asUI *DataListView) Layout(g *gocui.Gui) error {
-
 	if !asUI.initialized {
-
 		asUI.initialized = true
 		asUI.initialize(g)
-
-		// TODO
-		/*
-			if err := g.SetKeybinding(asUI.name, gocui.KeyEnter, gocui.ModNone,
-				func(g *gocui.Gui, v *gocui.View) error {
-					if asUI.listWidget.HighlightKey() != "" {
-						asUI.appDetailView = NewAppDetailView(asUI.masterUI, "appDetailView", asUI.listWidget.HighlightKey(), asUI)
-						asUI.masterUI.LayoutManager().Add(asUI.appDetailView)
-						asUI.masterUI.SetCurrentViewOnTop(g)
-					}
-					return nil
-				}); err != nil {
-				log.Panicln(err)
-			}
-		*/
-
 	}
 	return asUI.listWidget.Layout(g)
 }

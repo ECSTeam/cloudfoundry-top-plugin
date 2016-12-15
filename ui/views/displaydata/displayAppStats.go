@@ -6,6 +6,7 @@ type DisplayAppStats struct {
 	*eventdata.AppStats
 
 	DesiredContainers int
+
 	//TotalTraffic *eventdata.TrafficStats
 
 	TotalCpuPercentage float64

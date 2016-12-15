@@ -26,6 +26,10 @@ type AppListView struct {
 	*dataView.DataListView
 	displayAppStats  []*displaydata.DisplayAppStats
 	isWarmupComplete bool
+	// This is a count of the number of apps that do not have
+	// the correct number of containers running based on app
+	// instance setting
+	appsNotInDesiredState int
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
@@ -64,6 +68,15 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error {
 
 	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, asUI.copyAction); err != nil {
+		log.Panicln(err)
+	}
+
+	// TODO: Testing -- remove later
+	if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, asUI.testShowUserMessage); err != nil {
+		log.Panicln(err)
+	}
+	// TODO: Testing -- remove later
+	if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, asUI.testClearUserMessage); err != nil {
 		log.Panicln(err)
 	}
 
@@ -119,6 +132,56 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	return columns
 }
 
+func (asUI *AppListView) isUserMessageOpen(g *gocui.Gui) bool {
+	alertViewName := "alertView"
+	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
+	if view != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (asUI *AppListView) clearUserMessage(g *gocui.Gui) error {
+	alertViewName := "alertView"
+	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
+	if view != nil {
+		asUI.GetMasterUI().CloseView(view)
+	}
+	topMargin := asUI.GetTopMargin()
+	asUI.SetTopMarginOnListWidget(topMargin)
+	return nil
+}
+
+// TODO: Have message levels which will colorize differently
+func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
+	alertViewName := "alertView"
+	alertHeight := 1
+
+	topMargin := asUI.GetTopMargin()
+	asUI.SetTopMarginOnListWidget(topMargin + alertHeight)
+
+	var alertView *uiCommon.AlertWidget
+	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
+	if view == nil {
+		alertView = uiCommon.NewAlertWidget(alertViewName, topMargin, alertHeight)
+		asUI.GetMasterUI().LayoutManager().Add(alertView)
+	} else {
+		alertView = view.(*uiCommon.AlertWidget)
+		alertView.SetHeight(alertHeight)
+	}
+	alertView.SetMessage(message)
+	return nil
+}
+
+func (asUI *AppListView) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
+	return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (row colored red) ")
+}
+
+func (asUI *AppListView) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
+	return asUI.clearUserMessage(g)
+}
+
 func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 
 	selectedAppId := asUI.GetListWidget().HighlightKey()
@@ -141,7 +204,7 @@ func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 
-	clipboardValue := "hello from clipboard" + time.Now().Format("01-02-2006 15:04:05")
+	clipboardValue := ""
 
 	selectedAppId := asUI.GetListWidget().HighlightKey()
 	statsMap := asUI.GetDisplayedEventData().AppMap
@@ -178,6 +241,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventdata.PopulateNamesFromMap(appMap)
+	appsNotInDesiredState := 0
 
 	for _, appStats := range appStatsArray {
 		displayAppStats := displaydata.NewDisplayAppStats(appStats)
@@ -188,6 +252,10 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 		totalUsedMemory := uint64(0)
 		totalUsedDisk := uint64(0)
 		totalReportingContainers := 0
+
+		if appMetadata.State == "STARTED" {
+			displayAppStats.DesiredContainers = int(appMetadata.Instances)
+		}
 
 		now := time.Now()
 		for containerIndex, cs := range appStats.ContainerArray {
@@ -204,6 +272,10 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 				totalReportingContainers++
 			}
 		}
+		if totalReportingContainers < displayAppStats.DesiredContainers {
+			appsNotInDesiredState = appsNotInDesiredState + 1
+		}
+
 		displayAppStats.TotalCpuPercentage = totalCpuPercentage
 		displayAppStats.TotalUsedMemory = totalUsedMemory
 		displayAppStats.TotalUsedDisk = totalUsedDisk
@@ -220,13 +292,10 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 		displayAppStats.TotalLogStdout = logStdoutCount + appStats.NonContainerStdout
 		displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
 
-		if appMetadata.State == "STARTED" {
-			displayAppStats.DesiredContainers = int(appMetadata.Instances)
-		}
-
 	}
 	asUI.displayAppStats = displayStatsArray
 	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
+	asUI.appsNotInDesiredState = appsNotInDesiredState
 	return displayStatsArray
 }
 
@@ -258,7 +327,25 @@ func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) str
 	return v.String()
 }
 
+func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {
+	if asUI.isWarmupComplete && asUI.appsNotInDesiredState > 0 {
+		plural := ""
+		if asUI.appsNotInDesiredState > 1 {
+			plural = "s"
+		}
+		msg := fmt.Sprintf("ALERT: %v application%v not in desired state (row%v colored red) ",
+			asUI.appsNotInDesiredState, plural, plural)
+		asUI.showUserMessage(g, msg)
+	} else if asUI.isUserMessageOpen(g) {
+		asUI.clearUserMessage(g)
+	}
+	return nil
+}
+
 func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
+
+	// TODO: Is this the best stop to check for alerts?? Seems out of place in the updateHeader method
+	asUI.checkForAlerts(g)
 
 	totalReportingAppInstances := 0
 	totalActiveApps := 0

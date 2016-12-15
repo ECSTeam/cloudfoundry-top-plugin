@@ -173,6 +173,10 @@ func (w *ListWidget) Name() string {
 	return w.name
 }
 
+func (w *ListWidget) SetTopMargin(topMargin int) {
+	w.topMargin = topMargin
+}
+
 func (w *ListWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	bottom := maxY - w.bottomMargin
