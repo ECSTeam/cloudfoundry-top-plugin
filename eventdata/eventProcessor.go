@@ -36,21 +36,24 @@ type EventProcessor struct {
 	currentEventData   *EventData
 	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
+	metadataManager    *metadata.Manager
 }
 
 func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 
 	mu := &sync.Mutex{}
 
-	currentEventData := NewEventData(mu)
-	displayedEventData := NewEventData(mu)
-	metadata.SetConnection(cliConnection)
+	metadataManager := metadata.NewManager(cliConnection)
+
+	currentEventData := NewEventData(mu, metadataManager)
+	displayedEventData := NewEventData(mu, metadataManager)
 
 	ep := &EventProcessor{
 		mu:                 mu,
 		currentEventData:   currentEventData,
 		displayedEventData: displayedEventData,
 		cliConnection:      cliConnection,
+		metadataManager:    metadataManager,
 		startTime:          time.Now(),
 		eventRateCounter:   util.NewRateCounter(time.Second),
 	}
@@ -70,6 +73,10 @@ func (ep *EventProcessor) GetDisplayedEventData() *EventData {
 	return ep.displayedEventData
 }
 
+func (ep *EventProcessor) GetMetadataManager() *metadata.Manager {
+	return ep.metadataManager
+}
+
 func (ep *EventProcessor) UpdateData() {
 	//ep.mu.Lock()
 	//defer ep.mu.Unlock()
@@ -77,30 +84,12 @@ func (ep *EventProcessor) UpdateData() {
 	ep.displayedEventData = processorCopy
 }
 
-func (ep *EventProcessor) LoadMetadata() {
-	toplog.Info("EventProcessor>loadMetadata")
-
-	/*
-		appMetadata, err := metadata.GetAppMetadataX(ep.cliConnection, "9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
-		if err != nil {
-			toplog.Debug(fmt.Sprintf("Err:%v", err))
-		} else {
-			toplog.Debug(fmt.Sprintf("name:%v", appMetadata.Name))
-			toplog.Debug(fmt.Sprintf("name:%v", appMetadata.State))
-		}
-	*/
-
-	metadata.LoadAppCache(ep.cliConnection)
-	metadata.LoadSpaceCache(ep.cliConnection)
-	metadata.LoadOrgCache(ep.cliConnection)
-}
-
 func (ep *EventProcessor) Start() {
 	go ep.LoadCacheAndSeeData()
 }
 
 func (ep *EventProcessor) LoadCacheAndSeeData() {
-	ep.LoadMetadata()
+	ep.metadataManager.LoadMetadata()
 	ep.SeedStatsFromMetadata()
 }
 
@@ -112,7 +101,7 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 	defer ep.mu.Unlock()
 
 	currentStatsMap := ep.currentEventData.AppMap
-	for _, app := range metadata.AllApps() {
+	for _, app := range ep.metadataManager.GetAppMdManager().AllApps() {
 		appId := app.Guid
 		appStats := currentStatsMap[appId]
 		if appStats == nil {

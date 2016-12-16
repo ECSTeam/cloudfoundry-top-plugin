@@ -32,10 +32,12 @@ type AppInfoWidget struct {
 	width      int
 	height     int
 	detailView *AppDetailView
+	appMdMgr   *metadata.AppMetadataManager
 }
 
 func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {
-	return &AppInfoWidget{masterUI: masterUI, name: name, width: width, height: height, detailView: detailView}
+	appMdMgr := detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	return &AppInfoWidget{masterUI: masterUI, name: name, width: width, height: height, detailView: detailView, appMdMgr: appMdMgr}
 }
 
 func (w *AppInfoWidget) Name() string {
@@ -83,10 +85,8 @@ func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 	v.Clear()
 
 	m := w.detailView.GetDisplayedEventData().AppMap
-
 	appStats := m[w.detailView.appId]
-
-	appMetadata := metadata.FindAppMetadata(appStats.AppId)
+	appMetadata := w.appMdMgr.FindAppMetadata(appStats.AppId)
 
 	if appMetadata.Guid != "" {
 		memoryDisplay := util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()

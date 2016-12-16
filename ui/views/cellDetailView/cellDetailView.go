@@ -20,7 +20,6 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appDetailView"
@@ -122,9 +121,9 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.PopulateNamesFromMap(appMap)
+	appStatsArray := eventdata.PopulateNamesFromMap(appMap, asUI.GetAppMdMgr())
 	for _, appStats := range appStatsArray {
-		appMetadata := metadata.FindAppMetadata(appStats.AppId)
+		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil {
 				if containerStats.Ip == asUI.cellIp {

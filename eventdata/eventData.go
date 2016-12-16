@@ -31,23 +31,25 @@ import (
 )
 
 type EventData struct {
-	AppMap        map[string]*AppStats
-	CellMap       map[string]*CellStats
-	TotalEvents   int64
-	mu            *sync.Mutex
-	logHttpAccess *EventLogHttpAccess
+	AppMap          map[string]*AppStats
+	CellMap         map[string]*CellStats
+	TotalEvents     int64
+	mu              *sync.Mutex
+	logHttpAccess   *EventLogHttpAccess
+	metadataManager *metadata.Manager
 }
 
-func NewEventData(mu *sync.Mutex) *EventData {
+func NewEventData(mu *sync.Mutex, metadataManager *metadata.Manager) *EventData {
 
 	logHttpAccess := NewEventLogHttpAccess()
 
 	return &EventData{
-		AppMap:        make(map[string]*AppStats),
-		CellMap:       make(map[string]*CellStats),
-		TotalEvents:   0,
-		mu:            mu,
-		logHttpAccess: logHttpAccess,
+		AppMap:          make(map[string]*AppStats),
+		CellMap:         make(map[string]*CellStats),
+		TotalEvents:     0,
+		mu:              mu,
+		logHttpAccess:   logHttpAccess,
+		metadataManager: metadataManager,
 	}
 }
 
@@ -189,10 +191,10 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 	case "API":
 		// This is our notification that the state of an application may have changed
 		// e.g., App was marked as STARTED or STOPPED (by a user)
-		appMetadata := metadata.FindAppMetadata(appId)
+		appMetadata := ed.metadataManager.GetAppMdManager().FindAppMetadata(appId)
 		logText := string(logMessage.GetMessage())
 		toplog.Debug(fmt.Sprintf("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText))
-		metadata.RequestRefreshAppMetadata(appId)
+		ed.metadataManager.RequestRefreshAppMetadata(appId)
 
 	case "RTR":
 		// Ignore router log messages

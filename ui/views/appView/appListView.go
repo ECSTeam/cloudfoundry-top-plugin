@@ -28,7 +28,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/jroimartin/gocui"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
@@ -192,7 +191,7 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 
 func (asUI *AppListView) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
 	//return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (row colored red) ")
-	metadata.RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
+	asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
 	return nil
 }
 
@@ -258,13 +257,13 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 
 	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.PopulateNamesFromMap(appMap)
+	appStatsArray := eventdata.PopulateNamesFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
 
 	for _, appStats := range appStatsArray {
 		displayAppStats := displaydata.NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
-		appMetadata := metadata.FindAppMetadata(appStats.AppId)
+		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
 		totalCpuPercentage := 0.0
 		totalUsedMemory := uint64(0)
@@ -429,7 +428,10 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 		totalActiveApps, totalReportingAppInstances)
 
 	displayTotalMem := "--"
-	totalMem := metadata.GetTotalMemoryAllStartedApps()
+
+	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+
+	totalMem := appMdMgr.GetTotalMemoryAllStartedApps()
 	if totalMem > 0 {
 		displayTotalMem = util.ByteSize(totalMem).StringWithPrecision(0)
 	}
@@ -438,7 +440,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
 	displayTotalDisk := "--"
-	totalDisk := metadata.GetTotalDiskAllStartedApps()
+	totalDisk := appMdMgr.GetTotalDiskAllStartedApps()
 	if totalMem > 0 {
 		displayTotalDisk = util.ByteSize(totalDisk).StringWithPrecision(0)
 	}

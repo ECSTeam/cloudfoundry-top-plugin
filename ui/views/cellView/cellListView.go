@@ -20,7 +20,6 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
@@ -150,7 +149,7 @@ func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellS
 
 					if containerStats.ContainerMetric != nil {
 
-						appMetadata := metadata.FindAppMetadata(appStats.AppId)
+						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
 						cellStats.TotalReportingContainers = cellStats.TotalReportingContainers + 1
 

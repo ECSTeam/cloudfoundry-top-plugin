@@ -20,7 +20,6 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
@@ -119,8 +118,9 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStats := appMap[asUI.appId]
 
-	eventdata.PopulateNamesIfNeeded(appStats)
-	appMetadata := metadata.FindAppMetadata(appStats.AppId)
+	eventdata.PopulateNamesIfNeeded(appStats, asUI.GetAppMdMgr())
+
+	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
 	for _, containerStats := range appStats.ContainerArray {
 		if containerStats != nil {
