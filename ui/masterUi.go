@@ -34,6 +34,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -239,6 +240,7 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "TODO: Event Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
@@ -272,6 +274,9 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
 	case "cellListView":
 		dataView = cellView.NewCellListView(mui, "cellListView", mui.headerSize+1, mui.footerSize, ep)
+	case "capacityPlanView":
+		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.headerSize+1, mui.footerSize, ep)
+
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}

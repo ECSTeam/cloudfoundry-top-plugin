@@ -19,15 +19,23 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 
 type DisplayCellStats struct {
 	*eventdata.CellStats
-	TotalContainerCpuPercentage  float64 // updated when snapshot
-	TotalContainerReservedMemory uint64  // updated when snapshot
-	TotalContainerUsedMemory     uint64  // updated when snapshot
-	TotalContainerReservedDisk   uint64  // updated when snapshot
-	TotalContainerUsedDisk       uint64  // updated when snapshot
-	TotalReportingContainers     int     // updated when snapshot
-	TotalLogOutCount             int64   // updated when snapshot
-	TotalLogErrCount             int64   // updated when snapshot
+	TotalContainerCpuPercentage  float64
+	TotalContainerReservedMemory uint64
+	TotalContainerUsedMemory     uint64
+	TotalContainerReservedDisk   uint64
+	TotalContainerUsedDisk       uint64
+	TotalReportingContainers     int
+	TotalLogOutCount             int64
+	TotalLogErrCount             int64
 
+	CapacityPlan0_5GMem int
+	CapacityPlan1_0GMem int
+	CapacityPlan1_5GMem int
+	CapacityPlan2_0GMem int
+	CapacityPlan2_5GMem int
+	CapacityPlan3_0GMem int
+	CapacityPlan3_5GMem int
+	CapacityPlan4_0GMem int
 }
 
 func NewDisplayCellStats(cellStats *eventdata.CellStats) *DisplayCellStats {
