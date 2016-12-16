@@ -83,7 +83,7 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 		return response, nil
 	}
 
-	callAPI(cliConnection, url, handleRequest)
+	callPagableAPI(cliConnection, url, handleRequest)
 
 	return metadata, nil
 

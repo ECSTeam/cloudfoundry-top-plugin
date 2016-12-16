@@ -80,7 +80,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 		return response, nil
 	}
 
-	callAPI(cliConnection, url, handleRequest)
+	callPagableAPI(cliConnection, url, handleRequest)
 
 	return metadata, nil
 

@@ -34,7 +34,16 @@ var (
 
 type handleResponseFunc func(outputBytes []byte) (interface{}, error)
 
-func callAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
+func callAPI(cliConnection plugin.CliConnection, url string) (string, error) {
+	output, err := callCurlRetryable(cliConnection, url)
+	if err != nil {
+		return "", err
+	}
+	outputStr := strings.Join(output, "")
+	return outputStr, nil
+}
+
+func callPagableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
 	nextUrl := url
 	for nextUrl != "" {
 		output, err := callCurlRetryable(cliConnection, nextUrl)

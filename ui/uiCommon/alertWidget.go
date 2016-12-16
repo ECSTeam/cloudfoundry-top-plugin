@@ -19,19 +19,21 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
 type AlertWidget struct {
+	masterUI  masterUIInterface.MasterUIInterface
 	name      string
 	topMargin int
 	height    int
 	message   string
 }
 
-func NewAlertWidget(name string, topMargin, height int) *AlertWidget {
-	return &AlertWidget{name: name, topMargin: topMargin, height: height}
+func NewAlertWidget(masterUI masterUIInterface.MasterUIInterface, name string, topMargin, height int) *AlertWidget {
+	return &AlertWidget{masterUI: masterUI, name: name, topMargin: topMargin, height: height}
 }
 
 func (w *AlertWidget) Name() string {
@@ -52,6 +54,9 @@ func (w *AlertWidget) Layout(g *gocui.Gui) error {
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
+		} else {
+			// We need to ensure the alert line does not popup over another window (e.g., log window)
+			w.masterUI.SetCurrentViewOnTop(g)
 		}
 		v.Frame = false
 

@@ -179,8 +179,9 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 	var alertView *uiCommon.AlertWidget
 	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
 	if view == nil {
-		alertView = uiCommon.NewAlertWidget(alertViewName, topMargin, alertHeight)
-		asUI.GetMasterUI().LayoutManager().Add(alertView)
+		alertView = uiCommon.NewAlertWidget(asUI.GetMasterUI(), alertViewName, topMargin, alertHeight)
+		asUI.GetMasterUI().LayoutManager().AddToBack(alertView)
+		asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	} else {
 		alertView = view.(*uiCommon.AlertWidget)
 		alertView.SetHeight(alertHeight)
@@ -190,7 +191,9 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 }
 
 func (asUI *AppListView) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
-	return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (row colored red) ")
+	//return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (row colored red) ")
+	metadata.RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
+	return nil
 }
 
 func (asUI *AppListView) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {

@@ -44,6 +44,7 @@ func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 
 	currentEventData := NewEventData(mu)
 	displayedEventData := NewEventData(mu)
+	metadata.SetConnection(cliConnection)
 
 	ep := &EventProcessor{
 		mu:                 mu,
@@ -78,6 +79,17 @@ func (ep *EventProcessor) UpdateData() {
 
 func (ep *EventProcessor) LoadMetadata() {
 	toplog.Info("EventProcessor>loadMetadata")
+
+	/*
+		appMetadata, err := metadata.GetAppMetadataX(ep.cliConnection, "9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
+		if err != nil {
+			toplog.Debug(fmt.Sprintf("Err:%v", err))
+		} else {
+			toplog.Debug(fmt.Sprintf("name:%v", appMetadata.Name))
+			toplog.Debug(fmt.Sprintf("name:%v", appMetadata.State))
+		}
+	*/
+
 	metadata.LoadAppCache(ep.cliConnection)
 	metadata.LoadSpaceCache(ep.cliConnection)
 	metadata.LoadOrgCache(ep.cliConnection)

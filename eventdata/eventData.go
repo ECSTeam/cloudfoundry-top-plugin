@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
@@ -185,6 +186,14 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 				containerStats.ErrCount++
 			}
 		}
+	case "API":
+		// This is our notification that the state of an application may have changed
+		// e.g., App was marked as STARTED or STOPPED (by a user)
+		appMetadata := metadata.FindAppMetadata(appId)
+		logText := string(logMessage.GetMessage())
+		toplog.Debug(fmt.Sprintf("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText))
+		metadata.RequestRefreshAppMetadata(appId)
+
 	case "RTR":
 		// Ignore router log messages
 		// Turns out there is nothing useful in this message

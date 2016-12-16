@@ -16,14 +16,10 @@
 package util
 
 import (
-	//"strconv"
-	"time"
-	//"fmt"
 	"sync"
+	"time"
 	//"gopkg.in/eapache/queue.v1"
 	"github.com/eapache/queue"
-	//"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-	//"fmt"
 )
 
 /*

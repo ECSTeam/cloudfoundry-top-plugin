@@ -31,6 +31,7 @@ type LayoutManagerInterface interface {
 	Contains(Manager) bool
 	ContainsViewName(viewName string) bool
 	Add(Manager)
+	AddToBack(Manager)
 	Remove(Manager) Manager
 	Top() Manager
 	GetManagerByViewName(viewName string) Manager

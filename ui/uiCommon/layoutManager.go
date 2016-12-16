@@ -69,8 +69,14 @@ func (w *LayoutManager) SetCurrentView(viewName string) bool {
 	return true
 }
 
+func (w *LayoutManager) AddToBack(addMgr masterUIInterface.Manager) {
+	if w.Contains(addMgr) {
+		log.Panicf("Attempting to add a ui manager named %v and it already exists", addMgr.Name())
+	}
+	w.managers = append([]masterUIInterface.Manager{addMgr}, w.managers...)
+}
+
 func (w *LayoutManager) Add(addMgr masterUIInterface.Manager) {
-	// TODO: This is just a development check -- can move later
 	if w.Contains(addMgr) {
 		log.Panicf("Attempting to add a ui manager named %v and it already exists", addMgr.Name())
 	}
