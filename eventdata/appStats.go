@@ -16,6 +16,8 @@
 package eventdata
 
 import (
+	"log"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 )
@@ -92,6 +94,10 @@ func PopulateNamesFromMap(statsMap map[string]*AppStats) []*AppStats {
 	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {
 		appMetadata := metadata.FindAppMetadata(d.AppId)
+		// TODO: Take this check out
+		if appMetadata == nil {
+			log.Panic("appMetadata shouldn't be nil")
+		}
 		appName := appMetadata.Name
 		if appName == "" {
 			appName = d.AppId

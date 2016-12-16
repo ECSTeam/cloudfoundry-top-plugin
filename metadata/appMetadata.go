@@ -21,77 +21,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudfoundry/cli/plugin"
+	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
 const MEGABYTE = (1024 * 1024)
 
-type AppMetadata struct {
-	App
-	cacheTime time.Time
-}
-
-func NewAppMetadata(appStats App) *AppMetadata {
-	appMetadata := &AppMetadata{}
-	appMetadata.App = appStats
-	appMetadata.cacheTime = time.Now()
-	return appMetadata
-}
-
-type AppResponse struct {
-	Count     int           `json:"total_results"`
-	Pages     int           `json:"total_pages"`
-	NextUrl   string        `json:"next_url"`
-	Resources []AppResource `json:"resources"`
-}
-
-type AppResource struct {
-	Meta   Meta `json:"metadata"`
-	Entity App  `json:"entity"`
-}
-
-type App struct {
-	Guid      string `json:"guid"`
-	Name      string `json:"name,omitempty"`
-	SpaceGuid string `json:"space_guid,omitempty"`
-	SpaceName string
-	OrgGuid   string
-	OrgName   string
-
-	StackGuid   string  `json:"stack_guid,omitempty"`
-	MemoryMB    float64 `json:"memory,omitempty"`
-	DiskQuotaMB float64 `json:"disk_quota,omitempty"`
-
-	Environment map[string]interface{} `json:"environment_json,omitempty"`
-	Instances   float64                `json:"instances,omitempty"`
-	State       string                 `json:"state,omitempty"`
-	EnableSsh   bool                   `json:"enable_ssh,omitempty"`
-
-	PackageState        string `json:"package_state,omitempty"`
-	StagingFailedReason string `json:"staging_failed_reason,omitempty"`
-	StagingFailedDesc   string `json:"staging_failed_description,omitempty"`
-	DetectedStartCmd    string `json:"detected_start_command,omitempty"`
-	//DockerCredentials string  `json:"docker_credentials_json,omitempty"`
-	//audit.app.create event fields
-	Console           bool   `json:"console,omitempty"`
-	Buildpack         string `json:"buildpack,omitempty"`
-	DetectedBuildpack string `json:"detected_buildpack,omitempty"`
-
-	HealthcheckType    string  `json:"health_check_type,omitempty"`
-	HealthcheckTimeout float64 `json:"health_check_timeout,omitempty"`
-	Production         bool    `json:"production,omitempty"`
-	//app.crash event fields
-	//Index           float64 `json:"index,omitempty"`
-	//ExitStatus      string  `json:"exit_status,omitempty"`
-	//ExitDescription string  `json:"exit_description,omitempty"`
-	//ExitReason      string  `json:"reason,omitempty"`
-	// "package_updated_at": "2016-11-15T19:56:52Z",
-	PackageUpdatedAt string `json:"package_updated_at"`
-}
-
 var (
-	appMetadataMap            map[string]AppMetadata
+	appMetadataMap            map[string]*AppMetadata
 	totalMemoryAllStartedApps float64
 	totalDiskAllStartedApps   float64
 	mu                        sync.Mutex
@@ -104,7 +41,24 @@ var (
 func init() {
 	refreshQueue = make(map[string]string)
 	refreshNow = make(chan bool)
-	appMetadataMap = make(map[string]AppMetadata)
+	appMetadataMap = make(map[string]*AppMetadata)
+}
+
+type AppMetadata struct {
+	*App
+	cacheTime time.Time
+}
+
+func NewAppMetadata(appStats App) *AppMetadata {
+
+	appMetadata := &AppMetadata{}
+	appMetadata.App = &appStats
+	appMetadata.cacheTime = time.Now()
+	return appMetadata
+}
+
+func NewAppMetadataById(appId string) *AppMetadata {
+	return NewAppMetadata(App{Guid: appId})
 }
 
 func SetConnection(conn plugin.CliConnection) {
@@ -116,18 +70,19 @@ func AppMetadataSize() int {
 	return len(appMetadataMap)
 }
 
-func AllApps() []AppMetadata {
-	appsMetadataArray := []AppMetadata{}
+func AllApps() []*AppMetadata {
+	appsMetadataArray := []*AppMetadata{}
 	for _, appMetadata := range appMetadataMap {
 		appsMetadataArray = append(appsMetadataArray, appMetadata)
 	}
 	return appsMetadataArray
 }
 
-func FindAppMetadata(appId string) AppMetadata {
+func FindAppMetadata(appId string) *AppMetadata {
+
 	appMetadata := appMetadataMap[appId]
-	if appMetadataMap == nil {
-		appMetadata = AppMetadata{}
+	if appMetadata == nil {
+		appMetadata = NewAppMetadataById(appId)
 	}
 	return appMetadata
 }
@@ -229,16 +184,18 @@ func LoadAppCache(cliConnection plugin.CliConnection) {
 		return
 	}
 
-	metadataMap := make(map[string]AppMetadata)
+	metadataMap := make(map[string]*AppMetadata)
 	for _, appMetadata := range appMetadataArray {
+		toplog.Debug(fmt.Sprintf("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name))
+
 		metadataMap[appMetadata.Guid] = appMetadata
 	}
 	appMetadataMap = metadataMap
 }
 
-func getAppMetadata(cliConnection plugin.CliConnection, appId string) (AppMetadata, error) {
+func getAppMetadata(cliConnection plugin.CliConnection, appId string) (*AppMetadata, error) {
 	url := "/v2/apps/" + appId
-	emptyApp := AppMetadata{}
+	emptyApp := NewAppMetadataById(appId)
 
 	outputStr, err := callAPI(cliConnection, url)
 	if err != nil {
@@ -253,13 +210,13 @@ func getAppMetadata(cliConnection plugin.CliConnection, appId string) (AppMetada
 	appResource.Entity.Guid = appResource.Meta.Guid
 	flushCounters()
 	appMetadata := NewAppMetadata(appResource.Entity)
-	return *appMetadata, nil
+	return appMetadata, nil
 }
 
-func getAppsMetadata(cliConnection plugin.CliConnection) ([]AppMetadata, error) {
+func getAppsMetadata(cliConnection plugin.CliConnection) ([]*AppMetadata, error) {
 
 	url := "/v2/apps"
-	appsMetadataArray := []AppMetadata{}
+	appsMetadataArray := []*AppMetadata{}
 
 	handleRequest := func(outputBytes []byte) (interface{}, error) {
 		var appResp AppResponse
@@ -271,7 +228,7 @@ func getAppsMetadata(cliConnection plugin.CliConnection) ([]AppMetadata, error) 
 		for _, app := range appResp.Resources {
 			app.Entity.Guid = app.Meta.Guid
 			appMetadata := NewAppMetadata(app.Entity)
-			appsMetadataArray = append(appsMetadataArray, *appMetadata)
+			appsMetadataArray = append(appsMetadataArray, appMetadata)
 		}
 		return appResp, nil
 	}
