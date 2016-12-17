@@ -50,7 +50,7 @@ func (w *AlertWidget) SetMessage(msg string) {
 
 func (w *AlertWidget) Layout(g *gocui.Gui) error {
 	maxX, _ := g.Size()
-	v, err := g.SetView(w.name, 0, w.topMargin-1, maxX-1, w.topMargin+w.height)
+	v, err := g.SetView(w.name, -1, w.topMargin-1, maxX, w.topMargin+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
@@ -61,7 +61,7 @@ func (w *AlertWidget) Layout(g *gocui.Gui) error {
 		v.Frame = false
 
 		v.Clear()
-		fmt.Fprintf(v, "%v", util.REVERSE_RED)
+		fmt.Fprintf(v, " %v", util.REVERSE_RED)
 
 		if w.message != "" {
 			fmt.Fprintln(v, w.message)

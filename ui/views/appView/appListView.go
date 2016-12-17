@@ -182,6 +182,12 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 		asUI.GetMasterUI().LayoutManager().AddToBack(alertView)
 		asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	} else {
+		// This check is to prevent alert from showing on top of the log window
+		if asUI.GetMasterUI().GetCurrentView(g).Name() == asUI.Name() {
+			if _, err := g.SetViewOnTop(alertViewName); err != nil {
+				return err
+			}
+		}
 		alertView = view.(*uiCommon.AlertWidget)
 		alertView.SetHeight(alertHeight)
 	}

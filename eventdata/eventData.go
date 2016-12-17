@@ -18,39 +18,64 @@ package eventdata
 import (
 	"encoding/binary"
 	"fmt"
-	"math"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
 )
 
 type EventData struct {
-	AppMap          map[string]*AppStats
-	CellMap         map[string]*CellStats
-	TotalEvents     int64
-	mu              *sync.Mutex
-	logHttpAccess   *EventLogHttpAccess
-	metadataManager *metadata.Manager
+	AppMap         map[string]*AppStats
+	CellMap        map[string]*CellStats
+	TotalEvents    int64
+	mu             *sync.Mutex
+	logHttpAccess  *EventLogHttpAccess
+	eventProcessor *EventProcessor
+	apiUrl         string
+	apiUrlRegexp   *regexp.Regexp
+	urlPCF17Regexp *regexp.Regexp
 }
 
-func NewEventData(mu *sync.Mutex, metadataManager *metadata.Manager) *EventData {
+func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 
 	logHttpAccess := NewEventLogHttpAccess()
+	apiEndpoint, err := eventProcessor.cliConnection.ApiEndpoint()
+	if err != nil {
+		toplog.Error("Call to ApiEndpoint failed:" + err.Error())
+		apiEndpoint = "UNABLE_TO_GET_API_ENDPOINT"
+	}
+
+	url, err := url.Parse(apiEndpoint)
+	if err != nil {
+		toplog.Error("parse error:" + err.Error())
+	}
+	apiUrl := fmt.Sprintf("%v%v", url.Host, url.Path)
+
+	apiUrlRegexpStr := `^\/v[0-9]\/([^\/]*)\/([^\/]*)`
+	apiUrlRegexp := regexp.MustCompile(apiUrlRegexpStr)
+
+	urlPCF17RegexpStr := `^http[s]?:\/\/[^\/]*(\/v[0-9]\/.*)$`
+	urlPCF17Regexp := regexp.MustCompile(urlPCF17RegexpStr)
 
 	return &EventData{
-		AppMap:          make(map[string]*AppStats),
-		CellMap:         make(map[string]*CellStats),
-		TotalEvents:     0,
-		mu:              mu,
-		logHttpAccess:   logHttpAccess,
-		metadataManager: metadataManager,
+		AppMap:         make(map[string]*AppStats),
+		CellMap:        make(map[string]*CellStats),
+		TotalEvents:    0,
+		mu:             mu,
+		logHttpAccess:  logHttpAccess,
+		eventProcessor: eventProcessor,
+		apiUrl:         apiUrl,
+		apiUrlRegexp:   apiUrlRegexp,
+		urlPCF17Regexp: urlPCF17Regexp,
 	}
+
 }
 
 func (ed *EventData) Process(instanceId int, msg *events.Envelope) {
@@ -191,10 +216,10 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 	case "API":
 		// This is our notification that the state of an application may have changed
 		// e.g., App was marked as STARTED or STOPPED (by a user)
-		appMetadata := ed.metadataManager.GetAppMdManager().FindAppMetadata(appId)
+		appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
 		logText := string(logMessage.GetMessage())
 		toplog.Debug(fmt.Sprintf("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText))
-		ed.metadataManager.RequestRefreshAppMetadata(appId)
+		ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
 
 	case "RTR":
 		// Ignore router log messages
@@ -361,48 +386,155 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 	appUUID := msg.GetHttpStartStop().GetApplicationId()
 	instId := msg.GetHttpStartStop().GetInstanceId()
 	//instIndex := msg.GetHttpStartStop().GetInstanceIndex()
-	httpStartStopEvent := msg.GetHttpStartStop()
-	if httpStartStopEvent.GetPeerType() == events.PeerType_Client &&
-		appUUID != nil &&
-		instId != "" {
-		//toplog.Debug(fmt.Sprintf("index: %v\n", instIndex))
-		//toplog.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
-		//fmt.Printf("index: %v\n", instIndex)
-		ed.TotalEvents++
-		appId := formatUUID(appUUID)
-		//c.ui.Say("**** appId:%v ****", appId)
+	httpEvent := msg.GetHttpStartStop()
+	peerType := httpEvent.GetPeerType()
+	switch {
+	case peerType == events.PeerType_Client:
+		if appUUID != nil && instId != "" {
+			ed.httpStartStopEventForApp(msg)
+		} else if appUUID == nil && instId != "" {
+			switch httpEvent.GetMethod() {
+			case events.Method_PUT:
+				fallthrough
+			case events.Method_POST:
+				fallthrough
+			case events.Method_DELETE:
+				// Check if we have a PCF API call
+				uri := httpEvent.GetUri()
 
-		appStats := ed.getAppStats(appId)
-		if appStats.AppUUID == nil {
-			appStats.AppUUID = appUUID
+				isApiCall, apiUri := ed.checkIfApiCall_PCF1_6(uri)
+				if !isApiCall {
+					isApiCall, apiUri = ed.checkIfApiCall_PCF1_7(uri)
+				}
+				if isApiCall {
+					ed.pcfApiHasBeenCalled(msg, apiUri)
+				}
+			}
 		}
-
-		containerTraffic := ed.getContainerTraffic(appStats, instId)
-
-		responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
-		containerTraffic.HttpAllCount++
-		containerTraffic.responseL60Time.Track(responseTimeMillis)
-		containerTraffic.responseL10Time.Track(responseTimeMillis)
-		containerTraffic.responseL1Time.Track(responseTimeMillis)
-
-		statusCode := httpStartStopEvent.GetStatusCode()
-		switch {
-		case statusCode >= 200 && statusCode < 300:
-			containerTraffic.Http2xxCount++
-		case statusCode >= 300 && statusCode < 400:
-			containerTraffic.Http3xxCount++
-		case statusCode >= 400 && statusCode < 500:
-			containerTraffic.Http4xxCount++
-		case statusCode >= 500 && statusCode < 600:
-			containerTraffic.Http5xxCount++
-		}
-
-	} else {
-		statusCode := httpStartStopEvent.GetStatusCode()
-		if statusCode == 4040 {
-			toplog.Debug(fmt.Sprintf("event:%v\n", msg))
-		}
+	default:
+		// Ignore
 	}
+
+}
+
+// Format of HttpStartStop in PCF 1.6
+// origin:"router__0" eventType:HttpStartStop timestamp:1481942228218776855 deployment:"cf"
+// job:"router-partition-6c9fddda6d386d1b5b54" index:"0" ip:"172.28.1.57"
+// httpStartStop:<startTimestamp:1481942228172587068 stopTimestamp:1481942228218776855
+// requestId:<low:8306249200620409206  high:5348636437173287548 >  peerType:Client method:PUT
+// uri:"api.system.laba.ecsteam.io/v2/spaces/2a7f2b63-e3f9-4e26-a73c-d3dd0be4b77f"
+// remoteAddress:"172.28.1.51:46187" userAgent:"Mozilla/5.0" statusCode:201 contentLength:1300
+// instanceId:"a455303f-144b-4936-9483-a61bfa23b35b" 11:"xxxx" >
+func (ed *EventData) checkIfApiCall_PCF1_6(uri string) (bool, string) {
+	if strings.HasPrefix(uri, ed.apiUrl) {
+		// A PCF API has been called
+		return true, strings.TrimPrefix(uri, ed.apiUrl)
+	}
+	return false, ""
+}
+
+// Format of HttpStartStop in PCF 1.7
+// origin:"gorouter" eventType:HttpStartStop timestamp:1481950482175868678 deployment:"cf"
+// job:"router-partition-72c346932f9a11cd262e" index:"0" ip:"172.28.3.57"
+// httpStartStop:<startTimestamp:1481950482140382655 stopTimestamp:1481950482175838683
+// requestId:<low:4704681661434642403 high:14399846285434694512 >  peerType:Client method:PUT
+// uri:"http://73.169.24.191, 172.28.3.51, 172.29.0.2, 172.28.3.51/v2/spaces/605f2e92-a311-4bf8-a37d-296b0a692e25"
+// remoteAddress:"172.28.3.51:38274" userAgent:"Mozilla/5.0" statusCode:201 contentLength:1311
+// instanceId:"66a0e28b-81d7-44d6-46a4-ed46822b9b1f" 11:"xxxx" >
+//
+// NOTE: the uri has lost its hostname part which was the indication we are calling an api in PCF 1.6
+// so we need to make some guesses that if we don't have an applicationId property but have an instanceId
+// we must be calling an API.  Is this a good assumption?  Not a very clean solution.
+func (ed *EventData) checkIfApiCall_PCF1_7(uri string) (bool, string) {
+	toplog.Debug(fmt.Sprintf("Check if PCF 1.7 API call:%v", uri))
+	parsedData := ed.urlPCF17Regexp.FindAllStringSubmatch(uri, -1)
+	if len(parsedData) != 1 {
+		toplog.Debug("Not a PCF 1.7 API that we care about")
+		return false, ""
+	}
+	dataArray := parsedData[0]
+	if len(dataArray) != 2 {
+		toplog.Warn(fmt.Sprintf("checkIfApiCall_PCF1_7>>Unable to parse uri: %v", uri))
+		return false, ""
+	}
+	apiUri := dataArray[1]
+	toplog.Debug(fmt.Sprintf("This is a PCF 1.7 API call:%v", apiUri))
+	return true, apiUri
+}
+
+// A PCF API has been called -- use this to trigger reload of metadata if appropriate
+// Example: "/v2/spaces/59cde607-2cda-4e20-ab30-cc779c4026b0"
+func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
+	toplog.Debug(fmt.Sprintf("API called: %v", apiUri))
+
+	parsedData := ed.apiUrlRegexp.FindAllStringSubmatch(apiUri, -1)
+	if len(parsedData) != 1 {
+		toplog.Warn("pcfApiHasBeenCalled>>Unable to parse apiUri")
+		return
+	}
+	dataArray := parsedData[0]
+	if len(dataArray) != 3 {
+		toplog.Warn("pcfApiHasBeenCalled>>Unable to parse apiUri")
+		return
+	}
+	dataType := dataArray[1]
+	guid := dataArray[2]
+	ed.pcfApiHasBeenCalledReloadMetadata(dataType, guid)
+
+}
+
+func (ed *EventData) pcfApiHasBeenCalledReloadMetadata(dataType, guid string) {
+	toplog.Debug(fmt.Sprintf("Data type:%v GUID:%v", dataType, guid))
+	switch dataType {
+	case "spaces":
+		// TODO reload metadata
+		toplog.Debug(fmt.Sprintf("Reload SPACE metadata for space with GUID:%v", guid))
+	case "organizations":
+		// TODO reload metadata
+		toplog.Debug(fmt.Sprintf("Reload ORG metadata for org with GUID:%v", guid))
+	default:
+	}
+}
+
+func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
+
+	appUUID := msg.GetHttpStartStop().GetApplicationId()
+	instId := msg.GetHttpStartStop().GetInstanceId()
+	//instIndex := msg.GetHttpStartStop().GetInstanceIndex()
+	httpStartStopEvent := msg.GetHttpStartStop()
+
+	//toplog.Debug(fmt.Sprintf("index: %v\n", instIndex))
+	//toplog.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
+	//fmt.Printf("index: %v\n", instIndex)
+	ed.TotalEvents++
+	appId := formatUUID(appUUID)
+	//c.ui.Say("**** appId:%v ****", appId)
+
+	appStats := ed.getAppStats(appId)
+	if appStats.AppUUID == nil {
+		appStats.AppUUID = appUUID
+	}
+
+	containerTraffic := ed.getContainerTraffic(appStats, instId)
+
+	responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
+	containerTraffic.HttpAllCount++
+	containerTraffic.responseL60Time.Track(responseTimeMillis)
+	containerTraffic.responseL10Time.Track(responseTimeMillis)
+	containerTraffic.responseL1Time.Track(responseTimeMillis)
+
+	statusCode := httpStartStopEvent.GetStatusCode()
+	switch {
+	case statusCode >= 200 && statusCode < 300:
+		containerTraffic.Http2xxCount++
+	case statusCode >= 300 && statusCode < 400:
+		containerTraffic.Http3xxCount++
+	case statusCode >= 400 && statusCode < 500:
+		containerTraffic.Http4xxCount++
+	case statusCode >= 500 && statusCode < 600:
+		containerTraffic.Http5xxCount++
+	}
+
 }
 
 func formatUUID(uuid *events.UUID) string {
@@ -410,10 +542,4 @@ func formatUUID(uuid *events.UUID) string {
 	binary.LittleEndian.PutUint64(uuidBytes[:8], uuid.GetLow())
 	binary.LittleEndian.PutUint64(uuidBytes[8:], uuid.GetHigh())
 	return fmt.Sprintf("%x-%x-%x-%x-%x", uuidBytes[0:4], uuidBytes[4:6], uuidBytes[6:8], uuidBytes[8:10], uuidBytes[10:])
-}
-
-func MovingExpAvg(value, oldValue, fdtime, ftime float64) float64 {
-	alpha := 1.0 - math.Exp(-fdtime/ftime)
-	r := alpha*value + (1.0-alpha)*oldValue
-	return r
 }

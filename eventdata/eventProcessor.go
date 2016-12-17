@@ -45,24 +45,27 @@ func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 
 	metadataManager := metadata.NewManager(cliConnection)
 
-	currentEventData := NewEventData(mu, metadataManager)
-	displayedEventData := NewEventData(mu, metadataManager)
-
 	ep := &EventProcessor{
-		mu:                 mu,
-		currentEventData:   currentEventData,
-		displayedEventData: displayedEventData,
-		cliConnection:      cliConnection,
-		metadataManager:    metadataManager,
-		startTime:          time.Now(),
-		eventRateCounter:   util.NewRateCounter(time.Second),
+		mu:               mu,
+		cliConnection:    cliConnection,
+		metadataManager:  metadataManager,
+		startTime:        time.Now(),
+		eventRateCounter: util.NewRateCounter(time.Second),
 	}
+
+	ep.currentEventData = NewEventData(mu, ep)
+	ep.displayedEventData = NewEventData(mu, ep)
+
 	return ep
 
 }
 
 func (ep *EventProcessor) Process(instanceId int, msg *events.Envelope) {
 	ep.currentEventData.Process(instanceId, msg)
+}
+
+func (ep *EventProcessor) GetCliConnection() plugin.CliConnection {
+	return ep.cliConnection
 }
 
 func (ep *EventProcessor) GetCurrentEventData() *EventData {

@@ -40,7 +40,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-const WarmUpSeconds = 60
+const WarmUpSeconds = 5
 
 type MasterUI struct {
 	layoutManager *uiCommon.LayoutManager
