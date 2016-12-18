@@ -45,6 +45,10 @@ var (
 	stacksMetadataCache []Stack
 )
 
+func AllStacks() []Stack {
+	return stacksMetadataCache
+}
+
 func FindStackMetadata(stackGuid string) Stack {
 	for _, stack := range stacksMetadataCache {
 		if stack.Guid == stackGuid {

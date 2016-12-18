@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -285,6 +286,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 		}
 
 		stack := metadata.FindStackMetadata(appMetadata.StackGuid)
+		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
 		now := time.Now()
@@ -372,40 +374,88 @@ func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {
 	return nil
 }
 
+type StackSummaryStats struct {
+	StackId                     string
+	StackName                   string
+	TotalReportingAppInstances  int
+	TotalActiveApps             int
+	TotalUsedMemoryAppInstances uint64
+	TotalUsedDiskAppInstances   uint64
+	TotalCpuPercentage          float64
+}
+
+type StackSummaryStatsArray []*StackSummaryStats
+
+func (slice StackSummaryStatsArray) Len() int {
+	return len(slice)
+}
+
+func (slice StackSummaryStatsArray) Less(i, j int) bool {
+	return slice[i].StackName < slice[j].StackName
+}
+
+func (slice StackSummaryStatsArray) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
 func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 
-	// TODO: Is this the best stop to check for alerts?? Seems out of place in the updateHeader method
+	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
 	asUI.checkForAlerts(g)
 
-	totalReportingAppInstances := 0
-	totalActiveApps := 0
-	totalUsedMemoryAppInstances := uint64(0)
-	totalUsedDiskAppInstances := uint64(0)
-	totalCpuPercentage := float64(0)
+	stacks := metadata.AllStacks()
+	if len(stacks) == 0 {
+		fmt.Fprintf(v, "\n Waiting for more data...")
+		return nil
+	}
+	summaryStatsByStack := make(map[string]*StackSummaryStats)
+	for _, stack := range stacks {
+		summaryStatsByStack[stack.Guid] = &StackSummaryStats{StackId: stack.Guid, StackName: stack.Name}
+	}
+
 	for _, appStats := range asUI.displayAppStats {
+		sumStats := summaryStatsByStack[appStats.StackId]
+		if sumStats == nil {
+			log.Panic("We didn't find the stack data")
+		}
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
-				totalReportingAppInstances++
-				totalUsedMemoryAppInstances = totalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
-				totalUsedDiskAppInstances = totalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
+				sumStats.TotalReportingAppInstances++
+				sumStats.TotalUsedMemoryAppInstances = sumStats.TotalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
+				sumStats.TotalUsedDiskAppInstances = sumStats.TotalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
 			}
 		}
-		totalCpuPercentage = totalCpuPercentage + appStats.TotalCpuPercentage
+		sumStats.TotalCpuPercentage = sumStats.TotalCpuPercentage + appStats.TotalCpuPercentage
 		if appStats.TotalTraffic.EventL60Rate > 0 {
-			totalActiveApps++
+			sumStats.TotalActiveApps++
 		}
 	}
+
+	// Output stack information by stack name sort order
+	stackSummaryStatsArray := make(StackSummaryStatsArray, 0, len(summaryStatsByStack))
+	for _, stackSummaryStats := range summaryStatsByStack {
+		stackSummaryStatsArray = append(stackSummaryStatsArray, stackSummaryStats)
+	}
+	sort.Sort(stackSummaryStatsArray)
+	for _, stackSummaryStats := range stackSummaryStatsArray {
+		asUI.outputHeaderForStack(g, v, stackSummaryStats)
+	}
+
+	return nil
+}
+
+func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) {
 
 	totalUsedMemoryAppInstancesDisplay := "--"
 	totalUsedDiskAppInstancesDisplay := "--"
 	totalCpuPercentageDisplay := "--"
-	if totalReportingAppInstances > 0 {
-		totalUsedMemoryAppInstancesDisplay = util.ByteSize(totalUsedMemoryAppInstances).StringWithPrecision(0)
-		totalUsedDiskAppInstancesDisplay = util.ByteSize(totalUsedDiskAppInstances).StringWithPrecision(0)
-		if totalCpuPercentage >= 100 {
-			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", totalCpuPercentage)
+	if stackSummaryStats.TotalReportingAppInstances > 0 {
+		totalUsedMemoryAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalUsedMemoryAppInstances).StringWithPrecision(0)
+		totalUsedDiskAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalUsedDiskAppInstances).StringWithPrecision(0)
+		if stackSummaryStats.TotalCpuPercentage >= 100 {
+			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", stackSummaryStats.TotalCpuPercentage)
 		} else {
-			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", totalCpuPercentage)
+			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", stackSummaryStats.TotalCpuPercentage)
 		}
 	}
 
@@ -433,12 +483,11 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	}
 	fmt.Fprintf(v, "\r")
 
+	fmt.Fprintf(v, "Stack: %v\n", stackSummaryStats.StackName)
+
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
-	fmt.Fprintf(v, "CPU:%6v Used,%6v Max,         Apps:%5v Total,%5v Actv,   Cntrs:%5v\n",
-		totalCpuPercentageDisplay, cellTotalCapacityDisplay,
-		len(asUI.GetDisplayedEventData().AppMap),
-		totalActiveApps, totalReportingAppInstances)
+	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCapacityDisplay)
 
 	displayTotalMem := "--"
 
@@ -452,6 +501,10 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	// Total quota memory of all running app instances
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
+	fmt.Fprintf(v, "   Apps:%5v Total, Cntrs:%5v     ",
+		len(asUI.GetDisplayedEventData().AppMap),
+		stackSummaryStats.TotalReportingAppInstances)
+
 	displayTotalDisk := "--"
 	totalDisk := appMdMgr.GetTotalDiskAllStartedApps()
 	if totalMem > 0 {
@@ -461,5 +514,4 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	fmt.Fprintf(v, "Dsk:%6v Used,", totalUsedDiskAppInstancesDisplay)
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
 
-	return nil
 }
