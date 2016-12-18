@@ -47,10 +47,15 @@ var (
 	windowOpen       bool
 	freezeAutoScroll bool
 	mu               sync.Mutex
+	debugEnabled     bool
 )
 
 func init() {
 	debugLines = []*LogLine{}
+}
+
+func SetDebugEnabled(isEnabled bool) {
+	debugEnabled = isEnabled
 }
 
 type LogLine struct {
@@ -65,7 +70,9 @@ func NewLogLine(level LogLevel, message string, timestamp time.Time) *LogLine {
 }
 
 func Debug(msg string) {
-	logMsg(DebugLevel, msg)
+	if debugEnabled {
+		logMsg(DebugLevel, msg)
+	}
 }
 
 func Info(msg string) {
@@ -218,7 +225,16 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.copyClipboardAction); err != nil {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(w.name, 'z', gocui.ModNone, w.testMsg); err != nil {
+		if err := g.SetKeybinding(w.name, 'e', gocui.ModNone, w.testErrorMsg); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, 'w', gocui.ModNone, w.testWarnMsg); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, 'i', gocui.ModNone, w.testInfoMsg); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, 'd', gocui.ModNone, w.testDebugMsg); err != nil {
 			log.Panicln(err)
 		}
 
@@ -303,8 +319,23 @@ func (w *DebugWidget) closeDebugWidget(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (w *DebugWidget) testMsg(g *gocui.Gui, v *gocui.View) error {
-	Error("Test Error Message")
+func (w *DebugWidget) testErrorMsg(g *gocui.Gui, v *gocui.View) error {
+	Error("Test ERROR Message")
+	return nil
+}
+
+func (w *DebugWidget) testWarnMsg(g *gocui.Gui, v *gocui.View) error {
+	Warn("Test WARN Message")
+	return nil
+}
+
+func (w *DebugWidget) testInfoMsg(g *gocui.Gui, v *gocui.View) error {
+	Info("Test INFO Message")
+	return nil
+}
+
+func (w *DebugWidget) testDebugMsg(g *gocui.Gui, v *gocui.View) error {
+	Debug("Test DEBUG Message")
 	return nil
 }
 

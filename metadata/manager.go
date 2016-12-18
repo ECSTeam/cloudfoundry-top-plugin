@@ -81,7 +81,7 @@ func (mgr *Manager) loadMetadataThread() {
 
 	for {
 
-		toplog.Info(fmt.Sprintf("Metadata - sleep time: %v", minNextLoadTime))
+		toplog.Debug(fmt.Sprintf("Metadata - sleep time: %v", minNextLoadTime))
 
 		select {
 		case <-mgr.refreshNow:

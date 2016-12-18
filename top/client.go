@@ -76,10 +76,12 @@ func (c *Client) Ask(prompt string) string {
 func (c *Client) Start() {
 
 	if !c.options.NoTopCheck && c.shouldExitTop() {
+		// There are other instances of top running and user requested to exit
 		return
 	}
 
-	//isDebug := c.options.Debug
+	toplog.SetDebugEnabled(c.options.Debug)
+
 	conn := c.cliConnection
 
 	isLoggedIn, err := conn.IsLoggedIn()
