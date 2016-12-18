@@ -86,6 +86,16 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 			log.Panicln(err)
 		}
 
+		g.Highlight = true
+
+		fgColor := gocui.ColorWhite | gocui.AttrBold
+		//v.FgColor = fgColor
+		g.SelFgColor = fgColor
+
+		//bgColor := gocui.ColorWhite
+		//v.BgColor = bgColor
+		//g.SelBgColor = bgColor
+
 		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
 		}
@@ -95,6 +105,8 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 }
 
 func (w *HelpView) closeHelpView(g *gocui.Gui, v *gocui.View) error {
+	g.Highlight = false
+	g.SelBgColor = gocui.ColorBlack
 	if err := w.masterUI.CloseView(w); err != nil {
 		return err
 	}

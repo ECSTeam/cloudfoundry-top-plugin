@@ -16,8 +16,15 @@
 package cellDetailView
 
 const HelpText = `
+**Cell Detail Stats View**
+
+Cell detail view shows a list of all containers running on the selected
+diego cell. The full set of stats may not be available until the warm-up
+period is complete.  
+
 **Header information:**
 
+TODO
  
 **Container stats:**
 
@@ -26,15 +33,14 @@ const HelpText = `
   SPACE - Space name
   ORG - Organization name
   CPU%% - Total CPU percent consumed by all containers on cell
-  RSVD_MEM - Total memory reserved by all containers on cell
-  USD_MEM - Total memory actually in use by all containers
-  FREE_MEM - Total memory actually in use by all containers
-  
-  RSVD_DSK - Total disk reserved by all containers on cell
-  USD_DSK - Total disk actually in use by all containers
+  MEM_RSVD - Total memory reserved by all containers on cell
+  MEM_USED - Total memory actually in use by all containers
+  MEM_FREE - Total memory actually in use by all containers
+  DISK_RSVD - Total disk reserved by all containers on cell
+  DISK_USED - Total disk actually in use by all containers
   DISK_FREE - Free Disk space in cell VM available for containers
-  STDOUT - Number of stdout log events
-  STDERR - Number of stderr log events
+  LOG_OUT - Number of stdout log events
+  LOG_ERR - Number of stderr log events
   
 **Exit view: **
 Press 'x' to exit current view
@@ -77,10 +83,4 @@ is not supported on windows while top is running).
 
 **Refresh: **
 Press SPACE to force an immediate screen refresh
-
-**Log Window: **
-Press shift-D to open log window.  This shows internal top
-logging messages.  This window will open automatically if any error
-message is logged (e.g., connection timeouts)
-
 `

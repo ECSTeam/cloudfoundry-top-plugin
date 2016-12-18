@@ -16,14 +16,19 @@
 package capacityPlanView
 
 const HelpText = `
+**Capacity Plan View**
+
+Capacity plan view shows how many containers of various memory sizes
+can be deployed to the foundation based on current capacity.  
+
+NOTE: 
+This view currently does not take into consideration the stack
+(e.g., cflinuxfs2 vs windows2012R2 ).  This will be a future
+enhancement.
+
 **Header information:**
 
-  Evnts        - Total number of events received by the foundation.
-  Warm-up      - It can take up to 30 seconds to receive all event
-                 information before stats are accurate.
-  Duration     - Amount of time stats have been collected.
-  Target       - The target URL of monitored foundation.
-  
+ TODO
  
 **Cell list stats:**
 
@@ -55,6 +60,11 @@ sorting of any column.
 **Clear stats: **
 Press shift-C to clear the statistics counters.
 
+**Clipboard menu: **
+Press 'c' when a row is selected to open the clipboard menu.
+This will copy to clipboard a command you can paste in 
+terminal window later.
+
 **Pause display update:**
 Press 'p' to toggle pause display update.  When display update is
 paused top will continue to capture statstics and display updated
@@ -65,10 +75,10 @@ Press 'f' to show the filter window which allows for filtering
 which rows should be displayed
 
 **Reload metadata: **
-Press 'r' to reload metadata for app/space/org.  The metadata
-is loaded at top startup but can become stale if new applications
-are deployed while top is running.
-TODO: Auto reload metadata upon unknown translation
+Press 'r' to force a reload of metadata for app/space/org.  The
+metadata is loaded at startup and attempts to stay current by
+recognizing when specific data needs to be reloaded. However there
+can be circumstances were data becomes stale.
 
 **Refresh screen interval: **
 Press 's' to set the sleep time between refreshes. Default
@@ -78,9 +88,9 @@ on frequency the foundation delivers events. Top uses passive
 monitoring for stats, a faster refresh interval will not introduce
 additonal load on the CF foundation.
 
-**Select detail: **
-Press UP arrow or DOWN arrow to highlight a cell row.
-TODO: Press ENTER to select the highlighted cell and show
+**Select application detail: **
+Press UP arrow or DOWN arrow to highlight an application row.
+Press ENTER to select the highlighted application and show
 additional detail.
 
 **Scroll columns into view: **
@@ -90,14 +100,13 @@ terminal window to show more columns/rows (resize of cmd.exe window
 is not supported on windows while top is running).
 
 **Refresh: **
-Press SPACE to force an immediate screen refresh
+Press SPACE to force an immediate screen refresh.
 
 **Quit: **
-Press 'q' to quit application
+Press 'q' to quit application.
 
 **Log Window: **
 Press shift-D to open log window.  This shows internal top
 logging messages.  This window will open automatically if any error
-message is logged (e.g., connection timeouts)
-
+message is logged (e.g., connection timeouts).
 `

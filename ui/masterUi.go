@@ -40,7 +40,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-const WarmUpSeconds = 2
+const WarmUpSeconds = 60
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
 type MasterUI struct {
