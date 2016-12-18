@@ -272,3 +272,25 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
+
+func ColumnCellIp() *uiCommon.ListColumn {
+	defaultColSize := 16
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.Ip2long(c1.(*displaydata.DisplayContainerStats).Ip) < util.Ip2long(c2.(*displaydata.DisplayContainerStats).Ip)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		appStats := data.(*displaydata.DisplayContainerStats)
+		if appStats.Ip != "" {
+			return util.FormatDisplayData(appStats.Ip, defaultColSize)
+		} else {
+			return "--"
+		}
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayContainerStats)
+		return appStats.Ip
+	}
+	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}

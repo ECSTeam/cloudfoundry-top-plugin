@@ -57,7 +57,6 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
-	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
@@ -86,9 +85,12 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 }
 
 func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
-	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), "appInfoWidget", 70, 20, asUI)
+	infoWidgetName := "appInfoWidget"
+	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 20, asUI)
 	asUI.GetMasterUI().LayoutManager().Add(appInfoWidget)
 	asUI.GetMasterUI().SetCurrentViewOnTop(g)
+	asUI.GetMasterUI().AddCommonDataViewKeybindings(g, infoWidgetName)
+	//asUI.GetMasterUI().OpenView(g, appInfoWidget)
 	return nil
 }
 
@@ -102,7 +104,7 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnDiskFree())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
-
+	columns = append(columns, ColumnCellIp())
 	return columns
 }
 
@@ -118,6 +120,9 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStats := appMap[asUI.appId]
+	if appStats == nil {
+		return displayStatsArray
+	}
 
 	eventdata.PopulateNamesIfNeeded(appStats, asUI.GetAppMdMgr())
 
@@ -150,87 +155,10 @@ func (asUI *AppDetailView) convertToListData(containerStatsArray []*displaydata.
 	return listData
 }
 
-/*
-func (asUI *AppDetailView) GetListData() []uiCommon.IData {
-	displayDataList := asUI.postProcessData()
-	listData := asUI.convertToListData(displayDataList)
-	return listData
-}
-
-func (asUI *AppDetailView) postProcessData() []*eventdata.AppStats {
-
-	// TODO: Move most of the clone() code here
-
-	appMap := asUI.GetDisplayedEventData().AppMap
-	if len(appMap) > 0 {
-		stats := eventdata.PopulateNamesIfNeeded(appMap)
-		return stats
-	} else {
-		return nil
-	}
-}
-
-func (asUI *AppDetailView) convertToListData(statsList []*eventdata.AppStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, len(statsList))
-	for i, d := range statsList {
-		listData[i] = d
-	}
-	return listData
-}
-*/
-
-/*
-func (w *AppDetailView) Layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
-	bottom := maxY - w.bottomMargin
-	if w.topMargin >= bottom {
-		bottom = w.topMargin + 1
-	}
-
-	leftMargin := 0
-	rightMargin := maxX - 1
-	v, err := g.SetView(w.name, leftMargin, w.topMargin, rightMargin, bottom)
-
-	if err != nil {
-		if err != gocui.ErrUnknownView {
-			return merry.Wrap(err).Appendf("viewName:[%v] left:%v, top:%v, right:%v, bottom: %v",
-				w.name, leftMargin, w.topMargin, rightMargin, bottom)
-		}
-		v.Title = "App Details (press 'q' to quit view)"
-		v.Frame = true
-
-		if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeAppDetailView); err != nil {
-			return err
-		}
-		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeAppDetailView); err != nil {
-			return err
-		}
-
-		if err := g.SetKeybinding(w.name, 'i', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-			appInfoWidget := NewAppInfoWidget(w.masterUI, "appInfoWidget", 70, 20)
-			w.masterUI.LayoutManager().Add(appInfoWidget)
-			w.masterUI.SetCurrentViewOnTop(g)
-			return nil
-		}); err != nil {
-			log.Panicln(err)
-		}
-
-		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
-			log.Panicln(err)
-		}
-
-		w.refreshDisplay(g)
-
-	}
-	return nil
-}
-*/
-
 func (asUI *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
 	if err := asUI.GetMasterUI().CloseView(asUI); err != nil {
 		return err
 	}
-
 	if err := asUI.GetMasterUI().CloseView(asUI.requestsInfoWidget); err != nil {
 		return err
 	}
@@ -252,42 +180,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "%v", util.CLEAR)
 	*/
 
-	// App totals -- this is avaiable on appListView, do we need it here??
 	/*
-			totalCpuPercentage := 0.0
-			totalMemory := uint64(0)
-			totalDisk := uint64(0)
-			reportingAppInstances := 0
-			totalLogCount := int64(0)
-			for _, ca := range appStats.ContainerArray {
-				if ca != nil {
-					if ca.ContainerMetric != nil {
-						cpuPercentage := *ca.ContainerMetric.CpuPercentage
-						totalCpuPercentage = totalCpuPercentage + cpuPercentage
-						memory := *ca.ContainerMetric.MemoryBytes
-						totalMemory = totalMemory + memory
-						disk := *ca.ContainerMetric.DiskBytes
-						totalDisk = totalDisk + disk
-					}
-					totalLogCount = totalLogCount + (ca.OutCount + ca.ErrCount)
-					reportingAppInstances++
-				}
-			}
-
-			if reportingAppInstances == 0 {
-				fmt.Fprintf(v, "%6v", "\n Waiting for container metrics...")
-			} else {
-				if totalMemory > 0 {
-					fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-					fmt.Fprintf(v, "Total")
-					fmt.Fprintf(v, "%8.2f", totalCpuPercentage)
-					fmt.Fprintf(v, "%12v", util.ByteSize(totalMemory))
-					fmt.Fprintf(v, "%12v", util.ByteSize(totalDisk))
-					fmt.Fprintf(v, "%v", util.CLEAR)
-				}
-			}
-			fmt.Fprintf(v, "\n\n")
-
 		totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
 		fmt.Fprintf(v, "Non container logs - Stdout: %-12v ", util.Format(appStats.NonContainerOutCount))
 		fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))

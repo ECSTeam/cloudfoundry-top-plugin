@@ -18,7 +18,6 @@ package appDetailView
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -42,7 +41,6 @@ func (w *RequestsInfoWidget) Name() string {
 
 func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 	maxX, _ := g.Size()
-
 	topMargin := 7
 	width := maxX - 1
 
@@ -53,30 +51,18 @@ func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
 		v.Frame = true
-		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeRequestsInfoWidget); err != nil {
-			return err
-		}
-
-		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
-			log.Panicln(err)
-		}
-
 	}
 	v.Title = "App Request Info for: " + w.getAppName()
 	w.refreshDisplay(g)
 	return nil
 }
 
-func (w *RequestsInfoWidget) closeRequestsInfoWidget(g *gocui.Gui, v *gocui.View) error {
-	if err := w.masterUI.CloseView(w); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (w *RequestsInfoWidget) getAppName() string {
 	m := w.detailView.GetDisplayedEventData().AppMap
 	appStats := m[w.detailView.appId]
+	if appStats == nil {
+		return w.detailView.appId
+	}
 	return appStats.AppName
 }
 
@@ -96,6 +82,9 @@ func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	m := w.detailView.GetDisplayedEventData().AppMap
 	appStats := m[w.detailView.appId]
+	if appStats == nil {
+		return nil
+	}
 
 	avgResponseTimeL60Info := "--"
 	if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
@@ -128,7 +117,7 @@ func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
 	fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 	fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-	fmt.Fprintf(v, "  Press 'i' for more app info")
+	//fmt.Fprintf(v, "  Press 'i' for more app info")
 	fmt.Fprintf(v, "%v", util.CLEAR)
 	return nil
 }

@@ -54,6 +54,9 @@ func (as *AppStats) Id() string {
 }
 
 func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *metadata.AppMetadataManager) {
+	if appStats == nil {
+		return
+	}
 	appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
 	appName := appMetadata.Name
 	if appName == "" {

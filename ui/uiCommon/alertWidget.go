@@ -59,19 +59,18 @@ func (w *AlertWidget) Layout(g *gocui.Gui) error {
 			w.masterUI.SetCurrentViewOnTop(g)
 		}
 		v.Frame = false
+	} else {
 
-		v.Clear()
-		fmt.Fprintf(v, " %v", util.REVERSE_RED)
-
-		if w.message != "" {
-			fmt.Fprintln(v, w.message)
-		} else {
-			fmt.Fprintln(v, "No ALERT message specified")
-		}
-		fmt.Fprintf(v, "%v", util.CLEAR)
-		fmt.Fprintln(v, "line 2")
-		fmt.Fprintln(v, "line 3")
-		fmt.Fprintln(v, "line 4")
 	}
+
+	v.Clear()
+	fmt.Fprintf(v, " %v", util.REVERSE_RED)
+	if w.message != "" {
+		fmt.Fprintln(v, w.message)
+	} else {
+		fmt.Fprintln(v, "No ALERT message")
+	}
+	fmt.Fprintf(v, "%v", util.CLEAR)
+
 	return nil
 }

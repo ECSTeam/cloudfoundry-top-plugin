@@ -279,6 +279,6 @@ func (asUI *CapacityPlanView) preRowDisplay(data uiCommon.IData, isSelected bool
 }
 
 func (asUI *CapacityPlanView) updateHeader(g *gocui.Gui, v *gocui.View) error {
-	fmt.Fprintf(v, "\nTODO: show something here")
+	fmt.Fprintf(v, "\nTODO: Need to handle 'by stack'.  Show header stats")
 	return nil
 }

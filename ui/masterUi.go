@@ -40,7 +40,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-const WarmUpSeconds = 60
+const WarmUpSeconds = 2
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
 type MasterUI struct {
@@ -113,7 +113,7 @@ func (mui *MasterUI) initGui() {
 	mui.layoutManager.Add(headerView)
 	// We add the common keybindings to the header view in the event
 	// that no DataView is open
-	mui.addCommonDataViewKeybindings(g, "headerView")
+	mui.AddCommonDataViewKeybindings(g, "headerView")
 
 	mui.createAndOpenView(g, "appListView")
 
@@ -147,7 +147,7 @@ func (mui *MasterUI) addTopLevelDataViewKeybindings(g *gocui.Gui, viewName strin
 // Add common keybindings for all data views -- note that this does not include
 // keybindings for "top level" data views which are ones that are selectable from
 // the "select view" menu ('d' command)
-func (mui *MasterUI) addCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
+func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string) error {
 	if err := g.SetKeybinding(viewName, 'C', gocui.ModNone, mui.clearStats); err != nil {
 		log.Panicln(err)
 	}
@@ -299,7 +299,7 @@ func (mui *MasterUI) OpenView(g *gocui.Gui, dataView masterUIInterface.Updatable
 	mui.currentDataView = dataView
 	mui.layoutManager.Add(dataView)
 	dataView.Layout(g)
-	mui.addCommonDataViewKeybindings(g, dataView.Name())
+	mui.AddCommonDataViewKeybindings(g, dataView.Name())
 	mui.updateDisplay(g)
 	return nil
 }

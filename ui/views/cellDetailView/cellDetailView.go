@@ -60,7 +60,7 @@ func NewCellDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle(fmt.Sprintf("Cell %v Detail - Container List", cellIp))
+	dataListView.SetTitle(fmt.Sprintf("Cell IP:%v Detail - Container List", cellIp))
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 

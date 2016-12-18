@@ -91,7 +91,7 @@ func (mgr *Manager) loadMetadataThread() {
 		}
 
 		minNextLoadTime = veryLongtime
-		toplog.Warn("hello from cache thread")
+		toplog.Debug("Metadata cache thread is awake")
 		for _, appId := range mgr.refreshQueue {
 			appMetadata := mgr.appMdMgr.appMetadataMap[appId]
 			timeSinceLastLoad := time.Now().Sub(appMetadata.cacheTime)

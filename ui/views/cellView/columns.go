@@ -23,7 +23,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-func (asUI *CellListView) columnIp() *uiCommon.ListColumn {
+func (asUI *CellListView) columnCellIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.Ip2long(c1.(*displaydata.DisplayCellStats).Ip) < util.Ip2long(c2.(*displaydata.DisplayCellStats).Ip)
@@ -36,7 +36,7 @@ func (asUI *CellListView) columnIp() *uiCommon.ListColumn {
 		cellStats := data.(*displaydata.DisplayCellStats)
 		return cellStats.Ip
 	}
-	c := uiCommon.NewListColumn("IP", "IP", defaultColSize,
+	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }

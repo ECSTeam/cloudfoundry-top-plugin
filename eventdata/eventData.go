@@ -404,7 +404,8 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 
 				isApiCall, apiUri := ed.checkIfApiCall_PCF1_6(uri)
 				if !isApiCall {
-					isApiCall, apiUri = ed.checkIfApiCall_PCF1_7(uri)
+					// PCF 1.7 needs more testing -- comment out this check for now
+					//isApiCall, apiUri = ed.checkIfApiCall_PCF1_7(uri)
 				}
 				if isApiCall {
 					ed.pcfApiHasBeenCalled(msg, apiUri)

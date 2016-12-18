@@ -32,7 +32,6 @@ import (
 
 type CellListView struct {
 	*dataView.DataListView
-	//detailView *cellDetailView.CellDetailView
 }
 
 func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
@@ -43,7 +42,7 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("CPU_PERCENT", true),
-		uiCommon.NewSortColumn("IP", false),
+		uiCommon.NewSortColumn("CELL_IP", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
@@ -67,7 +66,7 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 
 func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, asUI.columnIp())
+	columns = append(columns, asUI.columnCellIp())
 
 	columns = append(columns, asUI.columnTotalCpuPercentage())
 	columns = append(columns, asUI.columnTotalReportingContainers())

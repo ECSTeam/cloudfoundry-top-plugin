@@ -65,7 +65,7 @@ TODO: Auto reload metadata upon unknown translation
 Press 's' to set the sleep time between refreshes. Default
 is 1 second.  Valid values are 0.1 - 60.  The refresh interval only
 effects how often the client screen is refreshed, it has no effect
-on frequency the platform delivers events. Top uses passive
+on frequency the foundation delivers events. Top uses passive
 monitoring for stats, a faster refresh interval will not introduce
 additonal load on the CF foundation.
 

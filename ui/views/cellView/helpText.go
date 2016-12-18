@@ -16,34 +16,34 @@
 package cellView
 
 const helpText = `
+**Cell Stats View**
+
+Cell list view shows a list of all diego cells in the foundation.  This
+list may not be complete until the warm-up period is complete.
+
 **Header information:**
 
-  Evnts        - Total number of events received by the platform.
-  Warm-up      - It can take up to 30 seconds to receive all event
-                 information before stats are accurate.
-  Duration     - Amount of time stats have been collected.
-  Target       - The target URL of monitored foundation.
-  
+TODO
  
 **Cell list stats:**
 
-  IP - IP address of Cloud Foundry cell
-  CPU%% - Total CPU percent consumed by all containers on cell
-  RCR - Total reporting containers
+  CELL_IP - IP address of Cloud Foundry diego cell
+  CPU%% - CPU percent consumed by all containers on cell
+  RCR - Reporting containers
   CPUS - Number of CPUs in cell VM
-  TOT_MEM - Total Memory in cell VM
+  TOT_MEM - Total Memory in cell VM available for containers
   FREE_MEM - Free Memory in cell VM available for containers
-  C_RSVD_MEM - Total memory reserved by all containers on cell
-  C_USD_MEM - Total memory actually in use by all containers
+  C_RSVD_MEM - Memory reserved by all containers on cell
+  C_USD_MEM - Memory actually in use by all containers
   TOT_DISK - Total Disk space in cell VM
   FREE_DISK - Free Disk space in cell VM available for containers
   C_RSVD_DSK - Total disk reserved by all containers on cell
   C_USD_DSK - Total disk actually in use by all containers
-  MAX_CNTR - Max containers cell can handle
+  MAX_CNTR - Max containers a cell can handle
   CNTRS - Number of containers running on cell reported by cell
-  DNAME - BOSH Deployment name
-  JOB_NAME - BOSH Job name
-  JOB_IDX - BOSH Job index
+  DNAME - BOSH deployment name
+  JOB_NAME - BOSH job name
+  JOB_IDX - BOSH job index
   
 **Display: **
 Press 'd' to select data view.
@@ -74,7 +74,7 @@ TODO: Auto reload metadata upon unknown translation
 Press 's' to set the sleep time between refreshes. Default
 is 1 second.  Valid values are 0.1 - 60.  The refresh interval only
 effects how often the client screen is refreshed, it has no effect
-on frequency the platform delivers events. Top uses passive
+on frequency the foundation delivers events. Top uses passive
 monitoring for stats, a faster refresh interval will not introduce
 additonal load on the CF foundation.
 

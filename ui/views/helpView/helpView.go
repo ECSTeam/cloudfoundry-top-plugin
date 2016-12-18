@@ -49,7 +49,8 @@ func (w *HelpView) Name() string {
 
 func (w *HelpView) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
+	top := maxY/2 - (w.height / 2)
+	v, err := g.SetView(w.name, maxX/2-(w.width/2), top, maxX/2+(w.width/2), top+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -76,6 +77,12 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 			log.Panicln(err)
 		}
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowDown, gocui.ModNone, w.arrowDown); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, gocui.KeyPgup, gocui.ModNone, w.pageUp); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, gocui.KeyPgdn, gocui.ModNone, w.pageDown); err != nil {
 			log.Panicln(err)
 		}
 
@@ -107,5 +114,29 @@ func (w *HelpView) arrowDown(g *gocui.Gui, v *gocui.View) error {
 		w.viewOffset++
 		v.SetOrigin(0, w.viewOffset)
 	}
+	return nil
+}
+
+func (w *HelpView) pageUp(g *gocui.Gui, v *gocui.View) error {
+	realHeight := w.height - 1
+	if w.viewOffset > 0 {
+		w.viewOffset = w.viewOffset - realHeight
+		if w.viewOffset < 0 {
+			w.viewOffset = 0
+		}
+		v.SetOrigin(0, w.viewOffset)
+	}
+	return nil
+}
+
+func (w *HelpView) pageDown(g *gocui.Gui, v *gocui.View) error {
+	h := w.height - 1
+	textLines := w.helpTextLines
+
+	w.viewOffset = w.viewOffset + h
+	if !(w.viewOffset < textLines && (textLines-h) > w.viewOffset) {
+		w.viewOffset = textLines - h
+	}
+	v.SetOrigin(0, w.viewOffset)
 	return nil
 }

@@ -18,7 +18,7 @@ package appDetailView
 const HelpText = `
 **Header information:**
 
-  Evnts        - Total number of events received by the platform.
+  Evnts        - Total number of events received by the foundation.
   Warm-up      - It can take up to 30 seconds to receive all event
                  information before stats are accurate.
   Duration     - Amount of time stats have been collected.
@@ -101,7 +101,7 @@ TODO: Auto reload metadata upon unknown translation
 Press 's' to set the sleep time between refreshes. Default
 is 1 second.  Valid values are 0.1 - 60.  The refresh interval only
 effects how often the client screen is refreshed, it has no effect
-on frequency the platform delivers events. Top uses passive
+on frequency the foundation delivers events. Top uses passive
 monitoring for stats, a faster refresh interval will not introduce
 additonal load on the CF foundation.
 

@@ -75,6 +75,10 @@ func (w *AppInfoWidget) closeAppInfoWidget(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (w *AppInfoWidget) UpdateDisplay(g *gocui.Gui) error {
+	return w.refreshDisplay(g)
+}
+
 func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	v, err := g.View(w.name)
@@ -86,6 +90,9 @@ func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	m := w.detailView.GetDisplayedEventData().AppMap
 	appStats := m[w.detailView.appId]
+	if appStats == nil {
+		return nil
+	}
 	appMetadata := w.appMdMgr.FindAppMetadata(appStats.AppId)
 
 	if appMetadata.Guid != "" {

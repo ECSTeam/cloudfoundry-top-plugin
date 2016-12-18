@@ -10,7 +10,7 @@ The primary source of information that the top plugin uses is from monitoring th
 
 ## Application Stats
 
-Provide details about applications running on the platform including the following
+Provide details about applications running on the foundation including the following
 stats:
 
 * APPLICATION - Application name
@@ -48,7 +48,7 @@ A specific application can be selected to show details of a specific application
 
 ## Cell Stats
 
-Provides details about each diego cell in the platform.  This information can be used to find
+Provides details about each diego cell in the foundation.  This information can be used to find
 "hot" cells -- Cells with high CPU untilization.  A cell can be selected to get details 
 such as which containers are currenly running on the cell.
 

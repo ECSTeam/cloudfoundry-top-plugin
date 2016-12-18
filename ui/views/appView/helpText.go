@@ -16,32 +16,38 @@
 package appView
 
 const HelpText = `
+**App Stats View**
+
+App list view shows a list of all deployed applications regardless of
+state. The full set of stats may not be available until the warm-up
+period is complete.  After the warm-up period, if any applications are
+found not to be in the desired state (e.g., instances set to 4 but
+only 3 are running) an alert will be displayed and the application will
+be colored red.
+
 **Header information:**
 
-  Evnts        - Total number of events received by the platform.
+  Evnts        - Total number of events received by the foundation.
   Warm-up      - It can take up to 30 seconds to receive all event
                  information before stats are accurate.
   Duration     - Amount of time stats have been collected.
   Target       - The target URL of monitored foundation.
   CPU (Used)   - Amount of CPU consumed by all app instances.
   CPU (Max)    - Sum of CPU capacity across all cells.
-  Mem (Used)   - Amount of memory actually in use by all app
-                 instances.
+  Mem (Used)   - Amount of memory actually in use by all app instances.
   Mem (Max)    - Sum of memory capacity across all cells.
-  Mem (Rsrvd)  - Total amount of requested memory for all started
-                 app instances.
+  Mem (Rsrvd)  - Amount of requested memory for all application
+                 marked as started (app mem * instance count).
   Dsk (Used)   - Amount of disk actually in use by all app
                  instances.
   Dsk (Max)    - Sum of disk capacity across all cells.
-  Dsk (Rsrvd)  - Total amount of requested disk for all started
-                 app instances.
-  Apps (total) - Total number of applications deployed to
-                 foundation.
+  Dsk (Rsrvd)  - Amount of requested disk for all applications
+                 marked as started (app mem * instance count).
+  Apps (total) - Number of applications deployed to foundation.
   Apps (Actv)  - Number of applications that have taken HTTP(S)
                  traffic through the go router in the last 60
                  seconds.
-  Cntrs        - Number of reporting containers which typically
-                 are app instances.
+  Cntrs        - Number of reporting containers.
  
 **Application list stats:**
 
@@ -64,8 +70,8 @@ const HelpText = `
   5XX - Count of HTTP(S) responses with status code 500-599
 
 NOTE: The HTTP counters are based on traffic through the 
-gorouter.  Applications that talk directly container-to-
-container will not show up in the REQ/nXX counters.
+go-router.  Applications that talk directly container-to-
+container will not show up in the REQ/TOT-REQ/nXX counters.
 
 **Display: **
 Press 'd' to select data view.
@@ -92,16 +98,16 @@ Press 'f' to show the filter window which allows for filtering
 which rows should be displayed
 
 **Reload metadata: **
-Press 'r' to reload metadata for app/space/org.  The metadata
-is loaded at top startup but can become stale if new applications
-are deployed while top is running.
-TODO: Auto reload metadata upon unknown translation
+Press 'r' to force a reload of metadata for app/space/org.  The
+metadata is loaded at startup and attempts to stay current by
+recognizing when specific data needs to be reloaded. However there
+can be circumstances were data becomes stale.
 
 **Refresh screen interval: **
 Press 's' to set the sleep time between refreshes. Default
 is 1 second.  Valid values are 0.1 - 60.  The refresh interval only
 effects how often the client screen is refreshed, it has no effect
-on frequency the platform delivers events. Top uses passive
+on frequency the foundation delivers events. Top uses passive
 monitoring for stats, a faster refresh interval will not introduce
 additonal load on the CF foundation.
 
@@ -117,14 +123,13 @@ terminal window to show more columns/rows (resize of cmd.exe window
 is not supported on windows while top is running).
 
 **Refresh: **
-Press SPACE to force an immediate screen refresh
+Press SPACE to force an immediate screen refresh.
 
 **Quit: **
-Press 'q' to quit application
+Press 'q' to quit application.
 
 **Log Window: **
 Press shift-D to open log window.  This shows internal top
 logging messages.  This window will open automatically if any error
-message is logged (e.g., connection timeouts)
-
+message is logged (e.g., connection timeouts).
 `

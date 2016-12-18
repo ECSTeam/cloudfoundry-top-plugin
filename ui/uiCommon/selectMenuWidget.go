@@ -91,6 +91,9 @@ func (w *SelectMenuWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeSelectMenuWidget); err != nil {
 			return err
 		}
+		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.closeSelectMenuWidget); err != nil {
+			return err
+		}
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowDown, gocui.ModNone, w.keyArrowDownAction); err != nil {
 			return err
 		}

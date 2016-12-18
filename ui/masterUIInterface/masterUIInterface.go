@@ -26,6 +26,7 @@ type MasterUIInterface interface {
 	OpenView(g *gocui.Gui, dataView UpdatableView) error
 	IsWarmupComplete() bool
 	SetHelpTextTips(g *gocui.Gui, helpTextTips string) error
+	AddCommonDataViewKeybindings(g *gocui.Gui, viewName string) error
 }
 
 type LayoutManagerInterface interface {
