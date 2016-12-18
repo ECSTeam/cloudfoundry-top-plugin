@@ -55,10 +55,11 @@ func (mgr *Manager) GetAppMdManager() *AppMetadataManager {
 	return mgr.appMdMgr
 }
 
+// Load all the metadata.  This is a blocking call.
 func (mgr *Manager) LoadMetadata() {
 	toplog.Info("Manager>loadMetadata")
-
 	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
+	LoadStackCache(mgr.cliConnection)
 	LoadSpaceCache(mgr.cliConnection)
 	LoadOrgCache(mgr.cliConnection)
 }

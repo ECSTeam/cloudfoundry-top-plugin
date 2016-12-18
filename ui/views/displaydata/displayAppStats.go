@@ -21,6 +21,7 @@ type DisplayAppStats struct {
 	*eventdata.AppStats
 
 	DesiredContainers int
+	StackName         string
 
 	//TotalTraffic *eventdata.TrafficStats
 

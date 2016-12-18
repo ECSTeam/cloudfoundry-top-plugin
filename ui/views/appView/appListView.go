@@ -23,6 +23,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -143,6 +144,8 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, asUI.column3XX())
 	columns = append(columns, asUI.column4XX())
 	columns = append(columns, asUI.column5XX())
+
+	columns = append(columns, asUI.columnStackName())
 
 	return columns
 }
@@ -280,6 +283,9 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 		if appMetadata.State == "STARTED" {
 			displayAppStats.DesiredContainers = int(appMetadata.Instances)
 		}
+
+		stack := metadata.FindStackMetadata(appMetadata.StackGuid)
+		displayAppStats.StackName = stack.Name
 
 		now := time.Now()
 		for containerIndex, cs := range appStats.ContainerArray {

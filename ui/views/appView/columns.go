@@ -376,3 +376,21 @@ func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
+
+func (asUI *AppListView) columnStackName() *uiCommon.ListColumn {
+	defaultColSize := 15
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayAppStats).StackName, c2.(*displaydata.DisplayAppStats).StackName)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		appStats := data.(*displaydata.DisplayAppStats)
+		return util.FormatDisplayData(appStats.StackName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayAppStats)
+		return appStats.StackName
+	}
+	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}
