@@ -15,7 +15,7 @@
 
 package appDetailView
 
-const helpText = `
+const HelpText = `
 **Header information:**
 
   Evnts        - Total number of events received by the platform.

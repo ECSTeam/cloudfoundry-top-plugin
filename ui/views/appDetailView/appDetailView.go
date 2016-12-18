@@ -64,7 +64,8 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 
 	dataListView.SetTitle("Container List")
-	dataListView.HelpText = helpText
+	dataListView.HelpText = HelpText
+	dataListView.HelpTextTips = HelpTextTips
 
 	asUI.DataListView = dataListView
 

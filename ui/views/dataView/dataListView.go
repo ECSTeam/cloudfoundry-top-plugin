@@ -51,6 +51,7 @@ type DataListView struct {
 	initialized            bool
 	Title                  string
 	HelpText               string
+	HelpTextTips           string
 	InitializeCallback     initializeCallback
 	UpdateHeaderCallback   actionCallback
 	PreRowDisplayCallback  preRowDisplayCallback
@@ -146,6 +147,8 @@ func (asUI *DataListView) Layout(g *gocui.Gui) error {
 		asUI.initialized = true
 		asUI.initialize(g)
 	}
+	asUI.masterUI.SetHelpTextTips(g, asUI.HelpTextTips)
+
 	return asUI.listWidget.Layout(g)
 }
 

@@ -41,6 +41,7 @@ import (
 )
 
 const WarmUpSeconds = 60
+const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
 type MasterUI struct {
 	layoutManager *uiCommon.LayoutManager
@@ -53,8 +54,8 @@ type MasterUI struct {
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
 
-	headerSize int
-	footerSize int
+	headerSize           int
+	helpTextTipsViewSize int
 
 	displayMenuId string
 }
@@ -103,9 +104,9 @@ func (mui *MasterUI) initGui() {
 
 	toplog.InitDebug(g, mui)
 
-	mui.footerSize = 4
-	footerView := NewFooterWidget("footerView", mui.footerSize)
-	mui.layoutManager.Add(footerView)
+	mui.helpTextTipsViewSize = 4
+	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
+	mui.layoutManager.Add(helpTextTipsView)
 
 	mui.headerSize = 6
 	headerView := NewHeaderWidget(mui, "headerView", mui.headerSize)
@@ -231,6 +232,15 @@ func (mui *MasterUI) GetCurrentView(g *gocui.Gui) *gocui.View {
 	return view
 }
 
+func (mui *MasterUI) SetHelpTextTips(g *gocui.Gui, helpTextTips string) error {
+	helpMgr := mui.layoutManager.GetManagerByViewName(HELP_TEXT_VIEW_NAME)
+	if helpMgr != nil {
+		helpTextTipsWidget := helpMgr.(*HelpTextTipsWidget)
+		helpTextTipsWidget.SetHelpTextTips(g, helpTextTips)
+	}
+	return nil
+}
+
 func (mui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
@@ -271,11 +281,11 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 	var dataView masterUIInterface.UpdatableView
 	switch viewName {
 	case "appListView":
-		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.footerSize, ep)
+		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
 	case "cellListView":
-		dataView = cellView.NewCellListView(mui, "cellListView", mui.headerSize+1, mui.footerSize, ep)
+		dataView = cellView.NewCellListView(mui, "cellListView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
 	case "capacityPlanView":
-		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.headerSize+1, mui.footerSize, ep)
+		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
 
 	default:
 		return errors.New("Unable to find view " + viewName)

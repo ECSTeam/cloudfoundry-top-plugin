@@ -71,7 +71,8 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.GetListData = asUI.GetListData
 
 	dataListView.SetTitle("App List")
-	dataListView.HelpText = helpText
+	dataListView.HelpText = HelpText
+	dataListView.HelpTextTips = HelpTextTips
 
 	asUI.DataListView = dataListView
 

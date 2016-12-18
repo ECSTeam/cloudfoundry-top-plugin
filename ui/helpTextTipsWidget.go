@@ -20,26 +20,29 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/jroimartin/gocui"
 )
 
-type FooterWidget struct {
+type HelpTextTipsWidget struct {
+	masterUI        masterUIInterface.MasterUIInterface
 	name            string
 	height          int
 	formatTextRegex *regexp.Regexp
+	helpTextTips    string
 }
 
-func NewFooterWidget(name string, height int) *FooterWidget {
-	w := &FooterWidget{name: name, height: height}
+func NewHelpTextTipsWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int) *HelpTextTipsWidget {
+	w := &HelpTextTipsWidget{masterUI: masterUI, name: name, height: height}
 	w.formatTextRegex = regexp.MustCompile(`\*\*([^\*]*)*\*\*`)
 	return w
 }
 
-func (w *FooterWidget) Name() string {
+func (w *HelpTextTipsWidget) Name() string {
 	return w.name
 }
 
-func (w *FooterWidget) Layout(g *gocui.Gui) error {
+func (w *HelpTextTipsWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	v, err := g.SetView(w.name, 0, maxY-w.height, maxX-1, maxY)
 	if err != nil {
@@ -47,24 +50,27 @@ func (w *FooterWidget) Layout(g *gocui.Gui) error {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
 		v.Frame = false
-		w.quickHelp(g, v)
+		return w.showHelpTextTips(g, v)
 	}
 	return nil
 }
 
-func (w *FooterWidget) quickHelp(g *gocui.Gui, v *gocui.View) error {
+func (w *HelpTextTipsWidget) SetHelpTextTips(g *gocui.Gui, helpTextTips string) error {
 
-	fmt.Fprint(v, w.formatText("**d**:display "))
-	fmt.Fprint(v, w.formatText("**q**:quit "))
+	w.helpTextTips = w.formatText(helpTextTips)
+	v, err := g.View(w.name)
+	if err != nil {
+		return err
+	}
+	return w.showHelpTextTips(g, v)
+}
 
-	fmt.Fprint(v, w.formatText("**x**:exit detail view "))
-	fmt.Fprint(v, w.formatText("**h**:help "))
-	fmt.Fprintln(v, w.formatText("**UP**/**DOWN** arrow to highlight row"))
-	fmt.Fprint(v, w.formatText("**ENTER** to select highlighted row, "))
-	fmt.Fprint(v, w.formatText(`**LEFT**/**RIGHT** arrow to scroll columns`))
+func (w *HelpTextTipsWidget) showHelpTextTips(g *gocui.Gui, v *gocui.View) error {
+	v.Clear()
+	fmt.Fprint(v, w.helpTextTips)
 	return nil
 }
 
-func (w *FooterWidget) formatText(text string) string {
+func (w *HelpTextTipsWidget) formatText(text string) string {
 	return w.formatTextRegex.ReplaceAllString(text, "\033[37;1m${1}\033[0m")
 }

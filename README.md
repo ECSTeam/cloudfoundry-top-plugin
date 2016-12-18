@@ -1,10 +1,10 @@
 # top-plugin
 
-Plugin for showing live statistics of the targeted cloud foundry foundation.  You
-must be logged in as 'admin' or assign permissions to PCF user as described in the
-installation below for this plugin to function.  The live statistics include
-application stats and route stats. The primary source of information
-that the top plugin uses is from monitoring firehose.
+Cloud Foundry command-line cf plugin for showing live statistics of the targeted cloud foundry foundation.
+You must be logged in as 'admin' user or assign permissions to the cloud foundry user as 
+described in the installation instructions below for this plugin to function.  
+The live statistics include application statistics and diego cell statistics amoung others.
+The primary source of information that the top plugin uses is from monitoring the cloud foundry firehose.
 
 ![Screenshot](screenshots/screencast1.gif?raw=true)
 
@@ -16,16 +16,18 @@ stats:
 * APPLICATION - Application name
 * SPACE - Space name
 * ORG - Organization name
-* RCR - Total reporting Containers
+* DRC - Total desired containers (configured instances of app)
+* RCR - Total reporting containers 
 * CPU% - Total CPU percent consumed by all containers
 * MEM - Total memory used by all containers
 * DISK - Total disk used by all containers
 * RESP - Avg response time in milliseconds over last 60 seconds
-* LOGS - Total number of log events
-* L1 - HTTP(S) request/responses in last 1 second
-* L10 - HTTP(S) request/responses in last 10 seconds
-* L60 - HTTP(S) request/responses in last 60 seconds
-* HTTP - All of the HTTP(S) responses
+* LOG_OUT - Total number of stdout log events
+* LOG_ERR - Total number of stderr log events
+* REQ/1 - HTTP(S) request/responses in last 1 second that have gone through go-router
+* REQ/10 - HTTP(S) request/responses in last 10 seconds that have gone through go-router
+* REQ/60 - HTTP(S) request/responses in last 60 seconds that have gone through go-router
+* TOT-REQ - All of the HTTP(S) responses that have gone through go-router
 * 2XX - HTTP(S) responses with status code 200-299
 * 3XX - HTTP(S) responses with status code 300-399
 * 4XX - HTTP(S) responses with status code 400-499
@@ -35,15 +37,39 @@ stats:
 
 A specific application can be selected to show details of a specific application including:
 
+* IDX - Container instance index
 * CPU% - Per container (application instance) CPU percent usage
-* Memory - Per container (application instance) memory used
-* Disk - Per container (application instance) disk used
-* Log Stdout - Per container (application instance) stdout log events
-* Log Stderr - Per container (application instance) stderr log events
+* MEM_USED - Per container (application instance) memory used
+* MEM_FREE - Per container (application instance) memory free
+* DISK_USED - Per container (application instance) disk used
+* DISK_FREE - Per container (application instance) disk free
+* LOG_OUT - Per container (application instance) stdout log events
+* LOG_ERR - Per container (application instance) stderr log events
 
-## Route Stats (TODO - not implemented yet)
+## Cell Stats
 
-Not yet implemented - This will show statistics based on routes (domain/host/path)
+Provides details about each diego cell in the platform.  This information can be used to find
+"hot" cells -- Cells with high CPU untilization.  A cell can be selected to get details 
+such as which containers are currenly running on the cell.
+
+* IP - The IP address of the diego cell
+* CPU% - Container CPU percent usage
+* RCR - Number of container that have reported in
+* CPUS - Number of CPUs assigned to this diego cell
+* TOT_MEM -
+* FREE_MEM -
+* C_RSVD_MEM -
+* C_USD_MEM -
+* TOT_DISK -
+* FREE_DISK -
+* C_RSVD_DSK -
+* C_USD_DSK - 
+* MAX_CNTR -
+* CNTRS - Number of containers cell thinks it has running
+* DNAME - BOSH deployment name
+* JOB_NAME - BOSH job name
+* JOB_IDX - BOSH deployment index
+
 
 # Installation
 
@@ -63,7 +89,7 @@ cf install-plugin ./top-plugin-osx
 ## Assign needed permissions
 
 To use this plugin you must be logged in as 'admin' or assign two permissions
-to an existing PCF user.  To assign needed permissions:
+to an existing cloud foundry user.  To assign needed permissions:
 
 Install the uaac client CLI if you do not already have it:
 ```
@@ -85,7 +111,7 @@ a logout and login.
 
 # Usage
 
-User must be logged in as admin or pcf user with permissions as described above.
+User must be logged in as admin or cloud foundry user with permissions as described above.
 ```
 cf top
 ```

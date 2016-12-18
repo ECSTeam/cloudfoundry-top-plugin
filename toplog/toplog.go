@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/atotto/clipboard"
@@ -45,6 +46,7 @@ var (
 	debugWidget      *DebugWidget
 	windowOpen       bool
 	freezeAutoScroll bool
+	mu               sync.Mutex
 )
 
 func init() {
@@ -82,7 +84,12 @@ func Error(msg string) {
 func Open() {
 	if gui != nil {
 		gui.Execute(func(gui *gocui.Gui) error {
-			scrollToLastLogLine()
+			if !freezeAutoScroll {
+				debugWidget.calulateViewDimensions(gui)
+				mu.Lock()
+				scrollToLastLogLine()
+				mu.Unlock()
+			}
 			openView()
 			return nil
 		})
@@ -90,11 +97,9 @@ func Open() {
 }
 
 func scrollToLastLogLine() {
-	//_, maxY := gui.Size()
-	//top := 4
-	//bottom := maxY - 2
-	//height := bottom - top - 1
-	viewOffset := len(debugLines) - debugWidget.height
+	// Do not lock mutex here -- as callers should already have the lock
+	logSize := len(debugLines)
+	viewOffset := logSize - debugWidget.height
 	if viewOffset < 0 {
 		viewOffset = 0
 	}
@@ -102,6 +107,8 @@ func scrollToLastLogLine() {
 }
 
 func logMsg(level LogLevel, msg string) {
+	mu.Lock()
+	defer mu.Unlock()
 	msg = strings.Replace(msg, "\n", " | ", -1)
 	logLine := NewLogLine(level, msg, time.Now())
 	debugLines = append(debugLines, logLine)
@@ -145,27 +152,34 @@ func (w *DebugWidget) Name() string {
 	return w.name
 }
 
-func (w *DebugWidget) Layout(g *gocui.Gui) error {
+func (w *DebugWidget) calulateViewDimensions(g *gocui.Gui) (left, top, right, bottom int) {
 	maxX, maxY := g.Size()
-	left := 5
-	right := maxX - 5
+	left = 5
+	right = maxX - 5
 	if right <= left {
 		right = left + 1
 	}
-	top := 4
-	bottom := maxY - 2
+	top = 4
+	bottom = maxY - 2
 	w.height = bottom - top - 1
 	w.width = right - left
 
 	if top >= bottom {
 		bottom = top + 1
 	}
+	return left, top, right, bottom
+}
+
+func (w *DebugWidget) Layout(g *gocui.Gui) error {
+
+	baseTitle := "Log (press ENTER to close, DOWN/UP arrow to scroll)"
+	left, top, right, bottom := w.calulateViewDimensions(g)
 	v, err := g.SetView(w.name, left, top, right, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
-		v.Title = "Log (press ENTER to close, DOWN/UP arrow to scroll)"
+		v.Title = baseTitle
 		v.Frame = true
 		v.Autoscroll = false
 		v.Wrap = false
@@ -174,15 +188,13 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		g.SelBgColor = bgColor
 		g.Highlight = true
 
-		//fmt.Fprintf(v, "Debug window\n")
-
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeDebugWidget); err != nil {
 			return err
 		}
 		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.closeDebugWidget); err != nil {
 			return err
 		}
-		if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.closeDebugWidget); err != nil {
+		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.closeDebugWidget); err != nil {
 			return err
 		}
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowUp, gocui.ModNone, w.arrowUp); err != nil {
@@ -203,10 +215,10 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowLeft, gocui.ModNone, w.arrowLeft); err != nil {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(w.name, 'x', gocui.ModNone, w.testMsg); err != nil {
+		if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.copyClipboardAction); err != nil {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.copyClipboardAction); err != nil {
+		if err := g.SetKeybinding(w.name, 'z', gocui.ModNone, w.testMsg); err != nil {
 			log.Panicln(err)
 		}
 
@@ -218,6 +230,13 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		v.BgColor = bgColor
 		g.SelBgColor = bgColor
 		w.writeLogLines(g, v)
+
+		title := baseTitle
+		if freezeAutoScroll {
+			title = fmt.Sprintf("%v - AUTO SCROLL OFF", baseTitle)
+		}
+		v.Title = title
+
 	}
 
 	return nil
@@ -226,6 +245,8 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
 	v.Clear()
 	h := w.height
+	mu.Lock()
+	defer mu.Unlock()
 	for index := w.viewOffset; (index-w.viewOffset) < (h) && index < len(debugLines); index++ {
 		logLine := debugLines[index]
 		msg := logLine.message
@@ -252,6 +273,8 @@ func (w *DebugWidget) getBackgroundColor() gocui.Attribute {
 
 func (w *DebugWidget) getMaxLogLevel() LogLevel {
 	maxLevel := DebugLevel
+	mu.Lock()
+	defer mu.Unlock()
 	for _, logLine := range debugLines {
 		switch logLine.level {
 		case ErrorLevel:
@@ -276,16 +299,19 @@ func (w *DebugWidget) closeDebugWidget(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 	windowOpen = false
+	freezeAutoScroll = false
 	return nil
 }
 
 func (w *DebugWidget) testMsg(g *gocui.Gui, v *gocui.View) error {
-	Warn("hello")
+	Error("Test Error Message")
 	return nil
 }
 
 func (w *DebugWidget) copyClipboardAction(g *gocui.Gui, v *gocui.View) error {
 
+	mu.Lock()
+	defer mu.Unlock()
 	var buffer bytes.Buffer
 	for index := 0; index < len(debugLines); index++ {
 		debugLine := debugLines[index]
@@ -323,6 +349,8 @@ func (w *DebugWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *DebugWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
+	mu.Lock()
+	defer mu.Unlock()
 	h := w.height
 	if w.viewOffset < len(debugLines) && (len(debugLines)-h) > w.viewOffset {
 		w.viewOffset++
@@ -347,7 +375,8 @@ func (w *DebugWidget) pageUp(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *DebugWidget) pageDown(g *gocui.Gui, v *gocui.View) error {
-
+	mu.Lock()
+	defer mu.Unlock()
 	h := w.height
 	w.viewOffset = w.viewOffset + h
 	if !(w.viewOffset < len(debugLines) && (len(debugLines)-h) > w.viewOffset) {

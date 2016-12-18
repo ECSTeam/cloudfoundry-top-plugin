@@ -23,6 +23,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
@@ -59,7 +60,8 @@ func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.PreRowDisplayCallback = asUI.preRowDisplay
 
 	dataListView.SetTitle("Capacity Plan (memory)")
-	dataListView.HelpText = helpText
+	dataListView.HelpText = HelpText
+	dataListView.HelpTextTips = appView.HelpTextTips
 
 	asUI.DataListView = dataListView
 

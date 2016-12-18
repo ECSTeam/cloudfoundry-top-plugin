@@ -15,7 +15,7 @@
 
 package cellDetailView
 
-const helpText = `
+const HelpText = `
 **Header information:**
 
  

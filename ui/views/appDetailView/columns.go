@@ -250,7 +250,7 @@ func ColumnLogStdout() *uiCommon.ListColumn {
 		appStats := data.(*displaydata.DisplayContainerStats)
 		return fmt.Sprintf("%v", appStats.OutCount)
 	}
-	c := uiCommon.NewListColumn("STDOUT", "STDOUT", 9,
+	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
@@ -268,7 +268,7 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 		appStats := data.(*displaydata.DisplayContainerStats)
 		return fmt.Sprintf("%v", appStats.ErrCount)
 	}
-	c := uiCommon.NewListColumn("STDERR", "STDERR", 9,
+	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
@@ -56,6 +57,7 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView.SetTitle("Cell List")
 	dataListView.HelpText = helpText
+	dataListView.HelpTextTips = appView.HelpTextTips
 
 	asUI.DataListView = dataListView
 
