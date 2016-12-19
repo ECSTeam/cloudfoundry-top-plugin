@@ -23,6 +23,58 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
+func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
+	defaultColSize := 6
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayContainerStats).ContainerMetric.GetCpuPercentage() < c2.(*displaydata.DisplayContainerStats).ContainerMetric.GetCpuPercentage())
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		totalCpuInfo := ""
+		cpuPercentage := stats.ContainerMetric.GetCpuPercentage()
+		if cpuPercentage == 0 {
+			totalCpuInfo = fmt.Sprintf("%6v", "--")
+		} else {
+			if cpuPercentage >= 100.0 {
+				totalCpuInfo = fmt.Sprintf("%6.0f", cpuPercentage)
+			} else if cpuPercentage >= 10.0 {
+				totalCpuInfo = fmt.Sprintf("%6.1f", cpuPercentage)
+			} else {
+				totalCpuInfo = fmt.Sprintf("%6.2f", cpuPercentage)
+			}
+		}
+		return fmt.Sprintf("%6v", totalCpuInfo)
+
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		return fmt.Sprintf("%v", stats.ContainerMetric.GetCpuPercentage())
+	}
+	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+
+	return c
+}
+
+func ColumnContainerIndex() *uiCommon.ListColumn {
+	defaultColSize := 4
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayContainerStats).ContainerIndex < c2.(*displaydata.DisplayContainerStats).ContainerIndex)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		display := fmt.Sprintf("%4v", stats.ContainerIndex)
+		return fmt.Sprintf("%4v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*displaydata.DisplayContainerStats)
+		return fmt.Sprintf("%v", stats.ContainerIndex)
+	}
+	c := uiCommon.NewListColumn("IDX", "IDX", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
 func ColumnAppName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -74,58 +126,6 @@ func ColumnOrgName() *uiCommon.ListColumn {
 	}
 	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func ColumnContainerIndex() *uiCommon.ListColumn {
-	defaultColSize := 4
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayContainerStats).ContainerIndex < c2.(*displaydata.DisplayContainerStats).ContainerIndex)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayContainerStats)
-		display := fmt.Sprintf("%4v", stats.ContainerIndex)
-		return fmt.Sprintf("%4v", display)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayContainerStats)
-		return fmt.Sprintf("%v", stats.ContainerIndex)
-	}
-	c := uiCommon.NewListColumn("IDX", "IDX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
-	return c
-}
-
-func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
-	defaultColSize := 6
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayContainerStats).ContainerMetric.GetCpuPercentage() < c2.(*displaydata.DisplayContainerStats).ContainerMetric.GetCpuPercentage())
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayContainerStats)
-		totalCpuInfo := ""
-		cpuPercentage := stats.ContainerMetric.GetCpuPercentage()
-		if cpuPercentage == 0 {
-			totalCpuInfo = fmt.Sprintf("%6v", "--")
-		} else {
-			if cpuPercentage >= 100.0 {
-				totalCpuInfo = fmt.Sprintf("%6.0f", cpuPercentage)
-			} else if cpuPercentage >= 10.0 {
-				totalCpuInfo = fmt.Sprintf("%6.1f", cpuPercentage)
-			} else {
-				totalCpuInfo = fmt.Sprintf("%6.2f", cpuPercentage)
-			}
-		}
-		return fmt.Sprintf("%6v", totalCpuInfo)
-
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayContainerStats)
-		return fmt.Sprintf("%v", stats.ContainerMetric.GetCpuPercentage())
-	}
-	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
-
 	return c
 }
 

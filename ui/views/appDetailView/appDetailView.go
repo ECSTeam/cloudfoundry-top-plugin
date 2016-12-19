@@ -48,6 +48,7 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
 
 	defaultSortColumns := []*uiCommon.SortColumn{
+		uiCommon.NewSortColumn("CPU_PERCENT", true),
 		uiCommon.NewSortColumn("IDX", false),
 	}
 

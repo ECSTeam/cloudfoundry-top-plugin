@@ -87,6 +87,15 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 
+	if options.Nozzles > 10 {
+		c.ui.Failed("Can not specify more then 10 nozzle instances")
+		return
+	}
+	if options.Nozzles < 1 {
+		c.ui.Failed("Can not specify less then 1 nozzle instance")
+		return
+	}
+
 	cfTrace := os.Getenv("CF_TRACE")
 	if strings.ToLower(cfTrace) == "true" {
 		c.ui.Failed("The cf top plugin will not run with CF_TRACE environment variable set to true")

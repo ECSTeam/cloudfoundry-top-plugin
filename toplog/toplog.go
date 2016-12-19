@@ -271,7 +271,7 @@ func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
 		} else {
 			msg = ""
 		}
-		line := fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05"), logLine.level, msg)
+		line := fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05 MST"), logLine.level, msg)
 		fmt.Fprintf(v, line)
 	}
 }

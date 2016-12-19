@@ -107,6 +107,7 @@ func (w *HelpView) Layout(g *gocui.Gui) error {
 func (w *HelpView) closeHelpView(g *gocui.Gui, v *gocui.View) error {
 	g.Highlight = false
 	g.SelBgColor = gocui.ColorBlack
+	g.SelFgColor = gocui.ColorWhite
 	if err := w.masterUI.CloseView(w); err != nil {
 		return err
 	}

@@ -65,7 +65,7 @@ func (w *AlertWidget) Layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, " %v", util.REVERSE_RED)
+	fmt.Fprintf(v, " %v", util.WHITE_TEXT_RED_BG)
 	if w.message != "" {
 		fmt.Fprintln(v, w.message)
 	} else {
