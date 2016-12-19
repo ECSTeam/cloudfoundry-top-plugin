@@ -199,9 +199,9 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 }
 
 func (asUI *AppListView) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
-	//return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (row colored red) ")
-	asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
-	return nil
+	return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (EXAMPLE) ")
+	//asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
+	//return nil
 }
 
 func (asUI *AppListView) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {

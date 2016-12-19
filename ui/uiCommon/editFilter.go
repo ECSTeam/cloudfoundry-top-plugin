@@ -79,6 +79,7 @@ func (w *EditFilterView) initialLayoutCallback(g *gocui.Gui, v *gocui.View) erro
 	if err := g.SetKeybinding(w.name, 'c', gocui.ModNone, w.clearFilterAction); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -150,6 +151,12 @@ func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr mas
 	filter := &FilterColumn{filterText: inputValue}
 	w.listWidget.filterColumnMap[selectedColId] = filter
 
+	w.closeInputWidget(g)
+	w.applyFilterAndRefresh(g, v)
+	return nil
+}
+
+func (w *EditFilterView) closeInputWidget(g *gocui.Gui) error {
 	g.Cursor = false
 	if err := w.masterUI.CloseView(w.labelWidget); err != nil {
 		return err
@@ -158,8 +165,7 @@ func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr mas
 		return err
 	}
 	w.editField = false
-	w.applyFilterAndRefresh(g, v)
-	return nil
+	return w.RefreshDisplay(g)
 }
 
 func (w *EditFilterView) applyNumericFilter(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
@@ -240,9 +246,7 @@ func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
 	w.labelWidget = NewLabel(w, "label", 1, topMargin, labelText)
 	cancelCallbackFunc := func(g *gocui.Gui, v *gocui.View) error {
-		//fmt.Printf("\n**** CANCELED ****\n")
-		//return w.CloseWidget(g, v)
-		return nil
+		return w.closeInputWidget(g)
 	}
 
 	w.inputWidget = NewInput(w, "input", len(labelText)+2, topMargin, maxLength+2,

@@ -99,9 +99,11 @@ func (w *InputDialogWidget) Layout(g *gocui.Gui) error {
 		v.Frame = true
 		fmt.Fprintf(v, " %v", w.titleText)
 
-		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.CloseWidget); err != nil {
-			return err
-		}
+		/*
+			if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone, w.CloseWidget); err != nil {
+				return err
+			}
+		*/
 		if err := g.SetKeybinding(w.name, 'q', gocui.ModNone, w.CloseWidget); err != nil {
 			return err
 		}
