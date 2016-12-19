@@ -19,17 +19,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
 type AppMetadataManager struct {
-	appMetadataMap            map[string]*AppMetadata
-	totalMemoryAllStartedApps float64
-	totalDiskAllStartedApps   float64
-
-	mu sync.Mutex
+	appMetadataMap map[string]*AppMetadata
+	mu             sync.Mutex
 }
 
 func NewAppMetadataManager() *AppMetadataManager {
@@ -53,46 +51,21 @@ func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 }
 
 func (mdMgr *AppMetadataManager) FindAppMetadata(appId string) *AppMetadata {
+	return mdMgr.findAppMetadataInternal(appId, true)
+}
 
+func (mdMgr *AppMetadataManager) findAppMetadataInternal(appId string, requestLoadIfNotFound bool) *AppMetadata {
 	appMetadata := mdMgr.appMetadataMap[appId]
 	if appMetadata == nil {
 		appMetadata = NewAppMetadataById(appId)
+		if requestLoadIfNotFound {
+			// TODO: Queue metadata load for this id
+		} else {
+			// We mark this metadata as 60 mins old
+			appMetadata.cacheTime = appMetadata.cacheTime.Add(-60 * time.Minute)
+		}
 	}
 	return appMetadata
-}
-
-func (mdMgr *AppMetadataManager) GetTotalMemoryAllStartedApps() float64 {
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-	//toplog.Debug("entering GetTotalMemoryAllStartedApps")
-	if mdMgr.totalMemoryAllStartedApps == 0 {
-		total := float64(0)
-		for _, app := range mdMgr.appMetadataMap {
-			if app.State == "STARTED" {
-				total = total + ((app.MemoryMB * MEGABYTE) * app.Instances)
-			}
-		}
-		mdMgr.totalMemoryAllStartedApps = total
-	}
-	//toplog.Debug("leaving GetTotalMemoryAllStartedApps")
-	return mdMgr.totalMemoryAllStartedApps
-}
-
-func (mdMgr *AppMetadataManager) GetTotalDiskAllStartedApps() float64 {
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-	//toplog.Debug("entering GetTotalDiskAllStartedApps")
-	if mdMgr.totalDiskAllStartedApps == 0 {
-		total := float64(0)
-		for _, app := range mdMgr.appMetadataMap {
-			if app.State == "STARTED" {
-				total = total + ((app.DiskQuotaMB * MEGABYTE) * app.Instances)
-			}
-		}
-		mdMgr.totalDiskAllStartedApps = total
-	}
-	//toplog.Debug("leaving GetTotalDiskAllStartedApps")
-	return mdMgr.totalDiskAllStartedApps
 }
 
 func (mdMgr *AppMetadataManager) LoadAppCache(cliConnection plugin.CliConnection) {
@@ -126,7 +99,6 @@ func (mdMgr *AppMetadataManager) getAppMetadata(cliConnection plugin.CliConnecti
 		return emptyApp, err
 	}
 	appResource.Entity.Guid = appResource.Meta.Guid
-	mdMgr.flushCounters()
 	appMetadata := NewAppMetadata(appResource.Entity)
 	return appMetadata, nil
 }
@@ -153,15 +125,6 @@ func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnect
 
 	callPagableAPI(cliConnection, url, handleRequest)
 
-	mdMgr.flushCounters()
 	return appsMetadataArray, nil
 
-}
-
-func (mdMgr *AppMetadataManager) flushCounters() {
-	// Flush the total counters
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-	mdMgr.totalMemoryAllStartedApps = 0
-	mdMgr.totalDiskAllStartedApps = 0
 }

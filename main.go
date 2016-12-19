@@ -51,7 +51,7 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 				UsageDetails: plugin.Usage{
 					Usage: "cf top",
 					Options: map[string]string{
-						"no-top-check": "-ntc, do not check if there are other instances of top running",
+						"no-top-check": "-ntc, do not check if there are other instances of top running on this OS",
 						"cygwin":       "-c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )",
 						"nozzles":      "-n, specify the number of nozzle instances (default: 2)",
 						"debug":        "-d, enable debugging",

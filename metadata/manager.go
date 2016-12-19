@@ -94,25 +94,34 @@ func (mgr *Manager) loadMetadataThread() {
 		minNextLoadTime = veryLongtime
 		toplog.Debug("Metadata cache thread is awake")
 		for _, appId := range mgr.refreshQueue {
-			appMetadata := mgr.appMdMgr.appMetadataMap[appId]
+			appMetadata := mgr.appMdMgr.findAppMetadataInternal(appId, false)
 			timeSinceLastLoad := time.Now().Sub(appMetadata.cacheTime)
-			toplog.Debug(fmt.Sprintf("Metadata - appId: %v - inqueue check time since last load: %v", appId, timeSinceLastLoad))
+			appName := appMetadata.Name
+			toplog.Debug(fmt.Sprintf("Metadata - appId: %v name: [%v] - inqueue check time since last load: %v", appId, appName, timeSinceLastLoad))
 			if timeSinceLastLoad > minimumLoadTimeMS {
-				toplog.Debug(fmt.Sprintf("Metadata - appId: %v - Needs to be loaded now", appId))
+				toplog.Debug(fmt.Sprintf("Metadata - appId: %v name: [%v] - Needs to be loaded now", appId, appName))
 				newAppMetadata, err := mgr.appMdMgr.getAppMetadata(mgr.cliConnection, appId)
 				if err != nil {
-					toplog.Warn(fmt.Sprintf("Metadata - appId: %v - Error: %v", appId, err))
+					toplog.Warn(fmt.Sprintf("Metadata - appId: %v name: [%v] - Error: %v", appId, appName, err))
 				} else {
-					toplog.Info(fmt.Sprintf("Metadata - appId: %v - Load start", appId))
-					mgr.appMdMgr.appMetadataMap[appId] = newAppMetadata
-					toplog.Info(fmt.Sprintf("Metadata - appId: %v - Load complete", appId))
+					toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Load start", appId, appName))
+					if newAppMetadata.Name != "" {
+						// Only save if it really loaded
+						mgr.appMdMgr.appMetadataMap[appId] = newAppMetadata
+					} else {
+						// If we can't reload this appId the it must have been deleted
+						delete(mgr.appMdMgr.appMetadataMap, appId)
+						toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Removed from cache as it doesn't seem to exist", appId, appName))
+					}
+					toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Load complete", appId, newAppMetadata.Name))
+					delete(mgr.refreshQueue, appId)
 				}
 			} else {
-				toplog.Debug(fmt.Sprintf("Metadata - appId %v - Too soon to reload", appId))
+				toplog.Debug(fmt.Sprintf("Metadata - appId %v name: [%v] - Too soon to reload", appId, appName))
 				nextLoadTime := minimumLoadTimeMS - timeSinceLastLoad
-				toplog.Debug(fmt.Sprintf("Metadata - appId %v - Try to load in: %v", appId, nextLoadTime))
+				toplog.Debug(fmt.Sprintf("Metadata - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime))
 				if minNextLoadTime > nextLoadTime {
-					toplog.Debug(fmt.Sprintf("Metadata - appId %v - value was min: %v", appId, nextLoadTime))
+					toplog.Debug(fmt.Sprintf("Metadata - appId %v name: [%v] - value was min: %v", appId, appName, nextLoadTime))
 					minNextLoadTime = nextLoadTime
 				}
 			}

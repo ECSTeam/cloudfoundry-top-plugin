@@ -167,8 +167,7 @@ func (asUI *AppListView) clearUserMessage(g *gocui.Gui) error {
 	if view != nil {
 		asUI.GetMasterUI().CloseView(view)
 	}
-	//topMargin := asUI.GetTopMargin()
-	//asUI.SetTopMarginOnListWidgetX(topMargin)
+	asUI.SetAlertSize(0)
 	return nil
 }
 
@@ -176,8 +175,6 @@ func (asUI *AppListView) clearUserMessage(g *gocui.Gui) error {
 func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 	alertViewName := "alertView"
 	alertHeight := 1
-
-	//topMargin := asUI.GetMasterUI().GetHeaderSize() + alertHeight
 
 	asUI.SetAlertSize(alertHeight)
 

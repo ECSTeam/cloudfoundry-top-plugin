@@ -9,8 +9,7 @@ also shows an alert:
 
 
 ### Application view - multi-stack:
-Top supports multiple stacks.  This screenshot shows a foundation that has both cflinuxfs2 and windows2012R2 cells.
-Top lets you filter output which enable you to focus in on the applications that are of interest.
+Top supports displaying data from multiple stacks.  This screenshot shows a foundation that has both cflinuxfs2 and windows2012R2 cells.
 ![Screenshot](screenshot_appViewMultiStack.png?raw=true)
 
 ### Application view - filters:
@@ -21,7 +20,7 @@ simple expressions (e.g., >15 ).  Filters on multiple columns are treated as an 
 
 
 ### Application view - sorting:
-Top allows sorting output on any column. Sorting on multiple columns is supporting (up to 5 levels).
+Top allows sorting output on any column. Sorting on multiple columns is supported (up to 5 levels).
 ![Screenshot](screenshot_appViewSort.png?raw=true)
 
 

@@ -484,12 +484,12 @@ func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
 
 	parsedData := ed.apiUrlRegexp.FindAllStringSubmatch(apiUri, -1)
 	if len(parsedData) != 1 {
-		toplog.Warn("pcfApiHasBeenCalled>>Unable to parse apiUri")
+		toplog.Info(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (parsedData size) apiUri: %v", apiUri))
 		return
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 3 {
-		toplog.Warn("pcfApiHasBeenCalled>>Unable to parse apiUri")
+		toplog.Info(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri))
 		return
 	}
 	dataType := dataArray[1]
