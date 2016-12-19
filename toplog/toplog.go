@@ -264,16 +264,21 @@ func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
 	mu.Lock()
 	defer mu.Unlock()
 	for index := w.viewOffset; (index-w.viewOffset) < (h) && index < len(debugLines); index++ {
-		logLine := debugLines[index]
-		msg := logLine.message
-		if w.horizonalOffset < len(msg) {
-			msg = msg[w.horizonalOffset:len(msg)]
-		} else {
-			msg = ""
-		}
-		line := fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05 MST"), logLine.level, msg)
+		line := w.getFormattedLogLine(index)
 		fmt.Fprintf(v, line)
 	}
+}
+
+func (w *DebugWidget) getFormattedLogLine(index int) string {
+	logLine := debugLines[index]
+	msg := logLine.message
+	if w.horizonalOffset < len(msg) {
+		msg = msg[w.horizonalOffset:len(msg)]
+	} else {
+		msg = ""
+	}
+	line := fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05 MST"), logLine.level, msg)
+	return line
 }
 
 func (w *DebugWidget) getBackgroundColor() gocui.Attribute {
@@ -340,22 +345,23 @@ func (w *DebugWidget) testDebugMsg(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *DebugWidget) copyClipboardAction(g *gocui.Gui, v *gocui.View) error {
-
-	mu.Lock()
-	defer mu.Unlock()
-	var buffer bytes.Buffer
-	for index := 0; index < len(debugLines); index++ {
-		debugLine := debugLines[index]
-		line := fmt.Sprintf("[%03v] %v\n", index, debugLine)
-		buffer.WriteString(line)
-	}
-	clipboardValue := buffer.String()
-
+	clipboardValue := w.getAllLogLines()
 	err := clipboard.WriteAll(clipboardValue)
 	if err != nil {
 		Error("Copy into Clipboard error: " + err.Error())
 	}
 	return nil
+}
+
+func (w *DebugWidget) getAllLogLines() string {
+	mu.Lock()
+	defer mu.Unlock()
+	var buffer bytes.Buffer
+	for index := 0; index < len(debugLines); index++ {
+		line := w.getFormattedLogLine(index)
+		buffer.WriteString(line)
+	}
+	return buffer.String()
 }
 
 func (w *DebugWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {

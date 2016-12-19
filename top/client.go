@@ -168,11 +168,17 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	toplog.Info(fmt.Sprintf("Nozzle #%v - Started", instanceId))
 
-	c.routeEvents(instanceId, messages, errors)
+	eventError := c.routeEvents(instanceId, messages, errors)
+	if eventError != nil {
+		msg := eventError.Error()
+		if strings.Contains(msg, "Invalid authorization") {
+			return eventError
+		}
+	}
 	return nil
 }
 
-func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, errors <-chan error) {
+func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, errors <-chan error) error {
 	for {
 		select {
 		case envelope := <-messages:
@@ -181,7 +187,7 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 			c.handleError(instanceId, err)
 			// Nozzle connection does not seem to recover from errors well, so
 			// return here so it can be closed and a new instanced opened
-			return
+			return err
 		}
 	}
 }

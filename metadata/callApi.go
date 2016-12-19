@@ -28,6 +28,8 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
+const AUTH_ERROR = "Authentication has expired"
+
 var (
 	curlMutex sync.Mutex
 )
@@ -71,6 +73,9 @@ func callCurlRetryable(cliConnection plugin.CliConnection, url string) ([]string
 		}
 		msg := fmt.Sprintf("metadata.callApi>callCurlRetryable try#%v url:%v Error:%v", retryCount, url, err.Error())
 		toplog.Warn(msg)
+		if strings.Contains(err.Error(), AUTH_ERROR) {
+			return nil, err
+		}
 		sleepTime := time.Duration(retryDelayMS*maxRetries) * time.Millisecond
 		time.Sleep(sleepTime)
 	}

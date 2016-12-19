@@ -75,15 +75,12 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 	switch args[0] {
 	case "top":
 		options = c.buildClientOptions(args)
-	case "app-top":
-		options = c.buildClientOptions(args)
-		appModel, err := cliConnection.GetApp(args[1])
-		if err != nil {
-			c.ui.Warn(err.Error())
-			return
-		}
-		options.AppGUID = appModel.Guid
+	case "example-alternate-command":
 	default:
+		return
+	}
+
+	if options == nil {
 		return
 	}
 
@@ -159,6 +156,7 @@ func (c *TopCmd) buildClientOptions(args []string) *top.ClientOptions {
 
 	if err != nil {
 		c.ui.Failed(err.Error())
+		return nil
 	}
 	if fc.IsSet("debug") {
 		debug = fc.Bool("debug")
