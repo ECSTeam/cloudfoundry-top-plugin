@@ -10,7 +10,7 @@ The primary source of information that the top plugin uses is from monitoring th
 
 ## Screenshots
 
-More [screenshot here](screenshots/screenshots.md)
+More [screenshots here](screenshots/screenshots.md)
 
 ## Application Stats
 
