@@ -44,9 +44,6 @@ be colored red.
   Dsk (Rsrvd)  - Amount of requested disk for all applications
                  marked as started (app mem * instance count).
   Apps (total) - Number of applications deployed to foundation.
-  Apps (Actv)  - Number of applications that have taken HTTP(S)
-                 traffic through the go router in the last 60
-                 seconds.
   Cntrs        - Number of reporting containers.
  
 **Application list stats:**
