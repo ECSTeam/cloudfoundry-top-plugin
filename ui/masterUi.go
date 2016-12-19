@@ -403,9 +403,9 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	}
 	v.Clear()
 
-	fmt.Fprintf(v, "Evnts: ")
+	fmt.Fprintf(v, "Events: ")
 	eventsText := fmt.Sprintf("%v (%v/sec)", util.Format(mui.router.GetEventCount()), mui.router.GetEventRate())
-	fmt.Fprintf(v, "%-28v", eventsText)
+	fmt.Fprintf(v, "%-27v", eventsText)
 
 	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
 	if runtimeSeconds < time.Second*WarmUpSeconds {

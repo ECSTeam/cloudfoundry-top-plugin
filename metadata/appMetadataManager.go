@@ -123,8 +123,8 @@ func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnect
 		return appResp, nil
 	}
 
-	callPagableAPI(cliConnection, url, handleRequest)
+	err := callPagableAPI(cliConnection, url, handleRequest)
 
-	return appsMetadataArray, nil
+	return appsMetadataArray, err
 
 }

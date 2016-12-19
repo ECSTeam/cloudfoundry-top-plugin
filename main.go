@@ -93,6 +93,21 @@ func (c *TopCmd) Run(cliConnection plugin.CliConnection, args []string) {
 		return
 	}
 
+	// TODO: THis is for testing only
+	/*
+		for i := 0; i < 10; i++ {
+			token, err := cliConnection.AccessToken()
+			if err != nil {
+				c.ui.Failed(err.Error())
+				break
+			}
+			fmt.Printf("Token: %v\n\n", token)
+		}
+		if true {
+			return
+		}
+	*/
+
 	cfTrace := os.Getenv("CF_TRACE")
 	if strings.ToLower(cfTrace) == "true" {
 		c.ui.Failed("The cf top plugin will not run with CF_TRACE environment variable set to true")

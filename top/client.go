@@ -36,7 +36,6 @@ import (
 )
 
 type Client struct {
-	authToken     string
 	options       *ClientOptions
 	ui            terminal.UI
 	cliConnection plugin.CliConnection
@@ -94,12 +93,6 @@ func (c *Client) Start() {
 		return
 	}
 
-	c.authToken, err = conn.AccessToken()
-	if err != nil {
-		c.ui.Failed(err.Error())
-		return
-	}
-
 	ui := ui.NewMasterUI(conn)
 	c.router = ui.GetRouter()
 
@@ -141,29 +134,44 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 	return nil
 }
 
+func (c *Client) RefreshAuthToken() (string, error) {
+	toplog.Info("RefreshAuthToken called")
+	token, err := c.cliConnection.AccessToken()
+	if err != nil {
+		c.ui.Failed(err.Error())
+		return "", err
+	}
+	toplog.Info(fmt.Sprintf("RefreshAuthToken complete with new token: %v", token))
+	return token, nil
+}
+
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	conn := c.cliConnection
 
 	dopplerEndpoint, err := conn.DopplerEndpoint()
 	if err != nil {
-		//c.ui.Failed(err.Error())
 		return err
 	}
 
 	skipVerifySSL, err := conn.IsSSLDisabled()
 	if err != nil {
-		//c.ui.Failed("couldn't check if ssl verification is disabled: " + err.Error())
 		return err
 	}
 
 	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 
+	dopplerConnection.RefreshTokenFrom(c)
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
 	dopplerConnection.SetIdleTimeout(15 * time.Second)
 
-	messages, errors := dopplerConnection.Firehose(subscriptionID, c.authToken)
+	authToken, err := conn.AccessToken()
+	if err != nil {
+		return err
+	}
+
+	messages, errors := dopplerConnection.Firehose(subscriptionID, authToken)
 	defer dopplerConnection.Close()
 
 	toplog.Info(fmt.Sprintf("Nozzle #%v - Started", instanceId))

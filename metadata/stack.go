@@ -86,8 +86,8 @@ func getStackMetadata(cliConnection plugin.CliConnection) ([]Stack, error) {
 		return response, nil
 	}
 
-	callPagableAPI(cliConnection, url, handleRequest)
+	err := callPagableAPI(cliConnection, url, handleRequest)
 
-	return metadata, nil
+	return metadata, err
 
 }
