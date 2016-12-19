@@ -5,7 +5,10 @@
 # Then verify GITHUB_TOKEN variable is set
 #   export GITHUB_TOKEN=XXXXXXX (your personal token)
 #
-
+# Example:
+# ./scripts/build-all.sh release v0.7.3
+#
+#
 set -e
 export GITHUB_USER=kkellner
 export GITHUB_REPO=cloudfoundry-top-plugin
