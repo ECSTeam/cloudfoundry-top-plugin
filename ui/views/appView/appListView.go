@@ -472,7 +472,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	sort.Sort(stackSummaryStatsArray)
 	linesWritten := 0
 	for _, stackSummaryStats := range stackSummaryStatsArray {
-		if stackSummaryStats.TotalApps > 0 {
+		if stackSummaryStats.TotalApps > 0 || stackSummaryStats.TotalCellCPUs > 0 {
 			linesWritten += asUI.outputHeaderForStack(g, v, stackSummaryStats)
 		}
 	}
