@@ -78,7 +78,7 @@ such as which containers are currenly running on the cell.
 # Installation
 
 * **Download the binary file for your target OS from the latest [release](https://github.com/ecsteam/cloudfoundry-top-plugin/releases/latest)**
-* If you've already installed the plugin and are updating, you must first run `cf uninstall-plugin TopPlugin`
+* If you've already installed the plugin and are updating, you must first run `cf uninstall-plugin top`
 * Then install the plugin with `cf install-plugin top-plugin-darwin`  (or `top-plugin-linux` or `top-plugin.exe`)
 * If you get a permission error run: `chmod +x top-plugin-darwin` (or `top-plugin-linux`) on the binary
 * Verify the plugin installed by looking for it with `cf plugins`
@@ -116,6 +116,7 @@ a logout and login.
 # Usage
 
 User must be logged in as admin or cloud foundry user with permissions as described above.
+The plugin does not require any arguments.  Simply run:
 ```
 cf top
 ```
@@ -126,12 +127,14 @@ List top live statistics for CF.
 
 ```
 NAME:
-   top - Displays top live statistics
+   top - Displays top stats - by Kurt Kellner of ECS Team
 
 USAGE:
    cf top
 
 OPTIONS:
-   -debug                 -d, enable debugging
-   -cygwin                -c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )
+   -debug              -d, enable debugging
+   -no-top-check       -ntc, do not check if there are other instances of top running
+   -nozzles            -n, specify the number of nozzle instances (default: 2)
+   -cygwin             -c, force run under cygwin (Use this to run: 'cmd /c start cf top -cygwin' )
 ```
