@@ -8,6 +8,10 @@ The primary source of information that the top plugin uses is from monitoring th
 
 ![Screenshot](screenshots/screencast1.gif?raw=true)
 
+## Screenshots
+
+More [screenshot here](screenshots/screenshots.md)
+
 ## Application Stats
 
 Provide details about applications running on the foundation including the following
