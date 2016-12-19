@@ -1,21 +1,21 @@
-- name: Top Plugin
-  description: This plugin show top statistics in CF (CF admins only)
+- name: top
+  description: An interactive interface that shows top statistics similar in concept as the UNIX top command.  (CF admins only)
   version: __TAG__
-  created: 2015-11-07T00:00:00Z
+  created: 2016-11-07T00:00:00Z
   updated: __TODAY__
-  company:
+  company: ECS Team
   authors:
-  - name: Kurt Kellner
+  - name: Kurt Kellner of ECS Team
     homepage: https://github.com/kkellner
     contact: kkellner@ecsteam.com
-  homepage: https://github.com/ecsteam/cloudfoundry-top-plugin
+  homepage: https://github.com/ECSTeam/cloudfoundry-top-plugin
   binaries:
   - platform: osx
-    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
     checksum: __osx-sha1__
   - platform: win64
-    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
     checksum: __win64-sha1__
   - platform: linux64
-    url: https://github.com/ecsteam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
     checksum: __linux64-sha1__
