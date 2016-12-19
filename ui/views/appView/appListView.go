@@ -49,7 +49,7 @@ type AppListView struct {
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
-	name string, topMargin, bottomMargin int,
+	name string, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor) *AppListView {
 
 	asUI := &AppListView{}
@@ -63,7 +63,7 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
-		name, topMargin, bottomMargin,
+		name, 0, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
@@ -107,10 +107,10 @@ func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error
 func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 	highlightKey := asUI.GetListWidget().HighlightKey()
 	if asUI.GetListWidget().HighlightKey() != "" {
-		topMargin, bottomMargin := asUI.GetMargins()
+		_, bottomMargin := asUI.GetMargins()
 
 		detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",
-			topMargin, bottomMargin,
+			bottomMargin,
 			asUI.GetEventProcessor(),
 			highlightKey)
 		asUI.SetDetailView(detailView)
@@ -167,8 +167,8 @@ func (asUI *AppListView) clearUserMessage(g *gocui.Gui) error {
 	if view != nil {
 		asUI.GetMasterUI().CloseView(view)
 	}
-	topMargin := asUI.GetTopMargin()
-	asUI.SetTopMarginOnListWidget(topMargin)
+	//topMargin := asUI.GetTopMargin()
+	//asUI.SetTopMarginOnListWidgetX(topMargin)
 	return nil
 }
 
@@ -177,13 +177,14 @@ func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
 	alertViewName := "alertView"
 	alertHeight := 1
 
-	topMargin := asUI.GetTopMargin()
-	asUI.SetTopMarginOnListWidget(topMargin + alertHeight)
+	//topMargin := asUI.GetMasterUI().GetHeaderSize() + alertHeight
+
+	asUI.SetAlertSize(alertHeight)
 
 	var alertView *uiCommon.AlertWidget
 	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
 	if view == nil {
-		alertView = uiCommon.NewAlertWidget(asUI.GetMasterUI(), alertViewName, topMargin, alertHeight)
+		alertView = uiCommon.NewAlertWidget(asUI.GetMasterUI(), alertViewName, alertHeight)
 		asUI.GetMasterUI().LayoutManager().AddToBack(alertView)
 		asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	} else {
@@ -377,11 +378,17 @@ func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {
 type StackSummaryStats struct {
 	StackId                     string
 	StackName                   string
+	TotalApps                   int
 	TotalReportingAppInstances  int
 	TotalActiveApps             int
 	TotalUsedMemoryAppInstances uint64
 	TotalUsedDiskAppInstances   uint64
 	TotalCpuPercentage          float64
+	TotalCellCPUs               int
+	TotalCapacityMemory         int64
+	TotalCapacityDisk           int64
+	ReservedMem                 float64
+	ReservedDisk                float64
 }
 
 type StackSummaryStatsArray []*StackSummaryStats
@@ -398,7 +405,9 @@ func (slice StackSummaryStatsArray) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
+// Output header stats by stack
+// Returns the number of rows (lines) written to header
+func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
 
 	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
 	asUI.checkForAlerts(g)
@@ -406,7 +415,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	stacks := metadata.AllStacks()
 	if len(stacks) == 0 {
 		fmt.Fprintf(v, "\n Waiting for more data...")
-		return nil
+		return 3, nil
 	}
 	summaryStatsByStack := make(map[string]*StackSummaryStats)
 	for _, stack := range stacks {
@@ -416,7 +425,9 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 	for _, appStats := range asUI.displayAppStats {
 		sumStats := summaryStatsByStack[appStats.StackId]
 		if sumStats == nil {
-			log.Panic("We didn't find the stack data")
+			//log.Panic(fmt.Sprintf("We didn't find the stack data, StackId: %v", appStats.StackId))
+			fmt.Fprintf(v, "\n Waiting for more data...")
+			return 3, nil
 		}
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
@@ -429,6 +440,28 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 		if appStats.TotalTraffic.EventL60Rate > 0 {
 			sumStats.TotalActiveApps++
 		}
+		sumStats.TotalApps++
+	}
+
+	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	for _, app := range appMdMgr.AllApps() {
+		sumStats := summaryStatsByStack[app.StackGuid]
+		if sumStats != nil {
+			if app.State == "STARTED" {
+				sumStats.ReservedMem = sumStats.ReservedMem + ((app.MemoryMB * util.MEGABYTE) * app.Instances)
+				sumStats.ReservedDisk = sumStats.ReservedDisk + ((app.DiskQuotaMB * util.MEGABYTE) * app.Instances)
+			}
+		}
+	}
+
+	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
+		//toplog.Info(fmt.Sprintf("cellStats.StackId:%v", cellStats.StackId))
+		sumStats := summaryStatsByStack[cellStats.StackId]
+		if sumStats != nil {
+			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
+			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityTotalMemory
+			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityTotalDisk
+		}
 	}
 
 	// Output stack information by stack name sort order
@@ -437,14 +470,15 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
 		stackSummaryStatsArray = append(stackSummaryStatsArray, stackSummaryStats)
 	}
 	sort.Sort(stackSummaryStatsArray)
+	linesWritten := 0
 	for _, stackSummaryStats := range stackSummaryStatsArray {
-		asUI.outputHeaderForStack(g, v, stackSummaryStats)
+		linesWritten += asUI.outputHeaderForStack(g, v, stackSummaryStats)
 	}
 
-	return nil
+	return linesWritten, nil
 }
 
-func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) {
+func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) int {
 
 	totalUsedMemoryAppInstancesDisplay := "--"
 	totalUsedDiskAppInstancesDisplay := "--"
@@ -459,41 +493,29 @@ func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stack
 		}
 	}
 
-	cellTotalCPUs := 0
-	capacityTotalMemory := int64(0)
-	capacityTotalDisk := int64(0)
-	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
-		cellTotalCPUs = cellTotalCPUs + cellStats.NumOfCpus
-		capacityTotalMemory = capacityTotalMemory + cellStats.CapacityTotalMemory
-		capacityTotalDisk = capacityTotalDisk + cellStats.CapacityTotalDisk
-	}
-
-	cellTotalCapacityDisplay := "--"
-	if cellTotalCPUs > 0 {
-		cellTotalCapacityDisplay = fmt.Sprintf("%v%%", (cellTotalCPUs * 100))
+	cellTotalCPUCapacityDisplay := "--"
+	if stackSummaryStats.TotalCellCPUs > 0 {
+		cellTotalCPUCapacityDisplay = fmt.Sprintf("%v%%", (stackSummaryStats.TotalCellCPUs * 100))
 	}
 
 	capacityTotalMemoryDisplay := "--"
-	if capacityTotalMemory > 0 {
-		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalMemory).StringWithPrecision(0))
+	if stackSummaryStats.TotalCapacityMemory > 0 {
+		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityMemory).StringWithPrecision(0))
 	}
 	capacityTotalDiskDisplay := "--"
-	if capacityTotalDisk > 0 {
-		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(capacityTotalDisk).StringWithPrecision(0))
+	if stackSummaryStats.TotalCapacityDisk > 0 {
+		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
 	}
-	fmt.Fprintf(v, "\r")
+	//fmt.Fprintf(v, "\r")
 
 	fmt.Fprintf(v, "Stack: %v\n", stackSummaryStats.StackName)
 
 	// Active apps are apps that have had go-rounter traffic in last 60 seconds
 	// Reporting containers are containers that reported metrics in last 90 seconds
-	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCapacityDisplay)
+	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"
-
-	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-
-	totalMem := appMdMgr.GetTotalMemoryAllStartedApps()
+	totalMem := stackSummaryStats.ReservedMem
 	if totalMem > 0 {
 		displayTotalMem = util.ByteSize(totalMem).StringWithPrecision(0)
 	}
@@ -502,16 +524,19 @@ func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stack
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
 	fmt.Fprintf(v, "   Apps:%5v Total, Cntrs:%5v     ",
-		len(asUI.GetDisplayedEventData().AppMap),
+		stackSummaryStats.TotalApps,
 		stackSummaryStats.TotalReportingAppInstances)
 
 	displayTotalDisk := "--"
-	totalDisk := appMdMgr.GetTotalDiskAllStartedApps()
+	totalDisk := stackSummaryStats.ReservedDisk
 	if totalMem > 0 {
 		displayTotalDisk = util.ByteSize(totalDisk).StringWithPrecision(0)
 	}
 
 	fmt.Fprintf(v, "Dsk:%6v Used,", totalUsedDiskAppInstancesDisplay)
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
+
+	// Number of lines written
+	return 3
 
 }

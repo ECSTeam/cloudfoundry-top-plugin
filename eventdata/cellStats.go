@@ -16,8 +16,8 @@
 package eventdata
 
 type CellStats struct {
-	Ip string
-
+	Ip             string
+	StackId        string
 	DeploymentName string
 	JobName        string
 	JobIndex       int

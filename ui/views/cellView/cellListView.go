@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
@@ -35,7 +36,7 @@ type CellListView struct {
 }
 
 func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
-	name string, topMargin, bottomMargin int,
+	name string, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor) *CellListView {
 
 	asUI := &CellListView{}
@@ -46,7 +47,7 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
-		name, topMargin, bottomMargin,
+		name, 0, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
@@ -85,6 +86,8 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, asUI.columnCapacityTotalContainers())
 	columns = append(columns, asUI.columnContainerCount())
+
+	columns = append(columns, asUI.columnStackName())
 
 	columns = append(columns, asUI.columnDeploymentName())
 	columns = append(columns, asUI.columnJobName())
@@ -131,43 +134,45 @@ func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellS
 
 	displayCellMap := make(map[string]*displaydata.DisplayCellStats)
 	for ip, cellStats := range cellMap {
-		displayStat := displaydata.NewDisplayCellStats(cellStats)
-		displayCellMap[ip] = displayStat
+		displayCellStat := displaydata.NewDisplayCellStats(cellStats)
+		displayCellMap[ip] = displayCellStat
 	}
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	for _, appStats := range appMap {
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil {
-				cellStats := displayCellMap[containerStats.Ip]
+				displayCellStat := displayCellMap[containerStats.Ip]
 
-				if cellStats != nil {
+				if displayCellStat != nil {
 					logOutCount := containerStats.OutCount
-					cellStats.TotalLogOutCount = cellStats.TotalLogOutCount + logOutCount
+					displayCellStat.TotalLogOutCount = displayCellStat.TotalLogOutCount + logOutCount
 
 					logErrCount := containerStats.ErrCount
-					cellStats.TotalLogErrCount = cellStats.TotalLogErrCount + logErrCount
+					displayCellStat.TotalLogErrCount = displayCellStat.TotalLogErrCount + logErrCount
 
 					if containerStats.ContainerMetric != nil {
 
 						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
-						cellStats.TotalReportingContainers = cellStats.TotalReportingContainers + 1
+						stack := metadata.FindStackMetadata(appMetadata.StackGuid)
+						displayCellStat.StackId = appMetadata.StackGuid
+						displayCellStat.StackName = stack.Name
+
+						displayCellStat.TotalReportingContainers = displayCellStat.TotalReportingContainers + 1
 
 						cpuValue := containerStats.ContainerMetric.GetCpuPercentage()
-						cellStats.TotalContainerCpuPercentage = cellStats.TotalContainerCpuPercentage + cpuValue
+						displayCellStat.TotalContainerCpuPercentage = displayCellStat.TotalContainerCpuPercentage + cpuValue
 
-						//reservedMemoryValue := containerStats.ContainerMetric.GetMemoryBytesQuota()
-						cellStats.TotalContainerReservedMemory = cellStats.TotalContainerReservedMemory + uint64(appMetadata.MemoryMB*util.MEGABYTE)
+						displayCellStat.TotalContainerReservedMemory = displayCellStat.TotalContainerReservedMemory + uint64(appMetadata.MemoryMB*util.MEGABYTE)
 
 						usedMemoryValue := containerStats.ContainerMetric.GetMemoryBytes()
-						cellStats.TotalContainerUsedMemory = cellStats.TotalContainerUsedMemory + usedMemoryValue
+						displayCellStat.TotalContainerUsedMemory = displayCellStat.TotalContainerUsedMemory + usedMemoryValue
 
-						//reservedDiskValue := containerStats.ContainerMetric.GetDiskBytesQuota()
-						cellStats.TotalContainerReservedDisk = cellStats.TotalContainerReservedDisk + uint64(appMetadata.DiskQuotaMB*util.MEGABYTE)
+						displayCellStat.TotalContainerReservedDisk = displayCellStat.TotalContainerReservedDisk + uint64(appMetadata.DiskQuotaMB*util.MEGABYTE)
 
 						usedDiskValue := containerStats.ContainerMetric.GetDiskBytes()
-						cellStats.TotalContainerUsedDisk = cellStats.TotalContainerUsedDisk + usedDiskValue
+						displayCellStat.TotalContainerUsedDisk = displayCellStat.TotalContainerUsedDisk + usedDiskValue
 					}
 				}
 			}
@@ -189,7 +194,7 @@ func (asUI *CellListView) PreRowDisplay(data uiCommon.IData, isSelected bool) st
 	return ""
 }
 
-func (asUI *CellListView) updateHeader(g *gocui.Gui, v *gocui.View) error {
-	fmt.Fprintf(v, "\nTODO: Show summary Cell stats")
-	return nil
+func (asUI *CellListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
+	fmt.Fprintf(v, "\nTODO: Show summary stats")
+	return 3, nil
 }

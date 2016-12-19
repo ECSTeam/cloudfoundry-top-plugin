@@ -163,7 +163,7 @@ func (asUI *CellDetailView) PreRowDisplay(data uiCommon.IData, isSelected bool) 
 	return ""
 }
 
-func (asUI *CellDetailView) updateHeader(g *gocui.Gui, v *gocui.View) error {
-	fmt.Fprintf(v, "\nTODO: Show summary Cell stats")
-	return nil
+func (asUI *CellDetailView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
+	fmt.Fprintf(v, "\nTODO: Show summary stats")
+	return 3, nil
 }

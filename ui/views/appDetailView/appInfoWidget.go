@@ -131,6 +131,6 @@ func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 	//fmt.Fprintf(v, "%v", util.CLEAR)
 	fmt.Fprintf(v, "\n")
 
-	fmt.Fprintf(v, "\n Press 'x' to exit view")
+	fmt.Fprintf(v, "\n %vx%v:exit view", "\033[37;1m", "\033[0m")
 	return nil
 }

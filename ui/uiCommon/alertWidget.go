@@ -25,15 +25,14 @@ import (
 )
 
 type AlertWidget struct {
-	masterUI  masterUIInterface.MasterUIInterface
-	name      string
-	topMargin int
-	height    int
-	message   string
+	masterUI masterUIInterface.MasterUIInterface
+	name     string
+	height   int
+	message  string
 }
 
-func NewAlertWidget(masterUI masterUIInterface.MasterUIInterface, name string, topMargin, height int) *AlertWidget {
-	return &AlertWidget{masterUI: masterUI, name: name, topMargin: topMargin, height: height}
+func NewAlertWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int) *AlertWidget {
+	return &AlertWidget{masterUI: masterUI, name: name, height: height}
 }
 
 func (w *AlertWidget) Name() string {
@@ -50,7 +49,9 @@ func (w *AlertWidget) SetMessage(msg string) {
 
 func (w *AlertWidget) Layout(g *gocui.Gui) error {
 	maxX, _ := g.Size()
-	v, err := g.SetView(w.name, -1, w.topMargin-1, maxX, w.topMargin+w.height)
+
+	top := w.masterUI.GetHeaderSize() + 1
+	v, err := g.SetView(w.name, -1, top-1, maxX, top+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())

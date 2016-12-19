@@ -36,8 +36,7 @@ type AppDetailView struct {
 
 func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	parentView dataView.DataListViewInterface,
-	name string,
-	topMargin, bottomMargin int,
+	name string, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor,
 	appId string) *AppDetailView {
 
@@ -53,7 +52,7 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
-		name, topMargin+requestViewHeight+1, bottomMargin,
+		name, requestViewHeight+1, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
@@ -86,11 +85,10 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 
 func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
 	infoWidgetName := "appInfoWidget"
-	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 20, asUI)
+	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 18, asUI)
 	asUI.GetMasterUI().LayoutManager().Add(appInfoWidget)
 	asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	asUI.GetMasterUI().AddCommonDataViewKeybindings(g, infoWidgetName)
-	//asUI.GetMasterUI().OpenView(g, appInfoWidget)
 	return nil
 }
 
@@ -189,7 +187,7 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 	return nil
 }
 
-func (asUI *AppDetailView) updateHeader(g *gocui.Gui, v *gocui.View) error {
+func (asUI *AppDetailView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
 	fmt.Fprintf(v, "\nTODO: Show summary stats")
-	return nil
+	return 3, nil
 }

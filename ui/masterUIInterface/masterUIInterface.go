@@ -27,6 +27,9 @@ type MasterUIInterface interface {
 	IsWarmupComplete() bool
 	SetHelpTextTips(g *gocui.Gui, helpTextTips string) error
 	AddCommonDataViewKeybindings(g *gocui.Gui, viewName string) error
+	GetHeaderSize() int
+	SetStatsSummarySize(statSummarySize int)
+	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
 }
 
 type LayoutManagerInterface interface {
@@ -49,4 +52,5 @@ type UpdatableView interface {
 	Layout(*gocui.Gui) error
 	Name() string
 	UpdateDisplay(g *gocui.Gui) error
+	RefreshDisplay(g *gocui.Gui) error
 }

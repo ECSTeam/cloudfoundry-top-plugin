@@ -39,4 +39,6 @@ type DataListViewInterface interface {
 	GetDisplayedEventData() *eventdata.EventData
 	RefreshDisplay(g *gocui.Gui) error
 	UpdateDisplay(g *gocui.Gui) error
+	GetTopOffset() int
+	SetAlertSize(alertSize int)
 }

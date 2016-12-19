@@ -40,7 +40,7 @@ type CapacityPlanView struct {
 }
 
 func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
-	name string, topMargin, bottomMargin int,
+	name string, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor) *CapacityPlanView {
 
 	asUI := &CapacityPlanView{}
@@ -50,7 +50,7 @@ func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
-		name, topMargin, bottomMargin,
+		name, 0, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
@@ -278,7 +278,7 @@ func (asUI *CapacityPlanView) preRowDisplay(data uiCommon.IData, isSelected bool
 	return v.String()
 }
 
-func (asUI *CapacityPlanView) updateHeader(g *gocui.Gui, v *gocui.View) error {
-	fmt.Fprintf(v, "\nTODO: Need to handle 'by stack'.  Show header stats")
-	return nil
+func (asUI *CapacityPlanView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
+	fmt.Fprintf(v, "\nTODO: Need to handle 'by stack'.  Show summary stats")
+	return 3, nil
 }

@@ -41,6 +41,61 @@ func (asUI *CellListView) columnCellIp() *uiCommon.ListColumn {
 	return c
 }
 
+func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
+	defaultColSize := 6
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage < c2.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		totalCpuInfo := ""
+		if cellStats.TotalReportingContainers == 0 {
+			totalCpuInfo = fmt.Sprintf("%6v", "--")
+		} else {
+			if cellStats.TotalContainerCpuPercentage >= 100.0 {
+				totalCpuInfo = fmt.Sprintf("%6.0f", cellStats.TotalContainerCpuPercentage)
+			} else if cellStats.TotalContainerCpuPercentage >= 10.0 {
+				totalCpuInfo = fmt.Sprintf("%6.1f", cellStats.TotalContainerCpuPercentage)
+			} else {
+				totalCpuInfo = fmt.Sprintf("%6.2f", cellStats.TotalContainerCpuPercentage)
+			}
+		}
+		return fmt.Sprintf("%6v", totalCpuInfo)
+
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return fmt.Sprintf("%v", cellStats.TotalContainerCpuPercentage)
+	}
+	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+
+	return c
+}
+
+func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn {
+	defaultColSize := 4
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayCellStats).TotalReportingContainers < c2.(*displaydata.DisplayCellStats).TotalReportingContainers)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		display := ""
+		if cellStats.TotalReportingContainers == 0 {
+			display = fmt.Sprintf("%4v", "--")
+		} else {
+			display = fmt.Sprintf("%4v", cellStats.TotalReportingContainers)
+		}
+		return fmt.Sprintf("%4v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return fmt.Sprintf("%v", cellStats.TotalReportingContainers)
+	}
+	c := uiCommon.NewListColumn("RCR", "RCR", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
 func (asUI *CellListView) columnNumOfCpus() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -205,117 +260,6 @@ func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
-	defaultColSize := 10
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).DeploymentName, c2.(*displaydata.DisplayCellStats).DeploymentName)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return util.FormatDisplayData(cellStats.DeploymentName, defaultColSize)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return cellStats.DeploymentName
-	}
-	c := uiCommon.NewListColumn("DNAME", "DNAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
-	defaultColSize := 45
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).JobName, c2.(*displaydata.DisplayCellStats).JobName)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return util.FormatDisplayData(cellStats.JobName, defaultColSize)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return cellStats.JobName
-	}
-	c := uiCommon.NewListColumn("JOB_NAME", "JOB_NAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
-	defaultColSize := 7
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).JobIndex < c2.(*displaydata.DisplayCellStats).JobIndex)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		display := fmt.Sprintf("%7v", cellStats.JobIndex)
-		return display
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return fmt.Sprintf("%v", cellStats.JobIndex)
-	}
-	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
-	defaultColSize := 6
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage < c2.(*displaydata.DisplayCellStats).TotalContainerCpuPercentage)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		totalCpuInfo := ""
-		if cellStats.TotalReportingContainers == 0 {
-			totalCpuInfo = fmt.Sprintf("%6v", "--")
-		} else {
-			if cellStats.TotalContainerCpuPercentage >= 100.0 {
-				totalCpuInfo = fmt.Sprintf("%6.0f", cellStats.TotalContainerCpuPercentage)
-			} else if cellStats.TotalContainerCpuPercentage >= 10.0 {
-				totalCpuInfo = fmt.Sprintf("%6.1f", cellStats.TotalContainerCpuPercentage)
-			} else {
-				totalCpuInfo = fmt.Sprintf("%6.2f", cellStats.TotalContainerCpuPercentage)
-			}
-		}
-		return fmt.Sprintf("%6v", totalCpuInfo)
-
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return fmt.Sprintf("%v", cellStats.TotalContainerCpuPercentage)
-	}
-	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
-
-	return c
-}
-
-func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn {
-	defaultColSize := 4
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).TotalReportingContainers < c2.(*displaydata.DisplayCellStats).TotalReportingContainers)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		display := ""
-		if cellStats.TotalReportingContainers == 0 {
-			display = fmt.Sprintf("%4v", "--")
-		} else {
-			display = fmt.Sprintf("%4v", cellStats.TotalReportingContainers)
-		}
-		return fmt.Sprintf("%4v", display)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayCellStats)
-		return fmt.Sprintf("%v", cellStats.TotalReportingContainers)
-	}
-	c := uiCommon.NewListColumn("RCR", "RCR", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
-	return c
-}
-
 func (asUI *CellListView) columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayCellStats).TotalContainerReservedMemory < c2.(*displaydata.DisplayCellStats).TotalContainerReservedMemory
@@ -405,5 +349,78 @@ func (asUI *CellListView) columnTotalContainerUsedDisk() *uiCommon.ListColumn {
 	}
 	c := uiCommon.NewListColumn("C_USD_DSK", "C_USD_DSK", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
+func (asUI *CellListView) columnStackName() *uiCommon.ListColumn {
+	defaultColSize := 15
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).StackName, c2.(*displaydata.DisplayCellStats).StackName)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		appStats := data.(*displaydata.DisplayCellStats)
+		return util.FormatDisplayData(appStats.StackName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*displaydata.DisplayCellStats)
+		return appStats.StackName
+	}
+	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}
+
+func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
+	defaultColSize := 10
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).DeploymentName, c2.(*displaydata.DisplayCellStats).DeploymentName)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return util.FormatDisplayData(cellStats.DeploymentName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return cellStats.DeploymentName
+	}
+	c := uiCommon.NewListColumn("DNAME", "DNAME", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}
+
+func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
+	defaultColSize := 45
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayCellStats).JobName, c2.(*displaydata.DisplayCellStats).JobName)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return util.FormatDisplayData(cellStats.JobName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return cellStats.JobName
+	}
+	c := uiCommon.NewListColumn("JOB_NAME", "JOB_NAME", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}
+
+func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
+	defaultColSize := 7
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayCellStats).JobIndex < c2.(*displaydata.DisplayCellStats).JobIndex)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		display := fmt.Sprintf("%7v", cellStats.JobIndex)
+		return display
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*displaydata.DisplayCellStats)
+		return fmt.Sprintf("%v", cellStats.JobIndex)
+	}
+	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
+		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }

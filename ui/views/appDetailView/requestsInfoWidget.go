@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -41,11 +42,12 @@ func (w *RequestsInfoWidget) Name() string {
 
 func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 	maxX, _ := g.Size()
-	topMargin := 7
+	top := w.detailView.GetTopOffset() - w.height - 1
+	toplog.Info(fmt.Sprintf("NewRequestsInfoWidget>>Layout top:%v", top))
 	width := maxX - 1
 
 	//v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
-	v, err := g.SetView(w.name, 0, topMargin, width, topMargin+w.height)
+	v, err := g.SetView(w.name, 0, top, width, top+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())

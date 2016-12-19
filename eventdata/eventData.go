@@ -336,6 +336,20 @@ func (ed *EventData) getCellStats(cellIp string) *CellStats {
 		cellStats = NewCellStats(cellIp)
 		ed.CellMap[cellIp] = cellStats
 	}
+
+	// TODO: Is this the best place for this??
+	if cellStats.StackId == "" {
+		// Look for a container running on cell to determine which stack the cell is running
+		for _, appStats := range ed.AppMap {
+			for _, containerStats := range appStats.ContainerArray {
+				if containerStats != nil && cellStats.Ip == containerStats.Ip {
+					appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appStats.AppId)
+					cellStats.StackId = appMetadata.StackGuid
+					return cellStats
+				}
+			}
+		}
+	}
 	return cellStats
 }
 

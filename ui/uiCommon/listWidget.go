@@ -25,6 +25,7 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/ansel1/merry"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -57,6 +58,7 @@ type DisplayViewInterface interface {
 	RefreshDisplay(g *gocui.Gui) error
 	SetDisplayPaused(paused bool)
 	GetDisplayPaused() bool
+	GetTopOffset() int
 }
 
 type ColumnType int
@@ -87,7 +89,6 @@ type IData interface {
 type ListWidget struct {
 	masterUI     masterUIInterface.MasterUIInterface
 	name         string
-	topMargin    int
 	bottomMargin int
 
 	Title string
@@ -165,12 +166,11 @@ func NewListColumn(
 }
 
 func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
-	topMargin, bottomMargin int, displayView DisplayViewInterface,
+	bottomMargin int, displayView DisplayViewInterface,
 	columns []*ListColumn) *ListWidget {
 	w := &ListWidget{
 		masterUI:        masterUI,
 		name:            name,
-		topMargin:       topMargin,
 		bottomMargin:    bottomMargin,
 		displayView:     displayView,
 		columns:         columns,
@@ -188,17 +188,22 @@ func (w *ListWidget) Name() string {
 	return w.name
 }
 
-func (w *ListWidget) SetTopMargin(topMargin int) {
-	w.topMargin = topMargin
+// TODO: Delete this method
+func (w *ListWidget) SetTopMarginX(topMargin int) {
+	toplog.Info(fmt.Sprintf("topMarginX: %v", topMargin))
+	//w.topMargin = topMargin
 }
 
 func (w *ListWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	bottom := maxY - w.bottomMargin
-	if w.topMargin >= bottom {
-		bottom = w.topMargin + 1
+
+	topMargin := w.displayView.GetTopOffset()
+
+	if topMargin >= bottom {
+		bottom = topMargin + 1
 	}
-	v, err := g.SetView(w.name, 0, w.topMargin, maxX-1, bottom)
+	v, err := g.SetView(w.name, 0, topMargin, maxX-1, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " (ListWidget) layout error:" + err.Error())
@@ -744,6 +749,9 @@ func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {
 	}
 	filterView := NewEditFilterView(asUI.masterUI, editViewName, asUI)
 	asUI.masterUI.LayoutManager().Add(filterView)
+
+	// TODO: Is this the correct spot to do this?
+	asUI.masterUI.SetMinimizeHeader(g, true)
 	return asUI.RefreshDisplay(g)
 }
 
@@ -755,6 +763,8 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 	}
 	editView := NewEditSortView(asUI.masterUI, editViewName, asUI)
 	asUI.masterUI.LayoutManager().Add(editView)
+	// TODO: Is this the correct spot to do this?
+	asUI.masterUI.SetMinimizeHeader(g, true)
 	return asUI.RefreshDisplay(g)
 }
 

@@ -159,6 +159,10 @@ func (w *EditColumnViewAbs) closeView(g *gocui.Gui, v *gocui.View) error {
 	if err := w.masterUI.CloseViewByName(w.name); err != nil {
 		return err
 	}
+
+	// TODO: Is this the correct spot to do this?
+	w.masterUI.SetMinimizeHeader(g, false)
+
 	w.listWidget.displayView.SetDisplayPaused(w.priorStateOfDisplayPaused)
 	w.listWidget.displayView.RefreshDisplay(g)
 	return nil

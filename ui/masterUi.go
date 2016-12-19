@@ -41,6 +41,7 @@ import (
 )
 
 const WarmUpSeconds = 60
+const DefaultRefreshInternalMS = 1000
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
 type MasterUI struct {
@@ -54,6 +55,7 @@ type MasterUI struct {
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
 
+	baseHeaderSize       int
 	headerSize           int
 	helpTextTipsViewSize int
 
@@ -108,8 +110,9 @@ func (mui *MasterUI) initGui() {
 	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
 	mui.layoutManager.Add(helpTextTipsView)
 
+	mui.baseHeaderSize = 3
 	mui.headerSize = 6
-	headerView := NewHeaderWidget(mui, "headerView", mui.headerSize)
+	headerView := NewHeaderWidget(mui, "headerView")
 	mui.layoutManager.Add(headerView)
 	// We add the common keybindings to the header view in the event
 	// that no DataView is open
@@ -118,7 +121,7 @@ func (mui *MasterUI) initGui() {
 	mui.createAndOpenView(g, "appListView")
 
 	// default refresh to 1 second
-	mui.refreshIntervalMS = 1000 * time.Millisecond
+	mui.refreshIntervalMS = DefaultRefreshInternalMS * time.Millisecond
 
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, mui.quit); err != nil {
 		log.Panicln(err)
@@ -130,6 +133,15 @@ func (mui *MasterUI) initGui() {
 		log.Panicln(m)
 	}
 
+}
+
+func (mui *MasterUI) SetStatsSummarySize(statSummarySize int) {
+	mui.headerSize = mui.baseHeaderSize + statSummarySize
+	//toplog.Info(fmt.Sprintf("headerSize set to: %v  statSummarySize: %v", mui.headerSize, statSummarySize))
+}
+
+func (mui *MasterUI) GetHeaderSize() int {
+	return mui.headerSize
 }
 
 // Add keybindings for top level data views -- note must also call addCommonDataViewKeybindings
@@ -197,6 +209,8 @@ func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
 
 	if mui.checkIfUpdatableView(nextForFocus) {
 		mui.currentDataView = nextForFocus.(masterUIInterface.UpdatableView)
+		mui.updateHeaderDisplay(mui.gui)
+		mui.currentDataView.RefreshDisplay(mui.gui)
 	}
 
 	return nil
@@ -263,7 +277,6 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 func (mui *MasterUI) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 	mui.displayMenuId = menuId
-	//mui.CloseView(mui.currentDataView)
 	mui.createAndOpenView(g, menuId)
 	return nil
 }
@@ -281,11 +294,11 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 	var dataView masterUIInterface.UpdatableView
 	switch viewName {
 	case "appListView":
-		dataView = appView.NewAppListView(mui, "appListView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
+		dataView = appView.NewAppListView(mui, "appListView", mui.helpTextTipsViewSize, ep)
 	case "cellListView":
-		dataView = cellView.NewCellListView(mui, "cellListView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
+		dataView = cellView.NewCellListView(mui, "cellListView", mui.helpTextTipsViewSize, ep)
 	case "capacityPlanView":
-		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.headerSize+1, mui.helpTextTipsViewSize, ep)
+		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.helpTextTipsViewSize, ep)
 
 	default:
 		return errors.New("Unable to find view " + viewName)
@@ -373,6 +386,13 @@ func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 func (mui *MasterUI) IsWarmupComplete() bool {
 	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
 	return runtimeSeconds > time.Second*WarmUpSeconds
+}
+
+func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
+	// TODO: The header needs to be the same accross data display types -- so need
+	// to move the responsability of displaying the summary stats to a common location
+	mui.RefeshNow()
+	//mui.updateHeaderDisplay(g)
 }
 
 func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {

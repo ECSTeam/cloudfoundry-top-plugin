@@ -105,9 +105,9 @@ func (mdMgr *AppMetadataManager) LoadAppCache(cliConnection plugin.CliConnection
 	metadataMap := make(map[string]*AppMetadata)
 	for _, appMetadata := range appMetadataArray {
 		//toplog.Debug(fmt.Sprintf("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name))
-
 		metadataMap[appMetadata.Guid] = appMetadata
 	}
+
 	mdMgr.appMetadataMap = metadataMap
 }
 

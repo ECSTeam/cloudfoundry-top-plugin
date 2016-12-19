@@ -29,6 +29,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+type updateHeaderCallback func(g *gocui.Gui, v *gocui.View) (int, error)
 type actionCallback func(g *gocui.Gui, v *gocui.View) error
 type initializeCallback func(g *gocui.Gui, viewName string) error
 type preRowDisplayCallback func(data uiCommon.IData, isSelected bool) string
@@ -43,6 +44,7 @@ type DataListView struct {
 	name                   string
 	topMargin              int
 	bottomMargin           int
+	alertSize              int
 	eventProcessor         *eventdata.EventProcessor
 	appMdMgr               *metadata.AppMetadataManager
 	mu                     sync.Mutex
@@ -53,7 +55,7 @@ type DataListView struct {
 	HelpText               string
 	HelpTextTips           string
 	InitializeCallback     initializeCallback
-	UpdateHeaderCallback   actionCallback
+	UpdateHeaderCallback   updateHeaderCallback
 	PreRowDisplayCallback  preRowDisplayCallback
 	RefreshDisplayCallback refreshDisplayCallback
 	GetListData            GetListData
@@ -78,7 +80,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
 
 	listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-		asUI.topMargin, asUI.bottomMargin, asUI, columnDefinitions)
+		asUI.bottomMargin, asUI, columnDefinitions)
 	listWidget.PreRowDisplayFunc = asUI.PreRowDisplay
 
 	listWidget.SetSortColumns(defaultSortColumns)
@@ -89,6 +91,14 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 
 }
 
+// Get the top offset where the data view should open
+func (asUI *DataListView) GetTopOffset() int {
+	size := asUI.masterUI.GetHeaderSize() + asUI.alertSize + asUI.topMargin + 1
+	//toplog.Info(fmt.Sprintf("DataListView name: %v GetTopOffset: %v  headerSize: %v topMargin: %v",
+	//	asUI.name, size, asUI.masterUI.GetHeaderSize(), asUI.topMargin))
+	return size
+}
+
 func (asUI *DataListView) Name() string {
 	return asUI.name
 }
@@ -97,13 +107,8 @@ func (asUI *DataListView) GetTopMargin() int {
 	return asUI.topMargin
 }
 
-func (asUI *DataListView) SetTopMargin(topMargin int) {
-	asUI.topMargin = topMargin
-	asUI.SetTopMarginOnListWidget(topMargin)
-}
-
-func (asUI *DataListView) SetTopMarginOnListWidget(topMargin int) {
-	asUI.listWidget.SetTopMargin(topMargin)
+func (asUI *DataListView) SetAlertSize(alertSize int) {
+	asUI.alertSize = alertSize
 }
 
 func (asUI *DataListView) SetTitle(title string) {
@@ -148,7 +153,9 @@ func (asUI *DataListView) Layout(g *gocui.Gui) error {
 		asUI.initialize(g)
 	}
 	asUI.masterUI.SetHelpTextTips(g, asUI.HelpTextTips)
-
+	//topOffset := asUI.getTopOffset()
+	// TODO: Is this correct?
+	//asUI.listWidget.SetTopMargin(topOffset)
 	return asUI.listWidget.Layout(g)
 }
 
@@ -189,6 +196,12 @@ func (asUI *DataListView) GetDisplayedEventData() *eventdata.EventData {
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 	var err error
 
+	headerSize, err2 := asUI.updateHeader(g)
+	if err2 != nil {
+		return err2
+	}
+	asUI.masterUI.SetStatsSummarySize(headerSize)
+
 	if asUI.RefreshDisplayCallback != nil {
 		err = asUI.RefreshDisplayCallback(g)
 	} else {
@@ -197,7 +210,8 @@ func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	return asUI.updateHeader(g)
+
+	return nil
 }
 
 func (asUI *DataListView) refreshListDisplay(g *gocui.Gui) error {
@@ -229,21 +243,21 @@ func (asUI *DataListView) PreRowDisplay(data uiCommon.IData, isSelected bool) st
 	return ""
 }
 
-func (asUI *DataListView) updateHeader(g *gocui.Gui) error {
+func (asUI *DataListView) updateHeader(g *gocui.Gui) (int, error) {
 
 	v, err := g.View("headerView")
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if asUI.displayPaused {
 		fmt.Fprintf(v, util.REVERSE_GREEN)
 		fmt.Fprintf(v, "\r Display update paused ")
 		fmt.Fprintf(v, util.CLEAR)
-		return nil
+		return 0, nil
 	}
 
 	if asUI.UpdateHeaderCallback != nil {
 		return asUI.UpdateHeaderCallback(g, v)
 	}
-	return nil
+	return 0, nil
 }
