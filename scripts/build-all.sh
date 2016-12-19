@@ -10,7 +10,7 @@
 #
 #
 set -e
-export GITHUB_USER=kkellner
+export GITHUB_USER=ecsteam
 export GITHUB_REPO=cloudfoundry-top-plugin
 
 if [[ "$1" = "release" ]] ; then
