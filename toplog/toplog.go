@@ -237,6 +237,9 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, 'd', gocui.ModNone, w.testDebugMsg); err != nil {
 			log.Panicln(err)
 		}
+		if err := g.SetKeybinding(w.name, 'D', gocui.ModNone, w.toggleDebugAction); err != nil {
+			log.Panicln(err)
+		}
 
 		if err := w.masterUI.SetCurrentViewOnTop(g); err != nil {
 			log.Panicln(err)
@@ -248,8 +251,11 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		w.writeLogLines(g, v)
 
 		title := baseTitle
+		if debugEnabled {
+			title = fmt.Sprintf("%v DebugMode:ON", baseTitle)
+		}
 		if freezeAutoScroll {
-			title = fmt.Sprintf("%v - AUTO SCROLL OFF", baseTitle)
+			title = fmt.Sprintf("%v - AUTO SCROLL OFF", title)
 		}
 		v.Title = title
 
@@ -341,6 +347,11 @@ func (w *DebugWidget) testInfoMsg(g *gocui.Gui, v *gocui.View) error {
 
 func (w *DebugWidget) testDebugMsg(g *gocui.Gui, v *gocui.View) error {
 	Debug("Test DEBUG Message")
+	return nil
+}
+
+func (w *DebugWidget) toggleDebugAction(g *gocui.Gui, v *gocui.View) error {
+	debugEnabled = !debugEnabled
 	return nil
 }
 

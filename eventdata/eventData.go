@@ -410,8 +410,9 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 			switch httpEvent.GetMethod() {
 			case events.Method_PUT:
 				fallthrough
-			case events.Method_POST:
-				fallthrough
+			//case events.Method_POST:
+			// TODO: Maybe this shouldn't be here as POST doesn't seem to include guid on URI
+			//	fallthrough
 			case events.Method_DELETE:
 				// Check if we have a PCF API call
 				uri := httpEvent.GetUri()
@@ -484,12 +485,12 @@ func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
 
 	parsedData := ed.apiUrlRegexp.FindAllStringSubmatch(apiUri, -1)
 	if len(parsedData) != 1 {
-		toplog.Info(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (parsedData size) apiUri: %v", apiUri))
+		toplog.Debug(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (parsedData size) apiUri: %v", apiUri))
 		return
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 3 {
-		toplog.Info(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri))
+		toplog.Debug(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri))
 		return
 	}
 	dataType := dataArray[1]
