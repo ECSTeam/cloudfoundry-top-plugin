@@ -76,21 +76,36 @@ such as which containers are currenly running on the cell.
 
 
 # Installation
+There are two options for installation; use the plugin repo (recommended) or manual installation.
 
+## Install from plugin repository (recommended)
+NOTE: This installation method requires that your client computer has access to the internet.
+If internet access is not available from client computer use the manual method.
+
+```
+cf install-plugin -r CF-Community "top"
+```
+<!---
+```
+cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
+```
+-->
+
+## Manual installation method
 * **Download the binary file for your target OS from the latest [release](https://github.com/ecsteam/cloudfoundry-top-plugin/releases/latest)**
 * If you've already installed the plugin and are updating, you must first run `cf uninstall-plugin top`
 * Then install the plugin with `cf install-plugin top-plugin-darwin`  (or `top-plugin-linux` or `top-plugin.exe`)
 * If you get a permission error run: `chmod +x top-plugin-darwin` (or `top-plugin-linux`) on the binary
 * Verify the plugin installed by looking for it with `cf plugins`
 
-TODO: Register plugin with the community cloud foundry plugins website (https://plugins.cloudfoundry.org/)
-<!---
-```bash
-cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
-cf install-plugin ./top-plugin-osx
+## Upgrade to latest version
+To upgrade to the lastest version of top plugin, uninstall plugin and install again.
 ```
--->
-## Assign needed permissions
+cf uninstall-plugin top
+cf install-plugin -r CF-Community "top"     (or use manual install method described above)
+```
+
+## Assign needed permissions (if not using `admin` user)
 
 To use this plugin you must be logged in as 'admin' or assign two permissions
 to an existing cloud foundry user.  To assign needed permissions:

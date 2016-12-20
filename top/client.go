@@ -121,8 +121,7 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 		startTime := time.Now()
 		err := c.createNozzle(subscriptionID, instanceId)
 		if err != nil {
-			errText := err.Error()
-			if !strings.Contains(errText, "timeout") {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
 				toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
 				break
 			}
