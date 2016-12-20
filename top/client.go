@@ -121,8 +121,12 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 		startTime := time.Now()
 		err := c.createNozzle(subscriptionID, instanceId)
 		if err != nil {
-			toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
-			break
+			errText := err.Error()
+			if !strings.Contains(errText, "timeout") {
+				toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
+				break
+			}
+			toplog.Warn(fmt.Sprintf("Nozzle #%v - error: %v", instanceId, err))
 		}
 		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId))
 		lastRetry := time.Now().Sub(startTime)
@@ -138,7 +142,7 @@ func (c *Client) RefreshAuthToken() (string, error) {
 	toplog.Info("RefreshAuthToken called")
 	token, err := c.cliConnection.AccessToken()
 	if err != nil {
-		c.ui.Failed(err.Error())
+		toplog.Error(fmt.Sprintf("Nozzle RefreshAuthToken failed: %v", err))
 		return "", err
 	}
 	toplog.Info(fmt.Sprintf("RefreshAuthToken complete with new token: %v", token))
@@ -148,7 +152,6 @@ func (c *Client) RefreshAuthToken() (string, error) {
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	conn := c.cliConnection
-
 	dopplerEndpoint, err := conn.DopplerEndpoint()
 	if err != nil {
 		return err
