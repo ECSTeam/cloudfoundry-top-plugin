@@ -30,7 +30,10 @@ type Manager struct {
 	//orgMdMgr *OrgMetadataManager
 	//spaceMdMgr *SpaceMetadataManager
 
-	mu            sync.Mutex
+	mu sync.Mutex
+
+	appDeleteQueue map[string]string
+
 	refreshNow    chan bool
 	refreshQueue  map[string]string
 	cliConnection plugin.CliConnection
@@ -41,6 +44,8 @@ func NewManager(conn plugin.CliConnection) *Manager {
 	mgr := &Manager{}
 
 	mgr.appMdMgr = NewAppMetadataManager()
+
+	mgr.appDeleteQueue = make(map[string]string)
 
 	mgr.refreshQueue = make(map[string]string)
 	mgr.refreshNow = make(chan bool)
@@ -62,6 +67,14 @@ func (mgr *Manager) LoadMetadata() {
 	LoadStackCache(mgr.cliConnection)
 	LoadSpaceCache(mgr.cliConnection)
 	LoadOrgCache(mgr.cliConnection)
+}
+
+func (mgr *Manager) IsAppDeleted(appId string) bool {
+	return mgr.appDeleteQueue[appId] != ""
+}
+
+func (mgr *Manager) RemoveAppFromDeletedQueue(appId string) {
+	delete(mgr.appDeleteQueue, appId)
 }
 
 // Request a refresh of specific app metadata
@@ -110,7 +123,9 @@ func (mgr *Manager) loadMetadataThread() {
 						mgr.appMdMgr.appMetadataMap[appId] = newAppMetadata
 					} else {
 						// If we can't reload this appId the it must have been deleted
+						// Remove from metadata cache AND remove from appstats in "current" processor
 						delete(mgr.appMdMgr.appMetadataMap, appId)
+						mgr.appDeleteQueue[appId] = appId
 						toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Removed from cache as it doesn't seem to exist", appId, appName))
 					}
 					toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Load complete", appId, newAppMetadata.Name))

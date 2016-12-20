@@ -111,6 +111,14 @@ func (ed *EventData) Clone() *EventData {
 
 	for _, appStat := range ed.AppMap {
 
+		// Check if this app has been deleted
+		if ed.eventProcessor.GetMetadataManager().IsAppDeleted(appStat.AppId) {
+			ed.eventProcessor.GetMetadataManager().RemoveAppFromDeletedQueue(appStat.AppId)
+			delete(ed.AppMap, appStat.AppId)
+			delete(clone.AppMap, appStat.AppId)
+			continue
+		}
+
 		clonedAppStat := clone.AppMap[appStat.AppId]
 
 		httpAllCount := int64(0)
@@ -215,7 +223,8 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		}
 	case "API":
 		// This is our notification that the state of an application may have changed
-		// e.g., App was marked as STARTED or STOPPED (by a user)
+		// e.g., App was marked as STARTED or STOPPED (by a user) or
+		// new app deployed or existing app deleted
 		appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
 		logText := string(logMessage.GetMessage())
 		toplog.Debug(fmt.Sprintf("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText))

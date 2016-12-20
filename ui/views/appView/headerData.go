@@ -56,6 +56,7 @@ func (slice StackSummaryStatsArray) Swap(i, j int) {
 
 // Output header stats by stack
 // Returns the number of rows (lines) written to header
+
 func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
 
 	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
@@ -74,9 +75,15 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	for _, appStats := range asUI.displayAppStats {
 		sumStats := summaryStatsByStack[appStats.StackId]
 		if sumStats == nil {
+			// This appStats has no stackId -- This could be caused by not having
+			// the app metadata in cache.  Either because it hasn't been loaded yet
+			// or it was deleted because the app has been deleted but we still
+			// have stats from when the app was deployed.
+
 			//log.Panic(fmt.Sprintf("We didn't find the stack data, StackId: %v", appStats.StackId))
-			fmt.Fprintf(v, "\n Waiting for more data...")
-			return 3, nil
+			//fmt.Fprintf(v, "\n Waiting for more data...")
+			//return 3, nil
+			continue
 		}
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
@@ -135,6 +142,12 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	return linesWritten, nil
 }
 
+// Called for each stack - this should output 3 lines:
+//
+//  Stack: cflinuxfs2
+//     CPU:  8.4% Used,  800% Max,       Mem:   7GB Used,  63GB Max,  22GB Rsrvd
+//     Apps:  122 Total, Cntrs:  127     Dsk:   7GB Used, 190GB Max,  27GB Rsrvd
+//
 func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) int {
 
 	totalUsedMemoryAppInstancesDisplay := "--"

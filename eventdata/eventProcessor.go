@@ -81,8 +81,6 @@ func (ep *EventProcessor) GetMetadataManager() *metadata.Manager {
 }
 
 func (ep *EventProcessor) UpdateData() {
-	//ep.mu.Lock()
-	//defer ep.mu.Unlock()
 	processorCopy := ep.currentEventData.Clone()
 	ep.displayedEventData = processorCopy
 }

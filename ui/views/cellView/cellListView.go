@@ -156,8 +156,12 @@ func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellS
 						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
 						stack := metadata.FindStackMetadata(appMetadata.StackGuid)
-						displayCellStat.StackId = appMetadata.StackGuid
-						displayCellStat.StackName = stack.Name
+						if displayCellStat.StackId == "" && appMetadata.StackGuid != "" {
+							displayCellStat.StackId = appMetadata.StackGuid
+						}
+						if displayCellStat.StackName == "" && stack.Name != "" {
+							displayCellStat.StackName = stack.Name
+						}
 
 						displayCellStat.TotalReportingContainers = displayCellStat.TotalReportingContainers + 1
 
