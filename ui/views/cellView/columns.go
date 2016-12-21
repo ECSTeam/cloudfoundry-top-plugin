@@ -406,21 +406,21 @@ func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
 	return c
 }
 
+// Job Index in PCF 1.8 is now a GUID not a integer number
 func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
-	defaultColSize := 7
+	defaultColSize := 36
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayCellStats).JobIndex < c2.(*displaydata.DisplayCellStats).JobIndex)
+		return c1.(*displaydata.DisplayCellStats).JobIndex < c2.(*displaydata.DisplayCellStats).JobIndex
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
-		display := fmt.Sprintf("%7v", cellStats.JobIndex)
-		return display
+		return util.FormatDisplayData(cellStats.JobIndex, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		cellStats := data.(*displaydata.DisplayCellStats)
-		return fmt.Sprintf("%v", cellStats.JobIndex)
+		return cellStats.JobIndex
 	}
 	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }

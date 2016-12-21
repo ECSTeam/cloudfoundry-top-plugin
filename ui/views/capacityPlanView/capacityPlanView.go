@@ -46,7 +46,7 @@ func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &CapacityPlanView{}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		uiCommon.NewSortColumn("IP", false),
+		uiCommon.NewSortColumn("CELL_IP", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,

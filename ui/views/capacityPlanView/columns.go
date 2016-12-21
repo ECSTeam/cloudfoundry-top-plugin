@@ -36,7 +36,7 @@ func columnIp() *uiCommon.ListColumn {
 		cellStats := data.(*displaydata.DisplayCellStats)
 		return cellStats.Ip
 	}
-	c := uiCommon.NewListColumn("IP", "IP", defaultColSize,
+	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }

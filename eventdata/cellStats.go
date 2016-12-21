@@ -20,7 +20,7 @@ type CellStats struct {
 	StackId        string
 	DeploymentName string
 	JobName        string
-	JobIndex       int
+	JobIndex       string
 
 	NumOfCpus                   int
 	CapacityTotalMemory         int64

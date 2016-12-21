@@ -263,12 +263,7 @@ func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 		cellStats.DeploymentName = msg.GetDeployment()
 		cellStats.JobName = msg.GetJob()
 
-		jobIndex, err := strconv.Atoi(msg.GetIndex())
-		if err == nil {
-			cellStats.JobIndex = jobIndex
-		} else {
-			cellStats.JobIndex = -1
-		}
+		cellStats.JobIndex = msg.GetIndex()
 
 		valueMetric := msg.GetValueMetric()
 		value := ed.getMetricValue(valueMetric)
