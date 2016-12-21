@@ -121,8 +121,15 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 		startTime := time.Now()
 		err := c.createNozzle(subscriptionID, instanceId)
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+			errMsg := err.Error()
+			notAuthorized := strings.Contains(errMsg, "authorized")
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) || notAuthorized {
 				toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
+				if notAuthorized {
+					toplog.Error("Are you sure you have 'admin' privileges on foundation?")
+					toplog.Error("See needed permissions for this plugin here:")
+					toplog.Error("https://github.com/ECSTeam/cloudfoundry-top-plugin")
+				}
 				break
 			}
 			toplog.Warn(fmt.Sprintf("Nozzle #%v - error: %v", instanceId, err))
@@ -137,18 +144,10 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 	return nil
 }
 
-func (c *Client) RefreshAuthToken() (string, error) {
-	toplog.Info("RefreshAuthToken called")
-	token, err := c.cliConnection.AccessToken()
-	if err != nil {
-		toplog.Error(fmt.Sprintf("Nozzle RefreshAuthToken failed: %v", err))
-		return "", err
-	}
-	toplog.Info(fmt.Sprintf("RefreshAuthToken complete with new token: %v", token))
-	return token, nil
-}
-
 func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
+
+	// Delay each nozzle instance creation by 1 second
+	time.Sleep(time.Duration(instanceId) * time.Second)
 
 	conn := c.cliConnection
 	dopplerEndpoint, err := conn.DopplerEndpoint()
@@ -163,7 +162,8 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 
-	dopplerConnection.RefreshTokenFrom(c)
+	tokenRefresher := NewTokenRefresher(conn, instanceId)
+	dopplerConnection.RefreshTokenFrom(tokenRefresher)
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
 	dopplerConnection.SetIdleTimeout(15 * time.Second)
