@@ -16,6 +16,8 @@
 package eventdata
 
 import (
+	"fmt"
+	"regexp"
 	"sync"
 	"time"
 
@@ -86,10 +88,10 @@ func (ep *EventProcessor) UpdateData() {
 }
 
 func (ep *EventProcessor) Start() {
-	go ep.LoadCacheAndSeeData()
+	go ep.LoadCacheAndSeedData()
 }
 
-func (ep *EventProcessor) LoadCacheAndSeeData() {
+func (ep *EventProcessor) LoadCacheAndSeedData() {
 	ep.metadataManager.LoadMetadata()
 	ep.SeedStatsFromMetadata()
 }
@@ -101,6 +103,14 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
 
+	ep.seedAppMap()
+	ep.seedDomainMap()
+	ep.seedRouteData()
+
+}
+
+func (ep *EventProcessor) seedAppMap() {
+
 	currentStatsMap := ep.currentEventData.AppMap
 	for _, app := range ep.metadataManager.GetAppMdManager().AllApps() {
 		appId := app.Guid
@@ -108,9 +118,90 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 		if appStats == nil {
 			// New app we haven't seen yet
 			appStats = NewAppStats(appId)
-			currentStatsMap[appId] = appStats // Thread was here at crash
+			currentStatsMap[appId] = appStats
 		}
 	}
+}
+
+func (ep *EventProcessor) seedDomainMap() {
+	currentStatsMap := ep.currentEventData.DomainMap
+	for _, domain := range metadata.AllDomains() {
+		domainStats := currentStatsMap[domain.Name]
+		if domainStats == nil {
+			// New domain we haven't seen yet
+			domainStats = NewDomainStats(domain.Guid)
+			currentStatsMap[domain.Name] = domainStats
+		}
+	}
+}
+
+func (ep *EventProcessor) seedRouteData() {
+
+	//currentDomainStatsMap := ep.currentEventData.DomainMap
+	for _, route := range metadata.AllRoutes() {
+		domainMd := metadata.FindDomainMetadata(route.DomainGuid)
+		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Guid)
+	}
+
+	// Seed special host names
+	apiDomain, apiHost := ep.getAPIHostAndDomain()
+	ep.addRoute(apiDomain, apiHost, "", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/internal", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/internal/bulk/apps", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/internal/log_access", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/v2", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/v2/apps", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "/v2/syslog_drain_urls", "CF_API")
+	ep.addRoute(apiDomain, "uaa", "", "CF_API")
+	ep.addRoute(apiDomain, "uaa", "/oauth/token", "CF_API")
+	ep.addRoute(apiDomain, "doppler", "", "CF_API")
+	ep.addRoute(apiDomain, "doppler", "/apps", "CF_API")
+	ep.addRoute("", "127.0.0.1", "/", "CF_API")
+	ep.addRoute("", "127.0.0.1", "/v2", "CF_API")
+	ep.addRoute("", "127.0.0.1", "/v2/stats/self", "CF_API")
+
+	// ERROR for uri:[127.0.0.1:4001/v2/stats/self] domain:[0.0.1] host:[127] path:[/v2/stats/self]
+
+}
+
+func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {
+	currentDomainStatsMap := ep.currentEventData.DomainMap
+
+	//domainMd := metadata.FindDomainMetadataByName(domain)
+
+	domainStats := currentDomainStatsMap[domain]
+	if domainStats == nil {
+		// New domain we haven't seen yet
+		domainStats = NewDomainStats(domain)
+		currentDomainStatsMap[domain] = domainStats
+	}
+	hostStats := domainStats.HostStatsMap[host]
+	if hostStats == nil {
+		hostStats = NewHostStats(host)
+		domainStats.HostStatsMap[host] = hostStats
+		//toplog.Info(fmt.Sprintf("seed hostStats: %v", host))
+	}
+	hostStats.AddPath(path, routeGuid)
+}
+
+func (ep *EventProcessor) getAPIHostAndDomain() (domain, host string) {
+	apiUrl := util.GetApiEndpointNoProtocol(ep.cliConnection)
+
+	parseInfoHostAndDomainNameStr := `^([^\.]+)\.([^\/^:]*)(?::[0-9]+)?`
+	parseInfoHostAndDomainName := regexp.MustCompile(parseInfoHostAndDomainNameStr)
+	parsedData := parseInfoHostAndDomainName.FindAllStringSubmatch(apiUrl, -1)
+	if len(parsedData) != 1 {
+		toplog.Debug(fmt.Sprintf("getAPIHostAndDomain>>Unable to parse (parsedData size) apiUri: %v", apiUrl))
+		return
+	}
+	dataArray := parsedData[0]
+	if len(dataArray) != 3 {
+		toplog.Debug(fmt.Sprintf("getAPIHostAndDomain>>Unable to parse (dataArray size) apiUri: %v", apiUrl))
+		return
+	}
+	host = dataArray[1]
+	domain = dataArray[2]
+	return domain, host
 }
 
 func (ep *EventProcessor) ClearStats() error {

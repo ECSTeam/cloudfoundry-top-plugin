@@ -1,56 +1,54 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
 
-type displayFunc func(dataRow IData) string
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+)
 
-type IData interface {
-	Id() string
-}
-
-type Person struct {
-	name string
-	age  int
-}
-
-func (p *Person) Id() string {
-	return p.name
-}
-
-func (p *Person) display() string {
-	return "hello"
-}
+// [0] "/webappa/subapp1"
+// [1] "/webappa"
+// [2] ""
+//
+// findPath = "/webappabc"    => ""
+// findPath = "/webappa"	  => "/webappa"
+// findPath = "/webappa/"	  => "/webappa"
+// findPath = "/webappa/doc"  => "/webappa"
 
 func main() {
 	fmt.Printf("start\n")
-
-	//personArray := make([]IData, 0, 10)
-	personArray := make([]*Person, 0, 10)
-	personArray = append(personArray, &Person{name: "one", age: 1})
-	personArray = append(personArray, &Person{name: "two", age: 2})
-	personArray = append(personArray, &Person{name: "three", age: 3})
-
-	displayFunc := func(dataRow IData) string {
-		//fmt.Printf("%v\n", dataRow)
-		person := dataRow.(*Person)
-		return fmt.Sprintf("name:%v age:%v", person.name, person.age)
-	}
-
-	fmt.Printf("len: %v\n", len(personArray))
-	displayDataArray := make([]IData, len(personArray))
-	for i, d := range personArray {
-		displayDataArray[i] = d
-		//fmt.Printf("i=%v, d=%v\n", i, d)
-	}
-
-	loop(displayDataArray, displayFunc)
+	test1()
+	test2()
 }
 
-func loop(dataArray []IData, displayFunc displayFunc) {
+func test1() {
+	hs := eventdata.NewHostStats("examplea")
+	find(hs, "")
+}
 
-	for i, item := range dataArray {
-		value := displayFunc(item)
-		fmt.Printf("i: %v  item:%v\n", i, value)
+func test2() {
+	hs := eventdata.NewHostStats("examplea")
+	hs.AddPath("", "base")
+	hs.AddPath("/webappa", "a level 1")
+	hs.AddPath("/webappa/subapp1", "a level 2")
+	hs.AddPath("/webappb", "b level 1")
+
+	find(hs, "/webappabc")
+	find(hs, "/webappa")
+	find(hs, "/webappa/")
+	find(hs, "/webappa/doc")
+	find(hs, "/webappa/subapp")
+	find(hs, "/webappa/subapp1")
+	find(hs, "/webappa/subapp1/")
+	find(hs, "/webappa/subapp1/xx")
+	find(hs, "/")
+	find(hs, "")
+}
+func find(hs *eventdata.HostStats, testPath string) {
+	rs := hs.FindRouteStats(testPath)
+	if rs != nil {
+		fmt.Printf("findPath: %v  useRoute: %v\n\n", testPath, rs.Id())
+	} else {
+		fmt.Printf("No match\n")
 	}
-
 }

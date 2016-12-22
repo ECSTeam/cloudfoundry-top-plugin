@@ -379,7 +379,7 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 }
 
 func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
-	go mui.router.GetProcessor().LoadCacheAndSeeData()
+	go mui.router.GetProcessor().LoadCacheAndSeedData()
 	return nil
 }
 

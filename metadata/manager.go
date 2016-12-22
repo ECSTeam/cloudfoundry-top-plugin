@@ -63,10 +63,16 @@ func (mgr *Manager) GetAppMdManager() *AppMetadataManager {
 // Load all the metadata.  This is a blocking call.
 func (mgr *Manager) LoadMetadata() {
 	toplog.Info("Manager>loadMetadata")
-	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
+
 	LoadStackCache(mgr.cliConnection)
+
+	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
 	LoadSpaceCache(mgr.cliConnection)
 	LoadOrgCache(mgr.cliConnection)
+
+	LoadRouteCache(mgr.cliConnection)
+	LoadDomainCache(mgr.cliConnection)
+
 }
 
 func (mgr *Manager) IsAppDeleted(appId string) bool {

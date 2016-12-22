@@ -5,7 +5,7 @@
 RESULT=$?
 if [ $RESULT -eq 0 ]; then
   echo compile success
-  cf top
+  cf top "$@"
 else
   echo compile failed
 fi

@@ -18,7 +18,6 @@ package eventdata
 import (
 	"encoding/binary"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -32,8 +31,10 @@ import (
 )
 
 type EventData struct {
-	AppMap         map[string]*AppStats
-	CellMap        map[string]*CellStats
+	AppMap  map[string]*AppStats
+	CellMap map[string]*CellStats
+	// Both shared + private
+	DomainMap      map[string]*DomainStats
 	TotalEvents    int64
 	mu             *sync.Mutex
 	logHttpAccess  *EventLogHttpAccess
@@ -41,22 +42,13 @@ type EventData struct {
 	apiUrl         string
 	apiUrlRegexp   *regexp.Regexp
 	urlPCF17Regexp *regexp.Regexp
+	routeUrlRegexp *regexp.Regexp
 }
 
 func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 
 	logHttpAccess := NewEventLogHttpAccess()
-	apiEndpoint, err := eventProcessor.cliConnection.ApiEndpoint()
-	if err != nil {
-		toplog.Error("Call to ApiEndpoint failed:" + err.Error())
-		apiEndpoint = "UNABLE_TO_GET_API_ENDPOINT"
-	}
-
-	url, err := url.Parse(apiEndpoint)
-	if err != nil {
-		toplog.Error("parse error:" + err.Error())
-	}
-	apiUrl := fmt.Sprintf("%v%v", url.Host, url.Path)
+	apiUrl := util.GetApiEndpointNoProtocol(eventProcessor.cliConnection)
 
 	apiUrlRegexpStr := `^\/v[0-9]\/([^\/]*)\/([^\/]*)`
 	apiUrlRegexp := regexp.MustCompile(apiUrlRegexpStr)
@@ -64,9 +56,15 @@ func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 	urlPCF17RegexpStr := `^http[s]?:\/\/[^\/]*(\/v[0-9]\/.*)$`
 	urlPCF17Regexp := regexp.MustCompile(urlPCF17RegexpStr)
 
+	//routeUrlRegexpStr := `^(?:http[s]?:\/\/)?([^\.]+)\.([^\/^:]*)(?::[0-9]+)?(.*)$`
+
+	routeUrlRegexpStr := `^(?:http[s]?:\/\/)?(?:((?:[0-9]{1,3}\.){3}[0-9]{1,3})|([^\.\:\/]+)(?:\.([^\/^:]*))?)(?::([0-9]+))?(.*)$`
+	routeUrlRegexp := regexp.MustCompile(routeUrlRegexpStr)
+
 	return &EventData{
 		AppMap:         make(map[string]*AppStats),
 		CellMap:        make(map[string]*CellStats),
+		DomainMap:      make(map[string]*DomainStats),
 		TotalEvents:    0,
 		mu:             mu,
 		logHttpAccess:  logHttpAccess,
@@ -74,6 +72,7 @@ func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 		apiUrl:         apiUrl,
 		apiUrlRegexp:   apiUrlRegexp,
 		urlPCF17Regexp: urlPCF17Regexp,
+		routeUrlRegexp: routeUrlRegexp,
 	}
 
 }
@@ -408,6 +407,9 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 	peerType := httpEvent.GetPeerType()
 	switch {
 	case peerType == events.PeerType_Client:
+
+		ed.handleRouteStats(msg)
+
 		if appUUID != nil && instId != "" {
 			ed.httpStartStopEventForApp(msg)
 		} else if appUUID == nil && instId != "" {
@@ -554,6 +556,67 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 	case statusCode >= 500 && statusCode < 600:
 		containerTraffic.Http5xxCount++
 	}
+
+}
+
+func (ed *EventData) handleRouteStats(msg *events.Envelope) {
+
+	httpEvent := msg.GetHttpStartStop()
+	uri := httpEvent.GetUri()
+	parsedData := ed.routeUrlRegexp.FindAllStringSubmatch(uri, -1)
+	if len(parsedData) != 1 {
+		toplog.Debug(fmt.Sprintf("handleRouteStats>>Unable to parse (parsedData size) apiUri: %v", uri))
+		return
+	}
+	dataArray := parsedData[0]
+	if len(dataArray) != 6 {
+		toplog.Debug(fmt.Sprintf("handleRouteStats>>Unable to parse (dataArray size) apiUri: %v", uri))
+		return
+	}
+	ipAddress := dataArray[1]
+	host := dataArray[2]
+	domain := dataArray[3]
+	port := dataArray[4]
+	path := dataArray[5]
+
+	if ipAddress != "" {
+		host = ipAddress
+	}
+	ed.updateRouteStats(domain, host, port, path, msg)
+
+}
+
+func (ed *EventData) updateRouteStats(domain string, host string, port string, path string, msg *events.Envelope) {
+
+	httpEvent := msg.GetHttpStartStop()
+	domainStats := ed.DomainMap[domain]
+	if domainStats == nil {
+		toplog.Warn(fmt.Sprintf("domainStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path))
+		return
+	}
+	hostStats := domainStats.HostStatsMap[host]
+	if hostStats == nil {
+		toplog.Warn(fmt.Sprintf("hostStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path))
+		return
+	}
+	routeStats := hostStats.FindRouteStats(path)
+	if routeStats == nil {
+		toplog.Warn(fmt.Sprintf("routeStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path))
+		return
+	}
+	routeStats.HttpStatusCode[httpEvent.GetStatusCode()] = routeStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
+	routeStats.HttpMethod[httpEvent.GetMethod()] = routeStats.HttpMethod[httpEvent.GetMethod()] + 1
+
+	routeStats.UserAgent[httpEvent.GetUserAgent()] = routeStats.UserAgent[httpEvent.GetUserAgent()] + 1
+
+	applicationGuid := formatUUID(httpEvent.GetApplicationId())
+	routeStats.ApplicationId[applicationGuid] = routeStats.ApplicationId[applicationGuid] + 1
+
+	toplog.Debug(fmt.Sprintf("Updated stats for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		httpEvent.GetUri(), domain, host, port, path))
 
 }
 
