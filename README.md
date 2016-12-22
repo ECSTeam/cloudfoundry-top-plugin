@@ -82,16 +82,18 @@ There are two options for installation; use the plugin repo (recommended) or man
 NOTE: This installation method requires that your client computer has access to the internet.
 If internet access is not available from client computer use the manual method.
 
+Verify you have a repo named `CF-Community` registered in your cf client.
+
 ```
 cf list-plugin-repos
 ```
-Verify the output of the above command shows a repo named `CF-Community`. If it does not add the repo via:
+If the above command does not show `CF-Community` you can add the repo via:
 
 ```
 cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
 ```
 Now that we have the cloud foundry community repo registered, install `top`:
- 
+
 ```
 cf install-plugin -r CF-Community "top"
 ```
