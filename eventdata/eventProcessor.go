@@ -160,7 +160,7 @@ func (ep *EventProcessor) seedRouteData() {
 	ep.addRoute("", "127.0.0.1", "/v2", "CF_API")
 	ep.addRoute("", "127.0.0.1", "/v2/stats/self", "CF_API")
 
-	// ERROR for uri:[127.0.0.1:4001/v2/stats/self] domain:[0.0.1] host:[127] path:[/v2/stats/self]
+	ep.addRoute(apiDomain, "proxy-0-p-mysql-ert", "/v0/backends", "CF_API")
 
 }
 

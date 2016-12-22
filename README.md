@@ -83,13 +83,19 @@ NOTE: This installation method requires that your client computer has access to 
 If internet access is not available from client computer use the manual method.
 
 ```
-cf install-plugin -r CF-Community "top"
+cf list-plugin-repos
 ```
-<!---
+Verify the output of the above command shows a repo named `CF-Community`. If it does not add the repo via:
+
 ```
 cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
 ```
--->
+Now that we have the cloud foundry community repo registered, install `top`:
+ 
+```
+cf install-plugin -r CF-Community "top"
+```
+
 
 ## Manual installation method
 * **Download the binary file for your target OS from the latest [release](https://github.com/ecsteam/cloudfoundry-top-plugin/releases/latest)**
