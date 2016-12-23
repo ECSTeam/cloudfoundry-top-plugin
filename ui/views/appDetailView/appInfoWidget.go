@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -32,7 +32,7 @@ type AppInfoWidget struct {
 	width      int
 	height     int
 	detailView *AppDetailView
-	appMdMgr   *metadata.AppMetadataManager
+	appMdMgr   *app.AppMetadataManager
 }
 
 func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {

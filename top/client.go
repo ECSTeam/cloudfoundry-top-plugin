@@ -32,6 +32,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	gops "github.com/mitchellh/go-ps"
 )
 
@@ -98,7 +99,7 @@ func (c *Client) Start() {
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
-	subscriptionID := "TopPlugin_" + pseudo_uuid()
+	subscriptionID := "TopPlugin_" + util.Pseudo_uuid()
 	go c.createNozzles(subscriptionID)
 
 	ui.Start()

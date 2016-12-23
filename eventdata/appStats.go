@@ -17,7 +17,9 @@ package eventdata
 
 import (
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 )
 
 const (
@@ -53,7 +55,7 @@ func (as *AppStats) Id() string {
 	return as.AppId
 }
 
-func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *metadata.AppMetadataManager) {
+func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *app.AppMetadataManager) {
 	if appStats == nil {
 		return
 	}
@@ -64,10 +66,10 @@ func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *metadata.AppMetadataMan
 	}
 	appStats.AppName = appName
 
-	var spaceMetadata metadata.Space
+	var spaceMetadata space.Space
 	spaceName := appStats.SpaceName
 	if spaceName == "" || spaceName == UnknownName {
-		spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+		spaceMetadata = space.FindSpaceMetadata(appMetadata.SpaceGuid)
 		spaceName = spaceMetadata.Name
 		if spaceName == "" {
 			spaceName = UnknownName
@@ -78,9 +80,9 @@ func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *metadata.AppMetadataMan
 	orgName := appStats.OrgName
 	if orgName == "" || orgName == UnknownName {
 		if &spaceMetadata == nil {
-			spaceMetadata = metadata.FindSpaceMetadata(appMetadata.SpaceGuid)
+			spaceMetadata = space.FindSpaceMetadata(appMetadata.SpaceGuid)
 		}
-		orgMetadata := metadata.FindOrgMetadata(spaceMetadata.OrgGuid)
+		orgMetadata := org.FindOrgMetadata(spaceMetadata.OrgGuid)
 		orgName = orgMetadata.Name
 		if orgName == "" {
 			orgName = UnknownName
@@ -90,7 +92,7 @@ func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *metadata.AppMetadataMan
 
 }
 
-func PopulateNamesFromMap(statsMap map[string]*AppStats, appMdMgr *metadata.AppMetadataManager) []*AppStats {
+func PopulateNamesFromMap(statsMap map[string]*AppStats, appMdMgr *app.AppMetadataManager) []*AppStats {
 
 	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {

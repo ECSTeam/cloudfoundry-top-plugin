@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package domain
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -31,8 +32,8 @@ type DomainResponse struct {
 }
 
 type DomainResource struct {
-	Meta   Meta   `json:"metadata"`
-	Entity Domain `json:"entity"`
+	Meta   common.Meta `json:"metadata"`
+	Entity Domain      `json:"entity"`
 }
 
 type Domain struct {
@@ -109,7 +110,7 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 		return response, nil
 	}
 
-	err := callPagableAPI(cliConnection, url, handleRequest)
+	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	toplog.Debug(fmt.Sprintf("Domain>>getDomainMetadata %v complete - loaded: %v items", url, len(metadata)))
 

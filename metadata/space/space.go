@@ -13,67 +13,65 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package space
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
-type StackResponse struct {
+type SpaceResponse struct {
 	Count     int             `json:"total_results"`
 	Pages     int             `json:"total_pages"`
 	NextUrl   string          `json:"next_url"`
-	Resources []StackResource `json:"resources"`
+	Resources []SpaceResource `json:"resources"`
 }
 
-type StackResource struct {
-	Meta   Meta  `json:"metadata"`
-	Entity Stack `json:"entity"`
+type SpaceResource struct {
+	Meta   common.Meta `json:"metadata"`
+	Entity Space       `json:"entity"`
 }
 
-type Stack struct {
-	Guid        string `json:"guid"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+type Space struct {
+	Guid    string `json:"guid"`
+	Name    string `json:"name"`
+	OrgGuid string `json:"organization_guid"`
+	OrgName string
 }
 
 var (
-	stacksMetadataCache []Stack
+	spacesMetadataCache []Space
 )
 
-func AllStacks() []Stack {
-	return stacksMetadataCache
-}
-
-func FindStackMetadata(stackGuid string) Stack {
-	for _, stack := range stacksMetadataCache {
-		if stack.Guid == stackGuid {
-			return stack
+func FindSpaceMetadata(spaceGuid string) Space {
+	for _, space := range spacesMetadataCache {
+		if space.Guid == spaceGuid {
+			return space
 		}
 	}
-	return Stack{Guid: stackGuid, Name: stackGuid}
+	return Space{}
 }
 
-func LoadStackCache(cliConnection plugin.CliConnection) {
-	data, err := getStackMetadata(cliConnection)
+func LoadSpaceCache(cliConnection plugin.CliConnection) {
+	data, err := getSpaceMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** stack metadata error: %v", err.Error()))
+		toplog.Warn(fmt.Sprintf("*** space metadata error: %v", err.Error()))
 		return
 	}
-	stacksMetadataCache = data
+	spacesMetadataCache = data
 }
 
-func getStackMetadata(cliConnection plugin.CliConnection) ([]Stack, error) {
+func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 
-	url := "/v2/stacks"
-	metadata := []Stack{}
+	url := "/v2/spaces"
+	metadata := []Space{}
 
 	handleRequest := func(outputBytes []byte) (interface{}, error) {
-		var response StackResponse
+		var response SpaceResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
 			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
@@ -86,7 +84,7 @@ func getStackMetadata(cliConnection plugin.CliConnection) ([]Stack, error) {
 		return response, nil
 	}
 
-	err := callPagableAPI(cliConnection, url, handleRequest)
+	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	return metadata, err
 

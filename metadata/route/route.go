@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package route
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -31,8 +32,8 @@ type RouteResponse struct {
 }
 
 type RouteResource struct {
-	Meta   Meta  `json:"metadata"`
-	Entity Route `json:"entity"`
+	Meta   common.Meta `json:"metadata"`
+	Entity Route       `json:"entity"`
 }
 
 type Route struct {
@@ -94,7 +95,7 @@ func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
 		return response, nil
 	}
 
-	err := callPagableAPI(cliConnection, url, handleRequest)
+	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	toplog.Debug(fmt.Sprintf("Route>>getRouteMetadata complete - loaded: %v items", len(metadata)))
 

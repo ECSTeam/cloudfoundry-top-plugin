@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package app
+
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type AppResponse struct {
 	Count     int           `json:"total_results"`
@@ -23,8 +25,8 @@ type AppResponse struct {
 }
 
 type AppResource struct {
-	Meta   Meta `json:"metadata"`
-	Entity App  `json:"entity"`
+	Meta   common.Meta `json:"metadata"`
+	Entity App         `json:"entity"`
 }
 
 type App struct {

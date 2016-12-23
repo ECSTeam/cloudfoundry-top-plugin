@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package common
 
 import (
 	"errors"
@@ -36,7 +36,7 @@ var (
 
 type handleResponseFunc func(outputBytes []byte) (interface{}, error)
 
-func callAPI(cliConnection plugin.CliConnection, url string) (string, error) {
+func CallAPI(cliConnection plugin.CliConnection, url string) (string, error) {
 	output, err := callCurlRetryable(cliConnection, url)
 	if err != nil {
 		return "", err
@@ -45,7 +45,7 @@ func callAPI(cliConnection plugin.CliConnection, url string) (string, error) {
 	return outputStr, nil
 }
 
-func callPagableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
+func CallPagableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
 	nextUrl := url
 	for nextUrl != "" {
 		output, err := callCurlRetryable(cliConnection, nextUrl)

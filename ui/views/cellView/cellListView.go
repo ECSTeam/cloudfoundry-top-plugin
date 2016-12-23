@@ -20,7 +20,7 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
@@ -155,7 +155,7 @@ func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellS
 
 						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
-						stack := metadata.FindStackMetadata(appMetadata.StackGuid)
+						stack := stack.FindStackMetadata(appMetadata.StackGuid)
 						if displayCellStat.StackId == "" && appMetadata.StackGuid != "" {
 							displayCellStat.StackId = appMetadata.StackGuid
 						}

@@ -21,7 +21,7 @@ import (
 	"sync"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/helpView"
@@ -46,7 +46,7 @@ type DataListView struct {
 	bottomMargin           int
 	alertSize              int
 	eventProcessor         *eventdata.EventProcessor
-	appMdMgr               *metadata.AppMetadataManager
+	appMdMgr               *app.AppMetadataManager
 	mu                     sync.Mutex
 	listWidget             *uiCommon.ListWidget
 	displayPaused          bool
@@ -143,7 +143,7 @@ func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 	return asUI.eventProcessor
 }
 
-func (asUI *DataListView) GetAppMdMgr() *metadata.AppMetadataManager {
+func (asUI *DataListView) GetAppMdMgr() *app.AppMetadataManager {
 	return asUI.appMdMgr
 }
 

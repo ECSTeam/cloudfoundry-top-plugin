@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package app
 
 import (
 	"encoding/json"
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -42,6 +43,11 @@ func (mdMgr *AppMetadataManager) AppMetadataSize() int {
 	return len(mdMgr.appMetadataMap)
 }
 
+// TODO: Remove this method once metadata is refactored
+func (mdMgr *AppMetadataManager) GetAppMetadataMap() map[string]*AppMetadata {
+	return mdMgr.appMetadataMap
+}
+
 func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 	appsMetadataArray := []*AppMetadata{}
 	for _, appMetadata := range mdMgr.appMetadataMap {
@@ -51,10 +57,10 @@ func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 }
 
 func (mdMgr *AppMetadataManager) FindAppMetadata(appId string) *AppMetadata {
-	return mdMgr.findAppMetadataInternal(appId, true)
+	return mdMgr.FindAppMetadataInternal(appId, true)
 }
 
-func (mdMgr *AppMetadataManager) findAppMetadataInternal(appId string, requestLoadIfNotFound bool) *AppMetadata {
+func (mdMgr *AppMetadataManager) FindAppMetadataInternal(appId string, requestLoadIfNotFound bool) *AppMetadata {
 	appMetadata := mdMgr.appMetadataMap[appId]
 	if appMetadata == nil {
 		appMetadata = NewAppMetadataById(appId)
@@ -62,7 +68,7 @@ func (mdMgr *AppMetadataManager) findAppMetadataInternal(appId string, requestLo
 			// TODO: Queue metadata load for this id
 		} else {
 			// We mark this metadata as 60 mins old
-			appMetadata.cacheTime = appMetadata.cacheTime.Add(-60 * time.Minute)
+			appMetadata.CacheTime = appMetadata.CacheTime.Add(-60 * time.Minute)
 		}
 	}
 	return appMetadata
@@ -84,11 +90,11 @@ func (mdMgr *AppMetadataManager) LoadAppCache(cliConnection plugin.CliConnection
 	mdMgr.appMetadataMap = metadataMap
 }
 
-func (mdMgr *AppMetadataManager) getAppMetadata(cliConnection plugin.CliConnection, appId string) (*AppMetadata, error) {
+func (mdMgr *AppMetadataManager) GetAppMetadataInternal(cliConnection plugin.CliConnection, appId string) (*AppMetadata, error) {
 	url := "/v2/apps/" + appId
 	emptyApp := NewAppMetadataById(appId)
 
-	outputStr, err := callAPI(cliConnection, url)
+	outputStr, err := common.CallAPI(cliConnection, url)
 	if err != nil {
 		return emptyApp, err
 	}
@@ -123,7 +129,7 @@ func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnect
 		return appResp, nil
 	}
 
-	err := callPagableAPI(cliConnection, url, handleRequest)
+	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	return appsMetadataArray, err
 

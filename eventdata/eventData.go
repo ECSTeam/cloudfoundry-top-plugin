@@ -618,6 +618,11 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	applicationGuid := formatUUID(httpEvent.GetApplicationId())
 	routeStats.ApplicationId[applicationGuid] = routeStats.ApplicationId[applicationGuid] + 1
 
+	responseLength := httpEvent.GetContentLength()
+	if responseLength > 0 {
+		routeStats.ResponseContentLength = routeStats.ResponseContentLength + httpEvent.GetContentLength()
+	}
+
 	toplog.Debug(fmt.Sprintf("Updated stats for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 		httpEvent.GetUri(), domain, host, port, path))
 

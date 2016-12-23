@@ -13,23 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package top
+package common
 
-import (
-	"crypto/rand"
-	"fmt"
-)
-
-func pseudo_uuid() (uuid string) {
-
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
-
-	uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
-
-	return
+type Meta struct {
+	Guid      string `json:"guid"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }

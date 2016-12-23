@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package app
 
 import "time"
 
@@ -21,14 +21,15 @@ const MEGABYTE = (1024 * 1024)
 
 type AppMetadata struct {
 	*App
-	cacheTime time.Time
+	// TODO: Make this private
+	CacheTime time.Time
 }
 
 func NewAppMetadata(appStats App) *AppMetadata {
 
 	appMetadata := &AppMetadata{}
 	appMetadata.App = &appStats
-	appMetadata.cacheTime = time.Now()
+	appMetadata.CacheTime = time.Now()
 	return appMetadata
 }
 

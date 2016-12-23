@@ -25,6 +25,8 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -126,7 +128,7 @@ func (ep *EventProcessor) seedAppMap() {
 
 func (ep *EventProcessor) seedDomainMap() {
 	currentStatsMap := ep.currentEventData.DomainMap
-	for _, domain := range metadata.AllDomains() {
+	for _, domain := range domain.AllDomains() {
 		domainStats := currentStatsMap[domain.Name]
 		if domainStats == nil {
 			// New domain we haven't seen yet
@@ -139,30 +141,34 @@ func (ep *EventProcessor) seedDomainMap() {
 func (ep *EventProcessor) seedRouteData() {
 
 	//currentDomainStatsMap := ep.currentEventData.DomainMap
-	for _, route := range metadata.AllRoutes() {
-		domainMd := metadata.FindDomainMetadata(route.DomainGuid)
+	for _, route := range route.AllRoutes() {
+		domainMd := domain.FindDomainMetadata(route.DomainGuid)
 		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Guid)
 	}
 
 	// Seed special host names
 	apiDomain, apiHost := ep.getAPIHostAndDomain()
-	ep.addRoute(apiDomain, apiHost, "", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/internal", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/internal/bulk/apps", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/internal/log_access", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/v2", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/v2/apps", "CF_API")
-	ep.addRoute(apiDomain, apiHost, "/v2/syslog_drain_urls", "CF_API")
-	ep.addRoute(apiDomain, "uaa", "", "CF_API")
-	ep.addRoute(apiDomain, "uaa", "/oauth/token", "CF_API")
-	ep.addRoute(apiDomain, "doppler", "", "CF_API")
-	ep.addRoute(apiDomain, "doppler", "/apps", "CF_API")
-	ep.addRoute("", "127.0.0.1", "/", "CF_API")
-	ep.addRoute("", "127.0.0.1", "/v2", "CF_API")
-	ep.addRoute("", "127.0.0.1", "/v2/stats/self", "CF_API")
+	ep.addRoute(apiDomain, apiHost, "", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/internal", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/internal/bulk/apps", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/internal/log_access", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/v2", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/v2/apps", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, apiHost, "/v2/syslog_drain_urls", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, "uaa", "", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, "uaa", "/oauth/token", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, "doppler", "", ep.generateUniqueRouteGuid())
+	ep.addRoute(apiDomain, "doppler", "/apps", ep.generateUniqueRouteGuid())
+	ep.addRoute("", "127.0.0.1", "/", ep.generateUniqueRouteGuid())
+	ep.addRoute("", "127.0.0.1", "/v2", ep.generateUniqueRouteGuid())
+	ep.addRoute("", "127.0.0.1", "/v2/stats/self", ep.generateUniqueRouteGuid())
 
-	ep.addRoute(apiDomain, "proxy-0-p-mysql-ert", "/v0/backends", "CF_API")
+	ep.addRoute(apiDomain, "proxy-0-p-mysql-ert", "/v0/backends", ep.generateUniqueRouteGuid())
 
+}
+
+func (ep *EventProcessor) generateUniqueRouteGuid() string {
+	return util.Pseudo_uuid()
 }
 
 func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {

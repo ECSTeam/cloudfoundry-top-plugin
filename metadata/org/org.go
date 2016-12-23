@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package metadata
+package org
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -30,8 +31,8 @@ type OrgResponse struct {
 }
 
 type OrgResource struct {
-	Meta   Meta `json:"metadata"`
-	Entity Org  `json:"entity"`
+	Meta   common.Meta `json:"metadata"`
+	Entity Org         `json:"entity"`
 }
 
 type Org struct {
@@ -80,7 +81,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 		return response, nil
 	}
 
-	err := callPagableAPI(cliConnection, url, handleRequest)
+	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	return metadata, err
 

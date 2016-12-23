@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -62,7 +62,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
 	asUI.checkForAlerts(g)
 
-	stacks := metadata.AllStacks()
+	stacks := stack.AllStacks()
 	if len(stacks) == 0 {
 		fmt.Fprintf(v, "\n Waiting for more data...")
 		return 3, nil

@@ -20,6 +20,25 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 type DisplayRouteStats struct {
 	*eventdata.RouteStats
 	// TODO: Put display fields here
+
+	// Includes [host].[domain]/[path]   what about port??
+	RouteName string
+	Host      string
+	Domain    string
+	Path      string
+
+	HttpAllCount   int64
+	Http2xxCount   int64
+	Http3xxCount   int64
+	Http4xxCount   int64
+	Http5xxCount   int64
+	HttpOtherCount int64
+
+	HttpMethodGetCount    int64
+	HttpMethodPostCount   int64
+	HttpMethodPutCount    int64
+	HttpMethodDeleteCount int64
+	HttpMethodOtherCount  int64
 }
 
 func NewDisplayRouteStats(routeStats *eventdata.RouteStats) *DisplayRouteStats {

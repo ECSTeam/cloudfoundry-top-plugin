@@ -20,13 +20,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 
 	"code.cloudfoundry.org/cli/plugin"
 )
 
 type Manager struct {
-	appMdMgr *AppMetadataManager
+	appMdMgr *app.AppMetadataManager
 	//orgMdMgr *OrgMetadataManager
 	//spaceMdMgr *SpaceMetadataManager
 
@@ -43,7 +49,7 @@ func NewManager(conn plugin.CliConnection) *Manager {
 
 	mgr := &Manager{}
 
-	mgr.appMdMgr = NewAppMetadataManager()
+	mgr.appMdMgr = app.NewAppMetadataManager()
 
 	mgr.appDeleteQueue = make(map[string]string)
 
@@ -56,7 +62,7 @@ func NewManager(conn plugin.CliConnection) *Manager {
 	return mgr
 }
 
-func (mgr *Manager) GetAppMdManager() *AppMetadataManager {
+func (mgr *Manager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
 }
 
@@ -64,14 +70,14 @@ func (mgr *Manager) GetAppMdManager() *AppMetadataManager {
 func (mgr *Manager) LoadMetadata() {
 	toplog.Info("Manager>loadMetadata")
 
-	LoadStackCache(mgr.cliConnection)
+	stack.LoadStackCache(mgr.cliConnection)
 
 	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
-	LoadSpaceCache(mgr.cliConnection)
-	LoadOrgCache(mgr.cliConnection)
+	space.LoadSpaceCache(mgr.cliConnection)
+	org.LoadOrgCache(mgr.cliConnection)
 
-	LoadRouteCache(mgr.cliConnection)
-	LoadDomainCache(mgr.cliConnection)
+	route.LoadRouteCache(mgr.cliConnection)
+	domain.LoadDomainCache(mgr.cliConnection)
 
 }
 
@@ -113,24 +119,24 @@ func (mgr *Manager) loadMetadataThread() {
 		minNextLoadTime = veryLongtime
 		toplog.Debug("Metadata cache thread is awake")
 		for _, appId := range mgr.refreshQueue {
-			appMetadata := mgr.appMdMgr.findAppMetadataInternal(appId, false)
-			timeSinceLastLoad := time.Now().Sub(appMetadata.cacheTime)
+			appMetadata := mgr.appMdMgr.FindAppMetadataInternal(appId, false)
+			timeSinceLastLoad := time.Now().Sub(appMetadata.CacheTime)
 			appName := appMetadata.Name
 			toplog.Debug(fmt.Sprintf("Metadata - appId: %v name: [%v] - inqueue check time since last load: %v", appId, appName, timeSinceLastLoad))
 			if timeSinceLastLoad > minimumLoadTimeMS {
 				toplog.Debug(fmt.Sprintf("Metadata - appId: %v name: [%v] - Needs to be loaded now", appId, appName))
-				newAppMetadata, err := mgr.appMdMgr.getAppMetadata(mgr.cliConnection, appId)
+				newAppMetadata, err := mgr.appMdMgr.GetAppMetadataInternal(mgr.cliConnection, appId)
 				if err != nil {
 					toplog.Warn(fmt.Sprintf("Metadata - appId: %v name: [%v] - Error: %v", appId, appName, err))
 				} else {
 					toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Load start", appId, appName))
 					if newAppMetadata.Name != "" {
 						// Only save if it really loaded
-						mgr.appMdMgr.appMetadataMap[appId] = newAppMetadata
+						mgr.appMdMgr.GetAppMetadataMap()[appId] = newAppMetadata
 					} else {
 						// If we can't reload this appId the it must have been deleted
 						// Remove from metadata cache AND remove from appstats in "current" processor
-						delete(mgr.appMdMgr.appMetadataMap, appId)
+						delete(mgr.appMdMgr.GetAppMetadataMap(), appId)
 						mgr.appDeleteQueue[appId] = appId
 						toplog.Info(fmt.Sprintf("Metadata - appId: %v name: [%v] - Removed from cache as it doesn't seem to exist", appId, appName))
 					}

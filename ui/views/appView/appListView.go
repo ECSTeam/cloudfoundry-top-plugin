@@ -23,7 +23,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -282,7 +282,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 			displayAppStats.DesiredContainers = int(appMetadata.Instances)
 		}
 
-		stack := metadata.FindStackMetadata(appMetadata.StackGuid)
+		stack := stack.FindStackMetadata(appMetadata.StackGuid)
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
