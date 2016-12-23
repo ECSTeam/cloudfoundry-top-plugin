@@ -107,6 +107,7 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 	ep.seedDomainMap()
 	ep.seedRouteData()
 
+	ep.currentEventData.EnableRouteTracking = true
 }
 
 func (ep *EventProcessor) seedAppMap() {

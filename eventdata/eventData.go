@@ -34,15 +34,16 @@ type EventData struct {
 	AppMap  map[string]*AppStats
 	CellMap map[string]*CellStats
 	// Both shared + private
-	DomainMap      map[string]*DomainStats
-	TotalEvents    int64
-	mu             *sync.Mutex
-	logHttpAccess  *EventLogHttpAccess
-	eventProcessor *EventProcessor
-	apiUrl         string
-	apiUrlRegexp   *regexp.Regexp
-	urlPCF17Regexp *regexp.Regexp
-	routeUrlRegexp *regexp.Regexp
+	DomainMap           map[string]*DomainStats
+	EnableRouteTracking bool
+	TotalEvents         int64
+	mu                  *sync.Mutex
+	logHttpAccess       *EventLogHttpAccess
+	eventProcessor      *EventProcessor
+	apiUrl              string
+	apiUrlRegexp        *regexp.Regexp
+	urlPCF17Regexp      *regexp.Regexp
+	routeUrlRegexp      *regexp.Regexp
 }
 
 func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
@@ -408,7 +409,9 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 	switch {
 	case peerType == events.PeerType_Client:
 
-		ed.handleRouteStats(msg)
+		if ed.EnableRouteTracking {
+			ed.handleRouteStats(msg)
+		}
 
 		if appUUID != nil && instId != "" {
 			ed.httpStartStopEventForApp(msg)
