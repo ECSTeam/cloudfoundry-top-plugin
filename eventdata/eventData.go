@@ -30,6 +30,9 @@ import (
 	"github.com/mohae/deepcopy"
 )
 
+const MaxDomainBucket = 100
+const MaxHostBucket = 10000
+
 type EventData struct {
 	AppMap  map[string]*AppStats
 	CellMap map[string]*CellStats
@@ -564,8 +567,26 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 
 func (ed *EventData) handleRouteStats(msg *events.Envelope) {
 
+	origin := msg.GetOrigin()
+	if !strings.Contains(origin, "router") {
+		// We are only interested in go-router events.
+		// Other sources of HttpStartStop events:
+		//   garden-windows
+		//   etcd
+		//	 routing_api  (PCF 1.8)
+		return
+	}
+
 	httpEvent := msg.GetHttpStartStop()
 	uri := httpEvent.GetUri()
+
+	// Check if URI has a space in it
+	if strings.IndexByte(uri, ' ') != -1 {
+		// This is a bogus uri -- ignore it
+		// PCF 1.7 messed up the HttpStartStop format using:
+		// http://172.29.0.2, 172.28.3.51/oauth/token
+		return
+	}
 	parsedData := ed.routeUrlRegexp.FindAllStringSubmatch(uri, -1)
 	if len(parsedData) != 1 {
 		toplog.Debug(fmt.Sprintf("handleRouteStats>>Unable to parse (parsedData size) apiUri: %v", uri))
@@ -594,29 +615,53 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	httpEvent := msg.GetHttpStartStop()
 	domainStats := ed.DomainMap[domain]
 	if domainStats == nil {
-		toplog.Warn(fmt.Sprintf("domainStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Info(fmt.Sprintf("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			httpEvent.GetUri(), domain, host, port, path))
-		return
+		if len(ed.DomainMap) > MaxDomainBucket {
+			toplog.Warn("domainStats map at max size. The entry will NOT be added")
+			return
+		}
+		domainGuid := util.Pseudo_uuid()
+		domainStats = NewDomainStats(domainGuid)
+		ed.DomainMap[domain] = domainStats
 	}
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
-		toplog.Warn(fmt.Sprintf("hostStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Info(fmt.Sprintf("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			httpEvent.GetUri(), domain, host, port, path))
-		return
+		if len(domainStats.HostStatsMap) > MaxHostBucket {
+			toplog.Warn("hostStats map at max size. The entry will NOT be added")
+			return
+		}
+		// dynamically add new hosts/routes that we don't have pre-registered
+		hostStats = NewHostStats(host)
+		domainStats.HostStatsMap[host] = hostStats
+		//routeGuid := util.Pseudo_uuid()
+		//hostStats.AddPath("", routeGuid)
 	}
 	routeStats := hostStats.FindRouteStats(path)
 	if routeStats == nil {
-		toplog.Warn(fmt.Sprintf("routeStats not found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Info(fmt.Sprintf("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			httpEvent.GetUri(), domain, host, port, path))
-		return
+		// dynamically add root path
+		routeGuid := util.Pseudo_uuid()
+		//routeStats = hostStats.AddPath("", routeGuid)
+		routeStats = hostStats.AddPathDynamic("", routeGuid)
 	}
+
+	// TODO: Should this really come from msg.GetTimestamp() instead of marking it with when we processed the event?
+	routeStats.LastAccess = time.Now()
+
 	routeStats.HttpStatusCode[httpEvent.GetStatusCode()] = routeStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
 	routeStats.HttpMethod[httpEvent.GetMethod()] = routeStats.HttpMethod[httpEvent.GetMethod()] + 1
 
 	routeStats.UserAgent[httpEvent.GetUserAgent()] = routeStats.UserAgent[httpEvent.GetUserAgent()] + 1
 
-	applicationGuid := formatUUID(httpEvent.GetApplicationId())
-	routeStats.ApplicationId[applicationGuid] = routeStats.ApplicationId[applicationGuid] + 1
+	appId := httpEvent.GetApplicationId()
+	if appId != nil {
+		applicationGuid := formatUUID(appId)
+		routeStats.ApplicationId[applicationGuid] = routeStats.ApplicationId[applicationGuid] + 1
+	}
 
 	responseLength := httpEvent.GetContentLength()
 	if responseLength > 0 {
@@ -629,6 +674,9 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 }
 
 func formatUUID(uuid *events.UUID) string {
+	if uuid == nil {
+		return ""
+	}
 	var uuidBytes [16]byte
 	binary.LittleEndian.PutUint64(uuidBytes[:8], uuid.GetLow())
 	binary.LittleEndian.PutUint64(uuidBytes[8:], uuid.GetHigh())

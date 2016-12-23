@@ -60,7 +60,7 @@ func (b ByteSize) StringWithPrecision(precision int) string {
 	case b >= KB:
 		return fmt.Sprintf(format+"KB", b/KB)
 	}
-	return fmt.Sprintf(format+"B", b)
+	return fmt.Sprintf("%.0fB", b)
 }
 
 func main() {

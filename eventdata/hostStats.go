@@ -24,6 +24,12 @@ type HostStats struct {
 	// Key: path (needs to include empty string as key for root path)
 	RouteStatsMap map[string]*RouteStats
 
+	// If path is not found, dynamically register it to this menu levels deep in path
+	// TODO: Problem -- if the first call is to "/v2" and its dynamically registered
+	// then a subsequent call to /v2/apps" will to be added as there will be a match.
+	// However, we really do want to register /v2/apps
+	dynamicAddPathDepth int
+
 	// index of paths where the best match is first (longest path first)
 	pathIndex []string
 }
@@ -34,10 +40,18 @@ func NewHostStats(hostName string) *HostStats {
 	return stats
 }
 
-// Find matching route for given path
-func (hs *HostStats) AddPath(path string, routeId string) {
-	hs.RouteStatsMap[path] = NewRouteStats(routeId)
+func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
+	rs := NewRouteStats(routeId)
+	hs.RouteStatsMap[path] = rs
 	hs.rebuildPathIndex()
+	return rs
+}
+
+func (hs *HostStats) AddPathDynamic(fullPath string, routeId string) *RouteStats {
+	// TODO: based on fullPath and hs.dynamicAddPathDepth tuncate the
+	// fullPath if needed to get it to dynamicAddPathDepth size, then add
+	rs := hs.AddPath(fullPath, routeId)
+	return rs
 }
 
 // Build index of paths where the best match is first
@@ -64,6 +78,11 @@ func (hs *HostStats) rebuildPathIndex() {
 // findPath = "/webappa/doc"  => "/webappa"
 //
 func (hs *HostStats) FindPathMatch(findPath string) string {
+
+	// TODO: need to make sure we take into account dynamicAddPathDepth
+	// e.g., do not return "/v2" if calling with "/v2/app" even if /v2
+	// is registered and /v2/apps is not -- we should return:
+	//		 empty match?  or "/v2/apps" even though its not in list?
 
 	for _, path := range hs.pathIndex {
 		if strings.HasPrefix(findPath, path) {

@@ -138,7 +138,11 @@ func column2xx() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.Http2xxCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.Http2xxCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -156,7 +160,11 @@ func column3xx() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.Http3xxCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.Http3xxCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -174,7 +182,11 @@ func column4xx() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.Http4xxCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.Http4xxCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -184,6 +196,7 @@ func column4xx() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
+
 func column5xx() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -191,7 +204,11 @@ func column5xx() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.Http5xxCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.Http5xxCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -209,8 +226,12 @@ func columnResponseContentLength() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		value := fmt.Sprintf("%9v", util.ByteSize(stats.ResponseContentLength).StringWithPrecision(1))
-		return value
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			value := fmt.Sprintf("%9v", util.ByteSize(stats.ResponseContentLength).StringWithPrecision(1))
+			return value
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -229,7 +250,11 @@ func columnMethodGet() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.HttpMethodGetCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.HttpMethodGetCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -247,7 +272,11 @@ func columnMethodPost() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.HttpMethodPostCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.HttpMethodPostCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -265,7 +294,11 @@ func columnMethodPut() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.HttpMethodPostCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.HttpMethodPostCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
@@ -283,13 +316,39 @@ func columnMethodDelete() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%10v", util.Format(stats.HttpMethodDeleteCount))
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%10v", "--")
+		} else {
+			return fmt.Sprintf("%10v", util.Format(stats.HttpMethodDeleteCount))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
 		return fmt.Sprintf("%v", stats.HttpMethodDeleteCount)
 	}
 	c := uiCommon.NewListColumn("M_DELETE", "M_DELETE", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	return c
+}
+
+func columnLastAccess() *uiCommon.ListColumn {
+	defaultColSize := 20
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*displaydata.DisplayRouteStats).LastAccess.Before(c2.(*displaydata.DisplayRouteStats).LastAccess)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayRouteStats)
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%20v", "--")
+		} else {
+			return fmt.Sprintf("%20v", stats.LastAccess.Format("01-02-2006 15:04:05"))
+		}
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*displaydata.DisplayRouteStats)
+		return fmt.Sprintf("%v", stats.LastAccess)
+	}
+	c := uiCommon.NewListColumn("LAST_ACCESS", "LAST_ACCESS", defaultColSize,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }

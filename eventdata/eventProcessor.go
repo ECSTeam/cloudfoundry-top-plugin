@@ -148,22 +148,57 @@ func (ep *EventProcessor) seedRouteData() {
 
 	// Seed special host names
 	apiDomain, apiHost := ep.getAPIHostAndDomain()
-	ep.addRoute(apiDomain, apiHost, "", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/internal", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/internal/bulk/apps", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/internal/log_access", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/v2", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/v2/apps", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, apiHost, "/v2/syslog_drain_urls", ep.generateUniqueRouteGuid())
+
+	// Register all documented APIs from https://apidocs.cloudfoundry.org/249/
+	// TODO: Add a way to dynamically add level-n paths as seen during runtime
+	// I.e., pathLevel=2 on "api" host would track: /*/*
+	// E.g., /v2/apps or /v3/jobs/2323-232-2323 (only /v2/jobs would be tracked)
+	registerApiPaths := [...]string{
+		"/internal",
+		"/internal/bulk/apps",
+		"/internal/log_access",
+		"/v2",
+		"/v2/app_usage_events",
+		"/v2/apps",
+		"/v2/buildpacks",
+		"/v2/domains",
+		"/v2/config",
+		"/v2/events",
+		"/v2/info",
+		"/v2/jobs",
+		"/v2/quota_definitions",
+		"/v2/organizations",
+		"/v2/private_domains",
+		"/v2/resource_match",
+		"/v2/routes",
+		"/v2/route_mappings",
+		"/v2/security_groups",
+		"/v2/service_bindings",
+		"/v2/service_brokers",
+		"/v2/service_instances",
+		"/v2/service_keys",
+		"/v2/service_plan_visibilities",
+		"/v2/service_plans",
+		"/v2/service_usage_events",
+		"/v2/services",
+		"/v2/shared_domains",
+		"/v2/space_quota_definitions",
+		"/v2/spaces",
+		"/v2/stacks",
+		"/v2/user_provided_service_instances",
+		"/v2/users",
+		"/v2/users",
+		"/v2/syslog_drain_urls",
+	}
+
+	for _, registerPath := range registerApiPaths {
+		ep.addRoute(apiDomain, apiHost, registerPath, ep.generateUniqueRouteGuid())
+	}
+
 	ep.addRoute(apiDomain, "uaa", "", ep.generateUniqueRouteGuid())
 	ep.addRoute(apiDomain, "uaa", "/oauth/token", ep.generateUniqueRouteGuid())
 	ep.addRoute(apiDomain, "doppler", "", ep.generateUniqueRouteGuid())
 	ep.addRoute(apiDomain, "doppler", "/apps", ep.generateUniqueRouteGuid())
-	ep.addRoute("", "127.0.0.1", "/", ep.generateUniqueRouteGuid())
-	ep.addRoute("", "127.0.0.1", "/v2", ep.generateUniqueRouteGuid())
-	ep.addRoute("", "127.0.0.1", "/v2/stats/self", ep.generateUniqueRouteGuid())
-
-	ep.addRoute(apiDomain, "proxy-0-p-mysql-ert", "/v0/backends", ep.generateUniqueRouteGuid())
 
 }
 

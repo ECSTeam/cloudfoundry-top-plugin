@@ -84,6 +84,7 @@ func (asUI *RouteListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnMethodPost())
 	columns = append(columns, columnMethodPut())
 	columns = append(columns, columnMethodDelete())
+	columns = append(columns, columnLastAccess())
 
 	return columns
 }

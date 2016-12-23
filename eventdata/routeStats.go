@@ -16,6 +16,8 @@
 package eventdata
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -31,8 +33,8 @@ type RouteSlice []*RouteStats
 
 type RouteStats struct {
 	RouteId string
-	//Host    string
-	//Path    string
+
+	LastAccess time.Time
 
 	responseL60Time    *util.AvgTracker
 	AvgResponseL60Time float64 // updated after a clone of this object
@@ -52,7 +54,7 @@ type RouteStats struct {
 	// E.g., GET, PUT, POST, DELETE
 	HttpMethod map[events.Method]int64
 
-	// NOTE: is this realistic?? There could be unlimited number of RemoteAddresses\
+	// NOTE: is this realistic?? There could be unlimited number of RemoteAddresses
 	// PCF 1.7 x-forward???
 	// PCF 1.8: "forwarded" (array)
 	// NOTE: PCF 1.8 - remote address includes a port
@@ -62,7 +64,8 @@ type RouteStats struct {
 	UserAgent map[string]int64
 
 	ResponseContentLength int64
-	RequestContentLength  int64
+	// Not currently used
+	RequestContentLength int64
 
 	// Key: GUID of application
 	ApplicationId map[string]int64
