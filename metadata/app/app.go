@@ -33,9 +33,6 @@ type App struct {
 	Guid      string `json:"guid"`
 	Name      string `json:"name,omitempty"`
 	SpaceGuid string `json:"space_guid,omitempty"`
-	SpaceName string
-	OrgGuid   string
-	OrgName   string
 
 	StackGuid   string  `json:"stack_guid,omitempty"`
 	MemoryMB    float64 `json:"memory,omitempty"`

@@ -41,6 +41,24 @@ func columnRouteId() *uiCommon.ListColumn {
 	return c
 }
 
+func columnAppIds() *uiCommon.ListColumn {
+	defaultColSize := 50
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*displaydata.DisplayRouteStats).RouteId) < (c2.(*displaydata.DisplayRouteStats).RouteId)
+	}
+	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+		stats := data.(*displaydata.DisplayRouteStats)
+		return util.FormatDisplayData(fmt.Sprintf("%v", stats.ApplicationId), defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*displaydata.DisplayRouteStats)
+		return stats.RouteId
+	}
+	c := uiCommon.NewListColumn("APP_IDS", "APP_IDS", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	return c
+}
+
 func columnRouteName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	sortFunc := func(c1, c2 util.Sortable) bool {

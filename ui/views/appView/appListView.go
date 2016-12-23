@@ -23,6 +23,8 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
@@ -238,13 +240,18 @@ func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId s
 		// Nothing selected
 		return nil
 	}
+	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(selectedAppId)
+	appName := appMetadata.Name
+	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
+	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
 	switch menuId {
 	case "cftarget":
-		clipboardValue = fmt.Sprintf("cf target -o %v -s %v", appStats.OrgName, appStats.SpaceName)
+		clipboardValue = fmt.Sprintf("cf target -o %v -s %v", orgName, spaceName)
 	case "cfapp":
-		clipboardValue = fmt.Sprintf("cf app %v", appStats.AppName)
+		clipboardValue = fmt.Sprintf("cf app %v", appName)
 	case "cfscale":
-		clipboardValue = fmt.Sprintf("cf scale %v ", appStats.AppName)
+		clipboardValue = fmt.Sprintf("cf scale %v ", appName)
 	case "appguid":
 		clipboardValue = selectedAppId
 	}
@@ -265,13 +272,17 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 
 	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.PopulateNamesFromMap(appMap, asUI.GetAppMdMgr())
+	appStatsArray := eventdata.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
 
 	for _, appStats := range appStatsArray {
 		displayAppStats := displaydata.NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+
+		displayAppStats.AppName = appMetadata.Name
+		displayAppStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
+		displayAppStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
 
 		totalCpuPercentage := 0.0
 		totalUsedMemory := uint64(0)

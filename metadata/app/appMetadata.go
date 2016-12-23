@@ -34,5 +34,5 @@ func NewAppMetadata(appStats App) *AppMetadata {
 }
 
 func NewAppMetadataById(appId string) *AppMetadata {
-	return NewAppMetadata(App{Guid: appId})
+	return NewAppMetadata(App{Guid: appId, Name: appId})
 }

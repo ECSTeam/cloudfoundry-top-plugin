@@ -21,6 +21,8 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -108,12 +110,16 @@ func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
 		}
 		packageUpdated := appMetadata.PackageUpdatedAt
 
+		appName := appMetadata.Name
+		spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
+		orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
 		fmt.Fprintf(v, " \n")
-		fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appStats.AppName, util.CLEAR)
+		fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appName, util.CLEAR)
 		fmt.Fprintf(v, " AppId:           %v\n", appStats.AppId)
 		fmt.Fprintf(v, " AppUUID:         %v\n", appStats.AppUUID)
-		fmt.Fprintf(v, " Space:           %v\n", appStats.SpaceName)
-		fmt.Fprintf(v, " Organization:    %v\n", appStats.OrgName)
+		fmt.Fprintf(v, " Space:           %v\n", spaceName)
+		fmt.Fprintf(v, " Organization:    %v\n", orgName)
 		fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
 		fmt.Fprintf(v, " State:           %v\n", state)
 		fmt.Fprintf(v, " Buildpack:       %v\n", buildpack)

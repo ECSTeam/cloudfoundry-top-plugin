@@ -20,6 +20,11 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 type DisplayContainerStats struct {
 	*eventdata.ContainerStats
 	*eventdata.AppStats
+
+	AppName   string
+	OrgName   string
+	SpaceName string
+
 	FreeMemory     uint64
 	ReservedMemory uint64
 	FreeDisk       uint64

@@ -20,6 +20,8 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
@@ -123,13 +125,24 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 		return displayStatsArray
 	}
 
-	eventdata.PopulateNamesIfNeeded(appStats, asUI.GetAppMdMgr())
-
 	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
 	for _, containerStats := range appStats.ContainerArray {
 		if containerStats != nil {
 			displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+
+			/*
+				appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
+				appName := appMetadata.Name
+				if appName == "" {
+					appName = appStats.AppId
+				}
+			*/
+
+			displayContainerStats.AppName = appMetadata.Name
+			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
+			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
 			usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
 			reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE
 			freeMemory := reservedMemory - usedMemory

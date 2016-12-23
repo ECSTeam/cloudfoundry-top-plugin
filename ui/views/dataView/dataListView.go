@@ -193,6 +193,10 @@ func (asUI *DataListView) GetDisplayedEventData() *eventdata.EventData {
 	return asUI.eventProcessor.GetDisplayedEventData()
 }
 
+func (asUI *DataListView) GetDisplayedListData() []uiCommon.IData {
+	return asUI.listWidget.GetListData()
+}
+
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 	var err error
 

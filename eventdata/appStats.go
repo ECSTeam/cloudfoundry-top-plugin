@@ -18,8 +18,6 @@ package eventdata
 import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 )
 
 const (
@@ -29,11 +27,9 @@ const (
 type dataSlice []*AppStats
 
 type AppStats struct {
-	AppUUID   *events.UUID
-	AppId     string
-	AppName   string
-	SpaceName string
-	OrgName   string
+	AppUUID *events.UUID
+	AppId   string
+	//AppName string
 
 	NonContainerStdout int64
 	NonContainerStderr int64
@@ -55,48 +51,9 @@ func (as *AppStats) Id() string {
 	return as.AppId
 }
 
-func PopulateNamesIfNeeded(appStats *AppStats, appMdMgr *app.AppMetadataManager) {
-	if appStats == nil {
-		return
-	}
-	appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
-	appName := appMetadata.Name
-	if appName == "" {
-		appName = appStats.AppId
-	}
-	appStats.AppName = appName
-
-	var spaceMetadata space.Space
-	spaceName := appStats.SpaceName
-	if spaceName == "" || spaceName == UnknownName {
-		spaceMetadata = space.FindSpaceMetadata(appMetadata.SpaceGuid)
-		spaceName = spaceMetadata.Name
-		if spaceName == "" {
-			spaceName = UnknownName
-		}
-		appStats.SpaceName = spaceName
-	}
-
-	orgName := appStats.OrgName
-	if orgName == "" || orgName == UnknownName {
-		if &spaceMetadata == nil {
-			spaceMetadata = space.FindSpaceMetadata(appMetadata.SpaceGuid)
-		}
-		orgMetadata := org.FindOrgMetadata(spaceMetadata.OrgGuid)
-		orgName = orgMetadata.Name
-		if orgName == "" {
-			orgName = UnknownName
-		}
-		appStats.OrgName = orgName
-	}
-
-}
-
-func PopulateNamesFromMap(statsMap map[string]*AppStats, appMdMgr *app.AppMetadataManager) []*AppStats {
-
+func ConvertFromMap(statsMap map[string]*AppStats, appMdMgr *app.AppMetadataManager) []*AppStats {
 	s := make([]*AppStats, 0, len(statsMap))
 	for _, d := range statsMap {
-		PopulateNamesIfNeeded(d, appMdMgr)
 		s = append(s, d)
 	}
 	return s

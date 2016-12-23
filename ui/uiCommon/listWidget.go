@@ -272,6 +272,10 @@ func (asUI *ListWidget) SetListData(listData []IData) {
 	asUI.FilterAndSortData()
 }
 
+func (asUI *ListWidget) GetListData() []IData {
+	return asUI.unfilteredListData
+}
+
 func (asUI *ListWidget) FilterAndSortData() {
 	filteredData := asUI.filterData(asUI.unfilteredListData)
 	asUI.listData = asUI.sortData(filteredData)

@@ -72,6 +72,8 @@ func (asUI *RouteListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnDomain())
 	columns = append(columns, columnPath())
 
+	columns = append(columns, columnAppIds())
+
 	columns = append(columns, columnTotalRequests())
 	columns = append(columns, column2xx())
 	columns = append(columns, column3xx())

@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -29,10 +30,12 @@ type RequestsInfoWidget struct {
 	name       string
 	height     int
 	detailView *AppDetailView
+	appMdMgr   *app.AppMetadataManager
 }
 
 func NewRequestsInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int, detailView *AppDetailView) *RequestsInfoWidget {
-	return &RequestsInfoWidget{masterUI: masterUI, name: name, height: height, detailView: detailView}
+	appMdMgr := detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	return &RequestsInfoWidget{masterUI: masterUI, name: name, height: height, detailView: detailView, appMdMgr: appMdMgr}
 }
 
 func (w *RequestsInfoWidget) Name() string {
@@ -58,12 +61,18 @@ func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 }
 
 func (w *RequestsInfoWidget) getAppName() string {
-	m := w.detailView.GetDisplayedEventData().AppMap
-	appStats := m[w.detailView.appId]
-	if appStats == nil {
-		return w.detailView.appId
-	}
-	return appStats.AppName
+
+	appMetadata := w.appMdMgr.FindAppMetadata(w.detailView.appId)
+	appName := appMetadata.Name
+	return appName
+	/*
+		m := w.detailView.GetDisplayedEventData().AppMap
+		appStats := m[w.detailView.appId]
+		if appStats == nil {
+			return w.detailView.appId
+		}
+		return appStats.AppName
+	*/
 }
 
 func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {

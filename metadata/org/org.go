@@ -21,8 +21,11 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
+
+const UnknownName = "unknown"
 
 type OrgResponse struct {
 	Count     int           `json:"total_results"`
@@ -51,6 +54,17 @@ func FindOrgMetadata(orgGuid string) Org {
 		}
 	}
 	return Org{}
+}
+
+func FindOrgNameBySpaceGuid(spaceGuid string) string {
+	spaceMetadata := space.FindSpaceMetadata(spaceGuid)
+	orgMetadata := FindOrgMetadata(spaceMetadata.OrgGuid)
+	orgName := orgMetadata.Name
+	toplog.Info(fmt.Sprintf("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName))
+	if orgName == "" {
+		orgName = UnknownName
+	}
+	return orgName
 }
 
 func LoadOrgCache(cliConnection plugin.CliConnection) {

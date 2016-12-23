@@ -24,6 +24,8 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
+const UnknownName = "unknown"
+
 type SpaceResponse struct {
 	Count     int             `json:"total_results"`
 	Pages     int             `json:"total_pages"`
@@ -40,7 +42,6 @@ type Space struct {
 	Guid    string `json:"guid"`
 	Name    string `json:"name"`
 	OrgGuid string `json:"organization_guid"`
-	OrgName string
 }
 
 var (
@@ -54,6 +55,15 @@ func FindSpaceMetadata(spaceGuid string) Space {
 		}
 	}
 	return Space{}
+}
+
+func FindSpaceName(spaceGuid string) string {
+	spaceMetadata := FindSpaceMetadata(spaceGuid)
+	spaceName := spaceMetadata.Name
+	if spaceName == "" {
+		spaceName = UnknownName
+	}
+	return spaceName
 }
 
 func LoadSpaceCache(cliConnection plugin.CliConnection) {
