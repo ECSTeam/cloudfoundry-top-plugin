@@ -438,7 +438,7 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 		return err
 	}
 
-	targetDisplay := fmt.Sprintf("%v@%v", username, url.Host)
+	targetDisplay := fmt.Sprintf("%v#%v", username, url.Host)
 	fmt.Fprintf(v, "Target: %-78.78v\n", targetDisplay)
 
 	return nil

@@ -26,7 +26,16 @@ import (
 func columnIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.Ip2long(c1.(*displaydata.DisplayCellStats).Ip) < util.Ip2long(c2.(*displaydata.DisplayCellStats).Ip)
+		ip1 := c1.(*displaydata.DisplayCellStats).Ip
+		// Always sort TOTAL to the top
+		if ip1 == "TOTAL" {
+			return true
+		}
+		ip2 := c2.(*displaydata.DisplayCellStats).Ip
+		if ip2 == "TOTAL" {
+			return false
+		}
+		return util.Ip2long(ip1) < util.Ip2long(ip2)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*displaydata.DisplayCellStats)

@@ -17,18 +17,17 @@ package util
 
 import (
 	"hash/fnv"
-	"math"
 	"net"
 )
 
-func Ip2long(s string) (ret uint64) {
+func Ip2long(s string) (ret uint32) {
 	bip := ([]byte)(net.ParseIP(s).To4())
 	if len(bip) != 4 {
 		// We don't have a IPv4 so give it a hash so at least we have a predictable sort order
-		return uint64(hash(s))
+		return uint32(hash(s))
 	}
 	val := (uint32)(bip[0])*(1<<24) + (uint32)(bip[1])*(1<<16) + (uint32)(bip[2])*(1<<8) + (uint32)(bip[3])
-	return uint64(math.MaxUint32 + val)
+	return val
 }
 
 func hash(s string) uint32 {
