@@ -72,7 +72,7 @@ func (asUI *RouteListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnDomain())
 	columns = append(columns, columnPath())
 
-	columns = append(columns, columnAppIds())
+	columns = append(columns, columnRoutedAppCount())
 
 	columns = append(columns, columnTotalRequests())
 	columns = append(columns, column2xx())
@@ -125,56 +125,64 @@ func (asUI *RouteListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *RouteListView) postProcessData() map[string]*displaydata.DisplayRouteStats {
+func (asUI *RouteListView) postProcessData() []*displaydata.DisplayRouteStats {
 
 	domainMap := asUI.GetDisplayedEventData().DomainMap
-	displayRouteMap := make(map[string]*displaydata.DisplayRouteStats)
+	displayRouteArray := make([]*displaydata.DisplayRouteStats, 0)
 
 	for domainName, domainStats := range domainMap {
 		for hostName, hostStats := range domainStats.HostStatsMap {
 			for pathName, routeStats := range hostStats.RouteStatsMap {
-				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats)
-				displayRouteMap[displayRouteStat.Id()] = displayRouteStat
 
+				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats)
+				displayRouteArray = append(displayRouteArray, displayRouteStat)
 				displayRouteStat.RouteName = fmt.Sprintf("%v.%v%v", hostName, domainName, pathName)
 				displayRouteStat.Host = hostName
 				displayRouteStat.Domain = domainName
 				displayRouteStat.Path = pathName
+				displayRouteStat.RoutedAppCount = len(routeStats.AppRouteStatsMap)
 
-				displayRouteStat.HttpMethodGetCount = routeStats.HttpMethod[events.Method_GET]
-				displayRouteStat.HttpMethodPostCount = routeStats.HttpMethod[events.Method_POST]
-				displayRouteStat.HttpMethodPutCount = routeStats.HttpMethod[events.Method_PUT]
-				displayRouteStat.HttpMethodDeleteCount = routeStats.HttpMethod[events.Method_DELETE]
-				//displayRouteStat.HttpMethodOtherCount = ???
+				for _, appRouteStats := range routeStats.AppRouteStatsMap {
 
-				for statusCode, responseCount := range routeStats.HttpStatusCode {
-					displayRouteStat.HttpAllCount = displayRouteStat.HttpAllCount + responseCount
-					switch {
-					case statusCode >= 200 && statusCode < 300:
-						displayRouteStat.Http2xxCount = responseCount
-					case statusCode >= 300 && statusCode < 400:
-						displayRouteStat.Http3xxCount = responseCount
-					case statusCode >= 400 && statusCode < 500:
-						displayRouteStat.Http4xxCount = responseCount
-					case statusCode >= 500 && statusCode < 600:
-						displayRouteStat.Http5xxCount = responseCount
-					default:
-						displayRouteStat.HttpOtherCount = responseCount
+					displayRouteStat.ResponseContentLength = displayRouteStat.ResponseContentLength + appRouteStats.ResponseContentLength
+					if displayRouteStat.LastAccess.Before(appRouteStats.LastAccess) {
+						displayRouteStat.LastAccess = appRouteStats.LastAccess
 					}
 
-				}
+					displayRouteStat.HttpMethodGetCount = appRouteStats.HttpMethod[events.Method_GET]
+					displayRouteStat.HttpMethodPostCount = appRouteStats.HttpMethod[events.Method_POST]
+					displayRouteStat.HttpMethodPutCount = appRouteStats.HttpMethod[events.Method_PUT]
+					displayRouteStat.HttpMethodDeleteCount = appRouteStats.HttpMethod[events.Method_DELETE]
+					//displayRouteStat.HttpMethodOtherCount = ???
 
+					for statusCode, responseCount := range appRouteStats.HttpStatusCode {
+						displayRouteStat.HttpAllCount = displayRouteStat.HttpAllCount + responseCount
+						switch {
+						case statusCode >= 200 && statusCode < 300:
+							displayRouteStat.Http2xxCount = responseCount
+						case statusCode >= 300 && statusCode < 400:
+							displayRouteStat.Http3xxCount = responseCount
+						case statusCode >= 400 && statusCode < 500:
+							displayRouteStat.Http4xxCount = responseCount
+						case statusCode >= 500 && statusCode < 600:
+							displayRouteStat.Http5xxCount = responseCount
+						default:
+							displayRouteStat.HttpOtherCount = responseCount
+						}
+
+					}
+				}
 			}
 		}
 
 	}
 
-	return displayRouteMap
+	return displayRouteArray
 }
 
-func (asUI *RouteListView) convertToListData(displayRouteMap map[string]*displaydata.DisplayRouteStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, 0, len(displayRouteMap))
-	for _, d := range displayRouteMap {
+func (asUI *RouteListView) convertToListData(displayRouteArray []*displaydata.DisplayRouteStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, 0, len(displayRouteArray))
+	for _, d := range displayRouteArray {
 		listData = append(listData, d)
 	}
 	return listData

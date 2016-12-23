@@ -15,17 +15,25 @@
 
 package displaydata
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
+import (
+	"time"
+
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
+)
 
 type DisplayRouteStats struct {
 	*eventRoute.RouteStats
-	// TODO: Put display fields here
 
 	// Includes [host].[domain]/[path]   what about port??
 	RouteName string
 	Host      string
 	Domain    string
 	Path      string
+
+	RoutedAppCount int
+
+	LastAccess            time.Time
+	ResponseContentLength int64
 
 	HttpAllCount   int64
 	Http2xxCount   int64

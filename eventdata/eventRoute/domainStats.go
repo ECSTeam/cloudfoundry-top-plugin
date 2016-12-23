@@ -17,7 +17,7 @@ package eventRoute
 
 type domainSlice []*DomainStats
 
-//  Domain --> Host --> Path = RouteStats
+//  Domain --> Host --> Path -> AppId = RouteStats
 type DomainStats struct {
 	DomainId string
 	// Key: host

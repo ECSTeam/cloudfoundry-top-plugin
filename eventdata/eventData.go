@@ -645,33 +645,43 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 		//routeGuid := util.Pseudo_uuid()
 		//hostStats.AddPath("", routeGuid)
 	}
+
+	appUUID := httpEvent.GetApplicationId()
+	appId := ""
+	if appUUID != nil {
+		appId = formatUUID(appUUID)
+	}
+
 	routeStats := hostStats.FindRouteStats(path)
 	if routeStats == nil {
 		toplog.Info(fmt.Sprintf("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			httpEvent.GetUri(), domain, host, port, path))
 		// dynamically add root path
 		routeGuid := util.Pseudo_uuid()
-		//routeStats = hostStats.AddPath("", routeGuid)
 		routeStats = hostStats.AddPathDynamic("", routeGuid)
 	}
 
-	// TODO: Should this really come from msg.GetTimestamp() instead of marking it with when we processed the event?
-	routeStats.LastAccess = time.Now()
-
-	routeStats.HttpStatusCode[httpEvent.GetStatusCode()] = routeStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
-	routeStats.HttpMethod[httpEvent.GetMethod()] = routeStats.HttpMethod[httpEvent.GetMethod()] + 1
-
-	routeStats.UserAgent[httpEvent.GetUserAgent()] = routeStats.UserAgent[httpEvent.GetUserAgent()] + 1
-
-	appId := httpEvent.GetApplicationId()
-	if appId != nil {
-		applicationGuid := formatUUID(appId)
-		routeStats.ApplicationId[applicationGuid] = routeStats.ApplicationId[applicationGuid] + 1
+	appRouteStats := routeStats.FindAppRouteStats(appId)
+	if appRouteStats == nil {
+		toplog.Info(fmt.Sprintf("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path))
+		appRouteStats = eventRoute.NewAppRouteStats(appId)
+		routeStats.AppRouteStatsMap[appId] = appRouteStats
 	}
+
+	// TODO: Should this really come from msg.GetTimestamp() instead of marking it with when we processed the event?
+	appRouteStats.LastAccess = time.Now()
+
+	appRouteStats.HttpStatusCode[httpEvent.GetStatusCode()] = appRouteStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
+	appRouteStats.HttpMethod[httpEvent.GetMethod()] = appRouteStats.HttpMethod[httpEvent.GetMethod()] + 1
+
+	appRouteStats.UserAgent[httpEvent.GetUserAgent()] = appRouteStats.UserAgent[httpEvent.GetUserAgent()] + 1
+
+	appRouteStats.HttpRequestCount = appRouteStats.HttpRequestCount + 1
 
 	responseLength := httpEvent.GetContentLength()
 	if responseLength > 0 {
-		routeStats.ResponseContentLength = routeStats.ResponseContentLength + httpEvent.GetContentLength()
+		appRouteStats.ResponseContentLength = appRouteStats.ResponseContentLength + httpEvent.GetContentLength()
 	}
 
 	toplog.Debug(fmt.Sprintf("Updated stats for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",

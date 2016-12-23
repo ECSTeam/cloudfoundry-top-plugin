@@ -15,8 +15,13 @@
 
 package eventRoute
 
-import "sort"
-import "strings"
+import (
+	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+)
 
 type HostSlice []*HostStats
 
@@ -31,7 +36,7 @@ type HostStats struct {
 	dynamicAddPathDepth int
 
 	// index of paths where the best match is first (longest path first)
-	pathIndex []string
+	routeIndex []string
 }
 
 func NewHostStats(hostName string) *HostStats {
@@ -41,10 +46,21 @@ func NewHostStats(hostName string) *HostStats {
 }
 
 func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
-	rs := NewRouteStats(routeId)
-	hs.RouteStatsMap[path] = rs
-	hs.rebuildPathIndex()
-	return rs
+	/*
+		pathStats := hs.PathStatsMap[appId]
+		if pathStats == nil {
+			pathStats = NewPathStats()
+		}
+	*/
+	routeStats := hs.RouteStatsMap[path]
+	if routeStats == nil {
+		routeStats = NewRouteStats(routeId)
+		hs.RouteStatsMap[path] = routeStats
+		hs.rebuildPathIndex()
+	} else {
+		toplog.Error(fmt.Sprintf("Attemping to AddPath but one already exists - path: %v routeId: %v", path, routeId))
+	}
+	return routeStats
 }
 
 func (hs *HostStats) AddPathDynamic(fullPath string, routeId string) *RouteStats {
@@ -62,7 +78,7 @@ func (hs *HostStats) rebuildPathIndex() {
 		paths = append(paths, path)
 	}
 	sort.Sort(sort.Reverse(ByLength(paths)))
-	hs.pathIndex = paths
+	hs.routeIndex = paths
 }
 
 // Find matching route for given path
@@ -84,7 +100,7 @@ func (hs *HostStats) FindPathMatch(findPath string) string {
 	// is registered and /v2/apps is not -- we should return:
 	//		 empty match?  or "/v2/apps" even though its not in list?
 
-	for _, path := range hs.pathIndex {
+	for _, path := range hs.routeIndex {
 		if strings.HasPrefix(findPath, path) {
 			pathLen := len(path)
 			if len(findPath) == pathLen {
@@ -100,7 +116,8 @@ func (hs *HostStats) FindPathMatch(findPath string) string {
 
 func (hs *HostStats) FindRouteStats(findPath string) *RouteStats {
 	pathMatch := hs.FindPathMatch(findPath)
-	return hs.RouteStatsMap[pathMatch]
+	routeStats := hs.RouteStatsMap[pathMatch]
+	return routeStats
 }
 
 type ByLength []string

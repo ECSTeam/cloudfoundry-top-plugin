@@ -144,7 +144,6 @@ func (ep *EventProcessor) seedDomainMap() {
 
 func (ep *EventProcessor) seedRouteData() {
 
-	//currentDomainStatsMap := ep.currentEventData.DomainMap
 	for _, route := range route.AllRoutes() {
 		domainMd := domain.FindDomainMetadata(route.DomainGuid)
 		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Guid)
@@ -190,7 +189,6 @@ func (ep *EventProcessor) seedRouteData() {
 		"/v2/spaces",
 		"/v2/stacks",
 		"/v2/user_provided_service_instances",
-		"/v2/users",
 		"/v2/users",
 		"/v2/syslog_drain_urls",
 	}

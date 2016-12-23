@@ -60,7 +60,7 @@ func FindOrgNameBySpaceGuid(spaceGuid string) string {
 	spaceMetadata := space.FindSpaceMetadata(spaceGuid)
 	orgMetadata := FindOrgMetadata(spaceMetadata.OrgGuid)
 	orgName := orgMetadata.Name
-	toplog.Info(fmt.Sprintf("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName))
+	//toplog.Info(fmt.Sprintf("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName))
 	if orgName == "" {
 		orgName = UnknownName
 	}

@@ -41,21 +41,26 @@ func columnRouteId() *uiCommon.ListColumn {
 	return c
 }
 
-func columnAppIds() *uiCommon.ListColumn {
-	defaultColSize := 50
+func columnRoutedAppCount() *uiCommon.ListColumn {
+	defaultColSize := 6
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).RouteId) < (c2.(*displaydata.DisplayRouteStats).RouteId)
+		return (c1.(*displaydata.DisplayRouteStats).RoutedAppCount) < (c2.(*displaydata.DisplayRouteStats).RoutedAppCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return util.FormatDisplayData(fmt.Sprintf("%v", stats.ApplicationId), defaultColSize)
+		if stats.HttpAllCount == 0 {
+			return fmt.Sprintf("%6v", "--")
+		} else {
+			return fmt.Sprintf("%6v", stats.RoutedAppCount)
+		}
+
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.RouteId
+		return fmt.Sprintf("%v", stats.RoutedAppCount)
 	}
-	c := uiCommon.NewListColumn("APP_IDS", "APP_IDS", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	c := uiCommon.NewListColumn("R_APPS", "R_APPS", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
