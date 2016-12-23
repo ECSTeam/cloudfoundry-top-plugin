@@ -108,10 +108,17 @@ func (w *EditFilterView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) err
 			fmt.Fprintf(v, "\n\n Expression examples:\n")
 			fmt.Fprintf(v, " Greater then: >0.15\n")
 			fmt.Fprintf(v, " Equals: ==2   Note the double equals\n")
+		case TIMESTAMP:
+			fmt.Fprintf(v, "\n\n Timestamp filtering not supported\n")
+			fmt.Fprintf(v, "\n\n at this time.\n")
 		}
 	} else {
 		fmt.Fprintln(v, " RIGHT or LEFT arrow - highlight column")
-		fmt.Fprintln(v, " SPACE - select column to edit filter")
+		if col.columnType != TIMESTAMP {
+			fmt.Fprintln(v, " SPACE - select column to edit filter")
+		} else {
+			fmt.Fprintln(v, " NOTE: Filters on Timestamp fields not supported ")
+		}
 		fmt.Fprintln(v, " ENTER - apply filter, ESC to cancel")
 		fmt.Fprintln(v, " 'c' - clear all filters")
 	}
@@ -233,6 +240,13 @@ func (w *EditFilterView) applyFilterAndRefresh(g *gocui.Gui, v *gocui.View) erro
 func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 
 	selectedColId := w.listWidget.selectedColumnId
+
+	col := w.listWidget.columnMap[selectedColId]
+	if col.columnType == TIMESTAMP {
+		// TODO: Timestamp filtering not supported yet
+		return nil
+	}
+
 	filter := w.listWidget.filterColumnMap[selectedColId]
 	filterText := ""
 	if filter != nil {

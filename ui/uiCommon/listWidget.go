@@ -66,6 +66,7 @@ type ColumnType int
 const (
 	ALPHANUMERIC ColumnType = iota
 	NUMERIC
+	TIMESTAMP
 )
 
 type ListColumn struct {
@@ -321,7 +322,6 @@ func (asUI *ListWidget) filterRow(data IData, column *ListColumn, filter *Filter
 		return asUI.filterRowAlpha(data, column, filter)
 	case NUMERIC:
 		return asUI.filterRowNumeric(data, column, filter)
-
 	}
 	return false
 }

@@ -332,16 +332,16 @@ func columnMethodDelete() *uiCommon.ListColumn {
 }
 
 func columnLastAccess() *uiCommon.ListColumn {
-	defaultColSize := 20
+	defaultColSize := 19
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*displaydata.DisplayRouteStats).LastAccess.Before(c2.(*displaydata.DisplayRouteStats).LastAccess)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		stats := data.(*displaydata.DisplayRouteStats)
 		if stats.HttpAllCount == 0 {
-			return fmt.Sprintf("%20v", "--")
+			return fmt.Sprintf("%19v", "--")
 		} else {
-			return fmt.Sprintf("%20v", stats.LastAccess.Format("01-02-2006 15:04:05"))
+			return fmt.Sprintf("%19v", stats.LastAccess.Format("01-02-2006 15:04:05"))
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
@@ -349,6 +349,6 @@ func columnLastAccess() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.LastAccess)
 	}
 	c := uiCommon.NewListColumn("LAST_ACCESS", "LAST_ACCESS", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }

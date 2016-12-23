@@ -612,6 +612,9 @@ func (ed *EventData) handleRouteStats(msg *events.Envelope) {
 
 func (ed *EventData) updateRouteStats(domain string, host string, port string, path string, msg *events.Envelope) {
 
+	domain = strings.ToLower(domain)
+	host = strings.ToLower(host)
+
 	httpEvent := msg.GetHttpStartStop()
 	domainStats := ed.DomainMap[domain]
 	if domainStats == nil {

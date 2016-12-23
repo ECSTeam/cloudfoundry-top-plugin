@@ -23,6 +23,8 @@ import (
 
 	"code.cloudfoundry.org/cli/plugin"
 
+	"strings"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
@@ -133,7 +135,7 @@ func (ep *EventProcessor) seedDomainMap() {
 		if domainStats == nil {
 			// New domain we haven't seen yet
 			domainStats = NewDomainStats(domain.Guid)
-			currentStatsMap[domain.Name] = domainStats
+			currentStatsMap[strings.ToLower(domain.Name)] = domainStats
 		}
 	}
 }
@@ -207,6 +209,10 @@ func (ep *EventProcessor) generateUniqueRouteGuid() string {
 }
 
 func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {
+
+	domain = strings.ToLower(domain)
+	host = strings.ToLower(host)
+
 	currentDomainStatsMap := ep.currentEventData.DomainMap
 
 	//domainMd := metadata.FindDomainMetadataByName(domain)
