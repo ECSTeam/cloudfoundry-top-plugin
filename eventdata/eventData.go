@@ -25,6 +25,9 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
@@ -34,10 +37,10 @@ const MaxDomainBucket = 100
 const MaxHostBucket = 10000
 
 type EventData struct {
-	AppMap  map[string]*AppStats
-	CellMap map[string]*CellStats
+	AppMap  map[string]*eventApp.AppStats
+	CellMap map[string]*eventCell.CellStats
 	// Both shared + private
-	DomainMap           map[string]*DomainStats
+	DomainMap           map[string]*eventRoute.DomainStats
 	EnableRouteTracking bool
 	TotalEvents         int64
 	mu                  *sync.Mutex
@@ -66,9 +69,9 @@ func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 	routeUrlRegexp := regexp.MustCompile(routeUrlRegexpStr)
 
 	return &EventData{
-		AppMap:         make(map[string]*AppStats),
-		CellMap:        make(map[string]*CellStats),
-		DomainMap:      make(map[string]*DomainStats),
+		AppMap:         make(map[string]*eventApp.AppStats),
+		CellMap:        make(map[string]*eventCell.CellStats),
+		DomainMap:      make(map[string]*eventRoute.DomainStats),
 		TotalEvents:    0,
 		mu:             mu,
 		logHttpAccess:  logHttpAccess,
@@ -133,27 +136,27 @@ func (ed *EventData) Clone() *EventData {
 		responseL60TimeArray := make([]*util.AvgTracker, 0)
 		responseL10TimeArray := make([]*util.AvgTracker, 0)
 		responseL1TimeArray := make([]*util.AvgTracker, 0)
-		totalTraffic := NewTrafficStats()
+		totalTraffic := eventApp.NewTrafficStats()
 
 		for instanceId, containerTraffic := range appStat.ContainerTrafficMap {
 
-			rate60 := containerTraffic.responseL60Time.Rate()
+			rate60 := containerTraffic.ResponseL60Time.Rate()
 			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL60Rate = rate60
 			totalTraffic.EventL60Rate = totalTraffic.EventL60Rate + rate60
 
-			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL60Time = containerTraffic.responseL60Time.Avg()
+			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL60Time = containerTraffic.ResponseL60Time.Avg()
 
-			rate10 := containerTraffic.responseL10Time.Rate()
+			rate10 := containerTraffic.ResponseL10Time.Rate()
 			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL10Rate = rate10
 			totalTraffic.EventL10Rate = totalTraffic.EventL10Rate + rate10
 
-			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL10Time = containerTraffic.responseL10Time.Avg()
+			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL10Time = containerTraffic.ResponseL10Time.Avg()
 
-			rate1 := containerTraffic.responseL1Time.Rate()
+			rate1 := containerTraffic.ResponseL1Time.Rate()
 			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].EventL1Rate = rate1
 			totalTraffic.EventL1Rate = totalTraffic.EventL1Rate + rate1
 
-			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL1Time = containerTraffic.responseL1Time.Avg()
+			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL1Time = containerTraffic.ResponseL1Time.Avg()
 
 			httpAllCount = httpAllCount + containerTraffic.HttpAllCount
 			http2xxCount = http2xxCount + containerTraffic.Http2xxCount
@@ -161,9 +164,9 @@ func (ed *EventData) Clone() *EventData {
 			http4xxCount = http4xxCount + containerTraffic.Http4xxCount
 			http5xxCount = http5xxCount + containerTraffic.Http5xxCount
 
-			responseL60TimeArray = append(responseL60TimeArray, containerTraffic.responseL60Time)
-			responseL10TimeArray = append(responseL10TimeArray, containerTraffic.responseL10Time)
-			responseL1TimeArray = append(responseL1TimeArray, containerTraffic.responseL1Time)
+			responseL60TimeArray = append(responseL60TimeArray, containerTraffic.ResponseL60Time)
+			responseL10TimeArray = append(responseL10TimeArray, containerTraffic.ResponseL10Time)
+			responseL1TimeArray = append(responseL1TimeArray, containerTraffic.ResponseL1Time)
 
 		}
 
@@ -192,8 +195,8 @@ func (ed *EventData) Clear() {
 	ed.mu.Lock()
 	defer ed.mu.Unlock()
 
-	ed.AppMap = make(map[string]*AppStats)
-	ed.CellMap = make(map[string]*CellStats)
+	ed.AppMap = make(map[string]*eventApp.AppStats)
+	ed.CellMap = make(map[string]*eventCell.CellStats)
 	ed.TotalEvents = 0
 }
 
@@ -325,22 +328,22 @@ func (ed *EventData) containerMetricEvent(msg *events.Envelope) {
 
 }
 
-func (ed *EventData) getAppStats(appId string) *AppStats {
+func (ed *EventData) getAppStats(appId string) *eventApp.AppStats {
 
 	appStats := ed.AppMap[appId]
 	if appStats == nil {
 		// New app we haven't seen yet
-		appStats = NewAppStats(appId)
+		appStats = eventApp.NewAppStats(appId)
 		ed.AppMap[appId] = appStats
 	}
 	return appStats
 }
 
-func (ed *EventData) getCellStats(cellIp string) *CellStats {
+func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 	cellStats := ed.CellMap[cellIp]
 	if cellStats == nil {
 		// New cell we haven't seen yet
-		cellStats = NewCellStats(cellIp)
+		cellStats = eventCell.NewCellStats(cellIp)
 		ed.CellMap[cellIp] = cellStats
 	}
 
@@ -360,11 +363,11 @@ func (ed *EventData) getCellStats(cellIp string) *CellStats {
 	return cellStats
 }
 
-func (ed *EventData) getContainerStats(appStats *AppStats, instIndex int) *ContainerStats {
+func (ed *EventData) getContainerStats(appStats *eventApp.AppStats, instIndex int) *eventApp.ContainerStats {
 
 	// Save the container data -- by instance id
 	if len(appStats.ContainerArray) <= instIndex {
-		caArray := make([]*ContainerStats, instIndex+1)
+		caArray := make([]*eventApp.ContainerStats, instIndex+1)
 		for i, ca := range appStats.ContainerArray {
 			caArray[i] = ca
 		}
@@ -375,28 +378,28 @@ func (ed *EventData) getContainerStats(appStats *AppStats, instIndex int) *Conta
 
 	if containerStats == nil {
 		// New app we haven't seen yet
-		containerStats = NewContainerStats(instIndex)
+		containerStats = eventApp.NewContainerStats(instIndex)
 		appStats.ContainerArray[instIndex] = containerStats
 
 	}
 	return containerStats
 }
 
-func (ed *EventData) getContainerTraffic(appStats *AppStats, instId string) *TrafficStats {
+func (ed *EventData) getContainerTraffic(appStats *eventApp.AppStats, instId string) *eventApp.TrafficStats {
 
 	// Save the container data -- by instance id
 
 	if appStats.ContainerTrafficMap == nil {
-		appStats.ContainerTrafficMap = make(map[string]*TrafficStats)
+		appStats.ContainerTrafficMap = make(map[string]*eventApp.TrafficStats)
 	}
 
 	containerTraffic := appStats.ContainerTrafficMap[instId]
 	if containerTraffic == nil {
-		containerTraffic = NewTrafficStats()
+		containerTraffic = eventApp.NewTrafficStats()
 		appStats.ContainerTrafficMap[instId] = containerTraffic
-		containerTraffic.responseL60Time = util.NewAvgTracker(time.Minute)
-		containerTraffic.responseL10Time = util.NewAvgTracker(time.Second * 10)
-		containerTraffic.responseL1Time = util.NewAvgTracker(time.Second)
+		containerTraffic.ResponseL60Time = util.NewAvgTracker(time.Minute)
+		containerTraffic.ResponseL10Time = util.NewAvgTracker(time.Second * 10)
+		containerTraffic.ResponseL1Time = util.NewAvgTracker(time.Second)
 	}
 
 	return containerTraffic
@@ -547,9 +550,9 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 
 	responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
 	containerTraffic.HttpAllCount++
-	containerTraffic.responseL60Time.Track(responseTimeMillis)
-	containerTraffic.responseL10Time.Track(responseTimeMillis)
-	containerTraffic.responseL1Time.Track(responseTimeMillis)
+	containerTraffic.ResponseL60Time.Track(responseTimeMillis)
+	containerTraffic.ResponseL10Time.Track(responseTimeMillis)
+	containerTraffic.ResponseL1Time.Track(responseTimeMillis)
 
 	statusCode := httpStartStopEvent.GetStatusCode()
 	switch {
@@ -625,7 +628,7 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 			return
 		}
 		domainGuid := util.Pseudo_uuid()
-		domainStats = NewDomainStats(domainGuid)
+		domainStats = eventRoute.NewDomainStats(domainGuid)
 		ed.DomainMap[domain] = domainStats
 	}
 	hostStats := domainStats.HostStatsMap[host]
@@ -637,7 +640,7 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 			return
 		}
 		// dynamically add new hosts/routes that we don't have pre-registered
-		hostStats = NewHostStats(host)
+		hostStats = eventRoute.NewHostStats(host)
 		domainStats.HostStatsMap[host] = hostStats
 		//routeGuid := util.Pseudo_uuid()
 		//hostStats.AddPath("", routeGuid)

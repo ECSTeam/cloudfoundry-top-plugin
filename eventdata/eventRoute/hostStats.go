@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventdata
+package eventRoute
 
 import "sort"
 import "strings"

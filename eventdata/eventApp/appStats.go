@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventdata
+package eventApp
 
 import (
 	"github.com/cloudfoundry/sonde-go/events"
@@ -29,7 +29,6 @@ type dataSlice []*AppStats
 type AppStats struct {
 	AppUUID *events.UUID
 	AppId   string
-	//AppName string
 
 	NonContainerStdout int64
 	NonContainerStderr int64

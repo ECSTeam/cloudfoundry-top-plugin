@@ -43,12 +43,7 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	appId string) *AppDetailView {
 
 	asUI := &AppDetailView{appId: appId}
-
 	requestViewHeight := 5
-
-	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget", requestViewHeight, asUI)
-	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
-
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("CPU_PERCENT", true),
 		uiCommon.NewSortColumn("IDX", false),
@@ -69,6 +64,9 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.HelpTextTips = HelpTextTips
 
 	asUI.DataListView = dataListView
+
+	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget", requestViewHeight, asUI)
+	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
 
 	return asUI
 }

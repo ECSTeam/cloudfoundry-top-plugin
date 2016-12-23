@@ -15,10 +15,10 @@
 
 package displaydata
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 
 type DisplayAppStats struct {
-	*eventdata.AppStats
+	*eventApp.AppStats
 
 	AppName           string
 	SpaceName         string
@@ -38,7 +38,7 @@ type DisplayAppStats struct {
 	TotalLogStderr           int64
 }
 
-func NewDisplayAppStats(appStats *eventdata.AppStats) *DisplayAppStats {
+func NewDisplayAppStats(appStats *eventApp.AppStats) *DisplayAppStats {
 	stats := &DisplayAppStats{}
 	stats.AppStats = appStats
 	return stats

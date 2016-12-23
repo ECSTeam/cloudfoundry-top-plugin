@@ -13,24 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventdata
+package eventRoute
 
-import (
-	"time"
+type domainSlice []*DomainStats
 
-	"github.com/cloudfoundry/sonde-go/events"
-)
-
-type ContainerStats struct {
-	ContainerIndex  int
-	Ip              string
-	ContainerMetric *events.ContainerMetric
-	LastUpdate      time.Time
-	OutCount        int64
-	ErrCount        int64
+//  Domain --> Host --> Path = RouteStats
+type DomainStats struct {
+	DomainId string
+	// Key: host
+	HostStatsMap map[string]*HostStats
 }
 
-func NewContainerStats(containerIndex int) *ContainerStats {
-	stats := &ContainerStats{ContainerIndex: containerIndex}
+func NewDomainStats(domainId string) *DomainStats {
+	stats := &DomainStats{}
+	stats.DomainId = domainId
+	stats.HostStatsMap = make(map[string]*HostStats)
 	return stats
+}
+
+func (ds *DomainStats) Id() string {
+	return ds.DomainId
 }

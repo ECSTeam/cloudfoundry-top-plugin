@@ -15,10 +15,10 @@
 
 package displaydata
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 
 type DisplayRouteStats struct {
-	*eventdata.RouteStats
+	*eventRoute.RouteStats
 	// TODO: Put display fields here
 
 	// Includes [host].[domain]/[path]   what about port??
@@ -41,7 +41,7 @@ type DisplayRouteStats struct {
 	HttpMethodOtherCount  int64
 }
 
-func NewDisplayRouteStats(routeStats *eventdata.RouteStats) *DisplayRouteStats {
+func NewDisplayRouteStats(routeStats *eventRoute.RouteStats) *DisplayRouteStats {
 	stats := &DisplayRouteStats{}
 	stats.RouteStats = routeStats
 	return stats

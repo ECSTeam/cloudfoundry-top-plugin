@@ -23,6 +23,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
@@ -272,7 +273,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 
 	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.ConvertFromMap(appMap, asUI.GetAppMdMgr())
+	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
 
 	for _, appStats := range appStatsArray {

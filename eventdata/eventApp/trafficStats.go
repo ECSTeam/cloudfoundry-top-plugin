@@ -13,20 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventdata
+package eventApp
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/util"
 
 type TrafficStats struct {
-	responseL60Time    *util.AvgTracker
+	ResponseL60Time    *util.AvgTracker
 	AvgResponseL60Time float64 // updated after a clone of this object
 	EventL60Rate       int     // updated after a clone of this object
 
-	responseL10Time    *util.AvgTracker
+	ResponseL10Time    *util.AvgTracker
 	AvgResponseL10Time float64 // updated after a clone of this object
 	EventL10Rate       int     // updated after a clone of this object
 
-	responseL1Time    *util.AvgTracker
+	ResponseL1Time    *util.AvgTracker
 	AvgResponseL1Time float64 // updated after a clone of this object
 	EventL1Rate       int     // updated after a clone of this object
 

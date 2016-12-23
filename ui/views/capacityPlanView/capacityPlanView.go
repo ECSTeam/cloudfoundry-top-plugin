@@ -21,6 +21,7 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
@@ -191,7 +192,7 @@ func (asUI *CapacityPlanView) postProcessData() map[string]*displaydata.DisplayC
 func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*displaydata.DisplayCellStats) {
 
 	totalLabel := DUMMY_CELL_NAME_FOR_TOTAL
-	totalCellStats := eventdata.NewCellStats(totalLabel)
+	totalCellStats := eventCell.NewCellStats(totalLabel)
 	totalDisplayStat := displaydata.NewDisplayCellStats(totalCellStats)
 	displayCellMap[totalLabel] = totalDisplayStat
 

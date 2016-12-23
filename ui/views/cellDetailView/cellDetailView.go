@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
@@ -124,7 +125,7 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventdata.ConvertFromMap(appMap, asUI.GetAppMdMgr())
+	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	for _, appStats := range appStatsArray {
 		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 		for _, containerStats := range appStats.ContainerArray {

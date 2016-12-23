@@ -15,10 +15,10 @@
 
 package displaydata
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 
 type DisplayCellStats struct {
-	*eventdata.CellStats
+	*eventCell.CellStats
 	StackName                    string
 	TotalContainerCpuPercentage  float64
 	TotalContainerReservedMemory uint64
@@ -39,7 +39,7 @@ type DisplayCellStats struct {
 	CapacityPlan4_0GMem int
 }
 
-func NewDisplayCellStats(cellStats *eventdata.CellStats) *DisplayCellStats {
+func NewDisplayCellStats(cellStats *eventCell.CellStats) *DisplayCellStats {
 	stats := &DisplayCellStats{}
 	stats.CellStats = cellStats
 	return stats

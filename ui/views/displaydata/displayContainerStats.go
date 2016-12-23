@@ -15,11 +15,11 @@
 
 package displaydata
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 
 type DisplayContainerStats struct {
-	*eventdata.ContainerStats
-	*eventdata.AppStats
+	*eventApp.ContainerStats
+	*eventApp.AppStats
 
 	AppName   string
 	OrgName   string
@@ -32,7 +32,7 @@ type DisplayContainerStats struct {
 	key            string
 }
 
-func NewDisplayContainerStats(containerStats *eventdata.ContainerStats, appStats *eventdata.AppStats) *DisplayContainerStats {
+func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats *eventApp.AppStats) *DisplayContainerStats {
 	stats := &DisplayContainerStats{}
 	stats.ContainerStats = containerStats
 	stats.AppStats = appStats

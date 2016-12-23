@@ -26,6 +26,8 @@ import (
 	"strings"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
@@ -122,7 +124,7 @@ func (ep *EventProcessor) seedAppMap() {
 		appStats := currentStatsMap[appId]
 		if appStats == nil {
 			// New app we haven't seen yet
-			appStats = NewAppStats(appId)
+			appStats = eventApp.NewAppStats(appId)
 			currentStatsMap[appId] = appStats
 		}
 	}
@@ -134,7 +136,7 @@ func (ep *EventProcessor) seedDomainMap() {
 		domainStats := currentStatsMap[domain.Name]
 		if domainStats == nil {
 			// New domain we haven't seen yet
-			domainStats = NewDomainStats(domain.Guid)
+			domainStats = eventRoute.NewDomainStats(domain.Guid)
 			currentStatsMap[strings.ToLower(domain.Name)] = domainStats
 		}
 	}
@@ -220,12 +222,12 @@ func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {
 	domainStats := currentDomainStatsMap[domain]
 	if domainStats == nil {
 		// New domain we haven't seen yet
-		domainStats = NewDomainStats(domain)
+		domainStats = eventRoute.NewDomainStats(domain)
 		currentDomainStatsMap[domain] = domainStats
 	}
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
-		hostStats = NewHostStats(host)
+		hostStats = eventRoute.NewHostStats(host)
 		domainStats.HostStatsMap[host] = hostStats
 		//toplog.Info(fmt.Sprintf("seed hostStats: %v", host))
 	}
