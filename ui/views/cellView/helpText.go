@@ -55,11 +55,6 @@ sorting of any column.
 **Clear stats: **
 Press shift-C to clear the statistics counters.
 
-**Clipboard menu: **
-Press 'c' when a row is selected to open the clipboard menu.
-This will copy to clipboard a command you can paste in 
-terminal window later.
-
 **Pause display update:**
 Press 'p' to toggle pause display update.  When display update is
 paused top will continue to capture statstics and display updated

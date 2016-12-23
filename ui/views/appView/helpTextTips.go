@@ -15,5 +15,5 @@
 
 package appView
 
-const HelpTextTips = `**d**:display  **q**:quit  **h**:help  **UP**/**DOWN** arrow to highlight row
+const HelpTextTips = `**d**:display  **o**:order  **f**:filter  **q**:quit  **h**:help  **UP**/**DOWN** arrow to highlight row
 **ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`

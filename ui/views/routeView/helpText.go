@@ -16,10 +16,12 @@
 package routeView
 
 const helpText = `
-**Cell Stats View**
+**Route Stats View**
 
-Cell list view shows a list of all diego cells in the foundation.  This
-list may not be complete until the warm-up period is complete.
+Route list view shows a list of all HTTP(s) traffic flowing through
+the go-router.  This view can provide different information from
+the App Stats view as a single route can be assinged to multiple 
+applications.  E.g., blue-green deployments.  
 
 **Header information:**
 
@@ -27,23 +29,26 @@ TODO
  
 **Cell list stats:**
 
-  CELL_IP - IP address of Cloud Foundry diego cell
-  CPU%% - CPU percent consumed by all containers on cell
-  RCR - Reporting containers
-  CPUS - Number of CPUs in cell VM
-  TOT_MEM - Total Memory in cell VM available for containers
-  FREE_MEM - Free Memory in cell VM available for containers
-  C_RSVD_MEM - Memory reserved by all containers on cell
-  C_USD_MEM - Memory actually in use by all containers
-  TOT_DISK - Total Disk space in cell VM
-  FREE_DISK - Free Disk space in cell VM available for containers
-  C_RSVD_DSK - Total disk reserved by all containers on cell
-  C_USD_DSK - Total disk actually in use by all containers
-  MAX_CNTR - Max containers a cell can handle
-  CNTRS - Number of containers running on cell reported by cell
-  DNAME - BOSH deployment name
-  JOB_NAME - BOSH job name
-  JOB_IDX - BOSH job index
+  HOST - Host name of the URL request
+  DOMAIN - Domain name of the URL request
+  PATH - Path (only shown if route has path routing)
+  TOT-REQ - Count of all of the HTTP(S) request/responses
+  2XX - Count of HTTP(S) responses with status code 200-299
+  3XX - Count of HTTP(S) responses with status code 300-399
+  4XX - Count of HTTP(S) responses with status code 400-499
+  5XX - Count of HTTP(S) responses with status code 500-599
+  RESP_DATA - Total size of response data that has been sent to
+     client.
+  M_GET - Count of HTTP(S) GET method requests
+  M_POST - Count of HTTP(S) POST method requests
+  M_PUT - Count of HTTP(S) PUT method requests
+  M_DELETE - Count of HTTP(S) DELETE method requests
+  LAST_ACCESS - Last time a reponse was sent 
+
+
+NOTE: The HTTP counters are based on traffic through the 
+go-router.  Applications that talk directly container-to-
+container will not show up in the REQ/TOT-REQ/nXX counters.
   
 **Display: **
 Press 'd' to select data view.
@@ -54,11 +59,6 @@ sorting of any column.
 
 **Clear stats: **
 Press shift-C to clear the statistics counters.
-
-**Clipboard menu: **
-Press 'c' when a row is selected to open the clipboard menu.
-This will copy to clipboard a command you can paste in 
-terminal window later.
 
 **Pause display update:**
 Press 'p' to toggle pause display update.  When display update is
