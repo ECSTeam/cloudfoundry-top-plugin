@@ -17,7 +17,6 @@ package domain
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
@@ -73,18 +72,18 @@ func FindDomainMetadataByName(domainName string) *Domain {
 func LoadDomainCache(cliConnection plugin.CliConnection) {
 	sharedDomains, err := getDomainMetadata(cliConnection, "/v2/shared_domains")
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** shared_domains metadata error: %v", err.Error()))
+		toplog.Warn("*** shared_domains metadata error: %v", err.Error())
 		return
 	}
 
 	privateDomains, err := getDomainMetadata(cliConnection, "/v2/private_domains")
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** private_domains metadata error: %v", err.Error()))
+		toplog.Warn("*** private_domains metadata error: %v", err.Error())
 		return
 	}
 
 	data := append(sharedDomains, privateDomains...)
-	toplog.Debug(fmt.Sprintf("Domain>>LoadDomainCache total items loaded: %v", len(data)))
+	toplog.Debug("Domain>>LoadDomainCache total items loaded: %v", len(data))
 	domainsMetadataCache = data
 }
 
@@ -92,13 +91,13 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 
 	metadata := []*Domain{}
 
-	toplog.Debug(fmt.Sprintf("Domain>>getDomainMetadata %v start", url))
+	toplog.Debug("Domain>>getDomainMetadata %v start", url)
 
 	handleRequest := func(outputBytes []byte) (interface{}, error) {
 		var response DomainResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return metadata, err
 		}
 		for _, item := range response.Resources {
@@ -112,7 +111,7 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
-	toplog.Debug(fmt.Sprintf("Domain>>getDomainMetadata %v complete - loaded: %v items", url, len(metadata)))
+	toplog.Debug("Domain>>getDomainMetadata %v complete - loaded: %v items", url, len(metadata))
 
 	return metadata, err
 

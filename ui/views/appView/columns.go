@@ -306,7 +306,7 @@ func (asUI *AppListView) columnTotalReq() *uiCommon.ListColumn {
 		appStats := data.(*displaydata.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
 	}
-	c := uiCommon.NewListColumn("TOTREQ", "TOT-REQ", 10,
+	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }

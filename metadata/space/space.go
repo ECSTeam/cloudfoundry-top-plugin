@@ -17,7 +17,6 @@ package space
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
@@ -69,7 +68,7 @@ func FindSpaceName(spaceGuid string) string {
 func LoadSpaceCache(cliConnection plugin.CliConnection) {
 	data, err := getSpaceMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** space metadata error: %v", err.Error()))
+		toplog.Warn("*** space metadata error: %v", err.Error())
 		return
 	}
 	spacesMetadataCache = data
@@ -84,7 +83,7 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 		var response SpaceResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return metadata, err
 		}
 		for _, item := range response.Resources {

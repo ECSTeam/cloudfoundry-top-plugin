@@ -110,7 +110,7 @@ func (c *Client) createNozzles(subscriptionID string) {
 	for i := 0; i < c.options.Nozzles; i++ {
 		go c.createAndKeepAliveNozzle(subscriptionID, i)
 	}
-	toplog.Info(fmt.Sprintf("Starting %v nozzle instances", c.options.Nozzles))
+	toplog.Info("Starting %v nozzle instances", c.options.Nozzles)
 }
 
 func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int) error {
@@ -125,7 +125,7 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 			errMsg := err.Error()
 			notAuthorized := strings.Contains(errMsg, "authorized")
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) || notAuthorized {
-				toplog.Error(fmt.Sprintf("Nozzle #%v - Stopped with error: %v", instanceId, err))
+				toplog.Error("Nozzle #%v - Stopped with error: %v", instanceId, err)
 				if notAuthorized {
 					toplog.Error("Are you sure you have 'admin' privileges on foundation?")
 					toplog.Error("See needed permissions for this plugin here:")
@@ -133,12 +133,12 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 				}
 				break
 			}
-			toplog.Warn(fmt.Sprintf("Nozzle #%v - error: %v", instanceId, err))
+			toplog.Warn("Nozzle #%v - error: %v", instanceId, err)
 		}
-		toplog.Warn(fmt.Sprintf("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId))
+		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId)
 		lastRetry := time.Now().Sub(startTime)
 		if lastRetry < minRetrySeconds {
-			toplog.Info(fmt.Sprintf("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceId, minRetrySeconds))
+			toplog.Info("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceId, minRetrySeconds)
 			time.Sleep(minRetrySeconds)
 		}
 	}
@@ -177,7 +177,7 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	messages, errors := dopplerConnection.Firehose(subscriptionID, authToken)
 	defer dopplerConnection.Close()
 
-	toplog.Info(fmt.Sprintf("Nozzle #%v - Started", instanceId))
+	toplog.Info("Nozzle #%v - Started", instanceId)
 
 	eventError := c.routeEvents(instanceId, messages, errors)
 	if eventError != nil {

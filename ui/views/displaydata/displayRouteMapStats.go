@@ -16,23 +16,18 @@
 package displaydata
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 )
 
-type DisplayRouteStats struct {
+type DisplayRouteMapStats struct {
 	*eventRoute.RouteStats
+	AppName   string
+	SpaceName string
+	OrgName   string
 
-	// Includes [host].[domain]/[path]   what about port??
-	RouteName string
-	Host      string
-	Domain    string
-	Path      string
-	Port      int
-
-	RoutedAppCount int
+	AppId string
 
 	LastAccess            time.Time
 	ResponseContentLength int64
@@ -51,15 +46,14 @@ type DisplayRouteStats struct {
 	HttpMethodOtherCount  int64
 }
 
-func NewDisplayRouteStats(routeStats *eventRoute.RouteStats, hostName string, domainName string, pathName string, port int) *DisplayRouteStats {
-	stats := &DisplayRouteStats{}
+func NewDisplayRouteMapStats(routeStats *eventRoute.RouteStats, appId, appName, spaceName, orgName string) *DisplayRouteMapStats {
+	stats := &DisplayRouteMapStats{}
 	stats.RouteStats = routeStats
 
-	stats.RouteName = fmt.Sprintf("%v.%v%v", hostName, domainName, pathName)
-	stats.Host = hostName
-	stats.Domain = domainName
-	stats.Path = pathName
-	stats.Port = port
+	stats.AppId = appId
+	stats.AppName = appName
+	stats.SpaceName = spaceName
+	stats.OrgName = orgName
 
 	return stats
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeMapView"
 	"github.com/jroimartin/gocui"
 )
 
@@ -40,11 +41,11 @@ func NewRouteListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &RouteListView{}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		uiCommon.NewSortColumn("TOT-REQ", true),
+		uiCommon.NewSortColumn("TOTREQ", true),
 		uiCommon.NewSortColumn("DOMAIN", false),
 		uiCommon.NewSortColumn("HOST", false),
 		uiCommon.NewSortColumn("PATH", false),
-		//uiCommon.NewSortColumn("CELL_IP", false),
+		uiCommon.NewSortColumn("PORT", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
@@ -71,6 +72,7 @@ func (asUI *RouteListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnHost())
 	columns = append(columns, columnDomain())
 	columns = append(columns, columnPath())
+	columns = append(columns, columnPort())
 
 	columns = append(columns, columnRoutedAppCount())
 
@@ -82,10 +84,6 @@ func (asUI *RouteListView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, columnResponseContentLength())
 
-	columns = append(columns, columnMethodGet())
-	columns = append(columns, columnMethodPost())
-	columns = append(columns, columnMethodPut())
-	columns = append(columns, columnMethodDelete())
 	columns = append(columns, columnLastAccess())
 
 	return columns
@@ -101,21 +99,20 @@ func (asUI *RouteListView) initializeCallback(g *gocui.Gui, viewName string) err
 }
 
 func (asUI *RouteListView) enterAction(g *gocui.Gui, v *gocui.View) error {
-	/*
-		highlightKey := asUI.GetListWidget().HighlightKey()
-		if asUI.GetListWidget().HighlightKey() != "" {
-			topMargin, bottomMargin := asUI.GetMargins()
+	highlightKey := asUI.GetListWidget().HighlightKey()
+	if asUI.GetListWidget().HighlightKey() != "" {
+		topMargin, bottomMargin := asUI.GetMargins()
 
-			detailView := routeListView.NewCellDetailView(asUI.GetMasterUI(), asUI,
-				"routeListView",
-				topMargin, bottomMargin,
-				asUI.GetEventProcessor(),
-				highlightKey)
+		detailView := routeMapView.NewRouteMapListView(asUI.GetMasterUI(), asUI,
+			"routeMapListView",
+			topMargin, bottomMargin,
+			asUI.GetEventProcessor(),
+			highlightKey)
 
-			asUI.SetDetailView(detailView)
-			asUI.GetMasterUI().OpenView(g, detailView)
-		}
-	*/
+		asUI.SetDetailView(detailView)
+		asUI.GetMasterUI().OpenView(g, detailView)
+	}
+
 	return nil
 }
 
@@ -132,47 +129,68 @@ func (asUI *RouteListView) postProcessData() []*displaydata.DisplayRouteStats {
 
 	for domainName, domainStats := range domainMap {
 		for hostName, hostStats := range domainStats.HostStatsMap {
+			// HTTP routes
 			for pathName, routeStats := range hostStats.RouteStatsMap {
 
-				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats)
+				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats, hostName, domainName, pathName, 0)
 				displayRouteArray = append(displayRouteArray, displayRouteStat)
-				displayRouteStat.RouteName = fmt.Sprintf("%v.%v%v", hostName, domainName, pathName)
-				displayRouteStat.Host = hostName
-				displayRouteStat.Domain = domainName
-				displayRouteStat.Path = pathName
-				displayRouteStat.RoutedAppCount = len(routeStats.AppRouteStatsMap)
 
-				for _, appRouteStats := range routeStats.AppRouteStatsMap {
+				for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 
-					displayRouteStat.ResponseContentLength = displayRouteStat.ResponseContentLength + appRouteStats.ResponseContentLength
-					if displayRouteStat.LastAccess.Before(appRouteStats.LastAccess) {
-						displayRouteStat.LastAccess = appRouteStats.LastAccess
+					if appId != "" {
+						displayRouteStat.RoutedAppCount = displayRouteStat.RoutedAppCount + 1
 					}
 
-					displayRouteStat.HttpMethodGetCount = appRouteStats.HttpMethod[events.Method_GET]
-					displayRouteStat.HttpMethodPostCount = appRouteStats.HttpMethod[events.Method_POST]
-					displayRouteStat.HttpMethodPutCount = appRouteStats.HttpMethod[events.Method_PUT]
-					displayRouteStat.HttpMethodDeleteCount = appRouteStats.HttpMethod[events.Method_DELETE]
-					//displayRouteStat.HttpMethodOtherCount = ???
+					for method, httpMethodStats := range appRouteStats.HttpMethodStatsMap {
 
-					for statusCode, responseCount := range appRouteStats.HttpStatusCode {
-						displayRouteStat.HttpAllCount = displayRouteStat.HttpAllCount + responseCount
-						switch {
-						case statusCode >= 200 && statusCode < 300:
-							displayRouteStat.Http2xxCount = responseCount
-						case statusCode >= 300 && statusCode < 400:
-							displayRouteStat.Http3xxCount = responseCount
-						case statusCode >= 400 && statusCode < 500:
-							displayRouteStat.Http4xxCount = responseCount
-						case statusCode >= 500 && statusCode < 600:
-							displayRouteStat.Http5xxCount = responseCount
-						default:
-							displayRouteStat.HttpOtherCount = responseCount
+						displayRouteStat.ResponseContentLength = displayRouteStat.ResponseContentLength + httpMethodStats.ResponseContentLength
+						if displayRouteStat.LastAccess.Before(httpMethodStats.LastAccess) {
+							displayRouteStat.LastAccess = httpMethodStats.LastAccess
 						}
 
+						switch method {
+						case events.Method_GET:
+							displayRouteStat.HttpMethodGetCount = httpMethodStats.RequestCount
+						case events.Method_POST:
+							displayRouteStat.HttpMethodPostCount = httpMethodStats.RequestCount
+						case events.Method_PUT:
+							displayRouteStat.HttpMethodPutCount = httpMethodStats.RequestCount
+						case events.Method_DELETE:
+							displayRouteStat.HttpMethodDeleteCount = httpMethodStats.RequestCount
+						}
+
+						for statusCode, responseCount := range httpMethodStats.HttpStatusCode {
+							displayRouteStat.HttpAllCount = displayRouteStat.HttpAllCount + responseCount
+							switch {
+							case statusCode >= 200 && statusCode < 300:
+								displayRouteStat.Http2xxCount = displayRouteStat.Http2xxCount + responseCount
+							case statusCode >= 300 && statusCode < 400:
+								displayRouteStat.Http3xxCount = displayRouteStat.Http3xxCount + responseCount
+							case statusCode >= 400 && statusCode < 500:
+								displayRouteStat.Http4xxCount = displayRouteStat.Http4xxCount + responseCount
+							case statusCode >= 500 && statusCode < 600:
+								displayRouteStat.Http5xxCount = displayRouteStat.Http5xxCount + responseCount
+							default:
+								displayRouteStat.HttpOtherCount = displayRouteStat.HttpOtherCount + responseCount
+							}
+
+						}
 					}
 				}
 			}
+
+			// TCP routes
+			for port, routeStats := range hostStats.TcpRouteStatsMap {
+				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats, hostName, domainName, "", port)
+				displayRouteArray = append(displayRouteArray, displayRouteStat)
+				//for appId, appRouteStats := range routeStats.AppRouteStatsMap {
+				for appId, _ := range routeStats.AppRouteStatsMap {
+					if appId != "" {
+						displayRouteStat.RoutedAppCount = displayRouteStat.RoutedAppCount + 1
+					}
+				}
+			}
+
 		}
 
 	}

@@ -15,66 +15,34 @@
 
 package eventRoute
 
-import (
-	"time"
-
-	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
-)
+import "github.com/cloudfoundry/sonde-go/events"
 
 // Used as an overflow key when too many values are in map
 // E.g., if too many values in UserAgent map, use OTHER bucket
 const OTHER = "OTHER"
 
 const MaxUserAgentBucket = 100
-const MaxRemoteAddressBucket = 100
 
 type AppRouteSlice []*AppRouteStats
 
 type AppRouteStats struct {
-	AppId      string
-	LastAccess time.Time
-
-	responseL60Time    *util.AvgTracker
-	AvgResponseL60Time float64 // updated after a clone of this object
-	EventL60Rate       int     // updated after a clone of this object
-
-	responseL10Time    *util.AvgTracker
-	AvgResponseL10Time float64 // updated after a clone of this object
-	EventL10Rate       int     // updated after a clone of this object
-
-	responseL1Time    *util.AvgTracker
-	AvgResponseL1Time float64 // updated after a clone of this object
-	EventL1Rate       int     // updated after a clone of this object
-
-	HttpRequestCount int64
-
-	// E.g., 200, 404, 500
-	HttpStatusCode map[int32]int64
+	AppId string
 
 	// E.g., GET, PUT, POST, DELETE
-	HttpMethod map[events.Method]int64
-
-	// NOTE: is this realistic?? There could be unlimited number of RemoteAddresses
-	// PCF 1.7 x-forward???
-	// PCF 1.8: "forwarded" (array)
-	// NOTE: PCF 1.8 - remote address includes a port
-	RemoteAddress map[string]int64
+	HttpMethodStatsMap map[events.Method]*HttpMethodStats
 
 	// Good idea??
-	UserAgent map[string]int64
-
-	ResponseContentLength int64
-	// Not currently used
-	RequestContentLength int64
+	UserAgentMap map[string]int64
 }
 
 func NewAppRouteStats(appId string) *AppRouteStats {
 	stats := &AppRouteStats{}
 	stats.AppId = appId
-	stats.HttpStatusCode = make(map[int32]int64)
-	stats.HttpMethod = make(map[events.Method]int64)
-	stats.RemoteAddress = make(map[string]int64)
-	stats.UserAgent = make(map[string]int64)
+	stats.HttpMethodStatsMap = make(map[events.Method]*HttpMethodStats)
+	stats.UserAgentMap = make(map[string]int64)
 	return stats
+}
+
+func (ars *AppRouteStats) FindHttpMethodStats(httpMethod events.Method) *HttpMethodStats {
+	return ars.HttpMethodStatsMap[httpMethod]
 }

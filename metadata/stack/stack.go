@@ -17,7 +17,6 @@ package stack
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
@@ -62,7 +61,7 @@ func FindStackMetadata(stackGuid string) Stack {
 func LoadStackCache(cliConnection plugin.CliConnection) {
 	data, err := getStackMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** stack metadata error: %v", err.Error()))
+		toplog.Warn("*** stack metadata error: %v", err.Error())
 		return
 	}
 	stacksMetadataCache = data
@@ -77,7 +76,7 @@ func getStackMetadata(cliConnection plugin.CliConnection) ([]Stack, error) {
 		var response StackResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return metadata, err
 		}
 		for _, item := range response.Resources {

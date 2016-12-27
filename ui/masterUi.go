@@ -49,6 +49,8 @@ type MasterUI struct {
 	layoutManager *uiCommon.LayoutManager
 	gui           *gocui.Gui
 	cliConnection plugin.CliConnection
+	username      string
+	targetDisplay string
 
 	currentDataView masterUIInterface.UpdatableView
 
@@ -73,6 +75,24 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection)
 	mui.router = eventrouting.NewEventRouter(eventProcessor)
 
+	username, err := cliConnection.Username()
+	if err != nil {
+		toplog.Info("Unable to get username, error: %v", err)
+		mui.username = "UNKNOWN"
+	} else {
+		mui.username = username
+	}
+	apiEndpoint, err := mui.cliConnection.ApiEndpoint()
+	if err != nil {
+		toplog.Info("Unable to get apiEndpoint, error: %v", err)
+	}
+
+	url, err := url.Parse(apiEndpoint)
+	if err != nil {
+		toplog.Info("Unable to get Parse apiEndpoint, error: %v", err)
+	} else {
+		mui.targetDisplay = fmt.Sprintf("%v:%v", username, url.Host)
+	}
 	return mui
 }
 
@@ -138,7 +158,7 @@ func (mui *MasterUI) initGui() {
 
 func (mui *MasterUI) SetStatsSummarySize(statSummarySize int) {
 	mui.headerSize = mui.baseHeaderSize + statSummarySize
-	//toplog.Info(fmt.Sprintf("headerSize set to: %v  statSummarySize: %v", mui.headerSize, statSummarySize))
+	//toplog.Info("headerSize set to: %v  statSummarySize: %v", mui.headerSize, statSummarySize)
 }
 
 func (mui *MasterUI) GetHeaderSize() int {
@@ -179,7 +199,7 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 
 	if err := g.SetKeybinding(viewName, 'Z', gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
-			toplog.Debug(fmt.Sprintf("Top: %v", mui.layoutManager.Top().Name()))
+			toplog.Debug("Top: %v", mui.layoutManager.Top().Name())
 			return nil
 		}); err != nil {
 		log.Panicln(err)
@@ -201,7 +221,7 @@ func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
 	mui.gui.DeleteKeybindings(m.Name())
 	nextForFocus := mui.layoutManager.Remove(m)
 
-	//toplog.Debug(fmt.Sprintf("type:%v", checkIfUpdatableView(nextForFocus)))
+	//toplog.Debug("type:%v", checkIfUpdatableView(nextForFocus))
 
 	nextViewName := nextForFocus.Name()
 	if err := mui.SetCurrentViewOnTop(mui.gui); err != nil {
@@ -408,7 +428,7 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	v.Clear()
 
 	fmt.Fprintf(v, "Events: ")
-	eventsText := fmt.Sprintf("%v (%v/sec)", util.Format(mui.router.GetEventCount()), mui.router.GetEventRate())
+	eventsText := fmt.Sprintf("%v (%v/sec)", util.FormatUint64(mui.router.GetEventCount()), mui.router.GetEventRate())
 	fmt.Fprintf(v, "%-27v", eventsText)
 
 	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
@@ -423,23 +443,7 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
 	fmt.Fprintf(v, "   %v\n", time.Now().Format("01-02-2006 15:04:05"))
 
-	apiEndpoint, err := mui.cliConnection.ApiEndpoint()
-	if err != nil {
-		return err
-	}
-
-	url, err := url.Parse(apiEndpoint)
-	if err != nil {
-		return err
-	}
-
-	username, err := mui.cliConnection.Username()
-	if err != nil {
-		return err
-	}
-
-	targetDisplay := fmt.Sprintf("%v#%v", username, url.Host)
-	fmt.Fprintf(v, "Target: %-78.78v\n", targetDisplay)
+	fmt.Fprintf(v, "Target: %-78.78v\n", mui.targetDisplay)
 
 	return nil
 }

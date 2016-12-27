@@ -39,7 +39,7 @@ const MaxHostBucket = 10000
 type EventData struct {
 	AppMap  map[string]*eventApp.AppStats
 	CellMap map[string]*eventCell.CellStats
-	// Both shared + private
+	// Domain name: Both shared + private
 	DomainMap           map[string]*eventRoute.DomainStats
 	EnableRouteTracking bool
 	TotalEvents         int64
@@ -233,7 +233,7 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		// new app deployed or existing app deleted
 		appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
 		logText := string(logMessage.GetMessage())
-		toplog.Debug(fmt.Sprintf("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText))
+		toplog.Debug("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
 		ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
 
 	case "RTR":
@@ -477,7 +477,7 @@ func (ed *EventData) checkIfApiCall_PCF1_6(uri string) (bool, string) {
 // so we need to make some guesses that if we don't have an applicationId property but have an instanceId
 // we must be calling an API.  Is this a good assumption?  Not a very clean solution.
 func (ed *EventData) checkIfApiCall_PCF1_7(uri string) (bool, string) {
-	toplog.Debug(fmt.Sprintf("Check if PCF 1.7 API call:%v", uri))
+	toplog.Debug("Check if PCF 1.7 API call:%v", uri)
 	parsedData := ed.urlPCF17Regexp.FindAllStringSubmatch(uri, -1)
 	if len(parsedData) != 1 {
 		toplog.Debug("Not a PCF 1.7 API that we care about")
@@ -485,27 +485,27 @@ func (ed *EventData) checkIfApiCall_PCF1_7(uri string) (bool, string) {
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 2 {
-		toplog.Warn(fmt.Sprintf("checkIfApiCall_PCF1_7>>Unable to parse uri: %v", uri))
+		toplog.Warn("checkIfApiCall_PCF1_7>>Unable to parse uri: %v", uri)
 		return false, ""
 	}
 	apiUri := dataArray[1]
-	toplog.Debug(fmt.Sprintf("This is a PCF 1.7 API call:%v", apiUri))
+	toplog.Debug("This is a PCF 1.7 API call:%v", apiUri)
 	return true, apiUri
 }
 
 // A PCF API has been called -- use this to trigger reload of metadata if appropriate
 // Example: "/v2/spaces/59cde607-2cda-4e20-ab30-cc779c4026b0"
 func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
-	toplog.Debug(fmt.Sprintf("API called: %v", apiUri))
+	toplog.Debug("API called: %v", apiUri)
 
 	parsedData := ed.apiUrlRegexp.FindAllStringSubmatch(apiUri, -1)
 	if len(parsedData) != 1 {
-		toplog.Debug(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (parsedData size) apiUri: %v", apiUri))
+		toplog.Debug("pcfApiHasBeenCalled>>Unable to parse (parsedData size) apiUri: %v", apiUri)
 		return
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 3 {
-		toplog.Debug(fmt.Sprintf("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri))
+		toplog.Debug("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri)
 		return
 	}
 	dataType := dataArray[1]
@@ -515,14 +515,14 @@ func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
 }
 
 func (ed *EventData) pcfApiHasBeenCalledReloadMetadata(dataType, guid string) {
-	toplog.Debug(fmt.Sprintf("Data type:%v GUID:%v", dataType, guid))
+	toplog.Debug("Data type:%v GUID:%v", dataType, guid)
 	switch dataType {
 	case "spaces":
 		// TODO reload metadata
-		toplog.Debug(fmt.Sprintf("Reload SPACE metadata for space with GUID:%v", guid))
+		toplog.Debug("Reload SPACE metadata for space with GUID:%v", guid)
 	case "organizations":
 		// TODO reload metadata
-		toplog.Debug(fmt.Sprintf("Reload ORG metadata for org with GUID:%v", guid))
+		toplog.Debug("Reload ORG metadata for org with GUID:%v", guid)
 	default:
 	}
 }
@@ -534,8 +534,8 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 	//instIndex := msg.GetHttpStartStop().GetInstanceIndex()
 	httpStartStopEvent := msg.GetHttpStartStop()
 
-	//toplog.Debug(fmt.Sprintf("index: %v\n", instIndex))
-	//toplog.Debug(fmt.Sprintf("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex))
+	//toplog.Debug("index: %v\n", instIndex)
+	//toplog.Debug("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex)
 	//fmt.Printf("index: %v\n", instIndex)
 	ed.TotalEvents++
 	appId := formatUUID(appUUID)
@@ -592,12 +592,12 @@ func (ed *EventData) handleRouteStats(msg *events.Envelope) {
 	}
 	parsedData := ed.routeUrlRegexp.FindAllStringSubmatch(uri, -1)
 	if len(parsedData) != 1 {
-		toplog.Debug(fmt.Sprintf("handleRouteStats>>Unable to parse (parsedData size) apiUri: %v", uri))
+		toplog.Debug("handleRouteStats>>Unable to parse (parsedData size) apiUri: %v", uri)
 		return
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 6 {
-		toplog.Debug(fmt.Sprintf("handleRouteStats>>Unable to parse (dataArray size) apiUri: %v", uri))
+		toplog.Debug("handleRouteStats>>Unable to parse (dataArray size) apiUri: %v", uri)
 		return
 	}
 	ipAddress := dataArray[1]
@@ -621,8 +621,8 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	httpEvent := msg.GetHttpStartStop()
 	domainStats := ed.DomainMap[domain]
 	if domainStats == nil {
-		toplog.Info(fmt.Sprintf("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path))
+		toplog.Info("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path)
 		if len(ed.DomainMap) > MaxDomainBucket {
 			toplog.Warn("domainStats map at max size. The entry will NOT be added")
 			return
@@ -633,8 +633,8 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	}
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
-		toplog.Info(fmt.Sprintf("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path))
+		toplog.Info("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path)
 		if len(domainStats.HostStatsMap) > MaxHostBucket {
 			toplog.Warn("hostStats map at max size. The entry will NOT be added")
 			return
@@ -654,39 +654,54 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 
 	routeStats := hostStats.FindRouteStats(path)
 	if routeStats == nil {
-		toplog.Info(fmt.Sprintf("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path))
+		toplog.Info("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path)
 		// dynamically add root path
-		routeGuid := util.Pseudo_uuid()
-		routeStats = hostStats.AddPathDynamic("", routeGuid)
+
+		//routeGuid := util.Pseudo_uuid()
+		//routeStats = hostStats.AddPathDynamic("", routeGuid)
+		routeStats = ed.eventProcessor.addInternalRoute(domain, host, path, 0)
 	}
 
 	appRouteStats := routeStats.FindAppRouteStats(appId)
 	if appRouteStats == nil {
-		toplog.Info(fmt.Sprintf("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path))
+		toplog.Info("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+			httpEvent.GetUri(), domain, host, port, path)
 		appRouteStats = eventRoute.NewAppRouteStats(appId)
 		routeStats.AppRouteStatsMap[appId] = appRouteStats
 	}
 
+	httpMethod := httpEvent.GetMethod()
+	httpMethodStats := appRouteStats.FindHttpMethodStats(httpMethod)
+	if httpMethodStats == nil {
+		toplog.Info("httpMethodStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v] method:[%v]",
+			httpEvent.GetUri(), domain, host, port, path, httpMethod)
+		httpMethodStats = eventRoute.NewHttpMethodStats(httpMethod)
+		appRouteStats.HttpMethodStatsMap[httpMethod] = httpMethodStats
+	}
+
+	//appRouteStats.HttpMethod[httpEvent.GetMethod()] = appRouteStats.HttpMethod[httpEvent.GetMethod()] + 1
+
 	// TODO: Should this really come from msg.GetTimestamp() instead of marking it with when we processed the event?
-	appRouteStats.LastAccess = time.Now()
+	httpMethodStats.LastAccess = time.Now()
 
-	appRouteStats.HttpStatusCode[httpEvent.GetStatusCode()] = appRouteStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
-	appRouteStats.HttpMethod[httpEvent.GetMethod()] = appRouteStats.HttpMethod[httpEvent.GetMethod()] + 1
+	httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] = httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
 
-	appRouteStats.UserAgent[httpEvent.GetUserAgent()] = appRouteStats.UserAgent[httpEvent.GetUserAgent()] + 1
+	userAgentCount := appRouteStats.UserAgentMap[httpEvent.GetUserAgent()]
+	if userAgentCount > 0 || (len(appRouteStats.UserAgentMap) < eventRoute.MaxUserAgentBucket) {
+		appRouteStats.UserAgentMap[httpEvent.GetUserAgent()] = userAgentCount + 1
+	}
 
-	appRouteStats.HttpRequestCount = appRouteStats.HttpRequestCount + 1
+	httpMethodStats.RequestCount = httpMethodStats.RequestCount + 1
 
 	responseLength := httpEvent.GetContentLength()
 	if responseLength > 0 {
-		appRouteStats.ResponseContentLength = appRouteStats.ResponseContentLength + httpEvent.GetContentLength()
+		httpMethodStats.ResponseContentLength = httpMethodStats.ResponseContentLength + httpEvent.GetContentLength()
 	}
-
-	toplog.Debug(fmt.Sprintf("Updated stats for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-		httpEvent.GetUri(), domain, host, port, path))
-
+	/*
+		toplog.Debug("Updated stats for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v] method:[%v]",
+			httpEvent.GetUri(), domain, host, port, path, httpMethod)
+	*/
 }
 
 func formatUUID(uuid *events.UUID) string {

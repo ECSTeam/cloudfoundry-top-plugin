@@ -1,14 +1,14 @@
 // Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
-// Licensed under the Apache License, Version 2.0 (the "License"); 
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 // http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, 
+// distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
@@ -56,45 +56,35 @@ func NewRateCounter(intrvl time.Duration) *RateCounter {
 // Add an event into the RateCounter
 func (r *RateCounter) Incr() {
 	r.mu.Lock()
-	r.removeOld()
+	defer r.mu.Unlock()
 	now := time.Now()
+	r.removeOldFromTime(now)
 	//fmt.Printf("now: %v\n", now)
 	r.queue.Add(now)
-	r.mu.Unlock()
 }
 
 // Return the current number of events in the last interval
 func (r *RateCounter) Rate() int {
 	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.removeOld()
 	len := r.queue.Length()
-	r.mu.Unlock()
 	return len
 }
 
-func (r *RateCounter) removeOldX() {
-
-	if r.queue.Length() > 0 {
-		now := time.Now()
-		for ts := r.queue.Peek().(time.Time); r.queue.Length() > 0 && now.Sub(ts) > r.interval; ts = r.queue.Peek().(time.Time) {
-			//fmt.Printf("Remove - Now:[%v] ts:[%v] len:%v\n", now, ts, r.queue.Length())
-			r.queue.Remove()
-		}
-	}
-
+func (r *RateCounter) removeOld() {
+	r.removeOldFromTime(time.Now())
 }
 
-func (r *RateCounter) removeOld() {
-
+func (r *RateCounter) removeOldFromTime(timeMark time.Time) {
 	if r.queue.Length() > 0 {
-		now := time.Now()
+		//now := time.Now()
 		for r.queue.Length() > 0 {
 			ts := r.queue.Peek().(time.Time)
-			if now.Sub(ts) < r.interval {
+			if timeMark.Sub(ts) < r.interval {
 				break
 			}
 			r.queue.Remove()
 		}
 	}
-
 }

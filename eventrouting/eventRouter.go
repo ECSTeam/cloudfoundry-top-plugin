@@ -16,8 +16,7 @@
 package eventrouting
 
 import (
-	"fmt"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
@@ -27,11 +26,10 @@ import (
 )
 
 type EventRouter struct {
-	eventCount       int64
+	eventCount       uint64
 	eventRateCounter *util.RateCounter
 	eventRatePeak    int
 	startTime        time.Time
-	mu               sync.Mutex
 	processor        *eventdata.EventProcessor
 }
 
@@ -47,8 +45,8 @@ func (er *EventRouter) GetProcessor() *eventdata.EventProcessor {
 	return er.processor
 }
 
-func (er *EventRouter) GetEventCount() int64 {
-	return er.eventCount
+func (er *EventRouter) GetEventCount() uint64 {
+	return atomic.LoadUint64(&er.eventCount)
 }
 
 func (er *EventRouter) GetEventRatePeak() int {
@@ -59,7 +57,7 @@ func (er *EventRouter) GetEventRate() int {
 	rate := er.eventRateCounter.Rate()
 	if rate > er.eventRatePeak {
 		er.eventRatePeak = rate
-		toplog.Info(fmt.Sprintf("New event rate per second peak: %v", rate))
+		toplog.Info("New event rate per second peak: %v", rate)
 	}
 	return rate
 }
@@ -69,16 +67,14 @@ func (er *EventRouter) GetStartTime() time.Time {
 }
 
 func (er *EventRouter) Clear() {
-	er.eventCount = 0
+	atomic.StoreUint64(&er.eventCount, 0)
 	er.eventRatePeak = 0
 	er.startTime = time.Now()
 	er.processor.ClearStats()
 }
 
 func (er *EventRouter) Route(instanceId int, msg *events.Envelope) {
-	er.mu.Lock()
-	defer er.mu.Unlock()
-	er.eventCount++
+	atomic.AddUint64(&er.eventCount, 1)
 	er.eventRateCounter.Incr()
 	er.processor.Process(instanceId, msg)
 }

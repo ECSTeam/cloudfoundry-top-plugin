@@ -19,6 +19,8 @@ import (
 	"os"
 	"strings"
 
+	// _ "net/http/pprof"
+
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/cf/trace"
 	"github.com/cloudfoundry/cli/plugin"
@@ -63,6 +65,14 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 }
 
 func main() {
+
+	/*
+		go func() {
+			runtime.SetBlockProfileRate(1)
+			log.Println(http.ListenAndServe("localhost:6060", http.DefaultServeMux))
+		}()
+	*/
+
 	plugin.Start(new(TopCmd))
 }
 

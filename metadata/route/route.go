@@ -17,11 +17,11 @@ package route
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 type RouteResponse struct {
@@ -44,10 +44,25 @@ type Route struct {
 	SpaceGuid           string `json:"space_guid"`
 	ServiceInstanceGuid string `json:"service_instance_guid"`
 	Port                int    `json:"port"`
+	InternalGenerated   bool
+}
+
+func CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid string, port int) *Route {
+	r := &Route{
+		Guid:              util.Pseudo_uuid(),
+		Host:              hostName,
+		Path:              pathName,
+		DomainGuid:        domainGuid,
+		Port:              port,
+		InternalGenerated: true,
+	}
+	internalRoutesMetadataCache = append(internalRoutesMetadataCache, r)
+	return r
 }
 
 var (
-	routesMetadataCache []*Route
+	routesMetadataCache         []*Route
+	internalRoutesMetadataCache []*Route
 )
 
 func AllRoutes() []*Route {
@@ -60,13 +75,18 @@ func FindRouteMetadata(routeGuid string) *Route {
 			return route
 		}
 	}
+	for _, route := range internalRoutesMetadataCache {
+		if route.Guid == routeGuid {
+			return route
+		}
+	}
 	return &Route{Guid: routeGuid}
 }
 
 func LoadRouteCache(cliConnection plugin.CliConnection) {
 	data, err := getRouteMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** route metadata error: %v", err.Error()))
+		toplog.Warn("*** route metadata error: %v", err.Error())
 		return
 	}
 	routesMetadataCache = data
@@ -83,7 +103,7 @@ func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
 		var response RouteResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return metadata, err
 		}
 		for _, item := range response.Resources {
@@ -97,7 +117,7 @@ func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
-	toplog.Debug(fmt.Sprintf("Route>>getRouteMetadata complete - loaded: %v items", len(metadata)))
+	toplog.Debug("Route>>getRouteMetadata complete - loaded: %v items", len(metadata))
 
 	return metadata, err
 

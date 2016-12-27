@@ -32,7 +32,11 @@ func CaseInsensitiveLess(s1, s2 string) bool {
 }
 
 func Format(n int64) string {
-	in := strconv.FormatInt(n, 10)
+	return FormatUint64(uint64(n))
+}
+
+func FormatUint64(n uint64) string {
+	in := strconv.FormatUint(n, 10)
 	out := make([]byte, len(in)+(len(in)-2+int(in[0]/'0'))/3)
 	if in[0] == '-' {
 		in, out[0] = in[1:], '-'

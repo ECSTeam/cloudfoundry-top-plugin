@@ -17,7 +17,6 @@ package org
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
@@ -60,7 +59,7 @@ func FindOrgNameBySpaceGuid(spaceGuid string) string {
 	spaceMetadata := space.FindSpaceMetadata(spaceGuid)
 	orgMetadata := FindOrgMetadata(spaceMetadata.OrgGuid)
 	orgName := orgMetadata.Name
-	//toplog.Info(fmt.Sprintf("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName))
+	//toplog.Info("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName)
 	if orgName == "" {
 		orgName = UnknownName
 	}
@@ -70,7 +69,7 @@ func FindOrgNameBySpaceGuid(spaceGuid string) string {
 func LoadOrgCache(cliConnection plugin.CliConnection) {
 	data, err := getOrgMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** org metadata error: %v", err.Error()))
+		toplog.Warn("*** org metadata error: %v", err.Error())
 		return
 	}
 	orgsMetadataCache = data
@@ -85,7 +84,7 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 		var response OrgResponse
 		err := json.Unmarshal(outputBytes, &response)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return metadata, err
 		}
 		for _, item := range response.Resources {

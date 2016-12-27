@@ -16,7 +16,6 @@
 package eventdata
 
 import (
-	"fmt"
 	"regexp"
 	"sync"
 	"time"
@@ -146,7 +145,7 @@ func (ep *EventProcessor) seedRouteData() {
 
 	for _, route := range route.AllRoutes() {
 		domainMd := domain.FindDomainMetadata(route.DomainGuid)
-		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Guid)
+		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Port, route.Guid)
 	}
 
 	// Seed special host names
@@ -194,21 +193,23 @@ func (ep *EventProcessor) seedRouteData() {
 	}
 
 	for _, registerPath := range registerApiPaths {
-		ep.addRoute(apiDomain, apiHost, registerPath, ep.generateUniqueRouteGuid())
+		ep.addInternalRoute(apiDomain, apiHost, registerPath, 0)
 	}
 
-	ep.addRoute(apiDomain, "uaa", "", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, "uaa", "/oauth/token", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, "doppler", "", ep.generateUniqueRouteGuid())
-	ep.addRoute(apiDomain, "doppler", "/apps", ep.generateUniqueRouteGuid())
+	ep.addInternalRoute(apiDomain, "uaa", "", 0)
+	ep.addInternalRoute(apiDomain, "uaa", "/oauth/token", 0)
+	ep.addInternalRoute(apiDomain, "doppler", "", 0)
+	ep.addInternalRoute(apiDomain, "doppler", "/apps", 0)
 
 }
 
-func (ep *EventProcessor) generateUniqueRouteGuid() string {
-	return util.Pseudo_uuid()
+func (ep *EventProcessor) addInternalRoute(domainName string, hostName string, pathName string, port int) *eventRoute.RouteStats {
+	domain := domain.FindDomainMetadataByName(domainName)
+	route := route.CreateInternalGeneratedRoute(hostName, pathName, domain.Guid, port)
+	return ep.addRoute(domainName, hostName, pathName, port, route.Guid)
 }
 
-func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {
+func (ep *EventProcessor) addRoute(domain string, host string, path string, port int, routeGuid string) *eventRoute.RouteStats {
 
 	domain = strings.ToLower(domain)
 	host = strings.ToLower(host)
@@ -227,9 +228,13 @@ func (ep *EventProcessor) addRoute(domain, host, path, routeGuid string) {
 	if hostStats == nil {
 		hostStats = eventRoute.NewHostStats(host)
 		domainStats.HostStatsMap[host] = hostStats
-		//toplog.Info(fmt.Sprintf("seed hostStats: %v", host))
+		//toplog.Info("seed hostStats: %v", host)
 	}
-	hostStats.AddPath(path, routeGuid)
+	if port == 0 {
+		return hostStats.AddPath(path, routeGuid)
+	} else {
+		return hostStats.AddPort(port, routeGuid)
+	}
 }
 
 func (ep *EventProcessor) getAPIHostAndDomain() (domain, host string) {
@@ -239,12 +244,12 @@ func (ep *EventProcessor) getAPIHostAndDomain() (domain, host string) {
 	parseInfoHostAndDomainName := regexp.MustCompile(parseInfoHostAndDomainNameStr)
 	parsedData := parseInfoHostAndDomainName.FindAllStringSubmatch(apiUrl, -1)
 	if len(parsedData) != 1 {
-		toplog.Debug(fmt.Sprintf("getAPIHostAndDomain>>Unable to parse (parsedData size) apiUri: %v", apiUrl))
+		toplog.Debug("getAPIHostAndDomain>>Unable to parse (parsedData size) apiUri: %v", apiUrl)
 		return
 	}
 	dataArray := parsedData[0]
 	if len(dataArray) != 3 {
-		toplog.Debug(fmt.Sprintf("getAPIHostAndDomain>>Unable to parse (dataArray size) apiUri: %v", apiUrl))
+		toplog.Debug("getAPIHostAndDomain>>Unable to parse (dataArray size) apiUri: %v", apiUrl)
 		return
 	}
 	host = dataArray[1]

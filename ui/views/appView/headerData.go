@@ -111,7 +111,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	}
 
 	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
-		//toplog.Info(fmt.Sprintf("cellStats.StackId:%v", cellStats.StackId))
+		//toplog.Info("cellStats.StackId:%v", cellStats.StackId)
 		sumStats := summaryStatsByStack[cellStats.StackId]
 		if sumStats != nil {
 			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus

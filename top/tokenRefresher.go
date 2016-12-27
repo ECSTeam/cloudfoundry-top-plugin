@@ -16,8 +16,6 @@
 package top
 
 import (
-	"fmt"
-
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
@@ -35,12 +33,12 @@ func NewTokenRefresher(cliConnection plugin.CliConnection, nozzleInstanceId int)
 }
 
 func (tr *TokenRefresher) RefreshAuthToken() (string, error) {
-	toplog.Info(fmt.Sprintf("Nozzle #%v - RefreshAuthToken called", tr.nozzleInstanceId))
+	toplog.Info("Nozzle #%v - RefreshAuthToken called", tr.nozzleInstanceId)
 	token, err := tr.cliConnection.AccessToken()
 	if err != nil {
-		toplog.Error(fmt.Sprintf("Nozzle #%v - RefreshAuthToken failed: %v", tr.nozzleInstanceId, err))
+		toplog.Error("Nozzle #%v - RefreshAuthToken failed: %v", tr.nozzleInstanceId, err)
 		return "", err
 	}
-	toplog.Info(fmt.Sprintf("Nozzle #%v - RefreshAuthToken complete with new token: %v", tr.nozzleInstanceId, token))
+	toplog.Info("Nozzle #%v - RefreshAuthToken complete with new token: %v", tr.nozzleInstanceId, token)
 	return token, nil
 }

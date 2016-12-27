@@ -16,7 +16,6 @@
 package appView
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"time"
@@ -355,17 +354,17 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
 	appStats := data.(*displaydata.DisplayAppStats)
-	v := bytes.NewBufferString("")
+	colorString := ""
 	if asUI.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
 		if isSelected {
-			fmt.Fprintf(v, util.RED_TEXT_GREEN_BG)
+			colorString = util.RED_TEXT_GREEN_BG
 		} else {
-			fmt.Fprintf(v, util.BRIGHT_RED)
+			colorString = util.BRIGHT_RED
 		}
 	} else if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
-		fmt.Fprintf(v, util.BRIGHT_WHITE)
+		colorString = util.BRIGHT_WHITE
 	}
-	return v.String()
+	return colorString
 }
 
 func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {

@@ -191,7 +191,7 @@ func (w *ListWidget) Name() string {
 
 // TODO: Delete this method
 func (w *ListWidget) SetTopMarginX(topMargin int) {
-	toplog.Info(fmt.Sprintf("topMarginX: %v", topMargin))
+	toplog.Info("topMarginX: %v", topMargin)
 	//w.topMargin = topMargin
 }
 
@@ -284,11 +284,11 @@ func (asUI *ListWidget) FilterAndSortData() {
 func (asUI *ListWidget) sortData(listData []IData) []IData {
 	sortFunctions := asUI.GetSortFunctions()
 	sortData := make([]util.Sortable, 0, len(listData))
-	//toplog.Debug(fmt.Sprintf("sortStats size before:%v", len(sortStats)))
+	//toplog.Debug("sortStats size before:%v", len(sortStats))
 	for _, data := range listData {
 		sortData = append(sortData, data)
 	}
-	//toplog.Debug(fmt.Sprintf("sortStats size after:%v", len(sortStats)))
+	//toplog.Debug("sortStats size after:%v", len(sortStats))
 	util.OrderedBy(sortFunctions).Sort(sortData)
 
 	s2 := make([]IData, len(sortData))
@@ -433,9 +433,9 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 		}
 	} else {
 		if len(asUI.unfilteredListData) > 0 {
-			fmt.Fprintf(v, " \n No data to display because of filters")
+			fmt.Fprint(v, " \n No data to display because of filters")
 		} else {
-			fmt.Fprintf(v, " \n No data yet...")
+			fmt.Fprint(v, " \n No data yet...")
 		}
 	}
 
@@ -445,7 +445,7 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) {
 	isSelected := false
 	if asUI.listData[rowIndex].Id() == asUI.highlightKey {
-		fmt.Fprintf(v, util.REVERSE_GREEN)
+		fmt.Fprint(v, util.REVERSE_GREEN)
 		isSelected = true
 	}
 
@@ -464,15 +464,15 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		fmt.Fprint(v, column.displayFunc(asUI.listData[rowIndex], isSelected))
 		fmt.Fprint(v, " ")
 	}
-	fmt.Fprintf(v, "\n")
-	fmt.Fprintf(v, util.CLEAR)
+	fmt.Fprint(v, "\n")
+	fmt.Fprint(v, util.CLEAR)
 }
 
 func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 
 	lastColumnCanDisplay := asUI.lastColumnCanDisplay(g, asUI.displayColIndexOffset)
 
-	fmt.Fprintf(v, "%v", normalHeaderColor)
+	fmt.Fprint(v, normalHeaderColor)
 
 	// Loop through all columns (for headers)
 	for colIndex, column := range asUI.columns {
@@ -485,7 +485,7 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		editSortColumn := false
 		if asUI.selectColumnMode && asUI.selectedColumnId == column.id {
 			editSortColumn = true
-			fmt.Fprintf(v, util.REVERSE_WHITE)
+			fmt.Fprint(v, util.REVERSE_WHITE)
 		}
 		var buffer bytes.Buffer
 		buffer.WriteString("%")
@@ -511,11 +511,11 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		fmt.Fprintf(v, buffer.String(), label)
 
 		if editSortColumn {
-			fmt.Fprintf(v, normalHeaderColor)
+			fmt.Fprint(v, normalHeaderColor)
 		}
 	}
-	fmt.Fprintf(v, util.CLEAR)
-	fmt.Fprintf(v, "\n")
+	fmt.Fprint(v, util.CLEAR)
+	fmt.Fprint(v, "\n")
 }
 
 func (asUI *ListWidget) lastColumnCanDisplay(g *gocui.Gui, ifDisplayColIndexOffset int) int {

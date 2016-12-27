@@ -16,7 +16,6 @@
 package eventdata
 
 import (
-	"fmt"
 	"regexp"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
@@ -42,5 +41,5 @@ func (ha *EventLogHttpAccess) parseHttpAccessLogLine(logLine string) {
 	//toplog.Debug(logLine)
 	parsedData := ha.regexHttpLog.FindAllStringSubmatch(logLine, -1)
 	dataArray := parsedData[0]
-	toplog.Debug(fmt.Sprintf("method:%v code:%v", dataArray[3], dataArray[6]))
+	toplog.Debug("method:%v code:%v", dataArray[3], dataArray[6])
 }

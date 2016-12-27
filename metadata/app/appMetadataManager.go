@@ -17,7 +17,6 @@ package app
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -77,13 +76,13 @@ func (mdMgr *AppMetadataManager) FindAppMetadataInternal(appId string, requestLo
 func (mdMgr *AppMetadataManager) LoadAppCache(cliConnection plugin.CliConnection) {
 	appMetadataArray, err := mdMgr.getAppsMetadata(cliConnection)
 	if err != nil {
-		toplog.Warn(fmt.Sprintf("*** app metadata error: %v", err.Error()))
+		toplog.Warn("*** app metadata error: %v", err.Error())
 		return
 	}
 
 	metadataMap := make(map[string]*AppMetadata)
 	for _, appMetadata := range appMetadataArray {
-		//toplog.Debug(fmt.Sprintf("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name))
+		//toplog.Debug("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name)
 		metadataMap[appMetadata.Guid] = appMetadata
 	}
 
@@ -118,7 +117,7 @@ func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnect
 		var appResp AppResponse
 		err := json.Unmarshal(outputBytes, &appResp)
 		if err != nil {
-			toplog.Warn(fmt.Sprintf("*** %v unmarshal parsing output: %v", url, string(outputBytes[:])))
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
 			return appsMetadataArray, err
 		}
 		for _, app := range appResp.Resources {

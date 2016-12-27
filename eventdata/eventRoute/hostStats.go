@@ -16,7 +16,6 @@
 package eventRoute
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
@@ -26,8 +25,12 @@ import (
 type HostSlice []*HostStats
 
 type HostStats struct {
+	hostName string
 	// Key: path (needs to include empty string as key for root path)
 	RouteStatsMap map[string]*RouteStats
+
+	// Key: tcp port (for TCP based routes)
+	TcpRouteStatsMap map[int]*RouteStats
 
 	// If path is not found, dynamically register it to this menu levels deep in path
 	// TODO: Problem -- if the first call is to "/v2" and its dynamically registered
@@ -41,24 +44,35 @@ type HostStats struct {
 
 func NewHostStats(hostName string) *HostStats {
 	stats := &HostStats{}
+	stats.hostName = hostName
 	stats.RouteStatsMap = make(map[string]*RouteStats)
+	stats.TcpRouteStatsMap = make(map[int]*RouteStats)
 	return stats
 }
 
+func (hs *HostStats) AddPort(port int, routeId string) *RouteStats {
+	routeStats := hs.TcpRouteStatsMap[port]
+	if routeStats == nil {
+		routeStats = NewRouteStats(routeId)
+		hs.TcpRouteStatsMap[port] = routeStats
+		hs.rebuildPathIndex()
+	} else {
+		toplog.Error("Attemping to AddPath but one already exists - host: [%v] port: [%v] routeId: %v  existingRoute:%v",
+			hs.hostName, port, routeId, routeStats)
+	}
+	return routeStats
+}
+
 func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
-	/*
-		pathStats := hs.PathStatsMap[appId]
-		if pathStats == nil {
-			pathStats = NewPathStats()
-		}
-	*/
+
 	routeStats := hs.RouteStatsMap[path]
 	if routeStats == nil {
 		routeStats = NewRouteStats(routeId)
 		hs.RouteStatsMap[path] = routeStats
 		hs.rebuildPathIndex()
 	} else {
-		toplog.Error(fmt.Sprintf("Attemping to AddPath but one already exists - path: %v routeId: %v", path, routeId))
+		toplog.Error("Attemping to AddPath but one already exists - host: [%v] path: [%v] routeId: %v  existingRoute:%v",
+			hs.hostName, path, routeId, routeStats)
 	}
 	return routeStats
 }

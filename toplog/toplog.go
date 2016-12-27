@@ -69,22 +69,22 @@ func NewLogLine(level LogLevel, message string, timestamp time.Time) *LogLine {
 	return logLine
 }
 
-func Debug(msg string) {
+func Debug(msg string, a ...interface{}) {
 	if debugEnabled {
-		logMsg(DebugLevel, msg)
+		logMsg(DebugLevel, msg, a...)
 	}
 }
 
-func Info(msg string) {
-	logMsg(InfoLevel, msg)
+func Info(msg string, a ...interface{}) {
+	logMsg(InfoLevel, msg, a...)
 }
 
-func Warn(msg string) {
-	logMsg(WarnLevel, msg)
+func Warn(msg string, a ...interface{}) {
+	logMsg(WarnLevel, msg, a...)
 }
 
-func Error(msg string) {
-	logMsg(ErrorLevel, msg)
+func Error(msg string, a ...interface{}) {
+	logMsg(ErrorLevel, msg, a...)
 	Open()
 }
 
@@ -113,9 +113,10 @@ func scrollToLastLogLine() {
 	debugWidget.viewOffset = viewOffset
 }
 
-func logMsg(level LogLevel, msg string) {
+func logMsg(level LogLevel, msg string, a ...interface{}) {
 	mu.Lock()
 	defer mu.Unlock()
+	msg = fmt.Sprintf(msg, a...)
 	msg = strings.Replace(msg, "\n", " | ", -1)
 	logLine := NewLogLine(level, msg, time.Now())
 	debugLines = append(debugLines, logLine)
