@@ -25,10 +25,10 @@ type AppMetadata struct {
 	CacheTime time.Time
 }
 
-func NewAppMetadata(appStats App) *AppMetadata {
+func NewAppMetadata(app App) *AppMetadata {
 
 	appMetadata := &AppMetadata{}
-	appMetadata.App = &appStats
+	appMetadata.App = &app
 	appMetadata.CacheTime = time.Now()
 	return appMetadata
 }

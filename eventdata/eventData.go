@@ -197,6 +197,7 @@ func (ed *EventData) Clear() {
 
 	ed.AppMap = make(map[string]*eventApp.AppStats)
 	ed.CellMap = make(map[string]*eventCell.CellStats)
+	ed.DomainMap = make(map[string]*eventRoute.DomainStats)
 	ed.TotalEvents = 0
 }
 
@@ -613,19 +614,18 @@ func (ed *EventData) handleRouteStats(msg *events.Envelope) {
 
 }
 
-func (ed *EventData) updateRouteStats(domain string, host string, port string, path string, msg *events.Envelope) {
+func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, port string, path string, appId string) *eventRoute.AppRouteStats {
 
 	domain = strings.ToLower(domain)
 	host = strings.ToLower(host)
 
-	httpEvent := msg.GetHttpStartStop()
 	domainStats := ed.DomainMap[domain]
 	if domainStats == nil {
 		toplog.Info("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path)
+			uri, domain, host, port, path)
 		if len(ed.DomainMap) > MaxDomainBucket {
 			toplog.Warn("domainStats map at max size. The entry will NOT be added")
-			return
+			return nil
 		}
 		domainGuid := util.Pseudo_uuid()
 		domainStats = eventRoute.NewDomainStats(domainGuid)
@@ -634,42 +634,44 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
 		toplog.Info("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path)
+			uri, domain, host, port, path)
 		if len(domainStats.HostStatsMap) > MaxHostBucket {
 			toplog.Warn("hostStats map at max size. The entry will NOT be added")
-			return
+			return nil
 		}
 		// dynamically add new hosts/routes that we don't have pre-registered
 		hostStats = eventRoute.NewHostStats(host)
 		domainStats.HostStatsMap[host] = hostStats
-		//routeGuid := util.Pseudo_uuid()
-		//hostStats.AddPath("", routeGuid)
-	}
-
-	appUUID := httpEvent.GetApplicationId()
-	appId := ""
-	if appUUID != nil {
-		appId = formatUUID(appUUID)
 	}
 
 	routeStats := hostStats.FindRouteStats(path)
 	if routeStats == nil {
 		toplog.Info("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path)
+			uri, domain, host, port, path)
 		// dynamically add root path
-
-		//routeGuid := util.Pseudo_uuid()
-		//routeStats = hostStats.AddPathDynamic("", routeGuid)
-		routeStats = ed.eventProcessor.addInternalRoute(domain, host, path, 0)
+		routeStats = ed.eventProcessor.addInternalRoute(domain, host, "", 0)
 	}
 
 	appRouteStats := routeStats.FindAppRouteStats(appId)
 	if appRouteStats == nil {
 		toplog.Info("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			httpEvent.GetUri(), domain, host, port, path)
+			uri, domain, host, port, path)
 		appRouteStats = eventRoute.NewAppRouteStats(appId)
 		routeStats.AppRouteStatsMap[appId] = appRouteStats
 	}
+
+	return appRouteStats
+}
+
+func (ed *EventData) updateRouteStats(domain string, host string, port string, path string, msg *events.Envelope) {
+
+	httpEvent := msg.GetHttpStartStop()
+	appUUID := httpEvent.GetApplicationId()
+	appId := ""
+	if appUUID != nil {
+		appId = formatUUID(appUUID)
+	}
+	appRouteStats := ed.GetAppRouteStats(httpEvent.GetUri(), domain, host, port, path, appId)
 
 	httpMethod := httpEvent.GetMethod()
 	httpMethodStats := appRouteStats.FindHttpMethodStats(httpMethod)

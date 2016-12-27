@@ -109,8 +109,11 @@ func (mdMgr *AppMetadataManager) GetAppMetadataInternal(cliConnection plugin.Cli
 }
 
 func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnection) ([]*AppMetadata, error) {
+	return GetAppsMetadataFromUrl(cliConnection, "/v2/apps")
+}
 
-	url := "/v2/apps"
+func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]*AppMetadata, error) {
+
 	appsMetadataArray := []*AppMetadata{}
 
 	handleRequest := func(outputBytes []byte) (interface{}, error) {

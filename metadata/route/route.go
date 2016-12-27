@@ -17,8 +17,10 @@ package route
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -63,7 +65,13 @@ func CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid s
 var (
 	routesMetadataCache         []*Route
 	internalRoutesMetadataCache []*Route
+	// Key: routeId, value: list of AppId
+	appsForRouteCache map[string][]string
 )
+
+func init() {
+	appsForRouteCache = make(map[string][]string)
+}
 
 func AllRoutes() []*Route {
 	return routesMetadataCache
@@ -83,6 +91,19 @@ func FindRouteMetadata(routeGuid string) *Route {
 	return &Route{Guid: routeGuid}
 }
 
+func FindAppIdsForRouteMetadata(cliConnection plugin.CliConnection, routeGuid string) []string {
+	appIds := appsForRouteCache[routeGuid]
+	if appIds == nil {
+		// We stick an empty array in to prevent triggering go routine multiple times
+		// TODO: Find a better way to do this
+		// TODO: Need a way to do a callback / tickle when metadata is loaded so
+		// caller who wanted the data can refresh screen (if still relevant)
+		appsForRouteCache[routeGuid] = make([]string, 0)
+		go LoadAppsForRouteCache(cliConnection, routeGuid)
+	}
+	return appIds
+}
+
 func LoadRouteCache(cliConnection plugin.CliConnection) {
 	data, err := getRouteMetadata(cliConnection)
 	if err != nil {
@@ -90,6 +111,32 @@ func LoadRouteCache(cliConnection plugin.CliConnection) {
 		return
 	}
 	routesMetadataCache = data
+}
+
+func LoadAppsForRouteCache(cliConnection plugin.CliConnection, routeId string) {
+	appIds := getAppIdsForRoute(cliConnection, routeId)
+	if appIds != nil {
+		appsForRouteCache[routeId] = appIds
+	}
+}
+
+func getAppIdsForRoute(cliConnection plugin.CliConnection, routeId string) []string {
+	appList, err := getAppsForRoute(cliConnection, routeId)
+	if err != nil {
+		toplog.Warn("*** getAppsForRoute metadata error: %v", err.Error())
+		return nil
+	}
+	appIdList := make([]string, len(appList))
+	for i, app := range appList {
+		appIdList[i] = app.Guid
+	}
+	return appIdList
+}
+
+func getAppsForRoute(cliConnection plugin.CliConnection, routeId string) ([]*app.AppMetadata, error) {
+	url := fmt.Sprintf("/v2/routes/%v/apps", routeId)
+	toplog.Debug("getAppsForRoute url: %v", url)
+	return app.GetAppsMetadataFromUrl(cliConnection, url)
 }
 
 func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
@@ -108,7 +155,6 @@ func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
 		}
 		for _, item := range response.Resources {
 			item.Entity.Guid = item.Meta.Guid
-			//itemMetadata := NewRouteMetadata(item.Entity)
 			entity := item.Entity
 			metadata = append(metadata, &entity)
 		}

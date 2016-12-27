@@ -19,15 +19,18 @@ import (
 	"fmt"
 	"log"
 
+	"strings"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/jroimartin/gocui"
@@ -48,6 +51,9 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("TOTREQ", true),
+		uiCommon.NewSortColumn("appName", false),
+		uiCommon.NewSortColumn("spaceName", false),
+		uiCommon.NewSortColumn("orgName", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
@@ -61,7 +67,7 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView.SetTitle("Route Map List")
 	dataListView.HelpText = helpText
-	dataListView.HelpTextTips = appView.HelpTextTips
+	dataListView.HelpTextTips = cellDetailView.HelpTextTips
 
 	asUI.DataListView = dataListView
 
@@ -133,6 +139,36 @@ func (asUI *RouteMapListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (asUI *RouteMapListView) seedAppsWithNoTraffic(routeStats *eventRoute.RouteStats) {
+
+	routeMd := route.FindRouteMetadata(asUI.routeId)
+	if routeMd.InternalGenerated {
+		return
+	}
+
+	appIds := route.FindAppIdsForRouteMetadata(asUI.GetEventProcessor().GetCliConnection(), asUI.routeId)
+	for _, appId := range appIds {
+		appRouteStats := routeStats.FindAppRouteStats(appId)
+		if appRouteStats == nil {
+			/*
+				toplog.Info("seedAppsWithNoTraffic adding appId %v to routeId %v",
+					appId, asUI.routeId)
+			*/
+			appRouteStats = eventRoute.NewAppRouteStats(appId)
+			routeStats.AppRouteStatsMap[appId] = appRouteStats
+		}
+	}
+}
+
+func (asUI *RouteMapListView) seedAppsWithNoTraffic2(domainName string, hostName string, port string, pathName string) {
+	appIds := route.FindAppIdsForRouteMetadata(asUI.GetEventProcessor().GetCliConnection(), asUI.routeId)
+	// TODO: Need to lock as we are dealing with live stats
+	currentData := asUI.GetEventProcessor().GetCurrentEventData()
+	for _, appId := range appIds {
+		currentData.GetAppRouteStats("", domainName, hostName, port, pathName, appId)
+	}
+}
+
 func (asUI *RouteMapListView) GetListData() []uiCommon.IData {
 	displayDataList := asUI.postProcessData()
 	listData := asUI.convertToListData(displayDataList)
@@ -146,8 +182,8 @@ func (asUI *RouteMapListView) postProcessData() []*displaydata.DisplayRouteMapSt
 
 	routeMd := route.FindRouteMetadata(asUI.routeId)
 	domainMd := domain.FindDomainMetadata(routeMd.DomainGuid)
-	domainName := domainMd.Name
-	hostName := routeMd.Host
+	domainName := strings.ToLower(domainMd.Name)
+	hostName := strings.ToLower(routeMd.Host)
 	pathName := routeMd.Path
 	port := routeMd.Port
 
@@ -156,6 +192,8 @@ func (asUI *RouteMapListView) postProcessData() []*displaydata.DisplayRouteMapSt
 
 	if port == 0 {
 		routeStats := hostStats.RouteStatsMap[pathName]
+
+		asUI.seedAppsWithNoTraffic(routeStats)
 
 		for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 

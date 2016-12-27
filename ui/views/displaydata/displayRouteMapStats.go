@@ -57,3 +57,7 @@ func NewDisplayRouteMapStats(routeStats *eventRoute.RouteStats, appId, appName, 
 
 	return stats
 }
+
+func (cs *DisplayRouteMapStats) Id() string {
+	return cs.AppId
+}
