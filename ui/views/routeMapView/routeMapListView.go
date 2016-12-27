@@ -55,8 +55,6 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("TOTREQ", true),
 		uiCommon.NewSortColumn("appName", false),
-		uiCommon.NewSortColumn("spaceName", false),
-		uiCommon.NewSortColumn("orgName", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
@@ -84,8 +82,6 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 func (asUI *RouteMapListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, columnAppName())
-	columns = append(columns, columnSpaceName())
-	columns = append(columns, columnOrgName())
 
 	columns = append(columns, columnTotalRequests())
 	columns = append(columns, column2xx())

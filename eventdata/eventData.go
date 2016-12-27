@@ -633,15 +633,22 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 	}
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
-		toplog.Debug("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
-			uri, domain, host, port, path)
-		if len(domainStats.HostStatsMap) > MaxHostBucket {
-			toplog.Warn("hostStats map at max size. The entry will NOT be added")
-			return nil
+		// Check if we have a wildcard hostname
+		hostStats = domainStats.HostStatsMap["*"]
+		if hostStats != nil {
+			toplog.Debug("hostStats wildcard found for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+				uri, domain, host, port, path)
+		} else {
+			toplog.Debug("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+				uri, domain, host, port, path)
+			if len(domainStats.HostStatsMap) > MaxHostBucket {
+				toplog.Warn("hostStats map at max size. The entry will NOT be added")
+				return nil
+			}
+			// dynamically add new hosts/routes that we don't have pre-registered
+			hostStats = eventRoute.NewHostStats(host)
+			domainStats.HostStatsMap[host] = hostStats
 		}
-		// dynamically add new hosts/routes that we don't have pre-registered
-		hostStats = eventRoute.NewHostStats(host)
-		domainStats.HostStatsMap[host] = hostStats
 	}
 
 	routeStats := hostStats.FindRouteStats(path)

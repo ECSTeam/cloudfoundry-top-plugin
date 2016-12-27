@@ -30,7 +30,11 @@ func columnAppName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		appStats := data.(*displaydata.DisplayRouteMapStats)
-		return util.FormatDisplayData(appStats.AppName, defaultColSize)
+		value := appStats.AppName
+		if len(value) == 0 {
+			value = "n/a"
+		}
+		return util.FormatDisplayData(value, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*displaydata.DisplayRouteMapStats)
