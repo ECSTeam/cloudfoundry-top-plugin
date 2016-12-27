@@ -231,9 +231,9 @@ func (ep *EventProcessor) addRoute(domain string, host string, path string, port
 		//toplog.Info("seed hostStats: %v", host)
 	}
 	if port == 0 {
-		return hostStats.AddPath(path, routeGuid)
+		return hostStats.AddPath(path, routeGuid, true)
 	} else {
-		return hostStats.AddPort(port, routeGuid)
+		return hostStats.AddPort(port, routeGuid, true)
 	}
 }
 

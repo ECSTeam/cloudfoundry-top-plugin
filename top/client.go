@@ -94,6 +94,15 @@ func (c *Client) Start() {
 		return
 	}
 
+	fmt.Printf("Loading...")
+	// We request an access token to confirm that authentication has not expired
+	_, err = conn.AccessToken()
+	if err != nil {
+		c.ui.Failed("AccessToken failed: %v", err)
+		return
+	}
+	fmt.Printf("\r           \r")
+
 	ui := ui.NewMasterUI(conn)
 	c.router = ui.GetRouter()
 

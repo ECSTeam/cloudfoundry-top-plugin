@@ -621,7 +621,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 
 	domainStats := ed.DomainMap[domain]
 	if domainStats == nil {
-		toplog.Info("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Debug("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
 		if len(ed.DomainMap) > MaxDomainBucket {
 			toplog.Warn("domainStats map at max size. The entry will NOT be added")
@@ -633,7 +633,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 	}
 	hostStats := domainStats.HostStatsMap[host]
 	if hostStats == nil {
-		toplog.Info("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Debug("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
 		if len(domainStats.HostStatsMap) > MaxHostBucket {
 			toplog.Warn("hostStats map at max size. The entry will NOT be added")
@@ -646,7 +646,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 
 	routeStats := hostStats.FindRouteStats(path)
 	if routeStats == nil {
-		toplog.Info("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Debug("routeStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
 		// dynamically add root path
 		routeStats = ed.eventProcessor.addInternalRoute(domain, host, "", 0)
@@ -654,7 +654,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 
 	appRouteStats := routeStats.FindAppRouteStats(appId)
 	if appRouteStats == nil {
-		toplog.Info("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
+		toplog.Debug("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
 		appRouteStats = eventRoute.NewAppRouteStats(appId)
 		routeStats.AppRouteStatsMap[appId] = appRouteStats
@@ -676,7 +676,7 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	httpMethod := httpEvent.GetMethod()
 	httpMethodStats := appRouteStats.FindHttpMethodStats(httpMethod)
 	if httpMethodStats == nil {
-		toplog.Info("httpMethodStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v] method:[%v]",
+		toplog.Debug("httpMethodStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v] method:[%v]",
 			httpEvent.GetUri(), domain, host, port, path, httpMethod)
 		httpMethodStats = eventRoute.NewHttpMethodStats(httpMethod)
 		appRouteStats.HttpMethodStatsMap[httpMethod] = httpMethodStats

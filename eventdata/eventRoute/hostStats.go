@@ -50,20 +50,22 @@ func NewHostStats(hostName string) *HostStats {
 	return stats
 }
 
-func (hs *HostStats) AddPort(port int, routeId string) *RouteStats {
+func (hs *HostStats) AddPort(port int, routeId string, ignoreOnExists bool) *RouteStats {
 	routeStats := hs.TcpRouteStatsMap[port]
 	if routeStats == nil {
 		routeStats = NewRouteStats(routeId)
 		hs.TcpRouteStatsMap[port] = routeStats
 		hs.rebuildPathIndex()
 	} else {
-		toplog.Error("Attemping to AddPath but one already exists - host: [%v] port: [%v] routeId: %v  existingRoute:%v",
-			hs.hostName, port, routeId, routeStats)
+		if !ignoreOnExists {
+			toplog.Error("Attemping to AddPath but one already exists - host: [%v] port: [%v] routeId: %v  existingRoute:%v",
+				hs.hostName, port, routeId, routeStats)
+		}
 	}
 	return routeStats
 }
 
-func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
+func (hs *HostStats) AddPath(path string, routeId string, ignoreOnExists bool) *RouteStats {
 
 	routeStats := hs.RouteStatsMap[path]
 	if routeStats == nil {
@@ -71,8 +73,10 @@ func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
 		hs.RouteStatsMap[path] = routeStats
 		hs.rebuildPathIndex()
 	} else {
-		toplog.Error("Attemping to AddPath but one already exists - host: [%v] path: [%v] routeId: %v  existingRoute:%v",
-			hs.hostName, path, routeId, routeStats)
+		if !ignoreOnExists {
+			toplog.Error("Attemping to AddPath but one already exists - host: [%v] path: [%v] routeId: %v  existingRoute:%v",
+				hs.hostName, path, routeId, routeStats)
+		}
 	}
 	return routeStats
 }
@@ -80,7 +84,7 @@ func (hs *HostStats) AddPath(path string, routeId string) *RouteStats {
 func (hs *HostStats) AddPathDynamic(fullPath string, routeId string) *RouteStats {
 	// TODO: based on fullPath and hs.dynamicAddPathDepth tuncate the
 	// fullPath if needed to get it to dynamicAddPathDepth size, then add
-	rs := hs.AddPath(fullPath, routeId)
+	rs := hs.AddPath(fullPath, routeId, false)
 	return rs
 }
 
