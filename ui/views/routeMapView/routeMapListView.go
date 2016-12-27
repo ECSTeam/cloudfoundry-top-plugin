@@ -39,6 +39,8 @@ import (
 type RouteMapListView struct {
 	*dataView.DataListView
 	routeId string
+
+	routeMapDetailWidget *RouteMapDetailWidget
 }
 
 func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
@@ -48,6 +50,7 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI := &RouteMapListView{}
 	asUI.routeId = routeId
+	detailWidgetViewHeight := 5
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("TOTREQ", true),
@@ -57,7 +60,7 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
-		name, topMargin, bottomMargin,
+		name, topMargin+detailWidgetViewHeight+1, bottomMargin,
 		eventProcessor, asUI.columnDefinitions(),
 		defaultSortColumns)
 
@@ -70,6 +73,9 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.HelpTextTips = cellDetailView.HelpTextTips
 
 	asUI.DataListView = dataListView
+
+	asUI.routeMapDetailWidget = NewRouteMapDetailWidget(masterUI, "routeMapDetailWidget", detailWidgetViewHeight, asUI)
+	masterUI.LayoutManager().Add(asUI.routeMapDetailWidget)
 
 	return asUI
 
@@ -115,6 +121,9 @@ func (asUI *RouteMapListView) initializeCallback(g *gocui.Gui, viewName string) 
 
 func (asUI *RouteMapListView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error {
 	if err := asUI.GetMasterUI().CloseView(asUI); err != nil {
+		return err
+	}
+	if err := asUI.GetMasterUI().CloseView(asUI.routeMapDetailWidget); err != nil {
 		return err
 	}
 	return nil

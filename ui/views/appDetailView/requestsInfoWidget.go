@@ -78,7 +78,7 @@ func (w *RequestsInfoWidget) getAppName() string {
 
 func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
-	v, err := g.View("requestsInfoWidget")
+	v, err := g.View(w.name)
 	if err != nil {
 		return err
 	}

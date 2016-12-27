@@ -41,6 +41,8 @@ type Domain struct {
 	RouterGroupGuid        string `json:"router_group_guid"`
 	RouterGroupType        string `json:"router_group_type"`
 	OwningOrganizationGuid string `json:"owning_organization_guid"`
+
+	SharedDomain bool
 }
 
 var (
@@ -74,6 +76,9 @@ func LoadDomainCache(cliConnection plugin.CliConnection) {
 	if err != nil {
 		toplog.Warn("*** shared_domains metadata error: %v", err.Error())
 		return
+	}
+	for _, domain := range sharedDomains {
+		domain.SharedDomain = true
 	}
 
 	privateDomains, err := getDomainMetadata(cliConnection, "/v2/private_domains")
