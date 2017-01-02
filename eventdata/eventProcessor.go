@@ -205,6 +205,10 @@ func (ep *EventProcessor) seedRouteData() {
 
 func (ep *EventProcessor) addInternalRoute(domainName string, hostName string, pathName string, port int) *eventRoute.RouteStats {
 	domain := domain.FindDomainMetadataByName(domainName)
+	if domain == nil {
+		toplog.Warn("addInternalRoute for domain %v but domain metadata not found (or not loaded)", domainName)
+		return nil
+	}
 	route := route.CreateInternalGeneratedRoute(hostName, pathName, domain.Guid, port)
 	return ep.addRoute(domainName, hostName, pathName, port, route.Guid)
 }
@@ -215,9 +219,6 @@ func (ep *EventProcessor) addRoute(domain string, host string, path string, port
 	host = strings.ToLower(host)
 
 	currentDomainStatsMap := ep.currentEventData.DomainMap
-
-	//domainMd := metadata.FindDomainMetadataByName(domain)
-
 	domainStats := currentDomainStatsMap[domain]
 	if domainStats == nil {
 		// New domain we haven't seen yet

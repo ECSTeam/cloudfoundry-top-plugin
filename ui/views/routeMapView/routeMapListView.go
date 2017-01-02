@@ -165,14 +165,6 @@ func (asUI *RouteMapListView) seedAppsWithNoTraffic(routeStats *eventRoute.Route
 	}
 }
 
-func (asUI *RouteMapListView) seedAppsWithNoTraffic2(domainName string, hostName string, port string, pathName string) {
-	appIds := route.FindAppIdsForRouteMetadata(asUI.GetEventProcessor().GetCliConnection(), asUI.routeId)
-	// TODO: Need to lock as we are dealing with live stats
-	currentData := asUI.GetEventProcessor().GetCurrentEventData()
-	for _, appId := range appIds {
-		currentData.GetAppRouteStats("", domainName, hostName, port, pathName, appId)
-	}
-}
 
 func (asUI *RouteMapListView) GetListData() []uiCommon.IData {
 	displayDataList := asUI.postProcessData()

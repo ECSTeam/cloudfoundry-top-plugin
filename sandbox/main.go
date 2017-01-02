@@ -81,7 +81,7 @@ func delMsg(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func quit3(g *gocui.Gui, v *gocui.View) error {
+func quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
@@ -157,7 +157,7 @@ func saveVisualMain(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func layout3(g *gocui.Gui) error {
+func layout(g *gocui.Gui) error {
 	_, maxY := g.Size()
 	if v, err := g.SetView("side", -1, -1, 30, maxY); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -209,7 +209,7 @@ func layout3(g *gocui.Gui) error {
 	return nil
 }
 
-func mainX4() {
+func main() {
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)

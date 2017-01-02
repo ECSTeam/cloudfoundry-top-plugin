@@ -657,6 +657,9 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 			uri, domain, host, port, path)
 		// dynamically add root path
 		routeStats = ed.eventProcessor.addInternalRoute(domain, host, "", 0)
+		if routeStats == nil {
+			return nil
+		}
 	}
 
 	appRouteStats := routeStats.FindAppRouteStats(appId)
@@ -679,6 +682,10 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 		appId = formatUUID(appUUID)
 	}
 	appRouteStats := ed.GetAppRouteStats(httpEvent.GetUri(), domain, host, port, path, appId)
+	if appRouteStats == nil {
+		// An internal error occured -- we can't track this stat at this time
+		return
+	}
 
 	httpMethod := httpEvent.GetMethod()
 	httpMethodStats := appRouteStats.FindHttpMethodStats(httpMethod)

@@ -26,7 +26,7 @@ func mainX5() {
 	}
 }
 
-func layout(g *gocui.Gui) error {
+func layout3(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	if v, err := g.SetView("colors", -1, -1, maxX, maxY); err != nil {
 		if err != gocui.ErrUnknownView {
@@ -62,6 +62,6 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
-func quit(g *gocui.Gui, v *gocui.View) error {
+func quit3(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
