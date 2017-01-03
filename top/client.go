@@ -32,7 +32,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	gops "github.com/mitchellh/go-ps"
 )
 
