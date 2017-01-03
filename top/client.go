@@ -103,37 +103,43 @@ func (c *Client) Start() {
 	fmt.Printf("\r           \r")
 
 	ui := ui.NewMasterUI(conn)
+
 	c.router = ui.GetRouter()
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
-	subscriptionID := "TopPlugin_" + util.Pseudo_uuid()
-	go c.createNozzles(subscriptionID)
+	apps, err := c.cliConnection.GetApps()
+	if err != nil {
+		c.ui.Failed("Fetching all Apps failed: %v", err)
+		return
+	}
+
+	for i, application := range apps {
+		c.createNozzles(application.Guid, application.Name, i)
+	}
 
 	ui.Start()
 
 }
 
-func (c *Client) createNozzles(subscriptionID string) {
-	for i := 0; i < c.options.Nozzles; i++ {
-		go c.createAndKeepAliveNozzle(subscriptionID, i)
-	}
-	toplog.Info("Starting %v nozzle instances", c.options.Nozzles)
+func (c *Client) createNozzles(appGUID, appName string, instanceID int) {
+	go c.createAndKeepAliveNozzle(appGUID, instanceID)
+	toplog.Info("Starting nozzle #%v instance for App %s", instanceID, appName)
 }
 
-func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int) error {
+func (c *Client) createAndKeepAliveNozzle(appGUID string, instanceID int) error {
 
 	minRetrySeconds := (2 * time.Second)
 
 	for {
 		// This is a blocking call if no error
 		startTime := time.Now()
-		err := c.createNozzle(subscriptionID, instanceId)
+		err := c.createNozzle(appGUID, instanceID)
 		if err != nil {
 			errMsg := err.Error()
 			notAuthorized := strings.Contains(errMsg, "authorized")
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) || notAuthorized {
-				toplog.Error("Nozzle #%v - Stopped with error: %v", instanceId, err)
+				toplog.Error("Nozzle #%v - Stopped with error: %v", instanceID, err)
 				if notAuthorized {
 					toplog.Error("Are you sure you have 'admin' privileges on foundation?")
 					toplog.Error("See needed permissions for this plugin here:")
@@ -141,22 +147,22 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 				}
 				break
 			}
-			toplog.Warn("Nozzle #%v - error: %v", instanceId, err)
+			toplog.Warn("Nozzle #%v - error: %v", instanceID, err)
 		}
-		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId)
+		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceID)
 		lastRetry := time.Now().Sub(startTime)
 		if lastRetry < minRetrySeconds {
-			toplog.Info("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceId, minRetrySeconds)
+			toplog.Info("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceID, minRetrySeconds)
 			time.Sleep(minRetrySeconds)
 		}
 	}
 	return nil
 }
 
-func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
+func (c *Client) createNozzle(appGUID string, instanceID int) error {
 
 	// Delay each nozzle instance creation by 1 second
-	time.Sleep(time.Duration(instanceId) * time.Second)
+	time.Sleep(time.Duration(instanceID) * time.Second)
 
 	conn := c.cliConnection
 	dopplerEndpoint, err := conn.DopplerEndpoint()
@@ -171,23 +177,20 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 
-	tokenRefresher := NewTokenRefresher(conn, instanceId)
+	tokenRefresher := NewTokenRefresher(conn, instanceID)
 	dopplerConnection.RefreshTokenFrom(tokenRefresher)
-	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
-	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
-	dopplerConnection.SetIdleTimeout(15 * time.Second)
 
 	authToken, err := conn.AccessToken()
 	if err != nil {
 		return err
 	}
 
-	messages, errors := dopplerConnection.Firehose(subscriptionID, authToken)
+	messages, errors := dopplerConnection.StreamWithoutReconnect(appGUID, authToken)
 	defer dopplerConnection.Close()
 
-	toplog.Info("Nozzle #%v - Started", instanceId)
+	toplog.Info("Nozzle #%v for %s - Started", instanceID, appGUID)
 
-	eventError := c.routeEvents(instanceId, messages, errors)
+	eventError := c.routeEvents(instanceID, messages, errors)
 	if eventError != nil {
 		msg := eventError.Error()
 		if strings.Contains(msg, "Invalid authorization") {
@@ -197,13 +200,13 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	return nil
 }
 
-func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, errors <-chan error) error {
+func (c *Client) routeEvents(instanceID int, messages <-chan *events.Envelope, errors <-chan error) error {
 	for {
 		select {
 		case envelope := <-messages:
-			c.router.Route(instanceId, envelope)
+			c.router.Route(instanceID, envelope)
 		case err := <-errors:
-			c.handleError(instanceId, err)
+			c.handleError(instanceID, err)
 			// Nozzle connection does not seem to recover from errors well, so
 			// return here so it can be closed and a new instanced opened
 			return err
@@ -211,17 +214,17 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 	}
 }
 
-func (c *Client) handleError(instanceId int, err error) {
+func (c *Client) handleError(instanceID int, err error) {
 
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
-		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceID, err)
 		toplog.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceID, err)
 		toplog.Error(msg)
 	default:
-		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceID, err)
 		toplog.Error(msg)
 	}
 }
