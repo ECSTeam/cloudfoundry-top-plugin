@@ -36,6 +36,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -286,8 +287,8 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("routeListView", "Route Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventListView", "Event Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("eventstats", "TODO: Event Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	selectDisplayView.SetMenuId(mui.displayMenuId)
@@ -321,6 +322,8 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 		dataView = cellView.NewCellListView(mui, "cellListView", mui.helpTextTipsViewSize, ep)
 	case "routeListView":
 		dataView = routeView.NewRouteListView(mui, "routeListView", mui.helpTextTipsViewSize, ep)
+	case "eventListView":
+		dataView = eventView.NewEventListView(mui, "eventListView", mui.helpTextTipsViewSize, ep)
 	case "capacityPlanView":
 		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.helpTextTipsViewSize, ep)
 

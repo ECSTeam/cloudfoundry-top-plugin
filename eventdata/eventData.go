@@ -27,6 +27,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -40,7 +41,9 @@ type EventData struct {
 	AppMap  map[string]*eventApp.AppStats
 	CellMap map[string]*eventCell.CellStats
 	// Domain name: Both shared + private
-	DomainMap           map[string]*eventRoute.DomainStats
+	DomainMap    map[string]*eventRoute.DomainStats
+	EventTypeMap map[events.Envelope_EventType]*eventEventType.EventTypeStats
+
 	EnableRouteTracking bool
 	TotalEvents         int64
 	mu                  *sync.Mutex
@@ -72,6 +75,7 @@ func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 		AppMap:         make(map[string]*eventApp.AppStats),
 		CellMap:        make(map[string]*eventCell.CellStats),
 		DomainMap:      make(map[string]*eventRoute.DomainStats),
+		EventTypeMap:   make(map[events.Envelope_EventType]*eventEventType.EventTypeStats),
 		TotalEvents:    0,
 		mu:             mu,
 		logHttpAccess:  logHttpAccess,
@@ -88,6 +92,8 @@ func (ed *EventData) Process(instanceId int, msg *events.Envelope) {
 
 	ed.mu.Lock()
 	defer ed.mu.Unlock()
+
+	ed.UpdateEventStats(msg)
 
 	eventType := msg.GetEventType()
 	switch eventType {
@@ -106,6 +112,25 @@ func (ed *EventData) Process(instanceId int, msg *events.Envelope) {
 		}
 	}
 
+}
+
+func (ed *EventData) UpdateEventStats(msg *events.Envelope) {
+	eventTypeStats := ed.FindEventTypeStats(msg.GetEventType())
+	originStats := eventTypeStats.FindEventOriginStats(msg.GetOrigin())
+	eventDetailStats := originStats.FindEventDetailStats(msg)
+	eventDetailStats.EventCount = eventDetailStats.EventCount + 1
+	eventDetailStats.LastEventTime = time.Now()
+	// TODO: Replace above time.Now() with time from msg
+	// eventDetailStats.LastEventTime = msg.GetTimestamp
+}
+
+func (ed *EventData) FindEventTypeStats(eventType events.Envelope_EventType) *eventEventType.EventTypeStats {
+	eventTypeStats := ed.EventTypeMap[eventType]
+	if eventTypeStats == nil {
+		eventTypeStats = eventEventType.NewEventTypeStats(eventType)
+		ed.EventTypeMap[eventType] = eventTypeStats
+	}
+	return eventTypeStats
 }
 
 func (ed *EventData) Clone() *EventData {
