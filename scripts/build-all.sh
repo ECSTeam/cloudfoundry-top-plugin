@@ -69,7 +69,7 @@ if [[ "$1" = "release" ]] ; then
 	$GOPATH/bin/github-release release \
     --tag $TAG \
     --name "Cloud Foundry top plugin $TAG" \
-    --description "$TAG release - work in progress"
+    --description "$TAG release - Added Route Stats and Event Stats"
 
 	$GOPATH/bin/github-release upload \
     --tag $TAG \

@@ -49,6 +49,10 @@ func NewEventDetailListView(masterUI masterUIInterface.MasterUIInterface,
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("COUNT", true),
+		uiCommon.NewSortColumn("DNAME", true),
+		uiCommon.NewSortColumn("JOB_NAME", true),
+		uiCommon.NewSortColumn("JOB_IDX", true),
+		uiCommon.NewSortColumn("IP", true),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,

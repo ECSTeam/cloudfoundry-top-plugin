@@ -41,6 +41,7 @@ func NewEventListView(masterUI masterUIInterface.MasterUIInterface,
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("COUNT", true),
+		uiCommon.NewSortColumn("EVENT_TYPE", true),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,

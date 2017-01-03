@@ -47,6 +47,7 @@ func NewEventOriginListView(masterUI masterUIInterface.MasterUIInterface,
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("COUNT", true),
+		uiCommon.NewSortColumn("ORIGIN", true),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
