@@ -9,6 +9,9 @@ If you are a foundation operator you will want to use top in privileged mode.  T
 correct permissions are granted to your Cloud Foundry login (or if you are logged in via `admin` account).  See
 [Assign Permissions](#assign-permissions-if-privileged-mode-is-needed) for more information on assigning permissions.
 
+
+[Installation Instructions](#installation) 
+
 ![Screenshot](screenshots/screencast1.gif?raw=true)
 
 ## Screenshots
