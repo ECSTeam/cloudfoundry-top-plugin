@@ -16,16 +16,14 @@
 package main_test
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/cloudfoundry/cli/plugin/models"
+	io_helpers "code.cloudfoundry.org/cli/util/testhelpers/io"
 	"github.com/cloudfoundry/cli/plugin/pluginfakes"
-	io_helpers "github.com/cloudfoundry/cli/testhelpers/io"
-	. "github.com/cloudfoundry/firehose-plugin"
 	"github.com/cloudfoundry/firehose-plugin/testhelpers"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	. "github.com/ecsteam/cloudfoundry-top-plugin"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -37,7 +35,7 @@ const (
 var _ = Describe("TopPlugin", func() {
 	Describe(".Run", func() {
 		var fakeCliConnection *pluginfakes.FakeCliConnection
-		var ToprCmd *ToprCmd
+		var ToprCmd *TopCmd
 		var fakeFirehose *testhelpers.FakeFirehose
 
 		BeforeEach(func() {
@@ -48,60 +46,13 @@ var _ = Describe("TopPlugin", func() {
 			fakeCliConnection = &pluginfakes.FakeCliConnection{}
 			fakeCliConnection.AccessTokenReturns(ACCESS_TOKEN, nil)
 			fakeCliConnection.DopplerEndpointReturns(fakeFirehose.URL(), nil)
-			ToprCmd = &ToprCmd{}
+			ToprCmd = &TopCmd{}
 		})
 
 		AfterEach(func() {
 			fakeFirehose.Close()
 		})
 
-		Context("when invoked via 'app-Top'", func() {
-			Context("when app name is not recognized", func() {
-				BeforeEach(func() {
-					fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{}, errors.New("App not found"))
-				})
-				It("returns error message", func(done Done) {
-					defer close(done)
-					outputChan := make(chan []string)
-					go func() {
-						output := io_helpers.CaptureOutput(func() {
-							ToprCmd.Run(fakeCliConnection, []string{"app-Top", "IDontExist"})
-						})
-						outputChan <- output
-					}()
-
-					var output []string
-					Eventually(outputChan, 2).Should(Receive(&output))
-					outputString := strings.Join(output, "|")
-
-					Expect(outputString).To(ContainSubstring("App not found"))
-				}, 3)
-
-			})
-			Context("when app name is valid", func() {
-				BeforeEach(func() {
-					fakeFirehose.AppMode = true
-					fakeFirehose.AppName = "app-guid"
-					fakeCliConnection.GetAppReturns(plugin_models.GetAppModel{Guid: "app-guid"}, nil)
-				})
-				It("displays app logs", func(done Done) {
-					defer close(done)
-					outputChan := make(chan []string)
-					go func() {
-						output := io_helpers.CaptureOutput(func() {
-							ToprCmd.Run(fakeCliConnection, []string{"app-Top", "spring-music", "-f", "LogMessage"})
-						})
-						outputChan <- output
-					}()
-
-					var output []string
-					Eventually(outputChan, 2).Should(Receive(&output))
-					outputString := strings.Join(output, "|")
-
-					Expect(outputString).To(ContainSubstring("logMessage:<message:\"Log Message\""))
-				})
-			})
-		})
 		Context("when invoked via 'Top'", func() {
 			It("displays debug logs when debug flag is passed", func(done Done) {
 				defer close(done)

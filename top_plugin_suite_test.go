@@ -16,7 +16,7 @@
 package main_test
 
 import (
-	"github.com/cloudfoundry/cli/testhelpers/pluginbuilder"
+	"code.cloudfoundry.org/cli/util/testhelpers/pluginbuilder"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

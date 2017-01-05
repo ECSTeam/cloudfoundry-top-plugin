@@ -29,6 +29,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 type FakeFirehose struct {
@@ -135,29 +136,6 @@ func (f *FakeFirehose) SendEvent(eventType events.Envelope_EventType, message st
 			Source:  proto.String("source"),
 			Code:    proto.Int32(404),
 			Message: proto.String(message),
-		}
-	case events.Envelope_HttpStart:
-		envelope.EventType = events.Envelope_HttpStart.Enum()
-		uuid, _ := uuid.NewV4()
-		envelope.HttpStart = &events.HttpStart{
-			Timestamp:     proto.Int64(12),
-			RequestId:     NewUUID(uuid),
-			PeerType:      events.PeerType_Client.Enum(),
-			Method:        events.Method_GET.Enum(),
-			Uri:           proto.String("some uri"),
-			RemoteAddress: proto.String("some address"),
-			UserAgent:     proto.String(message),
-		}
-	case events.Envelope_HttpStop:
-		envelope.EventType = events.Envelope_HttpStop.Enum()
-		uuid, _ := uuid.NewV4()
-		envelope.HttpStop = &events.HttpStop{
-			Timestamp:     proto.Int64(12),
-			Uri:           proto.String("http://stop.example.com"),
-			RequestId:     NewUUID(uuid),
-			PeerType:      events.PeerType_Client.Enum(),
-			StatusCode:    proto.Int32(404),
-			ContentLength: proto.Int64(98475189),
 		}
 	case events.Envelope_HttpStartStop:
 		envelope.EventType = events.Envelope_HttpStartStop.Enum()

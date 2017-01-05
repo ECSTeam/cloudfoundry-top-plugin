@@ -18,11 +18,13 @@ package top
 import (
 	"bufio"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/Jeffail/gabs"
 	"github.com/cloudfoundry/cli/cf/terminal"
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/cloudfoundry/noaa/consumer"
@@ -36,6 +38,7 @@ import (
 	gops "github.com/mitchellh/go-ps"
 )
 
+// Client struct
 type Client struct {
 	options       *ClientOptions
 	ui            terminal.UI
@@ -44,14 +47,15 @@ type Client struct {
 	router        *eventrouting.EventRouter
 }
 
+// ClientOptions needed to start the Client
 type ClientOptions struct {
-	AppGUID    string
 	Debug      bool
 	NoTopCheck bool
 	Cygwin     bool
 	Nozzles    int
 }
 
+// NewClient instantiating the top client
 func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
 
 	return &Client{
@@ -61,7 +65,7 @@ func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui te
 	}
 }
 
-// Created mine own Ask func instead of the CF provided one because the CF version adds
+// Ask Created my own Ask func instead of the CF provided one because the CF version adds
 // a call to PromptColor(">") which does not work cleanly on MS-Windows
 func (c *Client) Ask(prompt string) string {
 	fmt.Printf("%s ", prompt)
@@ -73,6 +77,7 @@ func (c *Client) Ask(prompt string) string {
 	return ""
 }
 
+// Start starting the client
 func (c *Client) Start() {
 
 	if !c.options.NoTopCheck && c.shouldExitTop() {
@@ -95,46 +100,65 @@ func (c *Client) Start() {
 	}
 
 	fmt.Printf("Loading...")
-	// We request an access token to confirm that authentication has not expired
-	_, err = conn.AccessToken()
-	if err != nil {
-		c.ui.Failed("AccessToken failed: %v", err)
-		return
-	}
 	fmt.Printf("\r           \r")
 
 	ui := ui.NewMasterUI(conn)
+
 	c.router = ui.GetRouter()
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
-	subscriptionID := "TopPlugin_" + util.Pseudo_uuid()
-	go c.createNozzles(subscriptionID)
+	c.setupFirehoseConnections()
 
 	ui.Start()
-
 }
 
-func (c *Client) createNozzles(subscriptionID string) {
-	for i := 0; i < c.options.Nozzles; i++ {
-		go c.createAndKeepAliveNozzle(subscriptionID, i)
+func (c *Client) setupFirehoseConnections() {
+	privileged, err := c.hasDopplerFirehoseScope()
+	if err != nil {
+		c.ui.Failed("Could not determine privileges. Are you logged in?", err)
+		return
 	}
-	toplog.Info("Starting %v nozzle instances", c.options.Nozzles)
+
+	if privileged {
+		toplog.Info("Running with doppler.firehose privileges - opening %v nozzles", c.options.Nozzles)
+		subscriptionID := "TopPlugin_" + util.Pseudo_uuid()
+		for i := 0; i < c.options.Nozzles; i++ {
+			go c.createAndKeepAliveNozzle(subscriptionID, "", i)
+		}
+		toplog.Info("Starting %v firehose nozzle instances", c.options.Nozzles)
+		return
+	}
+
+	apps, err := c.cliConnection.GetApps()
+	if err != nil {
+		c.ui.Failed("Fetching all Apps failed: %v", err)
+		return
+	}
+	toplog.Info("Running without doppler.firehose privileges - opening %v nozzles", len(apps))
+	for i, application := range apps {
+		go c.createAndKeepAliveNozzle("", application.Guid, i)
+		toplog.Info("Starting app nozzle #%v instance for App %s", i, application.Name)
+	}
 }
 
-func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int) error {
-
+func (c *Client) createAndKeepAliveNozzle(subscriptionID, appGUID string, instanceID int) error {
 	minRetrySeconds := (2 * time.Second)
 
 	for {
 		// This is a blocking call if no error
 		startTime := time.Now()
-		err := c.createNozzle(subscriptionID, instanceId)
+		var err error
+		if len(subscriptionID) > 0 {
+			err = c.createNozzle(subscriptionID, instanceID)
+		} else {
+			err = c.createAppNozzle(appGUID, instanceID)
+		}
 		if err != nil {
 			errMsg := err.Error()
 			notAuthorized := strings.Contains(errMsg, "authorized")
 			if websocket.IsCloseError(err, websocket.CloseNormalClosure) || notAuthorized {
-				toplog.Error("Nozzle #%v - Stopped with error: %v", instanceId, err)
+				toplog.Error("Nozzle #%v - Stopped with error: %v", instanceID, err)
 				if notAuthorized {
 					toplog.Error("Are you sure you have 'admin' privileges on foundation?")
 					toplog.Error("See needed permissions for this plugin here:")
@@ -142,22 +166,21 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID string, instanceId int)
 				}
 				break
 			}
-			toplog.Warn("Nozzle #%v - error: %v", instanceId, err)
+			toplog.Warn("Nozzle #%v - error: %v", instanceID, err)
 		}
-		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceId)
+		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceID)
 		lastRetry := time.Now().Sub(startTime)
 		if lastRetry < minRetrySeconds {
-			toplog.Info("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceId, minRetrySeconds)
+			toplog.Info("Nozzle #%v - Nozzle instance restart too fast, delaying for %v", instanceID, minRetrySeconds)
 			time.Sleep(minRetrySeconds)
 		}
 	}
 	return nil
 }
 
-func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
-
+func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 	// Delay each nozzle instance creation by 1 second
-	time.Sleep(time.Duration(instanceId) * time.Second)
+	time.Sleep(time.Duration(instanceID) * time.Second)
 
 	conn := c.cliConnection
 	dopplerEndpoint, err := conn.DopplerEndpoint()
@@ -172,7 +195,7 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 
 	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
 
-	tokenRefresher := NewTokenRefresher(conn, instanceId)
+	tokenRefresher := NewTokenRefresher(conn, instanceID)
 	dopplerConnection.RefreshTokenFrom(tokenRefresher)
 	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
 	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
@@ -186,9 +209,9 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	messages, errors := dopplerConnection.Firehose(subscriptionID, authToken)
 	defer dopplerConnection.Close()
 
-	toplog.Info("Nozzle #%v - Started", instanceId)
+	toplog.Info("Nozzle #%v - Started", instanceID)
 
-	eventError := c.routeEvents(instanceId, messages, errors)
+	eventError := c.routeEvents(instanceID, messages, errors)
 	if eventError != nil {
 		msg := eventError.Error()
 		if strings.Contains(msg, "Invalid authorization") {
@@ -198,13 +221,54 @@ func (c *Client) createNozzle(subscriptionID string, instanceId int) error {
 	return nil
 }
 
-func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, errors <-chan error) error {
+func (c *Client) createAppNozzle(appGUID string, instanceID int) error {
+
+	// Delay each nozzle instance creation by 1 second
+	time.Sleep(time.Duration(instanceID) * time.Second)
+
+	conn := c.cliConnection
+	dopplerEndpoint, err := conn.DopplerEndpoint()
+	if err != nil {
+		return err
+	}
+
+	skipVerifySSL, err := conn.IsSSLDisabled()
+	if err != nil {
+		return err
+	}
+
+	dopplerConnection := consumer.New(dopplerEndpoint, &tls.Config{InsecureSkipVerify: skipVerifySSL}, nil)
+
+	tokenRefresher := NewTokenRefresher(conn, instanceID)
+	dopplerConnection.RefreshTokenFrom(tokenRefresher)
+
+	authToken, err := conn.AccessToken()
+	if err != nil {
+		return err
+	}
+
+	messages, errors := dopplerConnection.StreamWithoutReconnect(appGUID, authToken)
+	defer dopplerConnection.Close()
+
+	toplog.Info("Nozzle #%v for %s - Started", instanceID, appGUID)
+
+	eventError := c.routeEvents(instanceID, messages, errors)
+	if eventError != nil {
+		msg := eventError.Error()
+		if strings.Contains(msg, "Invalid authorization") {
+			return eventError
+		}
+	}
+	return nil
+}
+
+func (c *Client) routeEvents(instanceID int, messages <-chan *events.Envelope, errors <-chan error) error {
 	for {
 		select {
 		case envelope := <-messages:
-			c.router.Route(instanceId, envelope)
+			c.router.Route(instanceID, envelope)
 		case err := <-errors:
-			c.handleError(instanceId, err)
+			c.handleError(instanceID, err)
 			// Nozzle connection does not seem to recover from errors well, so
 			// return here so it can be closed and a new instanced opened
 			return err
@@ -212,23 +276,22 @@ func (c *Client) routeEvents(instanceId int, messages <-chan *events.Envelope, e
 	}
 }
 
-func (c *Client) handleError(instanceId int, err error) {
+func (c *Client) handleError(instanceID int, err error) {
 
 	switch {
 	case websocket.IsCloseError(err, websocket.CloseNormalClosure):
-		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Normal Websocket Closure: %v", instanceID, err)
 		toplog.Error(msg)
 	case websocket.IsCloseError(err, websocket.ClosePolicyViolation):
-		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Disconnected because nozzle couldn't keep up (CloseError): %v", instanceID, err)
 		toplog.Error(msg)
 	default:
-		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceId, err)
+		msg := fmt.Sprintf("Nozzle #%v - Error reading firehose: %v", instanceID, err)
 		toplog.Error(msg)
 	}
 }
 
 func (c *Client) shouldExitTop() bool {
-
 	numRunning := c.getNumberOfTopPluginsRunning() - 1
 	if numRunning > 0 {
 		plural := ""
@@ -281,4 +344,66 @@ func (c *Client) getNumberOfTopPluginsRunning() int {
 
 	//fmt.Printf("Number of programs running with my same name: %v\n", numberRunning)
 	return numberRunning
+}
+
+func (c *Client) hasDopplerFirehoseScope() (bool, error) {
+	authToken, err := c.cliConnection.AccessToken()
+	if err != nil {
+		return false, err
+	}
+
+	decodedAccessToken, err := decodeAccessToken(authToken)
+	if err != nil {
+		return false, err
+	}
+
+	jsonParsed, err := gabs.ParseJSON(decodedAccessToken)
+	if err != nil {
+		return false, err
+	}
+
+	scopes, err := jsonParsed.Search("scope").Children()
+	if err != nil {
+		return false, err
+	}
+
+	for _, scope := range scopes {
+		if scope.Data().(string) == "doppler.firehose" {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func decodeAccessToken(accessToken string) (tokenJSON []byte, err error) {
+	tokenParts := strings.Split(accessToken, " ")
+
+	if len(tokenParts) < 2 {
+		return
+	}
+
+	token := tokenParts[1]
+	encodedParts := strings.Split(token, ".")
+
+	if len(encodedParts) < 3 {
+		return
+	}
+
+	encodedTokenJSON := encodedParts[1]
+	return base64Decode(encodedTokenJSON)
+}
+
+func base64Decode(encodedData string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(restorePadding(encodedData))
+}
+
+func restorePadding(seg string) string {
+	switch len(seg) % 4 {
+	case 2:
+		seg = seg + "=="
+	case 3:
+		seg = seg + "="
+	}
+	return seg
 }
