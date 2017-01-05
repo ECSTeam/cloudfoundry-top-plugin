@@ -2,7 +2,9 @@
 
 
 ### Application view:
-Shows all applications deployed to foundation. Including app CPU and memory usage.
+Shows all applications deployed to foundation (or your login has visibility to see). 
+The information provided inludes app CPU and memory usage, number of requests and response
+time of app.
 This is useful for finding the "top" CPU consumer on the foundation.  This screenshot 
 also shows an alert:
 ![Screenshot](screenshot_appView2.png?raw=true)
@@ -33,15 +35,27 @@ Shows all instances (containers) of selected application.
 Shows additional information about selected application.
 ![Screenshot](screenshot_appDetailViewAppInfo.png?raw=true)
 
+### Route view:
+Shows all routes registered with the foundation (or your login has visibility to see).
+This shows which routes are taking the most requests (through the go-router)
+![Screenshot](screenshot_routeView.png?raw=true)
 
-### Diego Cell view:
+
+### Route Map Detail view:
+Shows all apps that are mapped to the selected route.  This can be helpful in blue-green
+deployments.  It shows how much traffic is sent to each application along with HTTP status
+codes.
+![Screenshot](screenshot_routeMapDetailView.png?raw=true)
+
+
+### Diego Cell view (only available in privileged mode):
 Shows all Diego cells running on foundation. Includes cell CPU and memory usage. 
 This view is useful for locating any "hot" cell -- a cell that has a higher then
 expected CPU utilization.
 ![Screenshot](screenshot_cellView.png?raw=true)
 
 
-### Diego Cell "Detail" view:
+### Diego Cell "Detail" view (only available in privileged mode):
 Shows all containers running on selected cell. Includes container CPU and memory usage.  
 If a cell has a high CPU utilization, this detail view can help identify which application instance is the culprit. 
 ![Screenshot](screenshot_cellDetailView.png?raw=true)

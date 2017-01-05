@@ -1,10 +1,13 @@
 # top-plugin
 
-Cloud Foundry command-line cf plugin for showing live statistics of the targeted cloud foundry foundation.
-You must be logged in as 'admin' user or assign permissions to the cloud foundry user as 
-described in the installation instructions below for this plugin to function.  
-The live statistics include application statistics and diego cell statistics amoung others.
-The primary source of information that the top plugin uses is from monitoring the cloud foundry firehose.
+This is a Cloud Foundry command-line cf interactive plugin for showing live statistics of the targeted Cloud Foundry foundation.
+The live statistics include application statistics and route statistics among others.
+The primary source of information that the top plugin uses is via monitoring the Cloud Foundry firehose.
+
+The plugin will run in one of two modes, privileged or non-privileged depending on your Cloud Foundry user permission.
+If you are a foundation operator you will want to use top in privileged mode.  This is done automatically if the
+correct permissions are granted to your Cloud Foundry login (or if you are logged in via `admin` account).  See
+[Assign Permissions](#assign-permissions-if-privileged-mode-is-needed) for more information on assigning permissions.
 
 ![Screenshot](screenshots/screencast1.gif?raw=true)
 
@@ -113,10 +116,18 @@ cf uninstall-plugin top
 cf install-plugin -r CF-Community "top"     (or use manual install method described above)
 ```
 
-## Assign needed permissions (if not using `admin` user)
+## Assign permissions if privileged mode is needed
 
-To use this plugin you must be logged in as 'admin' or assign two permissions
-to an existing cloud foundry user.  To assign needed permissions:
+The `top` plugin will run without special permissions however it determines at runtime
+what permissions you have and displays the appropriate functionality based on those
+permissions.  If you are a foundation operator you will want the additional functionality
+that top provides to privileged users.
+
+If you are logged in with the Cloud Foundry `admin` account, no additional permissions
+are needed, the `admin` account has everything it needs to run top with full functionality.
+
+For non-admin accounts, to run top in privileged mode you need to assign two permissions
+to an existing Cloud Foundry user.  To assign needed permissions:
 
 Install the uaac client CLI if you do not already have it:
 ```
