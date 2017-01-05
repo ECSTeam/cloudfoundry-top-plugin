@@ -1,50 +1,38 @@
 package: github.com/ecsteam/cloudfoundry-top-plugin
 import:
 - package: code.cloudfoundry.org/cli
-  version: ~9001.0.0
   subpackages:
   - plugin
 - package: github.com/Jeffail/gabs
-  version: ~1.0.0
 - package: github.com/Knetic/govaluate
-  version: ~2.2.0
 - package: github.com/ansel1/merry
 - package: github.com/atotto/clipboard
 - package: github.com/cloudfoundry/cli
-  version: ~9001.0.0
   subpackages:
   - cf/terminal
   - cf/trace
   - plugin
 - package: github.com/cloudfoundry/noaa
-  version: ~2.0.0
   subpackages:
   - consumer
 - package: github.com/cloudfoundry/sonde-go
   subpackages:
   - events
 - package: github.com/eapache/queue
-  version: ~1.0.2
 - package: github.com/gogo/protobuf
-  version: ~0.3.0
   subpackages:
   - proto
 - package: github.com/gorilla/websocket
-  version: ~1.1.0
 - package: github.com/jroimartin/gocui
-  version: ~0.3.0
 - package: github.com/mitchellh/go-ps
 - package: github.com/mohae/deepcopy
 - package: github.com/nu7hatch/gouuid
 - package: github.com/simonleung8/flags
 testImport:
 - package: github.com/cloudfoundry/firehose-plugin
-  version: ~0.11.0
   subpackages:
   - firehose
   - firehose/fakes
   - testhelpers
 - package: github.com/onsi/ginkgo
-  version: ~1.2.0
 - package: github.com/onsi/gomega
-  version: ~1.0.0

@@ -1,0 +1,149 @@
+hash: e7d7abd3567ad88ebd1c879b8f5f2615a30df1d70eeee1d64dedcbad1d2b7cbf
+updated: 2017-01-05T14:42:01.283525955-07:00
+imports:
+- name: code.cloudfoundry.org/cli
+  version: 2d39e3f7a2908bb90d0d546375ac12236083f3a2
+  subpackages:
+  - cf
+  - cf/configuration
+  - cf/configuration/coreconfig
+  - cf/formatters
+  - cf/i18n
+  - cf/models
+  - cf/resources
+  - cf/trace
+  - plugin
+  - plugin/models
+  - util/testhelpers/io
+  - util/testhelpers/pluginbuilder
+  - version
+- name: github.com/ansel1/merry
+  version: e1c02f7f58d855a1aa2a8751c06adca27773da67
+- name: github.com/atotto/clipboard
+  version: bb272b845f1112e10117e3e45ce39f690c0001ad
+- name: github.com/blang/semver
+  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
+  repo: https://github.com/blang/semver
+- name: github.com/cloudfoundry/cli
+  version: 2d39e3f7a2908bb90d0d546375ac12236083f3a2
+  subpackages:
+  - cf/terminal
+  - cf/trace
+  - cf/trace/tracefakes
+  - plugin
+  - plugin/pluginfakes
+- name: github.com/cloudfoundry/noaa
+  version: 1939b6e4d6d76b2ee8541befd6a8fb8aa076933e
+  subpackages:
+  - consumer
+  - consumer/internal
+  - errors
+- name: github.com/cloudfoundry/sonde-go
+  version: 04fbe57ef6878d0050682b5b0697091003ebf960
+  subpackages:
+  - events
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
+- name: github.com/fatih/color
+  version: bf82308e8c8546dc2b945157173eb8a959ae9505
+  repo: https://github.com/fatih/color
+- name: github.com/go-errors/errors
+  version: 8fa88b06e5974e97fbf9899a7f86a344bfd1f105
+- name: github.com/gogo/protobuf
+  version: 06ec6c31ff1bac6ed4e205a547a3d72934813ef3
+  subpackages:
+  - gogoproto
+  - proto
+  - protoc-gen-gogo/descriptor
+- name: github.com/gorilla/websocket
+  version: adf16b31781325cbd41085c5be901d95b4d1f33d
+- name: github.com/Jeffail/gabs
+  version: 2a3aa15961d5fee6047b8151b67ac2f08ba2c48c
+- name: github.com/jroimartin/gocui
+  version: 7ac95c981b8a07b624ab197b3ad5813fdfbe4864
+- name: github.com/Knetic/govaluate
+  version: 3cc7c7de92e74a87c657e957e003600723db32f6
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  repo: https://github.com/mattn/go-isatty
+- name: github.com/mattn/go-runewidth
+  version: 737072b4e32b7a5018b4a7125da8d12de90e8045
+- name: github.com/mitchellh/go-ps
+  version: e2d21980687ce16e58469d98dcee92d27fbbd7fb
+- name: github.com/mohae/deepcopy
+  version: a40e8fd6a88555ab2b3f07a29db9e893598362a2
+- name: github.com/nicksnyder/go-i18n
+  version: 37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3
+  repo: https://github.com/nicksnyder/go-i18n
+  subpackages:
+  - i18n
+  - i18n/bundle
+  - i18n/language
+  - i18n/translation
+- name: github.com/nsf/termbox-go
+  version: abe82ce5fb7a42fbd6784a5ceb71aff977e09ed8
+- name: github.com/nu7hatch/gouuid
+  version: 179d4d0c4d8d407a32af483c2354df1d2c91e6c3
+- name: github.com/simonleung8/flags
+  version: 17269f01eb934b33a36096a55edabf097dbc1d7d
+  subpackages:
+  - flag
+- name: golang.org/x/crypto
+  version: 9a6f0a01987842989747adff311d80750ba25530
+  repo: https://go.googlesource.com/crypto
+  subpackages:
+  - curve25519
+  - ed25519
+  - ssh
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  repo: https://go.googlesource.com/sys
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  repo: https://gopkg.in/yaml.v2
+testImports:
+- name: github.com/cloudfoundry/firehose-plugin
+  version: 06fe26bf5342ec7568df4cdca1b91f280af4f912
+  subpackages:
+  - firehose
+  - firehose/fakes
+  - testhelpers
+- name: github.com/onsi/ginkgo
+  version: 00054c0bb96fc880d4e0be1b90937fad438c5290
+  subpackages:
+  - config
+  - internal/codelocation
+  - internal/containernode
+  - internal/failer
+  - internal/leafnodes
+  - internal/remote
+  - internal/spec
+  - internal/specrunner
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - reporters/stenographer/support/go-colorable
+  - reporters/stenographer/support/go-isatty
+  - types
+- name: github.com/onsi/gomega
+  version: f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/oraclematcher
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types
