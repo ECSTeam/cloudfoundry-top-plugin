@@ -368,6 +368,14 @@ func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) str
 }
 
 func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {
+
+	// TODO: We can't alert if we are not monitoring all the apps
+	// Update his this alert only on monitored apps if non-privileged
+	// for now we just don't alert
+	if !asUI.GetMasterUI().IsPrivileged() {
+		return nil
+	}
+
 	if asUI.isWarmupComplete && asUI.appsNotInDesiredState > 0 {
 		plural := ""
 		if asUI.appsNotInDesiredState > 1 {

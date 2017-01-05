@@ -30,6 +30,7 @@ type MasterUIInterface interface {
 	GetHeaderSize() int
 	SetStatsSummarySize(statSummarySize int)
 	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
+	IsPrivileged() bool
 }
 
 type LayoutManagerInterface interface {

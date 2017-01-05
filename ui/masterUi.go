@@ -50,6 +50,7 @@ type MasterUI struct {
 	layoutManager *uiCommon.LayoutManager
 	gui           *gocui.Gui
 	cliConnection plugin.CliConnection
+	privileged    bool
 	username      string
 	targetDisplay string
 
@@ -66,14 +67,15 @@ type MasterUI struct {
 	displayMenuId string
 }
 
-func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
+func NewMasterUI(cliConnection plugin.CliConnection, privileged bool) *MasterUI {
 
 	mui := &MasterUI{
 		cliConnection: cliConnection,
+		privileged:    privileged,
 		refreshNow:    make(chan bool),
 	}
 
-	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection)
+	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection, privileged)
 	mui.router = eventrouting.NewEventRouter(eventProcessor)
 
 	username, err := cliConnection.Username()
@@ -92,13 +94,21 @@ func NewMasterUI(cliConnection plugin.CliConnection) *MasterUI {
 	if err != nil {
 		toplog.Info("Unable to get Parse apiEndpoint, error: %v", err)
 	} else {
-		mui.targetDisplay = fmt.Sprintf("%v:%v", username, url.Host)
+		usernameDisplay := fmt.Sprintf("(%v)", username)
+		if privileged {
+			usernameDisplay = fmt.Sprintf("[%v]", username)
+		}
+		mui.targetDisplay = fmt.Sprintf("%v%v", usernameDisplay, url.Host)
 	}
 	return mui
 }
 
 func (mui *MasterUI) CliConnection() plugin.CliConnection {
 	return mui.cliConnection
+}
+
+func (mui *MasterUI) IsPrivileged() bool {
+	return mui.privileged
 }
 
 func (mui *MasterUI) LayoutManager() masterUIInterface.LayoutManagerInterface {
@@ -285,10 +295,14 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
+	if mui.privileged {
+		menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
+	}
 	menuItems = append(menuItems, uiCommon.NewMenuItem("routeListView", "Route Stats"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventListView", "Event Stats"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
+	if mui.privileged {
+		menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
+	}
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	selectDisplayView.SetMenuId(mui.displayMenuId)

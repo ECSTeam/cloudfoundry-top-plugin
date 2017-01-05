@@ -38,6 +38,9 @@ import (
 	gops "github.com/mitchellh/go-ps"
 )
 
+// Maximum number of app streams to open if non-privileged user
+const MAX_APPS_TO_MONITOR = 50
+
 // Client struct
 type Client struct {
 	options       *ClientOptions
@@ -100,26 +103,33 @@ func (c *Client) Start() {
 	}
 
 	fmt.Printf("Loading...")
-	fmt.Printf("\r           \r")
 
-	ui := ui.NewMasterUI(conn)
-
-	c.router = ui.GetRouter()
-
-	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
-
-	c.setupFirehoseConnections()
-
-	ui.Start()
-}
-
-func (c *Client) setupFirehoseConnections() {
 	privileged, err := c.hasDopplerFirehoseScope()
 	if err != nil {
 		c.ui.Failed("Could not determine privileges. Are you logged in?", err)
 		return
 	}
 
+	ui := ui.NewMasterUI(conn, privileged)
+	c.router = ui.GetRouter()
+
+	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
+
+	err = c.setupFirehoseConnections(privileged)
+	if err != nil {
+		return
+	}
+
+	// Clear the 'Loading...' message from screen
+	fmt.Printf("\r           \r")
+
+	ui.Start()
+}
+
+// setupFirehoseConnections starts nozzle(s) aysnc and return if user is privileged
+func (c *Client) setupFirehoseConnections(privileged bool) error {
+
+	// If user has correct privileges, use the "firehose" API
 	if privileged {
 		toplog.Info("Running with doppler.firehose privileges - opening %v nozzles", c.options.Nozzles)
 		subscriptionID := "TopPlugin_" + util.Pseudo_uuid()
@@ -127,19 +137,35 @@ func (c *Client) setupFirehoseConnections() {
 			go c.createAndKeepAliveNozzle(subscriptionID, "", i)
 		}
 		toplog.Info("Starting %v firehose nozzle instances", c.options.Nozzles)
-		return
+		return nil
 	}
 
+	// TODO: Can we do this through metadata package so we don't load Apps twice since
+	// metadata has to be loaded anyway.
+	// TODO: Can we do this async?  Wait for metadata load complete signal and then open streams
 	apps, err := c.cliConnection.GetApps()
 	if err != nil {
 		c.ui.Failed("Fetching all Apps failed: %v", err)
-		return
+		return err
 	}
-	toplog.Info("Running without doppler.firehose privileges - opening %v nozzles", len(apps))
+	nozzlesToOpen := len(apps)
+	if nozzlesToOpen > MAX_APPS_TO_MONITOR {
+		nozzlesToOpen = MAX_APPS_TO_MONITOR
+	}
+	toplog.Info("Running without doppler.firehose privileges - opening %v nozzles", nozzlesToOpen)
 	for i, application := range apps {
-		go c.createAndKeepAliveNozzle("", application.Guid, i)
+		if i >= MAX_APPS_TO_MONITOR {
+			toplog.Warn("Max of %v apps to monitor was reached.  Some apps will not be monitored", MAX_APPS_TO_MONITOR)
+			fmt.Printf("\rMax of %v apps to monitor was reached.  Some apps will not be monitored.\n", MAX_APPS_TO_MONITOR)
+			break
+		}
 		toplog.Info("Starting app nozzle #%v instance for App %s", i, application.Name)
+		go c.createAndKeepAliveNozzle("", application.Guid, i)
+		// TODO: Need to come up with a way for user to specify (or select on UI) which apps will be monitored
+		// if the max is reached -- does't make sense to just choose the first n apps returned from the API
+		// We don't want his unlimited as I'm fearful of opening 100s of connections to go-router/cloud-controller
 	}
+	return nil
 }
 
 func (c *Client) createAndKeepAliveNozzle(subscriptionID, appGUID string, instanceID int) error {
@@ -178,8 +204,10 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID, appGUID string, instan
 	return nil
 }
 
+// createNozzle uses 'firehose' API - one instance will get all firehose events
 func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 	// Delay each nozzle instance creation by 1 second
+	// We do this so we don't have a flood of API request
 	time.Sleep(time.Duration(instanceID) * time.Second)
 
 	conn := c.cliConnection
@@ -197,8 +225,6 @@ func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 
 	tokenRefresher := NewTokenRefresher(conn, instanceID)
 	dopplerConnection.RefreshTokenFrom(tokenRefresher)
-	dopplerConnection.SetMinRetryDelay(500 * time.Millisecond)
-	dopplerConnection.SetMaxRetryDelay(15 * time.Second)
 	dopplerConnection.SetIdleTimeout(15 * time.Second)
 
 	authToken, err := conn.AccessToken()
@@ -206,7 +232,7 @@ func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 		return err
 	}
 
-	messages, errors := dopplerConnection.Firehose(subscriptionID, authToken)
+	messages, errors := dopplerConnection.FirehoseWithoutReconnect(subscriptionID, authToken)
 	defer dopplerConnection.Close()
 
 	toplog.Info("Nozzle #%v - Started", instanceID)
@@ -221,10 +247,12 @@ func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 	return nil
 }
 
+// createAppNozzle uses'Stream' API - must be called once per app we are monitoring
 func (c *Client) createAppNozzle(appGUID string, instanceID int) error {
 
-	// Delay each nozzle instance creation by 1 second
-	time.Sleep(time.Duration(instanceID) * time.Second)
+	// Delay each nozzle instance creation by 100 millseconds
+	// We do this so we don't have a flood of API request
+	time.Sleep(time.Duration(instanceID*100) * time.Millisecond)
 
 	conn := c.cliConnection
 	dopplerEndpoint, err := conn.DopplerEndpoint()
@@ -241,6 +269,10 @@ func (c *Client) createAppNozzle(appGUID string, instanceID int) error {
 
 	tokenRefresher := NewTokenRefresher(conn, instanceID)
 	dopplerConnection.RefreshTokenFrom(tokenRefresher)
+	// TODO: We need to timeout or do a keepalive to deal with severed connectons
+	// however if we open a stream to a stopped app we never get any events which
+	// causes a timeout.
+	//dopplerConnection.SetIdleTimeout(90 * time.Second)
 
 	authToken, err := conn.AccessToken()
 	if err != nil {

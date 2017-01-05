@@ -43,10 +43,11 @@ type EventProcessor struct {
 	currentEventData   *EventData
 	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
+	privileged         bool
 	metadataManager    *metadata.Manager
 }
 
-func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
+func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *EventProcessor {
 
 	mu := &sync.Mutex{}
 
@@ -55,6 +56,7 @@ func NewEventProcessor(cliConnection plugin.CliConnection) *EventProcessor {
 	ep := &EventProcessor{
 		mu:               mu,
 		cliConnection:    cliConnection,
+		privileged:       privileged,
 		metadataManager:  metadataManager,
 		startTime:        time.Now(),
 		eventRateCounter: util.NewRateCounter(time.Second),
@@ -111,6 +113,9 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 	ep.seedAppMap()
 	ep.seedDomainMap()
 	ep.seedRouteData()
+	if ep.privileged {
+		ep.seedSpecialRouteData()
+	}
 
 	ep.currentEventData.EnableRouteTracking = true
 }
@@ -147,6 +152,9 @@ func (ep *EventProcessor) seedRouteData() {
 		domainMd := domain.FindDomainMetadata(route.DomainGuid)
 		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Port, route.Guid)
 	}
+}
+
+func (ep *EventProcessor) seedSpecialRouteData() {
 
 	// Seed special host names
 	apiDomain, apiHost := ep.getAPIHostAndDomain()
@@ -206,7 +214,7 @@ func (ep *EventProcessor) seedRouteData() {
 func (ep *EventProcessor) addInternalRoute(domainName string, hostName string, pathName string, port int) *eventRoute.RouteStats {
 	domain := domain.FindDomainMetadataByName(domainName)
 	if domain == nil {
-		toplog.Warn("addInternalRoute for domain %v but domain metadata not found (or not loaded)", domainName)
+		toplog.Warn("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v]", domainName, hostName, pathName)
 		return nil
 	}
 	route := route.CreateInternalGeneratedRoute(hostName, pathName, domain.Guid, port)
