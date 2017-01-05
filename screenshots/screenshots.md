@@ -35,6 +35,7 @@ Shows all instances (containers) of selected application.
 Shows additional information about selected application.
 ![Screenshot](screenshot_appDetailViewAppInfo.png?raw=true)
 
+
 ### Route view:
 Shows all routes registered with the foundation (or your login has visibility to see).
 This shows which routes are taking the most requests (through the go-router)
