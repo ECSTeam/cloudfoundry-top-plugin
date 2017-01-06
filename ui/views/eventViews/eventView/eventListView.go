@@ -22,9 +22,8 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventOriginView"
 	"github.com/jroimartin/gocui"
 )
@@ -106,13 +105,13 @@ func (asUI *EventListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *EventListView) postProcessData() []*displaydata.DisplayEventStats {
+func (asUI *EventListView) postProcessData() []*DisplayEventStats {
 
 	eventTypeMap := asUI.GetDisplayedEventData().EventTypeMap
-	displayEventList := make([]*displaydata.DisplayEventStats, 0, len(eventTypeMap))
+	displayEventList := make([]*DisplayEventStats, 0, len(eventTypeMap))
 
 	for _, eventTypeStats := range eventTypeMap {
-		displayEventStat := displaydata.NewDisplayEventStats(eventTypeStats)
+		displayEventStat := NewDisplayEventStats(eventTypeStats)
 		displayEventList = append(displayEventList, displayEventStat)
 		for _, eventOriginStats := range eventTypeStats.EventOriginStatsMap {
 			for _, eventDetailStats := range eventOriginStats.EventDetailStatsMap {
@@ -123,7 +122,7 @@ func (asUI *EventListView) postProcessData() []*displaydata.DisplayEventStats {
 	return displayEventList
 }
 
-func (asUI *EventListView) convertToListData(displayEventList []*displaydata.DisplayEventStats) []uiCommon.IData {
+func (asUI *EventListView) convertToListData(displayEventList []*DisplayEventStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayEventList))
 	for _, d := range displayEventList {
 		listData = append(listData, d)

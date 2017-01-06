@@ -23,9 +23,8 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellDetailView"
 	"github.com/jroimartin/gocui"
 )
 
@@ -113,7 +112,7 @@ func (asUI *EventDetailListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *EventDetailListView) postProcessData() []*displaydata.DisplayEventDetailStats {
+func (asUI *EventDetailListView) postProcessData() []*DisplayEventDetailStats {
 
 	eventTypeMap := asUI.GetDisplayedEventData().EventTypeMap
 
@@ -121,16 +120,16 @@ func (asUI *EventDetailListView) postProcessData() []*displaydata.DisplayEventDe
 	eventOriginStatsMap := eventStats.EventOriginStatsMap
 	eventOriginStats := eventOriginStatsMap[asUI.eventOrigin]
 	eventDetailStatsMap := eventOriginStats.EventDetailStatsMap
-	displayEventDetailList := make([]*displaydata.DisplayEventDetailStats, 0, len(eventDetailStatsMap))
+	displayEventDetailList := make([]*DisplayEventDetailStats, 0, len(eventDetailStatsMap))
 
 	for _, eventDetailStats := range eventDetailStatsMap {
-		displayEventDetailStat := displaydata.NewDisplayEventDetailStats(eventDetailStats)
+		displayEventDetailStat := NewDisplayEventDetailStats(eventDetailStats)
 		displayEventDetailList = append(displayEventDetailList, displayEventDetailStat)
 	}
 	return displayEventDetailList
 }
 
-func (asUI *EventDetailListView) convertToListData(displayEventList []*displaydata.DisplayEventDetailStats) []uiCommon.IData {
+func (asUI *EventDetailListView) convertToListData(displayEventList []*DisplayEventDetailStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayEventList))
 	for _, d := range displayEventList {
 		listData = append(listData, d)

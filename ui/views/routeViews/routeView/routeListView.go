@@ -23,10 +23,9 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeMapView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeViews/routeMapView"
 	"github.com/jroimartin/gocui"
 )
 
@@ -122,17 +121,17 @@ func (asUI *RouteListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *RouteListView) postProcessData() []*displaydata.DisplayRouteStats {
+func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 
 	domainMap := asUI.GetDisplayedEventData().DomainMap
-	displayRouteArray := make([]*displaydata.DisplayRouteStats, 0)
+	displayRouteArray := make([]*DisplayRouteStats, 0)
 
 	for domainName, domainStats := range domainMap {
 		for hostName, hostStats := range domainStats.HostStatsMap {
 			// HTTP routes
 			for pathName, routeStats := range hostStats.RouteStatsMap {
 
-				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats, hostName, domainName, pathName, 0)
+				displayRouteStat := NewDisplayRouteStats(routeStats, hostName, domainName, pathName, 0)
 				displayRouteArray = append(displayRouteArray, displayRouteStat)
 
 				for appId, appRouteStats := range routeStats.AppRouteStatsMap {
@@ -181,7 +180,7 @@ func (asUI *RouteListView) postProcessData() []*displaydata.DisplayRouteStats {
 
 			// TCP routes
 			for port, routeStats := range hostStats.TcpRouteStatsMap {
-				displayRouteStat := displaydata.NewDisplayRouteStats(routeStats, hostName, domainName, "", port)
+				displayRouteStat := NewDisplayRouteStats(routeStats, hostName, domainName, "", port)
 				displayRouteArray = append(displayRouteArray, displayRouteStat)
 				//for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 				for appId, _ := range routeStats.AppRouteStatsMap {
@@ -198,7 +197,7 @@ func (asUI *RouteListView) postProcessData() []*displaydata.DisplayRouteStats {
 	return displayRouteArray
 }
 
-func (asUI *RouteListView) convertToListData(displayRouteArray []*displaydata.DisplayRouteStats) []uiCommon.IData {
+func (asUI *RouteListView) convertToListData(displayRouteArray []*DisplayRouteStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayRouteArray))
 	for _, d := range displayRouteArray {
 		listData = append(listData, d)

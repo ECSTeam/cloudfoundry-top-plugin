@@ -13,177 +13,85 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package routeView
+package routeMapView
 
 import (
 	"fmt"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-func columnRouteId() *uiCommon.ListColumn {
-	defaultColSize := 16
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).RouteId) < (c2.(*displaydata.DisplayRouteStats).RouteId)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return util.FormatDisplayData(stats.RouteId, defaultColSize)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.RouteId
-	}
-	c := uiCommon.NewListColumn("ROUTE_ID", "ROUTE_ID", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func columnRoutedAppCount() *uiCommon.ListColumn {
-	defaultColSize := 6
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).RoutedAppCount) < (c2.(*displaydata.DisplayRouteStats).RoutedAppCount)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		value := ""
-		if stats.Port != 0 {
-			value = fmt.Sprintf("%6v", "n/a")
-		} else if stats.HttpAllCount == 0 {
-			value = fmt.Sprintf("%6v", "--")
-		} else {
-			value = fmt.Sprintf("%6v", stats.RoutedAppCount)
-		}
-		return value
-
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%v", stats.RoutedAppCount)
-	}
-	c := uiCommon.NewListColumn("R_APPS", "R_APPS", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func columnRouteName() *uiCommon.ListColumn {
+func columnAppName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).RouteName) < (c2.(*displaydata.DisplayRouteStats).RouteName)
+		return util.CaseInsensitiveLess(c1.(*DisplayRouteMapStats).AppName, c2.(*DisplayRouteMapStats).AppName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return util.FormatDisplayData(stats.RouteName, defaultColSize)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.RouteName
-	}
-	c := uiCommon.NewListColumn("ROUTE_NAME", "ROUTE_NAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func columnHost() *uiCommon.ListColumn {
-	defaultColSize := 30
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Host) < (c2.(*displaydata.DisplayRouteStats).Host)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		hostName := stats.Host
-		if hostName == "" {
-			hostName = "--"
+		appStats := data.(*DisplayRouteMapStats)
+		value := appStats.AppName
+		if len(value) == 0 {
+			value = "n/a"
 		}
-		return util.FormatDisplayData(hostName, defaultColSize)
-
+		return util.FormatDisplayData(value, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.Host
+		appStats := data.(*DisplayRouteMapStats)
+		return appStats.AppName
 	}
-	c := uiCommon.NewListColumn("HOST", "HOST", defaultColSize,
+	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
-func columnDomain() *uiCommon.ListColumn {
-	defaultColSize := 25
+func columnSpaceName() *uiCommon.ListColumn {
+	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Domain) < (c2.(*displaydata.DisplayRouteStats).Domain)
+		return util.CaseInsensitiveLess(c1.(*DisplayRouteMapStats).SpaceName, c2.(*DisplayRouteMapStats).SpaceName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return util.FormatDisplayData(stats.Domain, defaultColSize)
+		appStats := data.(*DisplayRouteMapStats)
+		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.Domain
+		appStats := data.(*DisplayRouteMapStats)
+		return appStats.SpaceName
 	}
-	c := uiCommon.NewListColumn("DOMAIN", "DOMAIN", defaultColSize,
+	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
 	return c
 }
 
-func columnPath() *uiCommon.ListColumn {
-	defaultColSize := 25
+func columnOrgName() *uiCommon.ListColumn {
+	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Path) < (c2.(*displaydata.DisplayRouteStats).Path)
+		return util.CaseInsensitiveLess(c1.(*DisplayRouteMapStats).OrgName, c2.(*DisplayRouteMapStats).OrgName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return util.FormatDisplayData(stats.Path, defaultColSize)
+		appStats := data.(*DisplayRouteMapStats)
+		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return stats.Path
+		appStats := data.(*DisplayRouteMapStats)
+		return appStats.OrgName
 	}
-	c := uiCommon.NewListColumn("PATH", "PATH", defaultColSize,
+	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
-	return c
-}
-
-func columnPort() *uiCommon.ListColumn {
-	defaultColSize := 5
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Port < c2.(*displaydata.DisplayRouteStats).Port)
-	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		if stats.Port != 0 {
-			return fmt.Sprintf("%5v", stats.Port)
-		} else {
-			return "   --"
-		}
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		return fmt.Sprintf("%v", stats.Port)
-	}
-	c := uiCommon.NewListColumn("PORT", "PORT", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
 
 func columnTotalRequests() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).HttpAllCount < c2.(*displaydata.DisplayRouteStats).HttpAllCount)
+		return (c1.(*DisplayRouteMapStats).HttpAllCount < c2.(*DisplayRouteMapStats).HttpAllCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
-		value := ""
-		if stats.Port == 0 {
-			value = util.Format(stats.HttpAllCount)
-		} else {
-			value = "n/a"
-		}
+		stats := data.(*DisplayRouteMapStats)
+		value := util.Format(stats.HttpAllCount)
 		return fmt.Sprintf("%10v", value)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.HttpAllCount)
 	}
 	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", defaultColSize,
@@ -194,10 +102,10 @@ func columnTotalRequests() *uiCommon.ListColumn {
 func column2xx() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Http2xxCount < c2.(*displaydata.DisplayRouteStats).Http2xxCount)
+		return (c1.(*DisplayRouteMapStats).Http2xxCount < c2.(*DisplayRouteMapStats).Http2xxCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -205,7 +113,7 @@ func column2xx() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.Http2xxCount)
 	}
 	c := uiCommon.NewListColumn("2XX", "2XX", defaultColSize,
@@ -216,10 +124,10 @@ func column2xx() *uiCommon.ListColumn {
 func column3xx() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Http3xxCount < c2.(*displaydata.DisplayRouteStats).Http3xxCount)
+		return (c1.(*DisplayRouteMapStats).Http3xxCount < c2.(*DisplayRouteMapStats).Http3xxCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -227,7 +135,7 @@ func column3xx() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.Http3xxCount)
 	}
 	c := uiCommon.NewListColumn("3XX", "3XX", defaultColSize,
@@ -238,10 +146,10 @@ func column3xx() *uiCommon.ListColumn {
 func column4xx() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Http4xxCount < c2.(*displaydata.DisplayRouteStats).Http4xxCount)
+		return (c1.(*DisplayRouteMapStats).Http4xxCount < c2.(*DisplayRouteMapStats).Http4xxCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -249,7 +157,7 @@ func column4xx() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.Http4xxCount)
 	}
 	c := uiCommon.NewListColumn("4XX", "4XX", defaultColSize,
@@ -260,10 +168,10 @@ func column4xx() *uiCommon.ListColumn {
 func column5xx() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).Http5xxCount < c2.(*displaydata.DisplayRouteStats).Http5xxCount)
+		return (c1.(*DisplayRouteMapStats).Http5xxCount < c2.(*DisplayRouteMapStats).Http5xxCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -271,7 +179,7 @@ func column5xx() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.Http5xxCount)
 	}
 	c := uiCommon.NewListColumn("5XX", "5XX", defaultColSize,
@@ -282,10 +190,10 @@ func column5xx() *uiCommon.ListColumn {
 func columnResponseContentLength() *uiCommon.ListColumn {
 	defaultColSize := 9
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).ResponseContentLength < c2.(*displaydata.DisplayRouteStats).ResponseContentLength)
+		return (c1.(*DisplayRouteMapStats).ResponseContentLength < c2.(*DisplayRouteMapStats).ResponseContentLength)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%9v", "--")
 		} else {
@@ -294,7 +202,7 @@ func columnResponseContentLength() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.ResponseContentLength)
 	}
 	c := uiCommon.NewListColumn("RESP_DATA", "RESP_DATA", defaultColSize,
@@ -306,10 +214,10 @@ func columnResponseContentLength() *uiCommon.ListColumn {
 func columnMethodGet() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).HttpMethodGetCount < c2.(*displaydata.DisplayRouteStats).HttpMethodGetCount)
+		return (c1.(*DisplayRouteMapStats).HttpMethodGetCount < c2.(*DisplayRouteMapStats).HttpMethodGetCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -317,7 +225,7 @@ func columnMethodGet() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.HttpMethodGetCount)
 	}
 	c := uiCommon.NewListColumn("M_GET", "M_GET", defaultColSize,
@@ -328,10 +236,10 @@ func columnMethodGet() *uiCommon.ListColumn {
 func columnMethodPost() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).HttpMethodPostCount < c2.(*displaydata.DisplayRouteStats).HttpMethodPostCount)
+		return (c1.(*DisplayRouteMapStats).HttpMethodPostCount < c2.(*DisplayRouteMapStats).HttpMethodPostCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -339,7 +247,7 @@ func columnMethodPost() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.HttpMethodPostCount)
 	}
 	c := uiCommon.NewListColumn("M_POST", "M_POST", defaultColSize,
@@ -350,10 +258,10 @@ func columnMethodPost() *uiCommon.ListColumn {
 func columnMethodPut() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).HttpMethodPutCount < c2.(*displaydata.DisplayRouteStats).HttpMethodPutCount)
+		return (c1.(*DisplayRouteMapStats).HttpMethodPutCount < c2.(*DisplayRouteMapStats).HttpMethodPutCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -361,7 +269,7 @@ func columnMethodPut() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.HttpMethodPutCount)
 	}
 	c := uiCommon.NewListColumn("M_PUT", "M_PUT", defaultColSize,
@@ -372,10 +280,10 @@ func columnMethodPut() *uiCommon.ListColumn {
 func columnMethodDelete() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayRouteStats).HttpMethodDeleteCount < c2.(*displaydata.DisplayRouteStats).HttpMethodDeleteCount)
+		return (c1.(*DisplayRouteMapStats).HttpMethodDeleteCount < c2.(*DisplayRouteMapStats).HttpMethodDeleteCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%10v", "--")
 		} else {
@@ -383,7 +291,7 @@ func columnMethodDelete() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.HttpMethodDeleteCount)
 	}
 	c := uiCommon.NewListColumn("M_DELETE", "M_DELETE", defaultColSize,
@@ -394,10 +302,10 @@ func columnMethodDelete() *uiCommon.ListColumn {
 func columnLastAccess() *uiCommon.ListColumn {
 	defaultColSize := 19
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayRouteStats).LastAccess.Before(c2.(*displaydata.DisplayRouteStats).LastAccess)
+		return c1.(*DisplayRouteMapStats).LastAccess.Before(c2.(*DisplayRouteMapStats).LastAccess)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		if stats.HttpAllCount == 0 {
 			return fmt.Sprintf("%19v", "--")
 		} else {
@@ -405,7 +313,7 @@ func columnLastAccess() *uiCommon.ListColumn {
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayRouteStats)
+		stats := data.(*DisplayRouteMapStats)
 		return fmt.Sprintf("%v", stats.LastAccess)
 	}
 	c := uiCommon.NewListColumn("LAST_ACCESS", "LAST_ACCESS", defaultColSize,

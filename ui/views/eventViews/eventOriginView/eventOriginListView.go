@@ -23,8 +23,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventDetailView"
 	"github.com/jroimartin/gocui"
 )
@@ -128,16 +127,16 @@ func (asUI *EventOriginListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *EventOriginListView) postProcessData() []*displaydata.DisplayEventOriginStats {
+func (asUI *EventOriginListView) postProcessData() []*DisplayEventOriginStats {
 
 	eventTypeMap := asUI.GetDisplayedEventData().EventTypeMap
 
 	eventStats := eventTypeMap[asUI.eventType]
 	eventOriginStatsMap := eventStats.EventOriginStatsMap
-	displayEventOriginList := make([]*displaydata.DisplayEventOriginStats, 0, len(eventOriginStatsMap))
+	displayEventOriginList := make([]*DisplayEventOriginStats, 0, len(eventOriginStatsMap))
 
 	for _, eventOriginStats := range eventOriginStatsMap {
-		displayEventOriginStat := displaydata.NewDisplayEventOriginStats(eventOriginStats)
+		displayEventOriginStat := NewDisplayEventOriginStats(eventOriginStats)
 		displayEventOriginList = append(displayEventOriginList, displayEventOriginStat)
 		for _, eventDetailStats := range eventOriginStats.EventDetailStatsMap {
 			displayEventOriginStat.EventCount = displayEventOriginStat.EventCount + eventDetailStats.EventCount
@@ -146,7 +145,7 @@ func (asUI *EventOriginListView) postProcessData() []*displaydata.DisplayEventOr
 	return displayEventOriginList
 }
 
-func (asUI *EventOriginListView) convertToListData(displayEventList []*displaydata.DisplayEventOriginStats) []uiCommon.IData {
+func (asUI *EventOriginListView) convertToListData(displayEventList []*DisplayEventOriginStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayEventList))
 	for _, d := range displayEventList {
 		listData = append(listData, d)

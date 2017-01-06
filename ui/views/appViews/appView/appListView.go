@@ -29,11 +29,10 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/jroimartin/gocui"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
@@ -41,7 +40,7 @@ const StaleContainerSeconds = 80
 
 type AppListView struct {
 	*dataView.DataListView
-	displayAppStats  []*displaydata.DisplayAppStats
+	displayAppStats  []*DisplayAppStats
 	isWarmupComplete bool
 	// This is a count of the number of apps that do not have
 	// the correct number of containers running based on app
@@ -268,15 +267,15 @@ func (asUI *AppListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
+func (asUI *AppListView) postProcessData() []*DisplayAppStats {
 
-	displayStatsArray := make([]*displaydata.DisplayAppStats, 0)
+	displayStatsArray := make([]*DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
 
 	for _, appStats := range appStatsArray {
-		displayAppStats := displaydata.NewDisplayAppStats(appStats)
+		displayAppStats := NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
@@ -339,7 +338,7 @@ func (asUI *AppListView) postProcessData() []*displaydata.DisplayAppStats {
 	return displayStatsArray
 }
 
-func (asUI *AppListView) convertToListData(statsArray []*displaydata.DisplayAppStats) []uiCommon.IData {
+func (asUI *AppListView) convertToListData(statsArray []*DisplayAppStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, len(statsArray))
 	for i, d := range statsArray {
 		listData[i] = d
@@ -353,7 +352,7 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 }
 
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
-	appStats := data.(*displaydata.DisplayAppStats)
+	appStats := data.(*DisplayAppStats)
 	colorString := ""
 	if asUI.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
 		if isSelected {

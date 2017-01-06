@@ -13,16 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package displaydata
+package appView
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
+import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 
-type DisplayEventDetailStats struct {
-	*eventEventType.EventDetailStats
+type DisplayAppStats struct {
+	*eventApp.AppStats
+
+	AppName           string
+	SpaceName         string
+	OrgName           string
+	DesiredContainers int
+	StackId           string
+	StackName         string
+
+	//TotalTraffic *eventdata.TrafficStats
+
+	TotalCpuPercentage float64
+	TotalUsedMemory    uint64
+	TotalUsedDisk      uint64
+
+	TotalReportingContainers int
+	TotalLogStdout           int64
+	TotalLogStderr           int64
 }
 
-func NewDisplayEventDetailStats(eventStats *eventEventType.EventDetailStats) *DisplayEventDetailStats {
-	stats := &DisplayEventDetailStats{}
-	stats.EventDetailStats = eventStats
+func NewDisplayAppStats(appStats *eventApp.AppStats) *DisplayAppStats {
+	stats := &DisplayAppStats{}
+	stats.AppStats = appStats
 	return stats
 }

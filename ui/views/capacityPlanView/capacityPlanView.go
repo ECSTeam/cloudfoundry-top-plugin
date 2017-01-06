@@ -24,10 +24,10 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellDetailView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -127,12 +127,12 @@ func (asUI *CapacityPlanView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *CapacityPlanView) postProcessData() map[string]*displaydata.DisplayCellStats {
+func (asUI *CapacityPlanView) postProcessData() map[string]*cellView.DisplayCellStats {
 	cellMap := asUI.GetDisplayedEventData().CellMap
 
-	displayCellMap := make(map[string]*displaydata.DisplayCellStats)
+	displayCellMap := make(map[string]*cellView.DisplayCellStats)
 	for ip, cellStats := range cellMap {
-		displayStat := displaydata.NewDisplayCellStats(cellStats)
+		displayStat := cellView.NewDisplayCellStats(cellStats)
 		displayCellMap[ip] = displayStat
 
 		if cellStats.CapacityTotalMemory > 0 {
@@ -189,11 +189,11 @@ func (asUI *CapacityPlanView) postProcessData() map[string]*displaydata.DisplayC
 	return displayCellMap
 }
 
-func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*displaydata.DisplayCellStats) {
+func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.DisplayCellStats) {
 
 	totalLabel := DUMMY_CELL_NAME_FOR_TOTAL
 	totalCellStats := eventCell.NewCellStats(totalLabel)
-	totalDisplayStat := displaydata.NewDisplayCellStats(totalCellStats)
+	totalDisplayStat := cellView.NewDisplayCellStats(totalCellStats)
 	displayCellMap[totalLabel] = totalDisplayStat
 
 	totalDisplayStat.CapacityPlan0_5GMem = UNKNOWN
@@ -261,7 +261,7 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*displaydata
 
 }
 
-func (asUI *CapacityPlanView) convertToListData(displayCellMap map[string]*displaydata.DisplayCellStats) []uiCommon.IData {
+func (asUI *CapacityPlanView) convertToListData(displayCellMap map[string]*cellView.DisplayCellStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayCellMap))
 	for _, d := range displayCellMap {
 		listData = append(listData, d)
@@ -271,7 +271,7 @@ func (asUI *CapacityPlanView) convertToListData(displayCellMap map[string]*displ
 
 func (asUI *CapacityPlanView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
 
-	cellStats := data.(*displaydata.DisplayCellStats)
+	cellStats := data.(*cellView.DisplayCellStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && cellStats.Ip == DUMMY_CELL_NAME_FOR_TOTAL {
 		fmt.Fprintf(v, util.BRIGHT_WHITE)

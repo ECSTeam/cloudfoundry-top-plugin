@@ -34,11 +34,11 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeViews/routeView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -465,13 +465,13 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
+	now := time.Now()
+	eventsText := fmt.Sprintf("%v (%v/sec)", util.FormatUint64(mui.router.GetEventCount()), mui.router.GetEventRate())
+	runtimeSeconds := Round(now.Sub(mui.router.GetStartTime()), time.Second)
 	v.Clear()
 
 	fmt.Fprintf(v, "Events: ")
-	eventsText := fmt.Sprintf("%v (%v/sec)", util.FormatUint64(mui.router.GetEventCount()), mui.router.GetEventRate())
 	fmt.Fprintf(v, "%-27v", eventsText)
-
-	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
 	if runtimeSeconds < time.Second*WarmUpSeconds {
 		warmUpTimeRemaining := (time.Second * WarmUpSeconds) - runtimeSeconds
 		fmt.Fprintf(v, util.DIM_GREEN)

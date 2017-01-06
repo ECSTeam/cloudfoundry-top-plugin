@@ -24,8 +24,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -113,9 +112,9 @@ func (asUI *AppDetailView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStats {
+func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
-	displayStatsArray := make([]*displaydata.DisplayContainerStats, 0)
+	displayStatsArray := make([]*DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStats := appMap[asUI.appId]
@@ -127,7 +126,7 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 
 	for _, containerStats := range appStats.ContainerArray {
 		if containerStats != nil {
-			displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+			displayContainerStats := NewDisplayContainerStats(containerStats, appStats)
 
 			/*
 				appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
@@ -157,7 +156,7 @@ func (asUI *AppDetailView) postProcessData() []*displaydata.DisplayContainerStat
 	return displayStatsArray
 }
 
-func (asUI *AppDetailView) convertToListData(containerStatsArray []*displaydata.DisplayContainerStats) []uiCommon.IData {
+func (asUI *AppDetailView) convertToListData(containerStatsArray []*DisplayContainerStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(containerStatsArray))
 	for _, d := range containerStatsArray {
 		listData = append(listData, d)

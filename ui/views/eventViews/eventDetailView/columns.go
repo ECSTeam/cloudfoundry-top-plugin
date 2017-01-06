@@ -19,21 +19,20 @@ import (
 	"fmt"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 func columnDeploymentName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayEventDetailStats).DeploymentName, c2.(*displaydata.DisplayEventDetailStats).DeploymentName)
+		return util.CaseInsensitiveLess(c1.(*DisplayEventDetailStats).DeploymentName, c2.(*DisplayEventDetailStats).DeploymentName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.DeploymentName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return cellStats.DeploymentName
 	}
 	c := uiCommon.NewListColumn("DNAME", "DNAME", defaultColSize,
@@ -44,14 +43,14 @@ func columnDeploymentName() *uiCommon.ListColumn {
 func columnJobName() *uiCommon.ListColumn {
 	defaultColSize := 45
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayEventDetailStats).JobName, c2.(*displaydata.DisplayEventDetailStats).JobName)
+		return util.CaseInsensitiveLess(c1.(*DisplayEventDetailStats).JobName, c2.(*DisplayEventDetailStats).JobName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.JobName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return cellStats.JobName
 	}
 	c := uiCommon.NewListColumn("JOB_NAME", "JOB_NAME", defaultColSize,
@@ -63,14 +62,14 @@ func columnJobName() *uiCommon.ListColumn {
 func columnJobIndex() *uiCommon.ListColumn {
 	defaultColSize := 36
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayEventDetailStats).JobIndex < c2.(*displaydata.DisplayEventDetailStats).JobIndex
+		return c1.(*DisplayEventDetailStats).JobIndex < c2.(*DisplayEventDetailStats).JobIndex
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.JobIndex, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return cellStats.JobIndex
 	}
 	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
@@ -81,14 +80,14 @@ func columnJobIndex() *uiCommon.ListColumn {
 func columnIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.Ip2long(c1.(*displaydata.DisplayEventDetailStats).Ip) < util.Ip2long(c2.(*displaydata.DisplayEventDetailStats).Ip)
+		return util.Ip2long(c1.(*DisplayEventDetailStats).Ip) < util.Ip2long(c2.(*DisplayEventDetailStats).Ip)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.Ip, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		cellStats := data.(*displaydata.DisplayEventDetailStats)
+		cellStats := data.(*DisplayEventDetailStats)
 		return cellStats.Ip
 	}
 	c := uiCommon.NewListColumn("IP", "IP", defaultColSize,
@@ -99,14 +98,14 @@ func columnIp() *uiCommon.ListColumn {
 func columnEventCount() *uiCommon.ListColumn {
 	defaultColSize := 12
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayEventDetailStats).EventCount < c2.(*displaydata.DisplayEventDetailStats).EventCount)
+		return (c1.(*DisplayEventDetailStats).EventCount < c2.(*DisplayEventDetailStats).EventCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayEventDetailStats)
+		stats := data.(*DisplayEventDetailStats)
 		return fmt.Sprintf("%12v", util.Format(stats.EventCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayEventDetailStats)
+		stats := data.(*DisplayEventDetailStats)
 		return fmt.Sprintf("%v", stats.EventCount)
 	}
 	c := uiCommon.NewListColumn("COUNT", "COUNT", defaultColSize,

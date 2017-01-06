@@ -25,9 +25,8 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -120,9 +119,9 @@ func (asUI *CellDetailView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerStats {
+func (asUI *CellDetailView) postProcessData() []*appDetailView.DisplayContainerStats {
 
-	containerStatsArray := make([]*displaydata.DisplayContainerStats, 0)
+	containerStatsArray := make([]*appDetailView.DisplayContainerStats, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
@@ -132,7 +131,7 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 			if containerStats != nil {
 				if containerStats.Ip == asUI.cellIp {
 					// This is a container on the selected cell
-					displayContainerStats := displaydata.NewDisplayContainerStats(containerStats, appStats)
+					displayContainerStats := appDetailView.NewDisplayContainerStats(containerStats, appStats)
 					displayContainerStats.AppName = appMetadata.Name
 					displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 					displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
@@ -158,7 +157,7 @@ func (asUI *CellDetailView) postProcessData() []*displaydata.DisplayContainerSta
 	return containerStatsArray
 }
 
-func (asUI *CellDetailView) convertToListData(containerStatsArray []*displaydata.DisplayContainerStats) []uiCommon.IData {
+func (asUI *CellDetailView) convertToListData(containerStatsArray []*appDetailView.DisplayContainerStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(containerStatsArray))
 	for _, d := range containerStatsArray {
 		listData = append(listData, d)

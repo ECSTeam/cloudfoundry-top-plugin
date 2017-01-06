@@ -23,10 +23,9 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/dataView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -129,12 +128,12 @@ func (asUI *CellListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellStats {
+func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 	cellMap := asUI.GetDisplayedEventData().CellMap
 
-	displayCellMap := make(map[string]*displaydata.DisplayCellStats)
+	displayCellMap := make(map[string]*DisplayCellStats)
 	for ip, cellStats := range cellMap {
-		displayCellStat := displaydata.NewDisplayCellStats(cellStats)
+		displayCellStat := NewDisplayCellStats(cellStats)
 		displayCellMap[ip] = displayCellStat
 	}
 
@@ -186,7 +185,7 @@ func (asUI *CellListView) postProcessData() map[string]*displaydata.DisplayCellS
 	return displayCellMap
 }
 
-func (asUI *CellListView) convertToListData(displayCellMap map[string]*displaydata.DisplayCellStats) []uiCommon.IData {
+func (asUI *CellListView) convertToListData(displayCellMap map[string]*DisplayCellStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(displayCellMap))
 	for _, d := range displayCellMap {
 		listData = append(listData, d)

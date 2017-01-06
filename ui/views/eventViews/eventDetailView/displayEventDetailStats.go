@@ -13,17 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package displaydata
+package eventDetailView
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
 
-type DisplayEventOriginStats struct {
-	*eventEventType.EventOriginStats
-	EventCount int64
+type DisplayEventDetailStats struct {
+	*eventEventType.EventDetailStats
 }
 
-func NewDisplayEventOriginStats(eventStats *eventEventType.EventOriginStats) *DisplayEventOriginStats {
-	stats := &DisplayEventOriginStats{}
-	stats.EventOriginStats = eventStats
+func NewDisplayEventDetailStats(eventStats *eventEventType.EventDetailStats) *DisplayEventDetailStats {
+	stats := &DisplayEventDetailStats{}
+	stats.EventDetailStats = eventStats
 	return stats
 }

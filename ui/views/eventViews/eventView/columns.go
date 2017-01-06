@@ -19,21 +19,20 @@ import (
 	"fmt"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 func columnEventType() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayEventStats).EventTypeName < c2.(*displaydata.DisplayEventStats).EventTypeName
+		return c1.(*DisplayEventStats).EventTypeName < c2.(*DisplayEventStats).EventTypeName
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayEventStats)
+		stats := data.(*DisplayEventStats)
 		return util.FormatDisplayData(stats.EventTypeName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayEventStats)
+		stats := data.(*DisplayEventStats)
 		return stats.EventTypeName
 	}
 	c := uiCommon.NewListColumn("EVENT_TYPE", "EVENT_TYPE", defaultColSize,
@@ -44,14 +43,14 @@ func columnEventType() *uiCommon.ListColumn {
 func columnEventCount() *uiCommon.ListColumn {
 	defaultColSize := 12
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*displaydata.DisplayEventStats).EventCount < c2.(*displaydata.DisplayEventStats).EventCount)
+		return (c1.(*DisplayEventStats).EventCount < c2.(*DisplayEventStats).EventCount)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		stats := data.(*displaydata.DisplayEventStats)
+		stats := data.(*DisplayEventStats)
 		return fmt.Sprintf("%12v", util.Format(stats.EventCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*displaydata.DisplayEventStats)
+		stats := data.(*DisplayEventStats)
 		return fmt.Sprintf("%v", stats.EventCount)
 	}
 	c := uiCommon.NewListColumn("COUNT", "COUNT", defaultColSize,

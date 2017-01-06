@@ -20,21 +20,20 @@ import (
 	"strconv"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/displaydata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayAppStats).AppName, c2.(*displaydata.DisplayAppStats).AppName)
+		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).AppName, c2.(*DisplayAppStats).AppName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return util.FormatDisplayData(appStats.AppName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return appStats.AppName
 	}
 	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
@@ -45,14 +44,14 @@ func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
 func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayAppStats).SpaceName, c2.(*displaydata.DisplayAppStats).SpaceName)
+		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).SpaceName, c2.(*DisplayAppStats).SpaceName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return appStats.SpaceName
 	}
 	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
@@ -63,14 +62,14 @@ func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
 func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayAppStats).OrgName, c2.(*displaydata.DisplayAppStats).OrgName)
+		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).OrgName, c2.(*DisplayAppStats).OrgName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return appStats.OrgName
 	}
 	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
@@ -80,14 +79,14 @@ func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalReportingContainers < c2.(*displaydata.DisplayAppStats).TotalReportingContainers
+		return c1.(*DisplayAppStats).TotalReportingContainers < c2.(*DisplayAppStats).TotalReportingContainers
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%3v", appStats.TotalReportingContainers)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
 	c := uiCommon.NewListColumn("reportingContainers", "RCR", 3,
@@ -97,14 +96,14 @@ func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnDesiredInstances() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).DesiredContainers < c2.(*displaydata.DisplayAppStats).DesiredContainers
+		return c1.(*DisplayAppStats).DesiredContainers < c2.(*DisplayAppStats).DesiredContainers
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%3v", appStats.DesiredContainers)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return strconv.Itoa(appStats.DesiredContainers)
 	}
 	c := uiCommon.NewListColumn("desiredInstances", "DCR", 3,
@@ -114,10 +113,10 @@ func (asUI *AppListView) columnDesiredInstances() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalCpuPercentage < c2.(*displaydata.DisplayAppStats).TotalCpuPercentage
+		return c1.(*DisplayAppStats).TotalCpuPercentage < c2.(*DisplayAppStats).TotalCpuPercentage
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		totalCpuInfo := ""
 		if appStats.TotalReportingContainers == 0 {
 			totalCpuInfo = fmt.Sprintf("%6v", "--")
@@ -133,7 +132,7 @@ func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 		return fmt.Sprintf("%6v", totalCpuInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
 	}
 	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
@@ -143,10 +142,10 @@ func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalUsedMemory < c2.(*displaydata.DisplayAppStats).TotalUsedMemory
+		return c1.(*DisplayAppStats).TotalUsedMemory < c2.(*DisplayAppStats).TotalUsedMemory
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		totalMemInfo := ""
 		if appStats.TotalReportingContainers == 0 {
 			totalMemInfo = fmt.Sprintf("%9v", "--")
@@ -156,7 +155,7 @@ func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
 	}
 	c := uiCommon.NewListColumn("MEM", "MEM", 9,
@@ -166,10 +165,10 @@ func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalUsedDisk < c2.(*displaydata.DisplayAppStats).TotalUsedDisk
+		return c1.(*DisplayAppStats).TotalUsedDisk < c2.(*DisplayAppStats).TotalUsedDisk
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		totalDiskInfo := ""
 		if appStats.TotalReportingContainers == 0 {
 			totalDiskInfo = fmt.Sprintf("%9v", "--")
@@ -179,7 +178,7 @@ func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%9v", totalDiskInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
 	}
 	c := uiCommon.NewListColumn("DISK", "DISK", 9,
@@ -189,10 +188,10 @@ func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.AvgResponseL60Time < c2.(*displaydata.DisplayAppStats).TotalTraffic.AvgResponseL60Time
+		return c1.(*DisplayAppStats).TotalTraffic.AvgResponseL60Time < c2.(*DisplayAppStats).TotalTraffic.AvgResponseL60Time
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		avgResponseTimeL60Info := "--"
 		if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
 			avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
@@ -201,7 +200,7 @@ func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 		return fmt.Sprintf("%6v", avgResponseTimeL60Info)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.AvgResponseL60Time)
 	}
 	c := uiCommon.NewListColumn("avgResponseTimeL60", "RESP", 6,
@@ -211,14 +210,14 @@ func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnLogStdout() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalLogStdout < c2.(*displaydata.DisplayAppStats).TotalLogStdout
+		return c1.(*DisplayAppStats).TotalLogStdout < c2.(*DisplayAppStats).TotalLogStdout
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%11v", util.Format(appStats.TotalLogStdout))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalLogStdout)
 	}
 	c := uiCommon.NewListColumn("TotalLogStdout", "LOG_OUT", 11,
@@ -228,14 +227,14 @@ func (asUI *AppListView) columnLogStdout() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnLogStderr() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalLogStderr < c2.(*displaydata.DisplayAppStats).TotalLogStderr
+		return c1.(*DisplayAppStats).TotalLogStderr < c2.(*DisplayAppStats).TotalLogStderr
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%11v", util.Format(appStats.TotalLogStderr))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalLogStderr)
 	}
 	c := uiCommon.NewListColumn("TotalLogStderr", "LOG_ERR", 11,
@@ -245,14 +244,14 @@ func (asUI *AppListView) columnLogStderr() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnReq1() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.EventL1Rate < c2.(*displaydata.DisplayAppStats).TotalTraffic.EventL1Rate
+		return c1.(*DisplayAppStats).TotalTraffic.EventL1Rate < c2.(*DisplayAppStats).TotalTraffic.EventL1Rate
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%6v", util.Format(int64(appStats.TotalTraffic.EventL1Rate)))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL1Rate)
 	}
 	c := uiCommon.NewListColumn("REQ1", "REQ/1", 6,
@@ -262,14 +261,14 @@ func (asUI *AppListView) columnReq1() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnReq10() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.EventL10Rate < c2.(*displaydata.DisplayAppStats).TotalTraffic.EventL10Rate
+		return c1.(*DisplayAppStats).TotalTraffic.EventL10Rate < c2.(*DisplayAppStats).TotalTraffic.EventL10Rate
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%7v", util.Format(int64(appStats.TotalTraffic.EventL10Rate)))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL10Rate)
 	}
 	c := uiCommon.NewListColumn("REQ10", "REQ/10", 7,
@@ -279,14 +278,14 @@ func (asUI *AppListView) columnReq10() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnReq60() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.EventL60Rate < c2.(*displaydata.DisplayAppStats).TotalTraffic.EventL60Rate
+		return c1.(*DisplayAppStats).TotalTraffic.EventL60Rate < c2.(*DisplayAppStats).TotalTraffic.EventL60Rate
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%7v", util.Format(int64(appStats.TotalTraffic.EventL60Rate)))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL60Rate)
 	}
 	c := uiCommon.NewListColumn("REQ60", "REQ/60", 7,
@@ -296,14 +295,14 @@ func (asUI *AppListView) columnReq60() *uiCommon.ListColumn {
 
 func (asUI *AppListView) columnTotalReq() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.HttpAllCount < c2.(*displaydata.DisplayAppStats).TotalTraffic.HttpAllCount
+		return c1.(*DisplayAppStats).TotalTraffic.HttpAllCount < c2.(*DisplayAppStats).TotalTraffic.HttpAllCount
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.HttpAllCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
 	}
 	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 10,
@@ -312,14 +311,14 @@ func (asUI *AppListView) columnTotalReq() *uiCommon.ListColumn {
 }
 func (asUI *AppListView) column2XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.Http2xxCount < c2.(*displaydata.DisplayAppStats).TotalTraffic.Http2xxCount
+		return c1.(*DisplayAppStats).TotalTraffic.Http2xxCount < c2.(*DisplayAppStats).TotalTraffic.Http2xxCount
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http2xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http2xxCount)
 	}
 	c := uiCommon.NewListColumn("2XX", "2XX", 10,
@@ -328,14 +327,14 @@ func (asUI *AppListView) column2XX() *uiCommon.ListColumn {
 }
 func (asUI *AppListView) column3XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.Http3xxCount < c2.(*displaydata.DisplayAppStats).TotalTraffic.Http3xxCount
+		return c1.(*DisplayAppStats).TotalTraffic.Http3xxCount < c2.(*DisplayAppStats).TotalTraffic.Http3xxCount
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http3xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http3xxCount)
 	}
 	c := uiCommon.NewListColumn("3XX", "3XX", 10,
@@ -345,14 +344,14 @@ func (asUI *AppListView) column3XX() *uiCommon.ListColumn {
 
 func (asUI *AppListView) column4XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.Http4xxCount < c2.(*displaydata.DisplayAppStats).TotalTraffic.Http4xxCount
+		return c1.(*DisplayAppStats).TotalTraffic.Http4xxCount < c2.(*DisplayAppStats).TotalTraffic.Http4xxCount
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http4xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http4xxCount)
 	}
 	c := uiCommon.NewListColumn("4XX", "4XX", 10,
@@ -362,14 +361,14 @@ func (asUI *AppListView) column4XX() *uiCommon.ListColumn {
 
 func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*displaydata.DisplayAppStats).TotalTraffic.Http5xxCount < c2.(*displaydata.DisplayAppStats).TotalTraffic.Http5xxCount
+		return c1.(*DisplayAppStats).TotalTraffic.Http5xxCount < c2.(*DisplayAppStats).TotalTraffic.Http5xxCount
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http5xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http5xxCount)
 	}
 	c := uiCommon.NewListColumn("5XX", "5XX", 10,
@@ -380,14 +379,14 @@ func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
 func (asUI *AppListView) columnStackName() *uiCommon.ListColumn {
 	defaultColSize := 15
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*displaydata.DisplayAppStats).StackName, c2.(*displaydata.DisplayAppStats).StackName)
+		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).StackName, c2.(*DisplayAppStats).StackName)
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return util.FormatDisplayData(appStats.StackName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		appStats := data.(*displaydata.DisplayAppStats)
+		appStats := data.(*DisplayAppStats)
 		return appStats.StackName
 	}
 	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,

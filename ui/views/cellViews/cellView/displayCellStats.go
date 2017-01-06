@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package displaydata
+package cellView
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 
