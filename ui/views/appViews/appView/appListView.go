@@ -121,32 +121,32 @@ func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, asUI.columnAppName())
-	columns = append(columns, asUI.columnSpaceName())
-	columns = append(columns, asUI.columnOrgName())
+	columns = append(columns, columnAppName())
+	columns = append(columns, columnSpaceName())
+	columns = append(columns, columnOrgName())
 
-	columns = append(columns, asUI.columnDesiredInstances())
-	columns = append(columns, asUI.columnReportingContainers())
+	columns = append(columns, columnDesiredInstances())
+	columns = append(columns, columnReportingContainers())
 
-	columns = append(columns, asUI.columnTotalCpu())
-	columns = append(columns, asUI.columnTotalMemoryUsed())
-	columns = append(columns, asUI.columnTotalDiskUsed())
+	columns = append(columns, columnTotalCpu())
+	columns = append(columns, columnTotalMemoryUsed())
+	columns = append(columns, columnTotalDiskUsed())
 
-	columns = append(columns, asUI.columnAvgResponseTimeL60Info())
-	columns = append(columns, asUI.columnLogStdout())
-	columns = append(columns, asUI.columnLogStderr())
+	columns = append(columns, columnAvgResponseTimeL60Info())
+	columns = append(columns, columnLogStdout())
+	columns = append(columns, columnLogStderr())
 
-	columns = append(columns, asUI.columnReq1())
-	columns = append(columns, asUI.columnReq10())
-	columns = append(columns, asUI.columnReq60())
+	columns = append(columns, columnReq1())
+	columns = append(columns, columnReq10())
+	columns = append(columns, columnReq60())
 
-	columns = append(columns, asUI.columnTotalReq())
-	columns = append(columns, asUI.column2XX())
-	columns = append(columns, asUI.column3XX())
-	columns = append(columns, asUI.column4XX())
-	columns = append(columns, asUI.column5XX())
+	columns = append(columns, columnTotalReq())
+	columns = append(columns, column2XX())
+	columns = append(columns, column3XX())
+	columns = append(columns, column4XX())
+	columns = append(columns, column5XX())
 
-	columns = append(columns, asUI.columnStackName())
+	columns = append(columns, columnStackName())
 
 	return columns
 }

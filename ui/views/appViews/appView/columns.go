@@ -23,7 +23,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
+func columnAppName() *uiCommon.ListColumn {
 	defaultColSize := 50
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).AppName, c2.(*DisplayAppStats).AppName)
@@ -41,7 +41,7 @@ func (asUI *AppListView) columnAppName() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
+func columnSpaceName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).SpaceName, c2.(*DisplayAppStats).SpaceName)
@@ -59,7 +59,7 @@ func (asUI *AppListView) columnSpaceName() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
+func columnOrgName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).OrgName, c2.(*DisplayAppStats).OrgName)
@@ -77,7 +77,7 @@ func (asUI *AppListView) columnOrgName() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
+func columnReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalReportingContainers < c2.(*DisplayAppStats).TotalReportingContainers
 	}
@@ -94,7 +94,7 @@ func (asUI *AppListView) columnReportingContainers() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnDesiredInstances() *uiCommon.ListColumn {
+func columnDesiredInstances() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).DesiredContainers < c2.(*DisplayAppStats).DesiredContainers
 	}
@@ -111,7 +111,7 @@ func (asUI *AppListView) columnDesiredInstances() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
+func columnTotalCpu() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalCpuPercentage < c2.(*DisplayAppStats).TotalCpuPercentage
 	}
@@ -140,7 +140,7 @@ func (asUI *AppListView) columnTotalCpu() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
+func columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalUsedMemory < c2.(*DisplayAppStats).TotalUsedMemory
 	}
@@ -163,7 +163,7 @@ func (asUI *AppListView) columnTotalMemoryUsed() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
+func columnTotalDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalUsedDisk < c2.(*DisplayAppStats).TotalUsedDisk
 	}
@@ -186,7 +186,7 @@ func (asUI *AppListView) columnTotalDiskUsed() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
+func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.AvgResponseL60Time < c2.(*DisplayAppStats).TotalTraffic.AvgResponseL60Time
 	}
@@ -208,7 +208,7 @@ func (asUI *AppListView) columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnLogStdout() *uiCommon.ListColumn {
+func columnLogStdout() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalLogStdout < c2.(*DisplayAppStats).TotalLogStdout
 	}
@@ -225,7 +225,7 @@ func (asUI *AppListView) columnLogStdout() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnLogStderr() *uiCommon.ListColumn {
+func columnLogStderr() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalLogStderr < c2.(*DisplayAppStats).TotalLogStderr
 	}
@@ -242,7 +242,7 @@ func (asUI *AppListView) columnLogStderr() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnReq1() *uiCommon.ListColumn {
+func columnReq1() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.EventL1Rate < c2.(*DisplayAppStats).TotalTraffic.EventL1Rate
 	}
@@ -259,7 +259,7 @@ func (asUI *AppListView) columnReq1() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnReq10() *uiCommon.ListColumn {
+func columnReq10() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.EventL10Rate < c2.(*DisplayAppStats).TotalTraffic.EventL10Rate
 	}
@@ -276,7 +276,7 @@ func (asUI *AppListView) columnReq10() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnReq60() *uiCommon.ListColumn {
+func columnReq60() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.EventL60Rate < c2.(*DisplayAppStats).TotalTraffic.EventL60Rate
 	}
@@ -293,7 +293,7 @@ func (asUI *AppListView) columnReq60() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnTotalReq() *uiCommon.ListColumn {
+func columnTotalReq() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.HttpAllCount < c2.(*DisplayAppStats).TotalTraffic.HttpAllCount
 	}
@@ -309,7 +309,7 @@ func (asUI *AppListView) columnTotalReq() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
-func (asUI *AppListView) column2XX() *uiCommon.ListColumn {
+func column2XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.Http2xxCount < c2.(*DisplayAppStats).TotalTraffic.Http2xxCount
 	}
@@ -325,7 +325,7 @@ func (asUI *AppListView) column2XX() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
-func (asUI *AppListView) column3XX() *uiCommon.ListColumn {
+func column3XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.Http3xxCount < c2.(*DisplayAppStats).TotalTraffic.Http3xxCount
 	}
@@ -342,7 +342,7 @@ func (asUI *AppListView) column3XX() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) column4XX() *uiCommon.ListColumn {
+func column4XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.Http4xxCount < c2.(*DisplayAppStats).TotalTraffic.Http4xxCount
 	}
@@ -359,7 +359,7 @@ func (asUI *AppListView) column4XX() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
+func column5XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayAppStats).TotalTraffic.Http5xxCount < c2.(*DisplayAppStats).TotalTraffic.Http5xxCount
 	}
@@ -376,7 +376,7 @@ func (asUI *AppListView) column5XX() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *AppListView) columnStackName() *uiCommon.ListColumn {
+func columnStackName() *uiCommon.ListColumn {
 	defaultColSize := 15
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayAppStats).StackName, c2.(*DisplayAppStats).StackName)

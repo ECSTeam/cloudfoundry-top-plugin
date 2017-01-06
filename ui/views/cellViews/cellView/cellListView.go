@@ -66,31 +66,31 @@ func NewCellListView(masterUI masterUIInterface.MasterUIInterface,
 
 func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, asUI.columnCellIp())
+	columns = append(columns, columnCellIp())
 
-	columns = append(columns, asUI.columnTotalCpuPercentage())
-	columns = append(columns, asUI.columnTotalReportingContainers())
+	columns = append(columns, columnTotalCpuPercentage())
+	columns = append(columns, columnTotalReportingContainers())
 
-	columns = append(columns, asUI.columnNumOfCpus())
+	columns = append(columns, columnNumOfCpus())
 
-	columns = append(columns, asUI.columnCapacityTotalMemory())
-	columns = append(columns, asUI.columnCapacityRemainingMemory())
-	columns = append(columns, asUI.columnTotalContainerReservedMemory())
-	columns = append(columns, asUI.columnTotalContainerUsedMemory())
+	columns = append(columns, columnCapacityTotalMemory())
+	columns = append(columns, columnCapacityRemainingMemory())
+	columns = append(columns, columnTotalContainerReservedMemory())
+	columns = append(columns, columnTotalContainerUsedMemory())
 
-	columns = append(columns, asUI.columnCapacityTotalDisk())
-	columns = append(columns, asUI.columnCapacityRemainingDisk())
-	columns = append(columns, asUI.columnTotalContainerReservedDisk())
-	columns = append(columns, asUI.columnTotalContainerUsedDisk())
+	columns = append(columns, columnCapacityTotalDisk())
+	columns = append(columns, columnCapacityRemainingDisk())
+	columns = append(columns, columnTotalContainerReservedDisk())
+	columns = append(columns, columnTotalContainerUsedDisk())
 
-	columns = append(columns, asUI.columnCapacityTotalContainers())
-	columns = append(columns, asUI.columnContainerCount())
+	columns = append(columns, columnCapacityTotalContainers())
+	columns = append(columns, columnContainerCount())
 
-	columns = append(columns, asUI.columnStackName())
+	columns = append(columns, columnStackName())
 
-	columns = append(columns, asUI.columnDeploymentName())
-	columns = append(columns, asUI.columnJobName())
-	columns = append(columns, asUI.columnJobIndex())
+	columns = append(columns, columnDeploymentName())
+	columns = append(columns, columnJobName())
+	columns = append(columns, columnJobIndex())
 
 	return columns
 }

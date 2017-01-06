@@ -14,3 +14,5 @@
 // limitations under the License.
 
 package cellDetailView
+
+// EMPTY: We use class appDetailView.DisplayContainerStats and column defs from appDetailView package

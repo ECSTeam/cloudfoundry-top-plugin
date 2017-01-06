@@ -22,7 +22,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-func (asUI *CellListView) columnCellIp() *uiCommon.ListColumn {
+func columnCellIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.Ip2long(c1.(*DisplayCellStats).Ip) < util.Ip2long(c2.(*DisplayCellStats).Ip)
@@ -40,7 +40,7 @@ func (asUI *CellListView) columnCellIp() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
+func columnTotalCpuPercentage() *uiCommon.ListColumn {
 	defaultColSize := 6
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).TotalContainerCpuPercentage < c2.(*DisplayCellStats).TotalContainerCpuPercentage)
@@ -72,7 +72,7 @@ func (asUI *CellListView) columnTotalCpuPercentage() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn {
+func columnTotalReportingContainers() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).TotalReportingContainers < c2.(*DisplayCellStats).TotalReportingContainers)
@@ -95,7 +95,7 @@ func (asUI *CellListView) columnTotalReportingContainers() *uiCommon.ListColumn 
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
 	return c
 }
-func (asUI *CellListView) columnNumOfCpus() *uiCommon.ListColumn {
+func columnNumOfCpus() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).NumOfCpus < c2.(*DisplayCellStats).NumOfCpus)
@@ -119,7 +119,7 @@ func (asUI *CellListView) columnNumOfCpus() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnCapacityTotalMemory() *uiCommon.ListColumn {
+func columnCapacityTotalMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityTotalMemory < c2.(*DisplayCellStats).CapacityTotalMemory
 	}
@@ -142,7 +142,7 @@ func (asUI *CellListView) columnCapacityTotalMemory() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnCapacityRemainingMemory() *uiCommon.ListColumn {
+func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityRemainingMemory < c2.(*DisplayCellStats).CapacityRemainingMemory
 	}
@@ -165,7 +165,7 @@ func (asUI *CellListView) columnCapacityRemainingMemory() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnCapacityTotalDisk() *uiCommon.ListColumn {
+func columnCapacityTotalDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityTotalDisk < c2.(*DisplayCellStats).CapacityTotalDisk
 	}
@@ -188,7 +188,7 @@ func (asUI *CellListView) columnCapacityTotalDisk() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnCapacityRemainingDisk() *uiCommon.ListColumn {
+func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityRemainingDisk < c2.(*DisplayCellStats).CapacityRemainingDisk
 	}
@@ -211,7 +211,7 @@ func (asUI *CellListView) columnCapacityRemainingDisk() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnCapacityTotalContainers() *uiCommon.ListColumn {
+func columnCapacityTotalContainers() *uiCommon.ListColumn {
 	defaultColSize := 8
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).CapacityTotalContainers < c2.(*DisplayCellStats).CapacityTotalContainers)
@@ -235,7 +235,7 @@ func (asUI *CellListView) columnCapacityTotalContainers() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
+func columnContainerCount() *uiCommon.ListColumn {
 	defaultColSize := 5
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).ContainerCount < c2.(*DisplayCellStats).ContainerCount)
@@ -259,7 +259,7 @@ func (asUI *CellListView) columnContainerCount() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnTotalContainerReservedMemory() *uiCommon.ListColumn {
+func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerReservedMemory < c2.(*DisplayCellStats).TotalContainerReservedMemory
 	}
@@ -282,7 +282,7 @@ func (asUI *CellListView) columnTotalContainerReservedMemory() *uiCommon.ListCol
 	return c
 }
 
-func (asUI *CellListView) columnTotalContainerUsedMemory() *uiCommon.ListColumn {
+func columnTotalContainerUsedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerUsedMemory < c2.(*DisplayCellStats).TotalContainerUsedMemory
 	}
@@ -305,7 +305,7 @@ func (asUI *CellListView) columnTotalContainerUsedMemory() *uiCommon.ListColumn 
 	return c
 }
 
-func (asUI *CellListView) columnTotalContainerReservedDisk() *uiCommon.ListColumn {
+func columnTotalContainerReservedDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerReservedDisk < c2.(*DisplayCellStats).TotalContainerReservedDisk
 	}
@@ -328,7 +328,7 @@ func (asUI *CellListView) columnTotalContainerReservedDisk() *uiCommon.ListColum
 	return c
 }
 
-func (asUI *CellListView) columnTotalContainerUsedDisk() *uiCommon.ListColumn {
+func columnTotalContainerUsedDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerUsedDisk < c2.(*DisplayCellStats).TotalContainerUsedDisk
 	}
@@ -351,7 +351,7 @@ func (asUI *CellListView) columnTotalContainerUsedDisk() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnStackName() *uiCommon.ListColumn {
+func columnStackName() *uiCommon.ListColumn {
 	defaultColSize := 15
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).StackName, c2.(*DisplayCellStats).StackName)
@@ -369,7 +369,7 @@ func (asUI *CellListView) columnStackName() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
+func columnDeploymentName() *uiCommon.ListColumn {
 	defaultColSize := 10
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).DeploymentName, c2.(*DisplayCellStats).DeploymentName)
@@ -387,7 +387,7 @@ func (asUI *CellListView) columnDeploymentName() *uiCommon.ListColumn {
 	return c
 }
 
-func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
+func columnJobName() *uiCommon.ListColumn {
 	defaultColSize := 45
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).JobName, c2.(*DisplayCellStats).JobName)
@@ -406,7 +406,7 @@ func (asUI *CellListView) columnJobName() *uiCommon.ListColumn {
 }
 
 // Job Index in PCF 1.8 is now a GUID not a integer number
-func (asUI *CellListView) columnJobIndex() *uiCommon.ListColumn {
+func columnJobIndex() *uiCommon.ListColumn {
 	defaultColSize := 36
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).JobIndex < c2.(*DisplayCellStats).JobIndex
