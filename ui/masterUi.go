@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/ansel1/merry"
+	termbox "github.com/nsf/termbox-go"
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
@@ -159,12 +160,23 @@ func (mui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
+	mui.flushKeyboardBuffer()
+
 	go mui.refreshDataAndDisplayThread(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		m := merry.Details(err)
 		log.Panicln(m)
 	}
 
+}
+
+func (mui *MasterUI) flushKeyboardBuffer() {
+	go func() {
+		for {
+			termbox.PollEvent()
+		}
+	}()
+	termbox.Interrupt()
 }
 
 func (mui *MasterUI) SetStatsSummarySize(statSummarySize int) {
