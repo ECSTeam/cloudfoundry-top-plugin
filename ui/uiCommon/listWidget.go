@@ -753,6 +753,7 @@ func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {
 	}
 	filterView := NewEditFilterView(asUI.masterUI, editViewName, asUI)
 	asUI.masterUI.LayoutManager().Add(filterView)
+	asUI.masterUI.SetCurrentViewOnTop(g)
 
 	// TODO: Is this the correct spot to do this?
 	asUI.masterUI.SetMinimizeHeader(g, true)
@@ -767,6 +768,7 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 	}
 	editView := NewEditSortView(asUI.masterUI, editViewName, asUI)
 	asUI.masterUI.LayoutManager().Add(editView)
+	asUI.masterUI.SetCurrentViewOnTop(g)
 	// TODO: Is this the correct spot to do this?
 	asUI.masterUI.SetMinimizeHeader(g, true)
 	return asUI.RefreshDisplay(g)

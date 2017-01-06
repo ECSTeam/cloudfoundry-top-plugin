@@ -74,7 +74,6 @@ func NewRouteMapListView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI.routeMapDetailWidget = NewRouteMapDetailWidget(masterUI, "routeMapDetailWidget", detailWidgetViewHeight, asUI)
 	masterUI.LayoutManager().Add(asUI.routeMapDetailWidget)
-
 	return asUI
 
 }
@@ -164,7 +163,6 @@ func (asUI *RouteMapListView) seedAppsWithNoTraffic(routeStats *eventRoute.Route
 		}
 	}
 }
-
 
 func (asUI *RouteMapListView) GetListData() []uiCommon.IData {
 	displayDataList := asUI.postProcessData()

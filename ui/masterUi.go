@@ -160,8 +160,6 @@ func (mui *MasterUI) initGui() {
 		log.Panicln(err)
 	}
 
-	mui.flushKeyboardBuffer()
-
 	go mui.refreshDataAndDisplayThread(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		m := merry.Details(err)
@@ -171,11 +169,20 @@ func (mui *MasterUI) initGui() {
 }
 
 func (mui *MasterUI) flushKeyboardBuffer() {
+
 	go func() {
-		for {
-			termbox.PollEvent()
+		loop := true
+		for loop {
+			switch ev := termbox.PollEvent(); ev.Type {
+			case termbox.EventKey:
+			case termbox.EventError:
+				loop = false
+			case termbox.EventInterrupt:
+				loop = false
+			}
 		}
 	}()
+	time.Sleep(10 * time.Microsecond)
 	termbox.Interrupt()
 }
 
@@ -274,7 +281,11 @@ func (mui *MasterUI) CloseViewByName(viewName string) error {
 }
 
 func (mui *MasterUI) SetCurrentViewOnTop(g *gocui.Gui) error {
-	topName := mui.layoutManager.Top().Name()
+
+	viewMgr := mui.layoutManager.Top()
+	viewMgr.Layout(g)
+
+	topName := viewMgr.Name()
 	if _, err := g.SetCurrentView(topName); err != nil {
 		return merry.Wrap(err).Appendf("SetCurrentView viewName:[%v]", topName)
 	}

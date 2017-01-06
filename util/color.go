@@ -15,6 +15,11 @@
 
 package util
 
+// "▁▂▃▄▅▆▇█"
+// "▁▂▃▄▅▆▇█▉▊▋▌▍▎▏"
+// ◐◑◒◓◔◕
+// https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+
 const (
 	CLEAR = "\033[0m"
 
