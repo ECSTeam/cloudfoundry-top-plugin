@@ -273,6 +273,7 @@ func (asUI *AppListView) postProcessData() []*DisplayAppStats {
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
+	now := time.Now()
 
 	for _, appStats := range appStatsArray {
 		displayAppStats := NewDisplayAppStats(appStats)
@@ -296,7 +297,6 @@ func (asUI *AppListView) postProcessData() []*DisplayAppStats {
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
-		now := time.Now()
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				// If we haven't gotten a container update recently, ignore the old value
@@ -304,7 +304,6 @@ func (asUI *AppListView) postProcessData() []*DisplayAppStats {
 					appStats.ContainerArray[containerIndex] = nil
 					continue
 				}
-
 				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
 				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
 				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes

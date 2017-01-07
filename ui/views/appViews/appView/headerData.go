@@ -19,10 +19,14 @@ import (
 	"fmt"
 	"sort"
 
+	"strings"
+
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
+
+const UNKNOWN_STACK_NAME = "UNKNOWN"
 
 type StackSummaryStats struct {
 	StackId                     string
@@ -47,7 +51,16 @@ func (slice StackSummaryStatsArray) Len() int {
 }
 
 func (slice StackSummaryStatsArray) Less(i, j int) bool {
-	return slice[i].StackName < slice[j].StackName
+	// Always sort UNKNOWN to bottom
+	v1 := slice[i].StackName
+	if strings.HasPrefix(v1, UNKNOWN_STACK_NAME) {
+		return false
+	}
+	v2 := slice[j].StackName
+	if strings.HasPrefix(v2, UNKNOWN_STACK_NAME) {
+		return true
+	}
+	return v1 < v2
 }
 
 func (slice StackSummaryStatsArray) Swap(i, j int) {
@@ -56,11 +69,12 @@ func (slice StackSummaryStatsArray) Swap(i, j int) {
 
 // Output header stats by stack
 // Returns the number of rows (lines) written to header
-
 func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
 
 	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
 	asUI.checkForAlerts(g)
+
+	isWarmupComplete := asUI.GetMasterUI().IsWarmupComplete()
 
 	stacks := stack.AllStacks()
 	if len(stacks) == 0 {
@@ -71,10 +85,14 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	for _, stack := range stacks {
 		summaryStatsByStack[stack.Guid] = &StackSummaryStats{StackId: stack.Guid, StackName: stack.Name}
 	}
+	if isWarmupComplete {
+		// We add an extra StackSummaryStats with not stackId to handle cells that have no containers (yet)
+		summaryStatsByStack[""] = &StackSummaryStats{StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
+	}
 
 	for _, appStats := range asUI.displayAppStats {
 		sumStats := summaryStatsByStack[appStats.StackId]
-		if sumStats == nil {
+		if appStats.StackId == "" || sumStats == nil {
 			// This appStats has no stackId -- This could be caused by not having
 			// the app metadata in cache.  Either because it hasn't been loaded yet
 			// or it was deleted because the app has been deleted but we still
@@ -85,13 +103,10 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 			//return 3, nil
 			continue
 		}
-		for _, cs := range appStats.ContainerArray {
-			if cs != nil && cs.ContainerMetric != nil {
-				sumStats.TotalReportingAppInstances++
-				sumStats.TotalUsedMemoryAppInstances = sumStats.TotalUsedMemoryAppInstances + *cs.ContainerMetric.MemoryBytes
-				sumStats.TotalUsedDiskAppInstances = sumStats.TotalUsedDiskAppInstances + *cs.ContainerMetric.DiskBytes
-			}
-		}
+
+		sumStats.TotalReportingAppInstances = sumStats.TotalReportingAppInstances + appStats.TotalReportingContainers
+		sumStats.TotalUsedMemoryAppInstances = sumStats.TotalUsedMemoryAppInstances + appStats.TotalUsedMemory
+		sumStats.TotalUsedDiskAppInstances = sumStats.TotalUsedDiskAppInstances + appStats.TotalUsedDisk
 		sumStats.TotalCpuPercentage = sumStats.TotalCpuPercentage + appStats.TotalCpuPercentage
 		if appStats.TotalTraffic.EventL60Rate > 0 {
 			sumStats.TotalActiveApps++
@@ -113,6 +128,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
 		//toplog.Info("cellStats.StackId:%v", cellStats.StackId)
 		sumStats := summaryStatsByStack[cellStats.StackId]
+		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
 		if sumStats != nil {
 			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
 			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityTotalMemory
@@ -176,12 +192,8 @@ func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stack
 	if stackSummaryStats.TotalCapacityDisk > 0 {
 		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
 	}
-	//fmt.Fprintf(v, "\r")
 
 	fmt.Fprintf(v, "Stack: %v\n", stackSummaryStats.StackName)
-
-	// Active apps are apps that have had go-rounter traffic in last 60 seconds
-	// Reporting containers are containers that reported metrics in last 90 seconds
 	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"
@@ -193,6 +205,7 @@ func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stack
 	// Total quota memory of all running app instances
 	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
 
+	// Reporting containers are containers that reported metrics in last 'StaleContainerSeconds'
 	fmt.Fprintf(v, "   Apps:%5v Total, Cntrs:%5v     ",
 		stackSummaryStats.TotalApps,
 		stackSummaryStats.TotalReportingAppInstances)

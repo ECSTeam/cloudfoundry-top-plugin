@@ -376,6 +376,8 @@ func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 	// TODO: Is this the best place for this??
 	if cellStats.StackId == "" {
 		// Look for a container running on cell to determine which stack the cell is running
+		// TODO: This is not very efficient -- if end up with a cell that has no containers yet
+		// this loop will run every time the cell metric comes in.
 		for _, appStats := range ed.AppMap {
 			for _, containerStats := range appStats.ContainerArray {
 				if containerStats != nil && cellStats.Ip == containerStats.Ip {

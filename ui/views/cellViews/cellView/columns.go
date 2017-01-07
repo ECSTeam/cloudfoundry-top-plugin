@@ -358,7 +358,11 @@ func columnStackName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		appStats := data.(*DisplayCellStats)
-		return util.FormatDisplayData(appStats.StackName, defaultColSize)
+		displayName := appStats.StackName
+		if displayName == "" {
+			displayName = "--"
+		}
+		return util.FormatDisplayData(displayName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayCellStats)
