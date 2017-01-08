@@ -56,8 +56,6 @@ type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int,
 
 type DisplayViewInterface interface {
 	RefreshDisplay(g *gocui.Gui) error
-	SetDisplayPaused(paused bool)
-	GetDisplayPaused() bool
 	GetTopOffset() int
 }
 
@@ -235,10 +233,6 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 		}
 
 		if err := g.SetKeybinding(w.name, 'f', gocui.ModNone, w.editFilterAction); err != nil {
-			log.Panicln(err)
-		}
-
-		if err := g.SetKeybinding(w.name, 'p', gocui.ModNone, w.toggleDisplayPauseAction); err != nil {
 			log.Panicln(err)
 		}
 
@@ -738,11 +732,6 @@ func writeFooter(g *gocui.Gui, msg string) {
 	v, _ := g.View("footerView")
 	fmt.Fprint(v, msg)
 
-}
-
-func (asUI *ListWidget) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error {
-	asUI.displayView.SetDisplayPaused(!asUI.displayView.GetDisplayPaused())
-	return asUI.displayView.RefreshDisplay(g)
 }
 
 func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {

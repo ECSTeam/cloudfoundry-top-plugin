@@ -31,6 +31,9 @@ type MasterUIInterface interface {
 	SetStatsSummarySize(statSummarySize int)
 	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
 	IsPrivileged() bool
+	//GetCommonData() *ui.CommonData
+	GetDisplayPaused() bool
+	SetDisplayPaused(paused bool)
 }
 
 type LayoutManagerInterface interface {

@@ -50,8 +50,8 @@ type EditColumnViewAbs struct {
 
 func NewEditColumnViewAbs(masterUI masterUIInterface.MasterUIInterface, name string, listWidget *ListWidget) *EditColumnViewAbs {
 	w := &EditColumnViewAbs{masterUI: masterUI, name: name, listWidget: listWidget}
-	w.priorStateOfDisplayPaused = listWidget.displayView.GetDisplayPaused()
-	listWidget.displayView.SetDisplayPaused(true)
+	w.priorStateOfDisplayPaused = masterUI.GetDisplayPaused()
+	masterUI.SetDisplayPaused(true)
 	w.minTopViewMargin = 9
 	return w
 }
@@ -163,7 +163,7 @@ func (w *EditColumnViewAbs) closeView(g *gocui.Gui, v *gocui.View) error {
 	// TODO: Is this the correct spot to do this?
 	w.masterUI.SetMinimizeHeader(g, false)
 
-	w.listWidget.displayView.SetDisplayPaused(w.priorStateOfDisplayPaused)
+	w.masterUI.SetDisplayPaused(w.priorStateOfDisplayPaused)
 	w.listWidget.displayView.RefreshDisplay(g)
 	return nil
 }

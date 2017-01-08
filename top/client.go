@@ -250,8 +250,8 @@ func (c *Client) createNozzle(subscriptionID string, instanceID int) error {
 // createAppNozzle uses'Stream' API - must be called once per app we are monitoring
 func (c *Client) createAppNozzle(appGUID string, instanceID int) error {
 
-	// Delay each nozzle instance creation by 100 millseconds
-	// We do this so we don't have a flood of API request
+	// Delay each nozzle instance creation by 100 milliseconds
+	// We do this so we don't have a flood of API requests
 	time.Sleep(time.Duration(instanceID*100) * time.Millisecond)
 
 	conn := c.cliConnection
@@ -270,8 +270,8 @@ func (c *Client) createAppNozzle(appGUID string, instanceID int) error {
 	tokenRefresher := NewTokenRefresher(conn, instanceID)
 	dopplerConnection.RefreshTokenFrom(tokenRefresher)
 	// TODO: We need to timeout or do a keepalive to deal with severed connectons
-	// however if we open a stream to a stopped app we never get any events which
-	// causes a timeout.
+	// however if we open a stream on a stopped app we never get any events which
+	// causes a timeout error which is not what we want.
 	//dopplerConnection.SetIdleTimeout(90 * time.Second)
 
 	authToken, err := conn.AccessToken()

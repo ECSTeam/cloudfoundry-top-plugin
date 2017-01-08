@@ -16,7 +16,6 @@
 package dataView
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -25,7 +24,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
@@ -49,7 +47,6 @@ type DataListView struct {
 	appMdMgr               *app.AppMetadataManager
 	mu                     sync.Mutex
 	listWidget             *uiCommon.ListWidget
-	displayPaused          bool
 	initialized            bool
 	Title                  string
 	HelpText               string
@@ -88,7 +85,6 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI.listWidget = listWidget
 
 	return asUI
-
 }
 
 // Get the top offset where the data view should open
@@ -174,17 +170,6 @@ func (asUI *DataListView) initialize(g *gocui.Gui) {
 	}
 }
 
-func (asUI *DataListView) GetDisplayPaused() bool {
-	return asUI.displayPaused
-}
-
-func (asUI *DataListView) SetDisplayPaused(paused bool) {
-	asUI.displayPaused = paused
-	if !paused {
-		asUI.updateData()
-	}
-}
-
 func (asUI *DataListView) GetCurrentEventData() *eventdata.EventData {
 	return asUI.eventProcessor.GetCurrentEventData()
 }
@@ -227,15 +212,13 @@ func (asUI *DataListView) refreshListDisplay(g *gocui.Gui) error {
 }
 
 func (asUI *DataListView) UpdateDisplay(g *gocui.Gui) error {
-	if !asUI.displayPaused {
-		asUI.updateData()
-	}
+	asUI.updateData()
 	return asUI.RefreshDisplay(g)
 }
 
 // XXX
 func (asUI *DataListView) updateData() {
-	asUI.eventProcessor.UpdateData()
+	//asUI.eventProcessor.UpdateData()
 	listData := asUI.GetListData()
 	asUI.listWidget.SetListData(listData)
 }
@@ -252,12 +235,6 @@ func (asUI *DataListView) updateHeader(g *gocui.Gui) (int, error) {
 	v, err := g.View("headerView")
 	if err != nil {
 		return 0, err
-	}
-	if asUI.displayPaused {
-		fmt.Fprintf(v, util.REVERSE_GREEN)
-		fmt.Fprintf(v, "\r Display update paused ")
-		fmt.Fprintf(v, util.CLEAR)
-		return 0, nil
 	}
 
 	if asUI.UpdateHeaderCallback != nil {

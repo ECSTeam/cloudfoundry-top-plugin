@@ -60,6 +60,8 @@ type MasterUI struct {
 	router            *eventrouting.EventRouter
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
+	displayPaused     bool
+	commonData        *CommonData
 
 	baseHeaderSize       int
 	headerSize           int
@@ -115,8 +117,13 @@ func (mui *MasterUI) IsPrivileged() bool {
 func (mui *MasterUI) LayoutManager() masterUIInterface.LayoutManagerInterface {
 	return mui.layoutManager
 }
+
 func (mui *MasterUI) GetRouter() *eventrouting.EventRouter {
 	return mui.router
+}
+
+func (mui *MasterUI) GetCommonData() *CommonData {
+	return mui.commonData
 }
 
 func (mui *MasterUI) Start() {
@@ -224,6 +231,9 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(viewName, 'r', gocui.ModNone, mui.refreshMetadata); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(viewName, 'p', gocui.ModNone, mui.toggleDisplayPauseAction); err != nil {
 		log.Panicln(err)
 	}
 
@@ -417,6 +427,23 @@ func (mui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (mui *MasterUI) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error {
+	mui.SetDisplayPaused(!mui.GetDisplayPaused())
+	mui.updateHeaderDisplay(mui.gui)
+	return mui.currentDataView.RefreshDisplay(mui.gui)
+}
+
+func (mui *MasterUI) GetDisplayPaused() bool {
+	return mui.displayPaused
+}
+
+func (mui *MasterUI) SetDisplayPaused(paused bool) {
+	mui.displayPaused = paused
+	if !paused {
+		mui.snapshotLiveData()
+	}
+}
+
 func (mui *MasterUI) RefeshNow() {
 	mui.refreshNow <- true
 }
@@ -434,8 +461,18 @@ func (mui *MasterUI) refreshDataAndDisplayThread(g *gocui.Gui) {
 	}
 }
 
+func (mui *MasterUI) snapshotLiveData() {
+	mui.router.GetProcessor().UpdateData()
+}
+
 func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 	g.Execute(func(g *gocui.Gui) error {
+
+		if !mui.displayPaused {
+			// This takes a snapshot of the live data
+			mui.snapshotLiveData()
+		}
+
 		mui.updateHeaderDisplay(g)
 		mui.currentDataView.UpdateDisplay(g)
 		return nil
@@ -483,7 +520,13 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
 	fmt.Fprintf(v, "   %v\n", time.Now().Format("01-02-2006 15:04:05"))
 
-	fmt.Fprintf(v, "Target: %-78.78v\n", mui.targetDisplay)
+	if mui.displayPaused {
+		fmt.Fprintf(v, util.REVERSE_GREEN)
+		fmt.Fprintf(v, " Display update paused \n")
+		fmt.Fprintf(v, util.CLEAR)
+	} else {
+		fmt.Fprintf(v, "Target: %-78.78v\n", mui.targetDisplay)
+	}
 
 	return nil
 }

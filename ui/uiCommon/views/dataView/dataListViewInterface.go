@@ -33,8 +33,6 @@ type DataListViewInterface interface {
 	GetListWidget() *uiCommon.ListWidget
 	GetEventProcessor() *eventdata.EventProcessor
 	Layout(g *gocui.Gui) error
-	GetDisplayPaused() bool
-	SetDisplayPaused(paused bool)
 	GetCurrentEventData() *eventdata.EventData
 	GetDisplayedEventData() *eventdata.EventData
 	RefreshDisplay(g *gocui.Gui) error
