@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
@@ -33,9 +34,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
 )
-
-const MaxDomainBucket = 100
-const MaxHostBucket = 10000
 
 type EventData struct {
 	// This time it set at clone time
@@ -656,7 +654,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 	if domainStats == nil {
 		toplog.Debug("domainStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
-		if len(ed.DomainMap) > MaxDomainBucket {
+		if len(ed.DomainMap) > config.MaxDomainBucket {
 			toplog.Warn("domainStats map at max size. The entry will NOT be added")
 			return nil
 		}
@@ -674,7 +672,7 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 		} else {
 			toplog.Debug("hostStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 				uri, domain, host, port, path)
-			if len(domainStats.HostStatsMap) > MaxHostBucket {
+			if len(domainStats.HostStatsMap) > config.MaxHostBucket {
 				toplog.Warn("hostStats map at max size. The entry will NOT be added")
 				return nil
 			}
@@ -737,7 +735,7 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 	httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] = httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
 
 	userAgentCount := appRouteStats.UserAgentMap[httpEvent.GetUserAgent()]
-	if userAgentCount > 0 || (len(appRouteStats.UserAgentMap) < eventRoute.MaxUserAgentBucket) {
+	if userAgentCount > 0 || (len(appRouteStats.UserAgentMap) < config.MaxUserAgentBucket) {
 		appRouteStats.UserAgentMap[httpEvent.GetUserAgent()] = userAgentCount + 1
 	}
 

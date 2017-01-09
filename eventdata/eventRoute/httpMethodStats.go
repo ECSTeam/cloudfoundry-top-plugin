@@ -22,8 +22,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-const MaxForwarderBucket = 100
-
 type HttpMethodSlice []*HttpMethodStats
 
 type HttpMethodStats struct {

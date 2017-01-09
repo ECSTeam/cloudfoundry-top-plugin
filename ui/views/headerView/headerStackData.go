@@ -87,7 +87,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		summaryStatsByStack[""] = &StackSummaryStats{StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
 	}
 
-	for _, appStats := range asUI.commonData.GetDisplayAppStats() {
+	for _, appStats := range asUI.commonData.GetDisplayAppStatsMap() {
 		sumStats := summaryStatsByStack[appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
 			// This appStats has no stackId -- This could be caused by not having

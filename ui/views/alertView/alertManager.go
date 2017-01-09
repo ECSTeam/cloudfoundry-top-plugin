@@ -30,7 +30,10 @@ type AlertManager struct {
 	commonData *dataCommon.CommonData
 
 	AlertSize int
-	message   string
+
+	// TODO: We need an Alert object that contains the messages as well as level: INFO, WARN, ERROR
+	// We also need to hold onto an array of Alert objects
+	message string
 }
 
 func NewAlertManager(masterUI masterUIInterface.MasterUIInterface, commonData *dataCommon.CommonData) *AlertManager {

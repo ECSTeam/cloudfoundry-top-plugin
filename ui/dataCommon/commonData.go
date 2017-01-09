@@ -32,7 +32,7 @@ type CommonData struct {
 	//eventProcessor *eventdata.EventProcessor
 	appMdMgr *app.AppMetadataManager
 
-	displayAppStats []*DisplayAppStats
+	displayAppStatsMap map[string]*DisplayAppStats
 
 	isWarmupComplete bool
 	// This is a count of the number of apps that do not have
@@ -54,8 +54,8 @@ func NewCommonData(router *eventrouting.EventRouter) *CommonData {
 	return cd
 }
 
-func (cd *CommonData) GetDisplayAppStats() []*DisplayAppStats {
-	return cd.displayAppStats
+func (cd *CommonData) GetDisplayAppStatsMap() map[string]*DisplayAppStats {
+	return cd.displayAppStatsMap
 }
 
 func (cd *CommonData) IsWarmupComplete() bool {
@@ -66,23 +66,26 @@ func (cd *CommonData) AppsNotInDesiredState() int {
 	return cd.appsNotInDesiredState
 }
 
-func (cd *CommonData) PostProcessData() []*DisplayAppStats {
+func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 	eventData := cd.router.GetProcessor().GetDisplayedEventData()
 	statsTime := eventData.StatsTime
 	runtimeSeconds := statsTime.Sub(cd.router.GetStartTime())
 	cd.isWarmupComplete = runtimeSeconds > time.Second*config.WarmUpSeconds
 
-	displayStatsArray := make([]*DisplayAppStats, 0)
+	//displayStatsArray := make([]*DisplayAppStats, 0)
+	displayStatsMap := make(map[string]*DisplayAppStats)
 
 	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
 	//appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
 	appsNotInDesiredState := 0
 	//now := time.Now()
 
-	for _, appStats := range appMap {
+	for appId, appStats := range appMap {
 		displayAppStats := NewDisplayAppStats(appStats)
-		displayStatsArray = append(displayStatsArray, displayAppStats)
+
+		displayStatsMap[appId] = displayAppStats
+		//displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
 
 		displayAppStats.AppName = appMetadata.Name
@@ -137,7 +140,7 @@ func (cd *CommonData) PostProcessData() []*DisplayAppStats {
 			displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
 		*/
 	}
-	cd.displayAppStats = displayStatsArray
+	cd.displayAppStatsMap = displayStatsMap
 	cd.appsNotInDesiredState = appsNotInDesiredState
-	return displayStatsArray
+	return displayStatsMap
 }

@@ -18,14 +18,11 @@ package appView
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
@@ -37,16 +34,10 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
-const StaleContainerSeconds = 80
-
 type AppListView struct {
 	*dataView.DataListView
-	displayAppStats  []*dataCommon.DisplayAppStats
-	isWarmupComplete bool
-	// This is a count of the number of apps that do not have
-	// the correct number of containers running based on app
-	// instance setting
-	appsNotInDesiredState int
+	displayAppStatsMap map[string]*dataCommon.DisplayAppStats
+	isWarmupComplete   bool
 }
 
 func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
@@ -203,61 +194,11 @@ func (asUI *AppListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *AppListView) postProcessData() []*dataCommon.DisplayAppStats {
+func (asUI *AppListView) postProcessData() map[string]*dataCommon.DisplayAppStats {
 
-	//displayStatsArray := asUI.GetMasterUI().GetCommonData().GetDisplayAppStats()
-	//xxx
+	displayStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
 
-	displayStatsArray := make([]*dataCommon.DisplayAppStats, 0)
-	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
-	appsNotInDesiredState := 0
-	now := time.Now()
-
-	for _, appStats := range appStatsArray {
-		displayAppStats := dataCommon.NewDisplayAppStats(appStats)
-		displayStatsArray = append(displayStatsArray, displayAppStats)
-		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
-
-		displayAppStats.AppName = appMetadata.Name
-		displayAppStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
-		displayAppStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
-
-		totalCpuPercentage := 0.0
-		totalUsedMemory := uint64(0)
-		totalUsedDisk := uint64(0)
-		totalReportingContainers := 0
-
-		if appMetadata.State == "STARTED" {
-			displayAppStats.DesiredContainers = int(appMetadata.Instances)
-		}
-
-		stack := stack.FindStackMetadata(appMetadata.StackGuid)
-		displayAppStats.StackId = appMetadata.StackGuid
-		displayAppStats.StackName = stack.Name
-
-		for containerIndex, cs := range appStats.ContainerArray {
-			if cs != nil && cs.ContainerMetric != nil {
-				// If we haven't gotten a container update recently, ignore the old value
-				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
-					appStats.ContainerArray[containerIndex] = nil
-					continue
-				}
-				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
-				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
-				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
-				totalReportingContainers++
-			}
-		}
-		if totalReportingContainers < displayAppStats.DesiredContainers {
-			appsNotInDesiredState = appsNotInDesiredState + 1
-		}
-
-		displayAppStats.TotalCpuPercentage = totalCpuPercentage
-		displayAppStats.TotalUsedMemory = totalUsedMemory
-		displayAppStats.TotalUsedDisk = totalUsedDisk
-		displayAppStats.TotalReportingContainers = totalReportingContainers
-
+	for appId, appStats := range displayStatsMap {
 		logStdoutCount := int64(0)
 		logStderrCount := int64(0)
 		for _, cs := range appStats.ContainerArray {
@@ -266,20 +207,20 @@ func (asUI *AppListView) postProcessData() []*dataCommon.DisplayAppStats {
 				logStderrCount = logStderrCount + cs.ErrCount
 			}
 		}
+		displayAppStats := displayStatsMap[appId]
 		displayAppStats.TotalLogStdout = logStdoutCount + appStats.NonContainerStdout
 		displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
-
 	}
-	asUI.displayAppStats = displayStatsArray
+
+	asUI.displayAppStatsMap = displayStatsMap
 	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
-	asUI.appsNotInDesiredState = appsNotInDesiredState
-	return displayStatsArray
+	return displayStatsMap
 }
 
-func (asUI *AppListView) convertToListData(statsArray []*dataCommon.DisplayAppStats) []uiCommon.IData {
-	listData := make([]uiCommon.IData, len(statsArray))
-	for i, d := range statsArray {
-		listData[i] = d
+func (asUI *AppListView) convertToListData(statsMap map[string]*dataCommon.DisplayAppStats) []uiCommon.IData {
+	listData := make([]uiCommon.IData, 0, len(statsMap))
+	for _, d := range statsMap {
+		listData = append(listData, d)
 	}
 	return listData
 }

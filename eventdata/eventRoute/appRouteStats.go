@@ -21,8 +21,6 @@ import "github.com/cloudfoundry/sonde-go/events"
 // E.g., if too many values in UserAgent map, use OTHER bucket
 const OTHER = "OTHER"
 
-const MaxUserAgentBucket = 100
-
 type AppRouteSlice []*AppRouteStats
 
 type AppRouteStats struct {

@@ -17,5 +17,10 @@ package config
 
 // TODO: Future home for storing configuration information to a json file
 
-const WarmUpSeconds = 5
+const WarmUpSeconds = 60
 const StaleContainerSeconds = 80
+
+const MaxDomainBucket = 100
+const MaxHostBucket = 10000
+const MaxUserAgentBucket = 100
+const MaxForwarderBucket = 100

@@ -74,9 +74,7 @@ func (w *HeaderWidget) UpdateDisplay(g *gocui.Gui) error {
 	processor := router.GetProcessor()
 	eventData := processor.GetDisplayedEventData()
 	statsTime := eventData.StatsTime
-	//mui.currentDataView.xxx
 
-	//now := time.Now()
 	eventsText := fmt.Sprintf("%v (%v/sec)", util.FormatUint64(router.GetEventCount()), router.GetEventRate())
 	runtimeSeconds := Round(statsTime.Sub(router.GetStartTime()), time.Second)
 	v.Clear()
