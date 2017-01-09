@@ -17,7 +17,8 @@ Top supports displaying data from multiple stacks.  This screenshot shows a foun
 
 ### Header  - attention color:
 The header shows a summary overview of a foundation.  The `CPU% Used` value will be colorized if any cell's CPU utilization is at or above
-80% of the cell's capacity.  Yellow (>=80%), red (>=90%) 
+80% of the cell's capacity.  Yellow (>=80%), red (>=90%).  To determine root cause of why this field is colorized, use the `Cell Stats` screen
+which will indicate which of the cells are running warm/hot on CPU resource.
 ![Screenshot](screenshot_header.png?raw=true)
 
 
