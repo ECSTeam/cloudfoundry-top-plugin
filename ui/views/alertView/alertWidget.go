@@ -13,26 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package uiCommon
+package alertView
 
 import (
 	"errors"
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
 type AlertWidget struct {
-	masterUI masterUIInterface.MasterUIInterface
-	name     string
-	height   int
-	message  string
+	masterUI   masterUIInterface.MasterUIInterface
+	name       string
+	height     int
+	commonData *dataCommon.CommonData
+
+	AlertSize int
+	message   string
 }
 
-func NewAlertWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int) *AlertWidget {
-	return &AlertWidget{masterUI: masterUI, name: name, height: height}
+func NewAlertWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int, commonData *dataCommon.CommonData) *AlertWidget {
+	return &AlertWidget{masterUI: masterUI, name: name, height: height, commonData: commonData}
 }
 
 func (w *AlertWidget) Name() string {

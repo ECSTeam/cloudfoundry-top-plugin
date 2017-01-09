@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appView
+package dataCommon
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 

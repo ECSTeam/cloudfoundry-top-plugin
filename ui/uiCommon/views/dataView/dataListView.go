@@ -42,7 +42,6 @@ type DataListView struct {
 	name                   string
 	topMargin              int
 	bottomMargin           int
-	alertSize              int
 	eventProcessor         *eventdata.EventProcessor
 	appMdMgr               *app.AppMetadataManager
 	mu                     sync.Mutex
@@ -89,7 +88,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 
 // Get the top offset where the data view should open
 func (asUI *DataListView) GetTopOffset() int {
-	size := asUI.masterUI.GetHeaderSize() + asUI.alertSize + asUI.topMargin + 1
+	size := asUI.masterUI.GetTopMargin() + asUI.topMargin + 1
 	//toplog.Info("DataListView name: %v GetTopOffset: %v  headerSize: %v topMargin: %v",
 	//	asUI.name, size, asUI.masterUI.GetHeaderSize(), asUI.topMargin)
 	return size
@@ -101,10 +100,6 @@ func (asUI *DataListView) Name() string {
 
 func (asUI *DataListView) GetTopMargin() int {
 	return asUI.topMargin
-}
-
-func (asUI *DataListView) SetAlertSize(alertSize int) {
-	asUI.alertSize = alertSize
 }
 
 func (asUI *DataListView) SetTitle(title string) {
@@ -185,11 +180,14 @@ func (asUI *DataListView) GetDisplayedListData() []uiCommon.IData {
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 	var err error
 
-	headerSize, err2 := asUI.updateHeader(g)
-	if err2 != nil {
-		return err2
-	}
-	asUI.masterUI.SetStatsSummarySize(headerSize)
+	/*
+		TODO: Need to figure out framework for allowing data views to add rows to header
+		headerSize, err2 := asUI.updateHeader(g)
+		if err2 != nil {
+			return err2
+		}
+		asUI.masterUI.SetStatsSummarySize(headerSize)
+	*/
 
 	if asUI.RefreshDisplayCallback != nil {
 		err = asUI.RefreshDisplayCallback(g)

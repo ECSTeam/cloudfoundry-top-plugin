@@ -29,21 +29,23 @@ import (
 	termbox "github.com/nsf/termbox-go"
 
 	"github.com/cloudfoundry/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/alertView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/headerView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeViews/routeView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
-const WarmUpSeconds = 60
 const DefaultRefreshInternalMS = 1000
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
@@ -55,16 +57,18 @@ type MasterUI struct {
 	username      string
 	targetDisplay string
 
+	headerView      *headerView.HeaderWidget
+	alertManager    *alertView.AlertManager
 	currentDataView masterUIInterface.UpdatableView
 
 	router            *eventrouting.EventRouter
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
 	displayPaused     bool
-	commonData        *CommonData
+	commonData        *dataCommon.CommonData
 
-	baseHeaderSize       int
-	headerSize           int
+	//baseHeaderSize       int
+	//headerSize           int
 	helpTextTipsViewSize int
 
 	displayMenuId string
@@ -122,8 +126,12 @@ func (mui *MasterUI) GetRouter() *eventrouting.EventRouter {
 	return mui.router
 }
 
-func (mui *MasterUI) GetCommonData() *CommonData {
+func (mui *MasterUI) GetCommonData() *dataCommon.CommonData {
 	return mui.commonData
+}
+
+func (mui *MasterUI) GetTargetDisplay() string {
+	return mui.targetDisplay
 }
 
 func (mui *MasterUI) Start() {
@@ -150,10 +158,14 @@ func (mui *MasterUI) initGui() {
 	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
 	mui.layoutManager.Add(helpTextTipsView)
 
-	mui.baseHeaderSize = 3
-	mui.headerSize = 6
-	headerView := NewHeaderWidget(mui, "headerView")
-	mui.layoutManager.Add(headerView)
+	mui.commonData = dataCommon.NewCommonData(mui, mui.router.GetProcessor())
+
+	mui.alertManager = alertView.NewAlertManager(mui, mui.commonData)
+	//mui.baseHeaderSize = 3
+	//mui.headerSize = 6
+	mui.headerView = headerView.NewHeaderWidget(mui, "headerView", mui.router, mui.commonData)
+	mui.layoutManager.Add(mui.headerView)
+
 	// We add the common keybindings to the header view in the event
 	// that no DataView is open
 	mui.AddCommonDataViewKeybindings(g, "headerView")
@@ -193,13 +205,16 @@ func (mui *MasterUI) flushKeyboardBuffer() {
 	termbox.Interrupt()
 }
 
-func (mui *MasterUI) SetStatsSummarySize(statSummarySize int) {
-	mui.headerSize = mui.baseHeaderSize + statSummarySize
-	//toplog.Info("headerSize set to: %v  statSummarySize: %v", mui.headerSize, statSummarySize)
+func (mui *MasterUI) GetHeaderSize() int {
+	return mui.headerView.HeaderSize
 }
 
-func (mui *MasterUI) GetHeaderSize() int {
-	return mui.headerSize
+func (mui *MasterUI) GetAlertSize() int {
+	return mui.alertManager.AlertSize
+}
+
+func (mui *MasterUI) GetTopMargin() int {
+	return mui.headerView.HeaderSize + mui.alertManager.AlertSize
 }
 
 // Add keybindings for top level data views -- note must also call addCommonDataViewKeybindings
@@ -252,6 +267,26 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		}); err != nil {
 		log.Panicln(err)
 	}
+
+	// TODO: Testing -- remove later
+	if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, mui.testShowUserMessage); err != nil {
+		log.Panicln(err)
+	}
+	// TODO: Testing -- remove later
+	if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, mui.testClearUserMessage); err != nil {
+		log.Panicln(err)
+	}
+
+	return nil
+}
+
+func (mui *MasterUI) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
+	//return mui.alertView.ShowUserMessage(g, "ALERT: 1 application(s) not in desired state (EXAMPLE) ")
+	return nil
+}
+
+func (mui *MasterUI) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
+	//return mui.alertView.ClearUserMessage(g)
 	return nil
 }
 
@@ -471,6 +506,7 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 		if !mui.displayPaused {
 			// This takes a snapshot of the live data
 			mui.snapshotLiveData()
+			mui.commonData.PostProcessData()
 		}
 
 		mui.updateHeaderDisplay(g)
@@ -485,8 +521,13 @@ func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (mui *MasterUI) IsWarmupComplete() bool {
-	runtimeSeconds := Round(time.Now().Sub(mui.router.GetStartTime()), time.Second)
-	return runtimeSeconds > time.Second*WarmUpSeconds
+	// TODO: Shouldn't this be in common data calculated once?
+	router := mui.router
+	processor := router.GetProcessor()
+	eventData := processor.GetDisplayedEventData()
+	statsTime := eventData.StatsTime
+	runtimeSeconds := statsTime.Sub(mui.router.GetStartTime())
+	return runtimeSeconds > time.Second*config.WarmUpSeconds
 }
 
 func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
@@ -497,55 +538,15 @@ func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
 }
 
 func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
-
-	v, err := g.View("headerView")
+	err := mui.headerView.UpdateDisplay(g)
 	if err != nil {
 		return err
 	}
-	now := time.Now()
-	eventsText := fmt.Sprintf("%v (%v/sec)", util.FormatUint64(mui.router.GetEventCount()), mui.router.GetEventRate())
-	runtimeSeconds := Round(now.Sub(mui.router.GetStartTime()), time.Second)
-	v.Clear()
 
-	fmt.Fprintf(v, "Events: ")
-	fmt.Fprintf(v, "%-27v", eventsText)
-	if runtimeSeconds < time.Second*WarmUpSeconds {
-		warmUpTimeRemaining := (time.Second * WarmUpSeconds) - runtimeSeconds
-		fmt.Fprintf(v, util.DIM_GREEN)
-		fmt.Fprintf(v, " Warm-up: %-10v ", warmUpTimeRemaining)
-		fmt.Fprintf(v, util.CLEAR)
-	} else {
-		fmt.Fprintf(v, "Duration: %-10v ", runtimeSeconds)
+	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
+	isWarmupComplete := mui.IsWarmupComplete()
+	if isWarmupComplete {
+		mui.alertManager.CheckForAlerts(g)
 	}
-
-	fmt.Fprintf(v, "   %v\n", time.Now().Format("01-02-2006 15:04:05"))
-
-	if mui.displayPaused {
-		fmt.Fprintf(v, util.REVERSE_GREEN)
-		fmt.Fprintf(v, " Display update paused \n")
-		fmt.Fprintf(v, util.CLEAR)
-	} else {
-		fmt.Fprintf(v, "Target: %-78.78v\n", mui.targetDisplay)
-	}
-
 	return nil
-}
-
-func Round(d, r time.Duration) time.Duration {
-	if r <= 0 {
-		return d
-	}
-	neg := d < 0
-	if neg {
-		d = -d
-	}
-	if m := d % r; m+m < r {
-		d = d - m
-	} else {
-		d = d + r - m
-	}
-	if neg {
-		return -d
-	}
-	return d
 }

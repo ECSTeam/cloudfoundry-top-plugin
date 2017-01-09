@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appView
+package headerView
 
 import (
 	"fmt"
@@ -69,12 +69,9 @@ func (slice StackSummaryStatsArray) Swap(i, j int) {
 
 // Output header stats by stack
 // Returns the number of rows (lines) written to header
-func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
+func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, error) {
 
-	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
-	asUI.checkForAlerts(g)
-
-	isWarmupComplete := asUI.GetMasterUI().IsWarmupComplete()
+	isWarmupComplete := asUI.masterUI.IsWarmupComplete()
 
 	stacks := stack.AllStacks()
 	if len(stacks) == 0 {
@@ -90,7 +87,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 		summaryStatsByStack[""] = &StackSummaryStats{StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
 	}
 
-	for _, appStats := range asUI.displayAppStats {
+	for _, appStats := range asUI.commonData.GetDisplayAppStats() {
 		sumStats := summaryStatsByStack[appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
 			// This appStats has no stackId -- This could be caused by not having
@@ -114,7 +111,10 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 		sumStats.TotalApps++
 	}
 
-	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	router := asUI.router
+	processor := router.GetProcessor()
+
+	appMdMgr := processor.GetMetadataManager().GetAppMdManager()
 	for _, app := range appMdMgr.AllApps() {
 		sumStats := summaryStatsByStack[app.StackGuid]
 		if sumStats != nil {
@@ -125,7 +125,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 		}
 	}
 
-	for _, cellStats := range asUI.GetDisplayedEventData().CellMap {
+	for _, cellStats := range processor.GetDisplayedEventData().CellMap {
 		//toplog.Info("cellStats.StackId:%v", cellStats.StackId)
 		sumStats := summaryStatsByStack[cellStats.StackId]
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
@@ -164,7 +164,7 @@ func (asUI *AppListView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) 
 //     CPU:  8.4% Used,  800% Max,       Mem:   7GB Used,  63GB Max,  22GB Rsrvd
 //     Apps:  122 Total, Cntrs:  127     Dsk:   7GB Used, 190GB Max,  27GB Rsrvd
 //
-func (asUI *AppListView) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) int {
+func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) int {
 
 	totalUsedMemoryAppInstancesDisplay := "--"
 	totalUsedDiskAppInstancesDisplay := "--"

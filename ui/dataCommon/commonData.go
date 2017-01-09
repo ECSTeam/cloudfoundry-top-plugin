@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ui
+package dataCommon
 
 import (
 	"time"
@@ -24,15 +24,17 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
+const StaleContainerSeconds = 80
+
 type CommonData struct {
-	masterUI       *MasterUI
+	masterUI       masterUIInterface.MasterUIInterface
 	eventProcessor *eventdata.EventProcessor
 	appMdMgr       *app.AppMetadataManager
 
-	displayAppStats []*appView.DisplayAppStats
+	displayAppStats []*DisplayAppStats
 
 	isWarmupComplete bool
 	// This is a count of the number of apps that do not have
@@ -46,7 +48,7 @@ type CommonData struct {
 // appView to access this data through  masterUI so we don't process
 // the same data twice
 
-func NewCommonData(masterUI *MasterUI, eventProcessor *eventdata.EventProcessor) *CommonData {
+func NewCommonData(masterUI masterUIInterface.MasterUIInterface, eventProcessor *eventdata.EventProcessor) *CommonData {
 	cd := &CommonData{masterUI: masterUI, eventProcessor: eventProcessor}
 
 	cd.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
@@ -54,16 +56,28 @@ func NewCommonData(masterUI *MasterUI, eventProcessor *eventdata.EventProcessor)
 	return cd
 }
 
-func (cd *CommonData) postProcessData() []*appView.DisplayAppStats {
+func (cd *CommonData) GetDisplayAppStats() []*DisplayAppStats {
+	return cd.displayAppStats
+}
 
-	displayStatsArray := make([]*appView.DisplayAppStats, 0)
+func (cd *CommonData) IsWarmupComplete() bool {
+	return cd.isWarmupComplete
+}
+
+func (cd *CommonData) AppsNotInDesiredState() int {
+	return cd.appsNotInDesiredState
+}
+
+func (cd *CommonData) PostProcessData() []*DisplayAppStats {
+
+	displayStatsArray := make([]*DisplayAppStats, 0)
 	appMap := cd.eventProcessor.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
 	appsNotInDesiredState := 0
 	now := time.Now()
 
 	for _, appStats := range appStatsArray {
-		displayAppStats := appView.NewDisplayAppStats(appStats)
+		displayAppStats := NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
 
@@ -87,7 +101,7 @@ func (cd *CommonData) postProcessData() []*appView.DisplayAppStats {
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				// If we haven't gotten a container update recently, ignore the old value
-				if now.Sub(cs.LastUpdate) > time.Second*appView.StaleContainerSeconds {
+				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
 					appStats.ContainerArray[containerIndex] = nil
 					continue
 				}

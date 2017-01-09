@@ -38,6 +38,9 @@ const MaxDomainBucket = 100
 const MaxHostBucket = 10000
 
 type EventData struct {
+	// This time it set at clone time
+	StatsTime time.Time
+
 	AppMap  map[string]*eventApp.AppStats
 	CellMap map[string]*eventCell.CellStats
 	// Domain name: Both shared + private
@@ -139,6 +142,8 @@ func (ed *EventData) Clone() *EventData {
 	defer ed.mu.Unlock()
 
 	clone := deepcopy.Copy(ed).(*EventData)
+
+	clone.StatsTime = time.Now()
 
 	for _, appStat := range ed.AppMap {
 

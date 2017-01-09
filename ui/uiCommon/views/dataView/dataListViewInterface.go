@@ -38,6 +38,5 @@ type DataListViewInterface interface {
 	RefreshDisplay(g *gocui.Gui) error
 	UpdateDisplay(g *gocui.Gui) error
 	GetTopOffset() int
-	SetAlertSize(alertSize int)
 	GetDisplayedListData() []uiCommon.IData
 }

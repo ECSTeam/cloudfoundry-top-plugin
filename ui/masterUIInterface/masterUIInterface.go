@@ -28,12 +28,15 @@ type MasterUIInterface interface {
 	SetHelpTextTips(g *gocui.Gui, helpTextTips string) error
 	AddCommonDataViewKeybindings(g *gocui.Gui, viewName string) error
 	GetHeaderSize() int
-	SetStatsSummarySize(statSummarySize int)
+	GetAlertSize() int
+	GetTopMargin() int
+	//SetStatsSummarySize(statSummarySize int)
 	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
 	IsPrivileged() bool
-	//GetCommonData() *ui.CommonData
+	//GetCommonData() *CommonDataInterface
 	GetDisplayPaused() bool
 	SetDisplayPaused(paused bool)
+	GetTargetDisplay() string
 }
 
 type LayoutManagerInterface interface {

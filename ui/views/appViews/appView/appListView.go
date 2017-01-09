@@ -27,6 +27,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -40,7 +41,7 @@ const StaleContainerSeconds = 80
 
 type AppListView struct {
 	*dataView.DataListView
-	displayAppStats  []*DisplayAppStats
+	displayAppStats  []*dataCommon.DisplayAppStats
 	isWarmupComplete bool
 	// This is a count of the number of apps that do not have
 	// the correct number of containers running based on app
@@ -69,7 +70,8 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.PreRowDisplayCallback = asUI.preRowDisplay
-	dataListView.UpdateHeaderCallback = asUI.updateHeader
+	// TODO: Add additional header rows such as "active apps"
+	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
 	dataListView.SetTitle("App List")
@@ -85,15 +87,6 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error {
 
 	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, asUI.copyAction); err != nil {
-		log.Panicln(err)
-	}
-
-	// TODO: Testing -- remove later
-	if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, asUI.testShowUserMessage); err != nil {
-		log.Panicln(err)
-	}
-	// TODO: Testing -- remove later
-	if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, asUI.testClearUserMessage); err != nil {
 		log.Panicln(err)
 	}
 
@@ -149,63 +142,6 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnStackName())
 
 	return columns
-}
-
-func (asUI *AppListView) isUserMessageOpen(g *gocui.Gui) bool {
-	alertViewName := "alertView"
-	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
-	if view != nil {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (asUI *AppListView) clearUserMessage(g *gocui.Gui) error {
-	alertViewName := "alertView"
-	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
-	if view != nil {
-		asUI.GetMasterUI().CloseView(view)
-	}
-	asUI.SetAlertSize(0)
-	return nil
-}
-
-// TODO: Have message levels which will colorize differently
-func (asUI *AppListView) showUserMessage(g *gocui.Gui, message string) error {
-	alertViewName := "alertView"
-	alertHeight := 1
-
-	asUI.SetAlertSize(alertHeight)
-
-	var alertView *uiCommon.AlertWidget
-	view := asUI.GetMasterUI().LayoutManager().GetManagerByViewName(alertViewName)
-	if view == nil {
-		alertView = uiCommon.NewAlertWidget(asUI.GetMasterUI(), alertViewName, alertHeight)
-		asUI.GetMasterUI().LayoutManager().AddToBack(alertView)
-		asUI.GetMasterUI().SetCurrentViewOnTop(g)
-	} else {
-		// This check is to prevent alert from showing on top of the log window
-		if asUI.GetMasterUI().GetCurrentView(g).Name() == asUI.Name() {
-			if _, err := g.SetViewOnTop(alertViewName); err != nil {
-				return err
-			}
-		}
-		alertView = view.(*uiCommon.AlertWidget)
-		alertView.SetHeight(alertHeight)
-	}
-	alertView.SetMessage(message)
-	return nil
-}
-
-func (asUI *AppListView) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
-	return asUI.showUserMessage(g, "ALERT: 1 application(s) not in desired state (EXAMPLE) ")
-	//asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppMetadata("9d82ef1b-4bba-4a49-9768-4ccd817edf9c")
-	//return nil
-}
-
-func (asUI *AppListView) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
-	return asUI.clearUserMessage(g)
 }
 
 func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
@@ -267,16 +203,16 @@ func (asUI *AppListView) GetListData() []uiCommon.IData {
 	return listData
 }
 
-func (asUI *AppListView) postProcessData() []*DisplayAppStats {
+func (asUI *AppListView) postProcessData() []*dataCommon.DisplayAppStats {
 
-	displayStatsArray := make([]*DisplayAppStats, 0)
+	displayStatsArray := make([]*dataCommon.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	appsNotInDesiredState := 0
 	now := time.Now()
 
 	for _, appStats := range appStatsArray {
-		displayAppStats := NewDisplayAppStats(appStats)
+		displayAppStats := dataCommon.NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
 
@@ -337,7 +273,7 @@ func (asUI *AppListView) postProcessData() []*DisplayAppStats {
 	return displayStatsArray
 }
 
-func (asUI *AppListView) convertToListData(statsArray []*DisplayAppStats) []uiCommon.IData {
+func (asUI *AppListView) convertToListData(statsArray []*dataCommon.DisplayAppStats) []uiCommon.IData {
 	listData := make([]uiCommon.IData, len(statsArray))
 	for i, d := range statsArray {
 		listData[i] = d
@@ -351,7 +287,7 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 }
 
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
-	appStats := data.(*DisplayAppStats)
+	appStats := data.(*dataCommon.DisplayAppStats)
 	colorString := ""
 	if asUI.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
 		if isSelected {
@@ -363,27 +299,4 @@ func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) str
 		colorString = util.BRIGHT_WHITE
 	}
 	return colorString
-}
-
-func (asUI *AppListView) checkForAlerts(g *gocui.Gui) error {
-
-	// TODO: We can't alert if we are not monitoring all the apps
-	// Update this alert only on monitored apps if non-privileged
-	// for now we just don't alert
-	if !asUI.GetMasterUI().IsPrivileged() {
-		return nil
-	}
-
-	if asUI.isWarmupComplete && asUI.appsNotInDesiredState > 0 {
-		plural := ""
-		if asUI.appsNotInDesiredState > 1 {
-			plural = "s"
-		}
-		msg := fmt.Sprintf("ALERT: %v application%v not in desired state (row%v colored red) ",
-			asUI.appsNotInDesiredState, plural, plural)
-		asUI.showUserMessage(g, msg)
-	} else if asUI.isUserMessageOpen(g) {
-		asUI.clearUserMessage(g)
-	}
-	return nil
 }
