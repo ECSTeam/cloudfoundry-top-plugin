@@ -18,6 +18,7 @@ package cellView
 import (
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -47,27 +48,44 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
 		cellStats := data.(*DisplayCellStats)
+
 		totalCpuInfo := ""
 		if cellStats.TotalReportingContainers == 0 {
 			totalCpuInfo = fmt.Sprintf("%6v", "--")
 		} else {
-			if cellStats.TotalContainerCpuPercentage >= 100.0 {
-				totalCpuInfo = fmt.Sprintf("%6.0f", cellStats.TotalContainerCpuPercentage)
-			} else if cellStats.TotalContainerCpuPercentage >= 10.0 {
-				totalCpuInfo = fmt.Sprintf("%6.1f", cellStats.TotalContainerCpuPercentage)
+			cpuPercentage := cellStats.TotalContainerCpuPercentage
+
+			if cpuPercentage >= 100.0 {
+				totalCpuInfo = fmt.Sprintf("%6.0f", cpuPercentage)
+			} else if cpuPercentage >= 10.0 {
+				totalCpuInfo = fmt.Sprintf("%6.1f", cpuPercentage)
 			} else {
-				totalCpuInfo = fmt.Sprintf("%6.2f", cellStats.TotalContainerCpuPercentage)
+				totalCpuInfo = fmt.Sprintf("%6.2f", cpuPercentage)
 			}
 		}
 		return fmt.Sprintf("%6v", totalCpuInfo)
-
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		cellStats := data.(*DisplayCellStats)
 		return fmt.Sprintf("%v", cellStats.TotalContainerCpuPercentage)
 	}
-	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+		cellStats := data.(*DisplayCellStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+
+		cpuPercentage := cellStats.TotalContainerCpuPercentage
+		// This is the overall percentage of CPU in use on this cell, where 100% means all CPUs are 100% consumed
+		cellMaxCpuCapacity := cpuPercentage / float64(cellStats.NumOfCpus)
+		switch {
+		case cellMaxCpuCapacity >= 90:
+			attentionType = uiCommon.ATTENTION_HOT
+		case cellMaxCpuCapacity >= 80:
+			attentionType = uiCommon.ATTENTION_WARM
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn2("CPU_PERCENT", "CPU%", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 
 	return c
 }
@@ -147,21 +165,35 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 		return c1.(*DisplayCellStats).CapacityRemainingMemory < c2.(*DisplayCellStats).CapacityRemainingMemory
 	}
 	displayFunc := func(data uiCommon.IData, isSelected bool) string {
-		CellStats := data.(*DisplayCellStats)
+		cellStats := data.(*DisplayCellStats)
 		display := ""
-		if CellStats.CapacityRemainingMemory == 0 {
+		if cellStats.CapacityRemainingMemory == 0 {
 			display = fmt.Sprintf("%9v", "--")
 		} else {
-			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.CapacityRemainingMemory).StringWithPrecision(1))
+			display = fmt.Sprintf("%9v", util.ByteSize(cellStats.CapacityRemainingMemory).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
-		CellStats := data.(*DisplayCellStats)
-		return fmt.Sprintf("%v", CellStats.CapacityRemainingMemory)
+		cellStats := data.(*DisplayCellStats)
+		return fmt.Sprintf("%v", cellStats.CapacityRemainingMemory)
 	}
-	c := uiCommon.NewListColumn("FREE_MEM", "FREE_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+		cellStats := data.(*DisplayCellStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if cellStats.CapacityTotalMemory > 0 {
+			cellCapacity := (1 - (float64(cellStats.CapacityRemainingMemory) / float64(cellStats.CapacityTotalMemory))) * 100
+			switch {
+			case cellCapacity >= 90:
+				attentionType = uiCommon.ATTENTION_HOT
+			case cellCapacity >= 80:
+				attentionType = uiCommon.ATTENTION_WARM
+			}
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn2("FREE_MEM", "FREE_MEM", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -206,8 +238,26 @@ func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 		CellStats := data.(*DisplayCellStats)
 		return fmt.Sprintf("%v", CellStats.CapacityRemainingDisk)
 	}
-	c := uiCommon.NewListColumn("FREE_DISK", "FREE_DISK", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+		cellStats := data.(*DisplayCellStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if cellStats.CapacityTotalDisk > 0 {
+			cellCapacity := (1 - (float64(cellStats.CapacityRemainingDisk) / float64(cellStats.CapacityTotalDisk))) * 100
+
+			toplog.Info("CapacityRemainingDisk: %v, CapacityTotalDisk: %v, cellCapacity: %v",
+				cellStats.CapacityRemainingDisk, cellStats.CapacityTotalDisk, cellCapacity)
+
+			switch {
+			case cellCapacity >= 90:
+				attentionType = uiCommon.ATTENTION_HOT
+			case cellCapacity >= 80:
+				attentionType = uiCommon.ATTENTION_WARM
+			}
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn2("FREE_DISK", "FREE_DISK", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 

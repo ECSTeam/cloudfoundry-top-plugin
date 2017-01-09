@@ -14,6 +14,13 @@ also shows an alert:
 Top supports displaying data from multiple stacks.  This screenshot shows a foundation that has both cflinuxfs2 and windows2012R2 cells.
 ![Screenshot](screenshot_appViewMultiStack.png?raw=true)
 
+
+### Header  - attention color:
+The header shows a summary overview of a foundation.  The `CPU% Used` value will be colorized if any cell's CPU utilization is at or above
+80% of the cell's capacity.  Yellow (>=80%), red (>=90%) 
+![Screenshot](screenshot_header.png?raw=true)
+
+
 ### Application view - filters:
 Top lets you filter output which enable you to focus in on the applications that are of interest.  
 All columns can be used for filtering.  Alphanumeric columns support regular expressions.  Numeric columns allow
@@ -54,6 +61,15 @@ Shows all Diego cells running on foundation. Includes cell CPU and memory usage.
 This view is useful for locating any "hot" cell -- a cell that has a higher then
 expected CPU utilization.
 ![Screenshot](screenshot_cellView.png?raw=true)
+
+
+### Diego Cell view - attention colors (only available in privileged mode):
+The Diego Cell view will colorize any value that might need attention.  A value is colorized yellow if its 
+value is at 80% of cell capacity and red if its at 90% of cell capacity.  
+Example:  If the cell has 4 vCPUs and the cell CPU percentage consumed is at 350% (3.5 vCPUs are busy) 
+the field value will be yellow as this is 87.5% of the cell's total CPU capacity.
+Memory Free and Disk Free are colorized based on 80%/90% of resource consumed. 
+![Screenshot](screenshot_cellView-attention.png?raw=true)
 
 
 ### Diego Cell "Detail" view (only available in privileged mode):

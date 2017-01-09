@@ -51,6 +51,7 @@ const (
 type getRowDisplayFunc func(data IData, isSelected bool) string
 type getRowRawValueFunc func(data IData) string
 type getDisplayHeaderFunc func() string
+type getRowAttentionFunc func(data IData) AttentionType
 
 type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool
 
@@ -67,6 +68,16 @@ const (
 	TIMESTAMP
 )
 
+// Used to determine the attention level of each table's cell (specific field in a display table)
+type AttentionType int
+
+const (
+	ATTENTION_NORMAL AttentionType = iota
+	ATTENTION_HOT
+	ATTENTION_WARM
+	ATTENTION_NOT_DESIRED_STATE
+)
+
 type ListColumn struct {
 	id                 string
 	label              string
@@ -77,6 +88,7 @@ type ListColumn struct {
 	defaultReverseSort bool
 	displayFunc        getRowDisplayFunc
 	rawValueFunc       getRowRawValueFunc
+	attentionFunc      getRowAttentionFunc
 }
 
 const LOCK_COLUMNS = 1
@@ -159,6 +171,33 @@ func NewListColumn(
 		defaultReverseSort: defaultReverseSort,
 		displayFunc:        displayFunc,
 		rawValueFunc:       rawValueFunc,
+	}
+
+	return column
+}
+
+// TODO: This is the new replacement for NewListColumn
+func NewListColumn2(
+	id, label string,
+	size int,
+	columnType ColumnType,
+	leftJustifyLabel bool,
+	sortFunc util.LessFunc,
+	defaultReverseSort bool,
+	displayFunc getRowDisplayFunc,
+	rawValueFunc getRowRawValueFunc,
+	attentionFunc getRowAttentionFunc) *ListColumn {
+	column := &ListColumn{
+		id:                 id,
+		label:              label,
+		size:               size,
+		columnType:         columnType,
+		leftJustifyLabel:   leftJustifyLabel,
+		sortFunc:           sortFunc,
+		defaultReverseSort: defaultReverseSort,
+		displayFunc:        displayFunc,
+		rawValueFunc:       rawValueFunc,
+		attentionFunc:      attentionFunc,
 	}
 
 	return column
@@ -443,19 +482,39 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		isSelected = true
 	}
 
+	rowData := asUI.listData[rowIndex]
+
 	if asUI.PreRowDisplayFunc != nil {
-		fmt.Fprint(v, asUI.PreRowDisplayFunc(asUI.listData[rowIndex], isSelected))
+		fmt.Fprint(v, asUI.PreRowDisplayFunc(rowData, isSelected))
 	}
 
 	// Loop through all columns
 	for colIndex, column := range asUI.columns {
+		colorString := ""
 		if colIndex > asUI.lastColumnCanDisplay(g, asUI.displayColIndexOffset) {
 			break
 		}
 		if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
 			continue
 		}
-		fmt.Fprint(v, column.displayFunc(asUI.listData[rowIndex], isSelected))
+
+		if !isSelected && column.attentionFunc != nil {
+			attentionLevel := column.attentionFunc(rowData)
+			switch attentionLevel {
+			case ATTENTION_HOT:
+				colorString = util.BRIGHT_RED
+			case ATTENTION_WARM:
+				colorString = util.BRIGHT_YELLOW
+			}
+			if colorString != "" {
+				fmt.Fprintf(v, "%v", colorString)
+			}
+		}
+
+		fmt.Fprint(v, column.displayFunc(rowData, isSelected))
+		if !isSelected && colorString != "" {
+			fmt.Fprint(v, util.CLEAR)
+		}
 		fmt.Fprint(v, " ")
 	}
 	fmt.Fprint(v, "\n")
