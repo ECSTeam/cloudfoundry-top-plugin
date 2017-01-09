@@ -20,12 +20,12 @@ import (
 
 	"log"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/jroimartin/gocui"
 )
 
 type LayoutManager struct {
-	managers  []masterUIInterface.Manager
+	managers  []managerUI.Manager
 	viewNames []string
 }
 
@@ -42,7 +42,7 @@ func (w *LayoutManager) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func (w *LayoutManager) Contains(managerToFind masterUIInterface.Manager) bool {
+func (w *LayoutManager) Contains(managerToFind managerUI.Manager) bool {
 	for _, m := range w.managers {
 		if m.Name() == managerToFind.Name() {
 			return true
@@ -69,21 +69,21 @@ func (w *LayoutManager) SetCurrentView(viewName string) bool {
 	return true
 }
 
-func (w *LayoutManager) AddToBack(addMgr masterUIInterface.Manager) {
+func (w *LayoutManager) AddToBack(addMgr managerUI.Manager) {
 	if w.Contains(addMgr) {
 		log.Panicf("Attempting to add a ui manager named %v and it already exists", addMgr.Name())
 	}
-	w.managers = append([]masterUIInterface.Manager{addMgr}, w.managers...)
+	w.managers = append([]managerUI.Manager{addMgr}, w.managers...)
 }
 
-func (w *LayoutManager) Add(addMgr masterUIInterface.Manager) {
+func (w *LayoutManager) Add(addMgr managerUI.Manager) {
 	if w.Contains(addMgr) {
 		log.Panicf("Attempting to add a ui manager named %v and it already exists", addMgr.Name())
 	}
 	w.managers = append(w.managers, addMgr)
 }
 
-func (w *LayoutManager) Top() masterUIInterface.Manager {
+func (w *LayoutManager) Top() managerUI.Manager {
 	len := len(w.managers)
 	if len > 0 {
 		return w.managers[len-1]
@@ -91,9 +91,9 @@ func (w *LayoutManager) Top() masterUIInterface.Manager {
 	return nil
 }
 
-func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) masterUIInterface.Manager {
+func (w *LayoutManager) Remove(managerToRemove managerUI.Manager) managerUI.Manager {
 
-	filteredManagers := []masterUIInterface.Manager{}
+	filteredManagers := []managerUI.Manager{}
 	for _, m := range w.managers {
 		if m.Name() != managerToRemove.Name() {
 			filteredManagers = append(filteredManagers, m)
@@ -104,12 +104,12 @@ func (w *LayoutManager) Remove(managerToRemove masterUIInterface.Manager) master
 	return w.Top()
 }
 
-func (w *LayoutManager) RemoveByName(managerViewNameToRemove string) masterUIInterface.Manager {
+func (w *LayoutManager) RemoveByName(managerViewNameToRemove string) managerUI.Manager {
 	m := w.GetManagerByViewName(managerViewNameToRemove)
 	return w.Remove(m)
 }
 
-func (w *LayoutManager) GetManagerByViewName(managerViewNameToRemove string) masterUIInterface.Manager {
+func (w *LayoutManager) GetManagerByViewName(managerViewNameToRemove string) managerUI.Manager {
 	for _, m := range w.managers {
 		if m.Name() == managerViewNameToRemove {
 			return m

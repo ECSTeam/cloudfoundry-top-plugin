@@ -25,11 +25,27 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/jroimartin/gocui"
 )
 
 const MAX_LOG_FILES = 1000
+
+type MasterUIInterface interface {
+	SetCurrentViewOnTop(*gocui.Gui) error
+	GetCurrentView(g *gocui.Gui) *gocui.View
+	CloseView(managerUI.Manager) error
+	CloseViewByName(viewName string) error
+	LayoutManager() managerUI.LayoutManagerInterface
+	GetHeaderSize() int
+	GetAlertSize() int
+	GetTopMargin() int
+	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
+	IsPrivileged() bool
+	GetDisplayPaused() bool
+	SetDisplayPaused(paused bool)
+	GetTargetDisplay() string
+}
 
 type LogLevel string
 
@@ -129,7 +145,7 @@ func logMsg(level LogLevel, msg string, a ...interface{}) {
 }
 
 type DebugWidget struct {
-	masterUI        masterUIInterface.MasterUIInterface
+	masterUI        MasterUIInterface
 	name            string
 	height          int
 	width           int
@@ -137,7 +153,7 @@ type DebugWidget struct {
 	horizonalOffset int
 }
 
-func InitDebug(g *gocui.Gui, masterUI masterUIInterface.MasterUIInterface) {
+func InitDebug(g *gocui.Gui, masterUI MasterUIInterface) {
 	debugWidget = NewDebugWidget(masterUI, "logView")
 	gui = g
 }
@@ -151,7 +167,7 @@ func openView() {
 	debugWidget.Layout(gui)
 }
 
-func NewDebugWidget(masterUI masterUIInterface.MasterUIInterface, name string) *DebugWidget {
+func NewDebugWidget(masterUI MasterUIInterface, name string) *DebugWidget {
 	hv := &DebugWidget{masterUI: masterUI, name: name}
 	return hv
 }

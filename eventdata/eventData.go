@@ -41,6 +41,7 @@ type EventData struct {
 	// This time it set at clone time
 	StatsTime time.Time
 
+	// Key: appId
 	AppMap  map[string]*eventApp.AppStats
 	CellMap map[string]*eventCell.CellStats
 	// Domain name: Both shared + private

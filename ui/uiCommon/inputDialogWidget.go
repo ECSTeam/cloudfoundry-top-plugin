@@ -20,6 +20,7 @@ import (
 	"fmt"
 	//"strings"
 	//"log"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/jroimartin/gocui"
 )
@@ -33,8 +34,8 @@ type InputDialogWidget struct {
 	titleText string
 	helpText  string
 
-	labelWidget masterUIInterface.Manager
-	inputWidget masterUIInterface.Manager
+	labelWidget managerUI.Manager
+	inputWidget managerUI.Manager
 }
 
 func NewInputDialogWidget(

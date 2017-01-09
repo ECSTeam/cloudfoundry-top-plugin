@@ -18,21 +18,19 @@ package dataCommon
 import (
 	"time"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 )
 
-const StaleContainerSeconds = 80
-
 type CommonData struct {
-	masterUI       masterUIInterface.MasterUIInterface
-	eventProcessor *eventdata.EventProcessor
-	appMdMgr       *app.AppMetadataManager
+	//masterUI       masterUIInterface.MasterUIInterface
+	router *eventrouting.EventRouter
+	//eventProcessor *eventdata.EventProcessor
+	appMdMgr *app.AppMetadataManager
 
 	displayAppStats []*DisplayAppStats
 
@@ -48,10 +46,10 @@ type CommonData struct {
 // appView to access this data through  masterUI so we don't process
 // the same data twice
 
-func NewCommonData(masterUI masterUIInterface.MasterUIInterface, eventProcessor *eventdata.EventProcessor) *CommonData {
-	cd := &CommonData{masterUI: masterUI, eventProcessor: eventProcessor}
+func NewCommonData(router *eventrouting.EventRouter) *CommonData {
+	cd := &CommonData{router: router}
 
-	cd.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
+	cd.appMdMgr = router.GetProcessor().GetMetadataManager().GetAppMdManager()
 
 	return cd
 }
@@ -70,13 +68,19 @@ func (cd *CommonData) AppsNotInDesiredState() int {
 
 func (cd *CommonData) PostProcessData() []*DisplayAppStats {
 
-	displayStatsArray := make([]*DisplayAppStats, 0)
-	appMap := cd.eventProcessor.GetDisplayedEventData().AppMap
-	appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
-	appsNotInDesiredState := 0
-	now := time.Now()
+	eventData := cd.router.GetProcessor().GetDisplayedEventData()
+	statsTime := eventData.StatsTime
+	runtimeSeconds := statsTime.Sub(cd.router.GetStartTime())
+	cd.isWarmupComplete = runtimeSeconds > time.Second*config.WarmUpSeconds
 
-	for _, appStats := range appStatsArray {
+	displayStatsArray := make([]*DisplayAppStats, 0)
+
+	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
+	//appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
+	appsNotInDesiredState := 0
+	//now := time.Now()
+
+	for _, appStats := range appMap {
 		displayAppStats := NewDisplayAppStats(appStats)
 		displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
@@ -101,7 +105,7 @@ func (cd *CommonData) PostProcessData() []*DisplayAppStats {
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 				// If we haven't gotten a container update recently, ignore the old value
-				if now.Sub(cs.LastUpdate) > time.Second*StaleContainerSeconds {
+				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
 					appStats.ContainerArray[containerIndex] = nil
 					continue
 				}
@@ -134,7 +138,6 @@ func (cd *CommonData) PostProcessData() []*DisplayAppStats {
 		*/
 	}
 	cd.displayAppStats = displayStatsArray
-	cd.isWarmupComplete = cd.masterUI.IsWarmupComplete()
 	cd.appsNotInDesiredState = appsNotInDesiredState
 	return displayStatsArray
 }

@@ -15,14 +15,18 @@
 
 package masterUIInterface
 
-import "github.com/jroimartin/gocui"
+import (
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
+	"github.com/jroimartin/gocui"
+)
 
 type MasterUIInterface interface {
 	SetCurrentViewOnTop(*gocui.Gui) error
 	GetCurrentView(g *gocui.Gui) *gocui.View
-	CloseView(Manager) error
+	CloseView(managerUI.Manager) error
 	CloseViewByName(viewName string) error
-	LayoutManager() LayoutManagerInterface
+	LayoutManager() managerUI.LayoutManagerInterface
 	OpenView(g *gocui.Gui, dataView UpdatableView) error
 	IsWarmupComplete() bool
 	SetHelpTextTips(g *gocui.Gui, helpTextTips string) error
@@ -33,26 +37,10 @@ type MasterUIInterface interface {
 	//SetStatsSummarySize(statSummarySize int)
 	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
 	IsPrivileged() bool
-	//GetCommonData() *CommonDataInterface
+	GetCommonData() *dataCommon.CommonData
 	GetDisplayPaused() bool
 	SetDisplayPaused(paused bool)
 	GetTargetDisplay() string
-}
-
-type LayoutManagerInterface interface {
-	Contains(Manager) bool
-	ContainsViewName(viewName string) bool
-	Add(Manager)
-	AddToBack(Manager)
-	Remove(Manager) Manager
-	Top() Manager
-	GetManagerByViewName(viewName string) Manager
-	RemoveByName(managerViewNameToRemove string) Manager
-}
-
-type Manager interface {
-	Layout(*gocui.Gui) error
-	Name() string
 }
 
 type UpdatableView interface {

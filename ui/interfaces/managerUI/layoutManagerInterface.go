@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved
+// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package managerUI
 
-// TODO: Future home for storing configuration information to a json file
+import "github.com/jroimartin/gocui"
 
-const WarmUpSeconds = 5
-const StaleContainerSeconds = 80
+type LayoutManagerInterface interface {
+	Contains(Manager) bool
+	ContainsViewName(viewName string) bool
+	Add(Manager)
+	AddToBack(Manager)
+	Remove(Manager) Manager
+	Top() Manager
+	GetManagerByViewName(viewName string) Manager
+	RemoveByName(managerViewNameToRemove string) Manager
+}
+
+type Manager interface {
+	Layout(*gocui.Gui) error
+	Name() string
+}

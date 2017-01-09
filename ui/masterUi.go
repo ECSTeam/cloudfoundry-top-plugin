@@ -29,11 +29,11 @@ import (
 	termbox "github.com/nsf/termbox-go"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/alertView"
@@ -118,7 +118,7 @@ func (mui *MasterUI) IsPrivileged() bool {
 	return mui.privileged
 }
 
-func (mui *MasterUI) LayoutManager() masterUIInterface.LayoutManagerInterface {
+func (mui *MasterUI) LayoutManager() managerUI.LayoutManagerInterface {
 	return mui.layoutManager
 }
 
@@ -158,7 +158,7 @@ func (mui *MasterUI) initGui() {
 	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
 	mui.layoutManager.Add(helpTextTipsView)
 
-	mui.commonData = dataCommon.NewCommonData(mui, mui.router.GetProcessor())
+	mui.commonData = dataCommon.NewCommonData(mui.router)
 
 	mui.alertManager = alertView.NewAlertManager(mui, mui.commonData)
 	//mui.baseHeaderSize = 3
@@ -290,7 +290,7 @@ func (mui *MasterUI) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (mui *MasterUI) CloseView(m masterUIInterface.Manager) error {
+func (mui *MasterUI) CloseView(m managerUI.Manager) error {
 
 	mui.gui.DeleteView(m.Name())
 	mui.gui.DeleteKeybindings(m.Name())
@@ -435,7 +435,7 @@ func (mui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 
 	valueText := strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", mui.refreshIntervalMS.Seconds()), "0"), ".")
 
-	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w masterUIInterface.Manager, inputValue string) error {
+	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w managerUI.Manager, inputValue string) error {
 		f, err := strconv.ParseFloat(inputValue, 64)
 		if err != nil {
 			return err
@@ -521,18 +521,13 @@ func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (mui *MasterUI) IsWarmupComplete() bool {
-	// TODO: Shouldn't this be in common data calculated once?
-	router := mui.router
-	processor := router.GetProcessor()
-	eventData := processor.GetDisplayedEventData()
-	statsTime := eventData.StatsTime
-	runtimeSeconds := statsTime.Sub(mui.router.GetStartTime())
-	return runtimeSeconds > time.Second*config.WarmUpSeconds
+	return mui.commonData.IsWarmupComplete()
 }
 
 func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
 	// TODO: The header needs to be the same accross data display types -- so need
 	// to move the responsability of displaying the summary stats to a common location
+	// TOOD: Need a way to minimize header for cases were we have a 25 row display -- for edit filter / sort
 	mui.RefeshNow()
 	//mui.updateHeaderDisplay(g)
 }

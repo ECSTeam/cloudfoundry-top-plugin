@@ -22,6 +22,7 @@ import (
 	"regexp"
 
 	"github.com/Knetic/govaluate"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -30,8 +31,8 @@ import (
 type EditFilterView struct {
 	*EditColumnViewAbs
 
-	labelWidget masterUIInterface.Manager
-	inputWidget masterUIInterface.Manager
+	labelWidget managerUI.Manager
+	inputWidget managerUI.Manager
 
 	oldFilterColumnMap map[string]*FilterColumn
 
@@ -132,7 +133,7 @@ func (w *EditFilterView) getSelectedColumn() *ListColumn {
 	return col
 }
 
-func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
+func (w *EditFilterView) applyValueCallback(g *gocui.Gui, v *gocui.View, mgr managerUI.Manager, inputValue string) error {
 
 	col := w.getSelectedColumn()
 	var err error
@@ -175,7 +176,7 @@ func (w *EditFilterView) closeInputWidget(g *gocui.Gui) error {
 	return w.RefreshDisplay(g)
 }
 
-func (w *EditFilterView) applyNumericFilter(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
+func (w *EditFilterView) applyNumericFilter(g *gocui.Gui, v *gocui.View, mgr managerUI.Manager, inputValue string) error {
 
 	varName := "VALUE"
 	if inputValue == "" {
@@ -216,7 +217,7 @@ func (w *EditFilterView) adjustExpression(value string) string {
 	return value
 }
 
-func (w *EditFilterView) applyAlphaFilter(g *gocui.Gui, v *gocui.View, mgr masterUIInterface.Manager, inputValue string) error {
+func (w *EditFilterView) applyAlphaFilter(g *gocui.Gui, v *gocui.View, mgr managerUI.Manager, inputValue string) error {
 	_, err := regexp.Compile(inputValue)
 	if err != nil {
 		return err

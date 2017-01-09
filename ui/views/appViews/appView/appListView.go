@@ -205,6 +205,9 @@ func (asUI *AppListView) GetListData() []uiCommon.IData {
 
 func (asUI *AppListView) postProcessData() []*dataCommon.DisplayAppStats {
 
+	//displayStatsArray := asUI.GetMasterUI().GetCommonData().GetDisplayAppStats()
+	//xxx
+
 	displayStatsArray := make([]*dataCommon.DisplayAppStats, 0)
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
