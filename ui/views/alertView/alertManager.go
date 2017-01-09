@@ -18,7 +18,6 @@ package alertView
 import (
 	"fmt"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/jroimartin/gocui"
@@ -51,8 +50,6 @@ func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 
 	commonData := am.commonData
 	appsNotInDesiredState := commonData.AppsNotInDesiredState()
-
-	toplog.Info("appsNotInDesiredState: %v", appsNotInDesiredState)
 
 	if commonData.IsWarmupComplete() && appsNotInDesiredState > 0 {
 		plural := ""
@@ -93,8 +90,6 @@ func (am *AlertManager) ShowUserMessage(g *gocui.Gui, message string) error {
 	alertViewName := "alertView"
 	alertHeight := 1
 
-	toplog.Info("ShowUserMessage: %v", message)
-
 	am.AlertSize = alertHeight
 
 	var alertView *AlertWidget
@@ -103,8 +98,6 @@ func (am *AlertManager) ShowUserMessage(g *gocui.Gui, message string) error {
 		alertView = NewAlertWidget(am.masterUI, alertViewName, alertHeight, am.commonData)
 		am.masterUI.LayoutManager().AddToBack(alertView)
 		am.masterUI.SetCurrentViewOnTop(g)
-		toplog.Info("NewAlertWidget: %v", alertViewName)
-
 	} else {
 		// This check is to prevent alert from showing on top of the log window
 		if am.masterUI.GetCurrentView(g).Name() == alertViewName {

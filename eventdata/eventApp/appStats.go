@@ -33,7 +33,8 @@ type AppStats struct {
 	NonContainerStdout int64
 	NonContainerStderr int64
 
-	ContainerArray      []*ContainerStats
+	ContainerArray []*ContainerStats
+	// Key: instanceId
 	ContainerTrafficMap map[string]*TrafficStats
 
 	// ISSUE: Must do this at clone time because of AvgTracker counter

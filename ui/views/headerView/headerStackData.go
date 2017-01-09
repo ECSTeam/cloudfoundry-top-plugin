@@ -38,10 +38,17 @@ type StackSummaryStats struct {
 	TotalUsedDiskAppInstances   uint64
 	TotalCpuPercentage          float64
 	TotalCellCPUs               int
-	TotalCapacityMemory         int64
-	TotalCapacityDisk           int64
-	ReservedMem                 float64
-	ReservedDisk                float64
+	// This is the hightest CPU percent of all the cells
+	CellMaxCpuPercentage float64
+	// This is the percent of CPU capacity of the hightest CPU percent cell
+	// E.g.,  If CellMaxCpuPercentage is 160.0 and our cell has 2 vCPUs
+	// then CellMaxCpuCapacity = (160 * 100) / (2 * 100) = 80 percent
+	// To simplify the above equation it would be (160 / 2) = 80 percent
+	CellMaxCpuCapacity  float64
+	TotalCapacityMemory int64
+	TotalCapacityDisk   int64
+	ReservedMem         float64
+	ReservedDisk        float64
 }
 
 type StackSummaryStatsArray []*StackSummaryStats
@@ -87,6 +94,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		summaryStatsByStack[""] = &StackSummaryStats{StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
 	}
 
+	// Key: cellIP
+	cpuByCellMap := make(map[string]float64)
+
 	for _, appStats := range asUI.commonData.GetDisplayAppStatsMap() {
 		sumStats := summaryStatsByStack[appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
@@ -99,6 +109,15 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			//fmt.Fprintf(v, "\n Waiting for more data...")
 			//return 3, nil
 			continue
+		}
+
+		// Track how much CPU is consumed per cell
+		for _, containerStats := range appStats.ContainerArray {
+			if containerStats != nil {
+				cellIP := containerStats.Ip
+				cpuPercent := containerStats.ContainerMetric.GetCpuPercentage()
+				cpuByCellMap[cellIP] = cpuByCellMap[cellIP] + cpuPercent
+			}
 		}
 
 		sumStats.TotalReportingAppInstances = sumStats.TotalReportingAppInstances + appStats.TotalReportingContainers
@@ -133,6 +152,12 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
 			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityTotalMemory
 			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityTotalDisk
+
+			cellCpu := cpuByCellMap[cellStats.Ip]
+			if cellCpu > sumStats.CellMaxCpuPercentage {
+				sumStats.CellMaxCpuPercentage = cpuByCellMap[cellStats.Ip]
+				sumStats.CellMaxCpuCapacity = sumStats.CellMaxCpuPercentage / float64(cellStats.NumOfCpus)
+			}
 		}
 	}
 
@@ -176,6 +201,14 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", stackSummaryStats.TotalCpuPercentage)
 		} else {
 			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", stackSummaryStats.TotalCpuPercentage)
+		}
+		switch {
+		case stackSummaryStats.CellMaxCpuCapacity >= 90:
+			colorString := util.BRIGHT_RED
+			totalCpuPercentageDisplay = fmt.Sprintf("%v%6v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+		case stackSummaryStats.CellMaxCpuCapacity >= 80:
+			colorString := util.BRIGHT_YELLOW
+			totalCpuPercentageDisplay = fmt.Sprintf("%v%6v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
 		}
 	}
 
