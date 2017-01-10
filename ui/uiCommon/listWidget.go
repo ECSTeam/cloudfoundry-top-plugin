@@ -506,7 +506,7 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_NOT_DESIRED_STATE:
 				colorString = util.BRIGHT_RED
 			case ATTENTION_ACTIVITY:
-				colorString = util.BRIGHT_CYAN
+				colorString = util.DIM_CYAN
 			}
 			if colorString != "" {
 				fmt.Fprintf(v, "%v", colorString)
