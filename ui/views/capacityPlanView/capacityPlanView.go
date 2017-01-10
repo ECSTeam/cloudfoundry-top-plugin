@@ -16,8 +16,6 @@
 package capacityPlanView
 
 import (
-	"bytes"
-	"fmt"
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
@@ -56,9 +54,9 @@ func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
 		defaultSortColumns)
 
 	dataListView.InitializeCallback = asUI.initializeCallback
-	dataListView.UpdateHeaderCallback = asUI.updateHeader
+	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
-	dataListView.PreRowDisplayCallback = asUI.preRowDisplay
+	//dataListView.PreRowDisplayCallback = asUI.preRowDisplay
 
 	dataListView.SetTitle("Capacity Plan (memory)")
 	dataListView.HelpText = HelpText
@@ -269,8 +267,8 @@ func (asUI *CapacityPlanView) convertToListData(displayCellMap map[string]*cellV
 	return listData
 }
 
+/*
 func (asUI *CapacityPlanView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
-
 	cellStats := data.(*cellView.DisplayCellStats)
 	v := bytes.NewBufferString("")
 	if !isSelected && cellStats.Ip == DUMMY_CELL_NAME_FOR_TOTAL {
@@ -278,8 +276,4 @@ func (asUI *CapacityPlanView) preRowDisplay(data uiCommon.IData, isSelected bool
 	}
 	return v.String()
 }
-
-func (asUI *CapacityPlanView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
-	fmt.Fprintf(v, "\nTODO: Need to handle 'by stack'.  Show summary stats")
-	return 3, nil
-}
+*/
