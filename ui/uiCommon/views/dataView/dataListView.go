@@ -195,9 +195,12 @@ func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
 
 	if asUI.RefreshDisplayCallback != nil {
 		err = asUI.RefreshDisplayCallback(g)
-	} else {
-		err = asUI.refreshListDisplay(g)
+		if err != nil {
+			return err
+		}
 	}
+
+	err = asUI.refreshListDisplay(g)
 	if err != nil {
 		return err
 	}

@@ -59,7 +59,6 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 		defaultSortColumns)
 
 	dataListView.InitializeCallback = asUI.initializeCallback
-	//dataListView.SetColumnOwner(asUI)
 
 	// TODO: Add additional header rows such as "active apps"
 	//dataListView.UpdateHeaderCallback = asUI.updateHeader
@@ -223,9 +222,4 @@ func (asUI *AppListView) convertToListData(statsMap map[string]*dataCommon.Displ
 		listData = append(listData, d)
 	}
 	return listData
-}
-
-func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
-	asUI.DataListView.RefreshDisplayCallback = nil
-	return asUI.RefreshDisplay(g)
 }
