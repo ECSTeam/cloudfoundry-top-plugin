@@ -482,6 +482,11 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		isSelected = true
 	}
 
+	sortColumnId := ""
+	if len(asUI.sortColumns) > 0 {
+		sortColumnId = asUI.sortColumns[0].id
+	}
+
 	if asUI.PreRowDisplayFunc != nil {
 		fmt.Fprint(v, asUI.PreRowDisplayFunc(rowData, isSelected))
 	}
@@ -506,11 +511,19 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_NOT_DESIRED_STATE:
 				colorString = util.BRIGHT_RED
 			case ATTENTION_ACTIVITY:
-				colorString = util.DIM_CYAN
+				if column.id == sortColumnId {
+					colorString = util.BRIGHT_CYAN
+				} else {
+					colorString = util.DIM_CYAN
+				}
 			}
-			if colorString != "" {
-				fmt.Fprintf(v, "%v", colorString)
-			}
+		}
+
+		if !isSelected && colorString == "" && column.id == sortColumnId {
+			colorString = util.BRIGHT_WHITE
+		}
+		if colorString != "" {
+			fmt.Fprintf(v, "%v", colorString)
 		}
 
 		fmt.Fprint(v, column.displayFunc(rowData, asUI.columnOwner))
@@ -537,6 +550,7 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		if colIndex >= LOCK_COLUMNS && colIndex < asUI.displayColIndexOffset+LOCK_COLUMNS {
 			continue
 		}
+		colorString := ""
 		editSortColumn := false
 		if asUI.selectColumnMode && asUI.selectedColumnId == column.id {
 			editSortColumn = true
@@ -555,6 +569,9 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 		if len(asUI.sortColumns) > 0 {
 			sortCol := asUI.sortColumns[0]
 			if sortCol != nil && sortCol.id == column.id {
+				if !editSortColumn {
+					colorString = util.BRIGHT_WHITE
+				}
 				if sortCol.reverseSort {
 					label = label + DownArrow
 				} else {
@@ -563,11 +580,14 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 			}
 		}
 
+		if colorString != "" {
+			fmt.Fprint(v, colorString)
+		}
 		fmt.Fprintf(v, buffer.String(), label)
-
-		if editSortColumn {
+		if editSortColumn || colorString != "" {
 			fmt.Fprint(v, normalHeaderColor)
 		}
+
 	}
 	fmt.Fprint(v, util.CLEAR)
 	fmt.Fprint(v, "\n")

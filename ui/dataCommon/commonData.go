@@ -121,8 +121,15 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		if totalReportingContainers < displayAppStats.DesiredContainers {
 			appsNotInDesiredState = appsNotInDesiredState + 1
 		}
-
-		displayAppStats.TotalCpuPercentage = totalCpuPercentage
+		if totalReportingContainers > 0 {
+			displayAppStats.TotalCpuPercentage = totalCpuPercentage
+		} else {
+			// In PCF 1.9 running containers can report 0.00 CPU percent usage
+			// To help distiquish between a container with 0 CPU and no container
+			// at all we set this to a very small negative number to help sort
+			// no-container apps to the bottom when sorting by CPU%
+			displayAppStats.TotalCpuPercentage = -0.0001
+		}
 		displayAppStats.TotalUsedMemory = totalUsedMemory
 		displayAppStats.TotalUsedDisk = totalUsedDisk
 		displayAppStats.TotalReportingContainers = totalReportingContainers

@@ -106,7 +106,7 @@ func (c *Client) Start() {
 
 	privileged, err := c.hasDopplerFirehoseScope()
 	if err != nil {
-		c.ui.Failed("Could not determine privileges. Are you logged in?", err)
+		c.ui.Failed("Could not determine privileges. Are you logged in?\n%v", err)
 		return
 	}
 
