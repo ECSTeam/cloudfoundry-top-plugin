@@ -15,17 +15,23 @@
 
 package cellDetailView
 
-const HelpText = `
+import "github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
+
+const HelpText = HelpOverviewText +
+	helpView.HelpHeaderText +
+	HelpColumnsText +
+	helpView.HelpChildLevelDataViewKeybindings +
+	helpView.HelpCommonDataViewKeybindings
+
+const HelpOverviewText = `
 **Cell Detail Stats View**
 
 Cell detail view shows a list of all containers running on the selected
 diego cell. The full set of stats may not be available until the warm-up
 period is complete.  
+`
 
-**Header information:**
-
-TODO
- 
+const HelpColumnsText = `
 **Container stats:**
 
   APPLICATION - Application name
@@ -41,46 +47,4 @@ TODO
   DISK_FREE - Free Disk space in cell VM available for containers
   LOG_OUT - Number of stdout log events
   LOG_ERR - Number of stderr log events
-  
-**Exit view: **
-Press 'x' to exit current view
-
-**Order / Sort display: **
-Press 'o' to show the sort order window allowing multi-column
-sorting of any column.
-
-**Clear stats: **
-Press shift-C to clear the statistics counters.
-
-**Pause display update:**
-Press 'p' to toggle pause display update.  When display update is
-paused top will continue to capture statstics and display updated
-values when unpaused.
-
-**Filter display: **
-Press 'f' to show the filter window which allows for filtering
-which rows should be displayed
-
-**Reload metadata: **
-Press 'r' to reload metadata for app/space/org.  The metadata
-is loaded at top startup but can become stale if new applications
-are deployed while top is running.
-TODO: Auto reload metadata upon unknown translation
-
-**Refresh screen interval: **
-Press 's' to set the sleep time between refreshes. Default
-is 1 second.  Valid values are 0.1 - 60.  The refresh interval only
-effects how often the client screen is refreshed, it has no effect
-on frequency the foundation delivers events. Top uses passive
-monitoring for stats, a faster refresh interval will not introduce
-additonal load on the CF foundation.
-
-**Scroll columns into view: **
-Press RIGHT or LEFT arrow to scroll the columns into view if the
-window is not wide enough to view all columns.  You can also resize
-terminal window to show more columns/rows (resize of cmd.exe window
-is not supported on windows while top is running).
-
-**Refresh: **
-Press SPACE to force an immediate screen refresh
 `

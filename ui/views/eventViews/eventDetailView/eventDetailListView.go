@@ -64,7 +64,7 @@ func NewEventDetailListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.GetListData = asUI.GetListData
 
 	dataListView.SetTitle(fmt.Sprintf("Event Detail List - Event Type: %v Origin: %v", eventTypeName, eventOrigin))
-	dataListView.HelpText = helpText
+	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = cellDetailView.HelpTextTips
 
 	asUI.DataListView = dataListView
