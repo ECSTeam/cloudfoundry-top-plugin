@@ -48,7 +48,8 @@ const (
 	CircleBackslash = string('\U000020E0')
 )
 
-type getRowDisplayFunc func(data IData, isSelected bool) string
+type preRowDisplayFunc func(data IData, isSelected bool) string
+type getRowDisplayFunc func(data IData, columnOwner IColumnOwner) string
 type getRowRawValueFunc func(data IData) string
 type getDisplayHeaderFunc func() string
 type getRowAttentionFunc func(data IData, columnOwner IColumnOwner) AttentionType
@@ -112,7 +113,7 @@ type ListWidget struct {
 	displayRowIndexOffset int
 	displayColIndexOffset int
 
-	PreRowDisplayFunc  getRowDisplayFunc
+	PreRowDisplayFunc  preRowDisplayFunc
 	columnOwner        IColumnOwner
 	listData           []IData
 	unfilteredListData []IData
@@ -474,13 +475,12 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 }
 
 func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) {
+	rowData := asUI.listData[rowIndex]
 	isSelected := false
-	if asUI.listData[rowIndex].Id() == asUI.highlightKey {
+	if rowData.Id() == asUI.highlightKey {
 		fmt.Fprint(v, util.REVERSE_GREEN)
 		isSelected = true
 	}
-
-	rowData := asUI.listData[rowIndex]
 
 	if asUI.PreRowDisplayFunc != nil {
 		fmt.Fprint(v, asUI.PreRowDisplayFunc(rowData, isSelected))
@@ -513,7 +513,7 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			}
 		}
 
-		fmt.Fprint(v, column.displayFunc(rowData, isSelected))
+		fmt.Fprint(v, column.displayFunc(rowData, asUI.columnOwner))
 		if !isSelected && colorString != "" {
 			fmt.Fprint(v, util.CLEAR)
 		}

@@ -27,7 +27,7 @@ func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayContainerStats).ContainerMetric.GetCpuPercentage() < c2.(*DisplayContainerStats).ContainerMetric.GetCpuPercentage())
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		totalCpuInfo := ""
 		cpuPercentage := stats.ContainerMetric.GetCpuPercentage()
@@ -60,7 +60,7 @@ func ColumnContainerIndex() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayContainerStats).ContainerIndex < c2.(*DisplayContainerStats).ContainerIndex)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		display := fmt.Sprintf("%4v", stats.ContainerIndex)
 		return fmt.Sprintf("%4v", display)
@@ -79,7 +79,7 @@ func ColumnAppName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayContainerStats).AppName, c2.(*DisplayContainerStats).AppName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
 		return util.FormatDisplayData(appStats.AppName, defaultColSize)
 	}
@@ -97,7 +97,7 @@ func ColumnSpaceName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayContainerStats).SpaceName, c2.(*DisplayContainerStats).SpaceName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
 		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
 	}
@@ -115,7 +115,7 @@ func ColumnOrgName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayContainerStats).OrgName, c2.(*DisplayContainerStats).OrgName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
 		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
 	}
@@ -132,7 +132,7 @@ func ColumnMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).ContainerMetric.GetMemoryBytes() < c2.(*DisplayContainerStats).ContainerMetric.GetMemoryBytes()
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ContainerMetric.GetMemoryBytes()).StringWithPrecision(1))
 		return fmt.Sprintf("%9v", memInfo)
@@ -150,7 +150,7 @@ func ColumnMemoryFree() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).FreeMemory < c2.(*DisplayContainerStats).FreeMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.FreeMemory).StringWithPrecision(1))
 		return fmt.Sprintf("%9v", memInfo)
@@ -168,7 +168,7 @@ func ColumnMemoryReserved() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).ReservedMemory < c2.(*DisplayContainerStats).ReservedMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedMemory).StringWithPrecision(1))
 		return fmt.Sprintf("%9v", memInfo)
@@ -186,7 +186,7 @@ func ColumnDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).ContainerMetric.GetDiskBytes() < c2.(*DisplayContainerStats).ContainerMetric.GetDiskBytes()
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
 		diskUsed := fmt.Sprintf("%9v", util.ByteSize(appStats.ContainerMetric.GetDiskBytes()).StringWithPrecision(1))
 		return diskUsed
@@ -204,7 +204,7 @@ func ColumnDiskFree() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).FreeDisk < c2.(*DisplayContainerStats).FreeDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.FreeDisk).StringWithPrecision(1))
 		return fmt.Sprintf("%9v", memInfo)
@@ -222,7 +222,7 @@ func ColumnDiskReserved() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).ReservedDisk < c2.(*DisplayContainerStats).ReservedDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedDisk).StringWithPrecision(1))
 		return fmt.Sprintf("%9v", memInfo)
@@ -240,7 +240,7 @@ func ColumnLogStdout() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).OutCount < c2.(*DisplayContainerStats).OutCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		display := fmt.Sprintf("%9v", util.Format(stats.OutCount))
 		return fmt.Sprintf("%9v", display)
@@ -258,7 +258,7 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).ErrCount < c2.(*DisplayContainerStats).ErrCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		display := fmt.Sprintf("%9v", util.Format(stats.ErrCount))
 		return fmt.Sprintf("%9v", display)
@@ -277,7 +277,7 @@ func ColumnCellIp() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.Ip2long(c1.(*DisplayContainerStats).Ip) < util.Ip2long(c2.(*DisplayContainerStats).Ip)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
 		if appStats.Ip != "" {
 			return util.FormatDisplayData(appStats.Ip, defaultColSize)

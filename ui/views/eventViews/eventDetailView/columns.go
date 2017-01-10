@@ -27,7 +27,7 @@ func columnDeploymentName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayEventDetailStats).DeploymentName, c2.(*DisplayEventDetailStats).DeploymentName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.DeploymentName, defaultColSize)
 	}
@@ -45,7 +45,7 @@ func columnJobName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayEventDetailStats).JobName, c2.(*DisplayEventDetailStats).JobName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.JobName, defaultColSize)
 	}
@@ -64,7 +64,7 @@ func columnJobIndex() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayEventDetailStats).JobIndex < c2.(*DisplayEventDetailStats).JobIndex
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.JobIndex, defaultColSize)
 	}
@@ -82,7 +82,7 @@ func columnIp() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.Ip2long(c1.(*DisplayEventDetailStats).Ip) < util.Ip2long(c2.(*DisplayEventDetailStats).Ip)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayEventDetailStats)
 		return util.FormatDisplayData(cellStats.Ip, defaultColSize)
 	}
@@ -100,7 +100,7 @@ func columnEventCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayEventDetailStats).EventCount < c2.(*DisplayEventDetailStats).EventCount)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventDetailStats)
 		return fmt.Sprintf("%12v", util.Format(stats.EventCount))
 	}

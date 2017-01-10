@@ -37,7 +37,7 @@ func columnIp() *uiCommon.ListColumn {
 		}
 		return util.Ip2long(ip1) < util.Ip2long(ip2)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		return util.FormatDisplayData(cellStats.Ip, defaultColSize)
 	}
@@ -55,7 +55,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).NumOfCpus < c2.(*cellView.DisplayCellStats).NumOfCpus)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.NumOfCpus == 0 {
@@ -78,7 +78,7 @@ func columnCapacityTotalMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*cellView.DisplayCellStats).CapacityTotalMemory < c2.(*cellView.DisplayCellStats).CapacityTotalMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if CellStats.CapacityTotalMemory == 0 {
@@ -101,7 +101,7 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*cellView.DisplayCellStats).CapacityRemainingMemory < c2.(*cellView.DisplayCellStats).CapacityRemainingMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if CellStats.CapacityRemainingMemory == 0 {
@@ -125,7 +125,7 @@ func columnCapacityTotalContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityTotalContainers < c2.(*cellView.DisplayCellStats).CapacityTotalContainers)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityTotalContainers == 0 {
@@ -149,7 +149,7 @@ func columnContainerCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).ContainerCount < c2.(*cellView.DisplayCellStats).ContainerCount)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.ContainerCount == 0 {
@@ -172,7 +172,7 @@ func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*cellView.DisplayCellStats).TotalContainerReservedMemory < c2.(*cellView.DisplayCellStats).TotalContainerReservedMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerReservedMemory == 0 {
@@ -196,7 +196,7 @@ func columnCapacityPlan0_5GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan0_5GMem < c2.(*cellView.DisplayCellStats).CapacityPlan0_5GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan0_5GMem == UNKNOWN {
@@ -220,7 +220,7 @@ func columnCapacityPlan1_0GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan1_0GMem < c2.(*cellView.DisplayCellStats).CapacityPlan1_0GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan1_0GMem == UNKNOWN {
@@ -244,7 +244,7 @@ func columnCapacityPlan1_5GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan1_5GMem < c2.(*cellView.DisplayCellStats).CapacityPlan1_5GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan1_5GMem == UNKNOWN {
@@ -268,7 +268,7 @@ func columnCapacityPlan2_0GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan2_0GMem < c2.(*cellView.DisplayCellStats).CapacityPlan2_0GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan2_0GMem == UNKNOWN {
@@ -291,7 +291,7 @@ func columnCapacityPlan2_5GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan2_5GMem < c2.(*cellView.DisplayCellStats).CapacityPlan2_5GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan2_5GMem == UNKNOWN {
@@ -315,7 +315,7 @@ func columnCapacityPlan3_0GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan3_0GMem < c2.(*cellView.DisplayCellStats).CapacityPlan3_0GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan3_0GMem == UNKNOWN {
@@ -339,7 +339,7 @@ func columnCapacityPlan3_5GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan3_5GMem < c2.(*cellView.DisplayCellStats).CapacityPlan3_5GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan3_5GMem == UNKNOWN {
@@ -363,7 +363,7 @@ func columnCapacityPlan4_0GMem() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*cellView.DisplayCellStats).CapacityPlan4_0GMem < c2.(*cellView.DisplayCellStats).CapacityPlan4_0GMem)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*cellView.DisplayCellStats)
 		display := ""
 		if cellStats.CapacityPlan4_0GMem == UNKNOWN {

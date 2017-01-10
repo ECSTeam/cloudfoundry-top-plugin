@@ -27,7 +27,7 @@ func columnEventOrigin() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayEventOriginStats).Origin < c2.(*DisplayEventOriginStats).Origin
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventOriginStats)
 		return util.FormatDisplayData(stats.Origin, defaultColSize)
 	}
@@ -45,7 +45,7 @@ func columnEventCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayEventOriginStats).EventCount < c2.(*DisplayEventOriginStats).EventCount)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventOriginStats)
 		return fmt.Sprintf("%12v", util.Format(stats.EventCount))
 	}

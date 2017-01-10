@@ -29,7 +29,7 @@ func columnAppName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*dataCommon.DisplayAppStats).AppName, c2.(*dataCommon.DisplayAppStats).AppName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return util.FormatDisplayData(appStats.AppName, defaultColSize)
 	}
@@ -74,7 +74,7 @@ func columnSpaceName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*dataCommon.DisplayAppStats).SpaceName, c2.(*dataCommon.DisplayAppStats).SpaceName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
 	}
@@ -92,7 +92,7 @@ func columnOrgName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*dataCommon.DisplayAppStats).OrgName, c2.(*dataCommon.DisplayAppStats).OrgName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
 	}
@@ -109,7 +109,7 @@ func columnReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalReportingContainers < c2.(*dataCommon.DisplayAppStats).TotalReportingContainers
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%3v", appStats.TotalReportingContainers)
 	}
@@ -127,7 +127,7 @@ func columnDesiredInstances() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).DesiredContainers < c2.(*dataCommon.DisplayAppStats).DesiredContainers
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%3v", appStats.DesiredContainers)
 	}
@@ -145,7 +145,7 @@ func columnTotalCpu() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalCpuPercentage < c2.(*dataCommon.DisplayAppStats).TotalCpuPercentage
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		totalCpuInfo := ""
 		if appStats.TotalReportingContainers == 0 {
@@ -174,7 +174,7 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalUsedMemory < c2.(*dataCommon.DisplayAppStats).TotalUsedMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		totalMemInfo := ""
 		if appStats.TotalReportingContainers == 0 {
@@ -197,7 +197,7 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalUsedDisk < c2.(*dataCommon.DisplayAppStats).TotalUsedDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		totalDiskInfo := ""
 		if appStats.TotalReportingContainers == 0 {
@@ -220,7 +220,7 @@ func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.AvgResponseL60Time < c2.(*dataCommon.DisplayAppStats).TotalTraffic.AvgResponseL60Time
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		avgResponseTimeL60Info := "--"
 		if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
@@ -242,7 +242,7 @@ func columnLogStdout() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalLogStdout < c2.(*dataCommon.DisplayAppStats).TotalLogStdout
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%11v", util.Format(appStats.TotalLogStdout))
 	}
@@ -259,7 +259,7 @@ func columnLogStderr() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalLogStderr < c2.(*dataCommon.DisplayAppStats).TotalLogStderr
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%11v", util.Format(appStats.TotalLogStderr))
 	}
@@ -276,7 +276,7 @@ func columnReq1() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.EventL1Rate < c2.(*dataCommon.DisplayAppStats).TotalTraffic.EventL1Rate
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%6v", util.Format(int64(appStats.TotalTraffic.EventL1Rate)))
 	}
@@ -301,7 +301,7 @@ func columnReq10() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.EventL10Rate < c2.(*dataCommon.DisplayAppStats).TotalTraffic.EventL10Rate
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%7v", util.Format(int64(appStats.TotalTraffic.EventL10Rate)))
 	}
@@ -319,7 +319,7 @@ func columnReq60() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.EventL60Rate < c2.(*dataCommon.DisplayAppStats).TotalTraffic.EventL60Rate
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%7v", util.Format(int64(appStats.TotalTraffic.EventL60Rate)))
 	}
@@ -344,7 +344,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.HttpAllCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.HttpAllCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.HttpAllCount))
 	}
@@ -360,7 +360,7 @@ func column2XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http2xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http2xxCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http2xxCount))
 	}
@@ -376,7 +376,7 @@ func column3XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http3xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http3xxCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http3xxCount))
 	}
@@ -393,7 +393,7 @@ func column4XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http4xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http4xxCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http4xxCount))
 	}
@@ -410,7 +410,7 @@ func column5XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http5xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http5xxCount
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http5xxCount))
 	}
@@ -428,7 +428,7 @@ func columnStackName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*dataCommon.DisplayAppStats).StackName, c2.(*dataCommon.DisplayAppStats).StackName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return util.FormatDisplayData(appStats.StackName, defaultColSize)
 	}

@@ -27,7 +27,7 @@ func columnCellIp() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.Ip2long(c1.(*DisplayCellStats).Ip) < util.Ip2long(c2.(*DisplayCellStats).Ip)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		return util.FormatDisplayData(cellStats.Ip, defaultColSize)
 	}
@@ -45,7 +45,7 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).TotalContainerCpuPercentage < c2.(*DisplayCellStats).TotalContainerCpuPercentage)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 
 		totalCpuInfo := ""
@@ -94,7 +94,7 @@ func columnTotalReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).TotalReportingContainers < c2.(*DisplayCellStats).TotalReportingContainers)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		display := ""
 		if cellStats.TotalReportingContainers == 0 {
@@ -117,7 +117,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).NumOfCpus < c2.(*DisplayCellStats).NumOfCpus)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		display := ""
 		if cellStats.NumOfCpus == 0 {
@@ -140,7 +140,7 @@ func columnCapacityTotalMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityTotalMemory < c2.(*DisplayCellStats).CapacityTotalMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.CapacityTotalMemory == 0 {
@@ -163,7 +163,7 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityRemainingMemory < c2.(*DisplayCellStats).CapacityRemainingMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		display := ""
 		if cellStats.CapacityRemainingMemory == 0 {
@@ -200,7 +200,7 @@ func columnCapacityTotalDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityTotalDisk < c2.(*DisplayCellStats).CapacityTotalDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.CapacityTotalDisk == 0 {
@@ -223,7 +223,7 @@ func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).CapacityRemainingDisk < c2.(*DisplayCellStats).CapacityRemainingDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.CapacityRemainingDisk == 0 {
@@ -261,7 +261,7 @@ func columnCapacityTotalContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).CapacityTotalContainers < c2.(*DisplayCellStats).CapacityTotalContainers)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		display := ""
 		if cellStats.CapacityTotalContainers == 0 {
@@ -285,7 +285,7 @@ func columnContainerCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayCellStats).ContainerCount < c2.(*DisplayCellStats).ContainerCount)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		display := ""
 		if cellStats.ContainerCount == 0 {
@@ -308,7 +308,7 @@ func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerReservedMemory < c2.(*DisplayCellStats).TotalContainerReservedMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerReservedMemory == 0 {
@@ -331,7 +331,7 @@ func columnTotalContainerUsedMemory() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerUsedMemory < c2.(*DisplayCellStats).TotalContainerUsedMemory
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerUsedMemory == 0 {
@@ -354,7 +354,7 @@ func columnTotalContainerReservedDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerReservedDisk < c2.(*DisplayCellStats).TotalContainerReservedDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerReservedDisk == 0 {
@@ -377,7 +377,7 @@ func columnTotalContainerUsedDisk() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).TotalContainerUsedDisk < c2.(*DisplayCellStats).TotalContainerUsedDisk
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*DisplayCellStats)
 		display := ""
 		if CellStats.TotalContainerUsedDisk == 0 {
@@ -401,7 +401,7 @@ func columnStackName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).StackName, c2.(*DisplayCellStats).StackName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayCellStats)
 		displayName := appStats.StackName
 		if displayName == "" {
@@ -423,7 +423,7 @@ func columnDeploymentName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).DeploymentName, c2.(*DisplayCellStats).DeploymentName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		return util.FormatDisplayData(cellStats.DeploymentName, defaultColSize)
 	}
@@ -441,7 +441,7 @@ func columnJobName() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).JobName, c2.(*DisplayCellStats).JobName)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		return util.FormatDisplayData(cellStats.JobName, defaultColSize)
 	}
@@ -460,7 +460,7 @@ func columnJobIndex() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayCellStats).JobIndex < c2.(*DisplayCellStats).JobIndex
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
 		return util.FormatDisplayData(cellStats.JobIndex, defaultColSize)
 	}

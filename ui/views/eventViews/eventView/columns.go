@@ -27,7 +27,7 @@ func columnEventType() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayEventStats).EventTypeName < c2.(*DisplayEventStats).EventTypeName
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventStats)
 		return util.FormatDisplayData(stats.EventTypeName, defaultColSize)
 	}
@@ -45,7 +45,7 @@ func columnEventCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayEventStats).EventCount < c2.(*DisplayEventStats).EventCount)
 	}
-	displayFunc := func(data uiCommon.IData, isSelected bool) string {
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventStats)
 		return fmt.Sprintf("%12v", util.Format(stats.EventCount))
 	}
