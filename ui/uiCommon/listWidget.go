@@ -77,6 +77,7 @@ const (
 	ATTENTION_HOT
 	ATTENTION_WARM
 	ATTENTION_NOT_DESIRED_STATE
+	ATTENTION_ACTIVITY
 )
 
 type ListColumn struct {
@@ -155,31 +156,6 @@ func NewSortColumn(id string, reverseSort bool) *SortColumn {
 }
 
 func NewListColumn(
-	id, label string,
-	size int,
-	columnType ColumnType,
-	leftJustifyLabel bool,
-	sortFunc util.LessFunc,
-	defaultReverseSort bool,
-	displayFunc getRowDisplayFunc,
-	rawValueFunc getRowRawValueFunc) *ListColumn {
-	column := &ListColumn{
-		id:                 id,
-		label:              label,
-		size:               size,
-		columnType:         columnType,
-		leftJustifyLabel:   leftJustifyLabel,
-		sortFunc:           sortFunc,
-		defaultReverseSort: defaultReverseSort,
-		displayFunc:        displayFunc,
-		rawValueFunc:       rawValueFunc,
-	}
-
-	return column
-}
-
-// TODO: This is the new replacement for NewListColumn
-func NewListColumn2(
 	id, label string,
 	size int,
 	columnType ColumnType,
@@ -510,6 +486,8 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 				colorString = util.BRIGHT_YELLOW
 			case ATTENTION_NOT_DESIRED_STATE:
 				colorString = util.BRIGHT_RED
+			case ATTENTION_ACTIVITY:
+				colorString = util.BRIGHT_WHITE
 			}
 			if colorString != "" {
 				fmt.Fprintf(v, "%v", colorString)

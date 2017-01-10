@@ -37,8 +37,15 @@ func columnAppName() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return appStats.AppName
 	}
-	attentionFunc := notInDesiredStateAttentionFunc
-	c := uiCommon.NewListColumn2("appName", "APPLICATION", defaultColSize,
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		attentionType := notInDesiredStateAttentionFunc(data, columnOwner)
+		if attentionType == uiCommon.ATTENTION_NORMAL {
+			attentionType = activityAttentionFunc(data, columnOwner)
+		}
+		return attentionType
+	}
+
+	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -49,6 +56,15 @@ func notInDesiredStateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IC
 	attentionType := uiCommon.ATTENTION_NORMAL
 	if appListView.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
 		attentionType = uiCommon.ATTENTION_NOT_DESIRED_STATE
+	}
+	return attentionType
+}
+
+func activityAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	appStats := data.(*dataCommon.DisplayAppStats)
+	attentionType := uiCommon.ATTENTION_NORMAL
+	if appStats.TotalTraffic.EventL10Rate > 0 {
+		attentionType = uiCommon.ATTENTION_ACTIVITY
 	}
 	return attentionType
 }
@@ -67,7 +83,7 @@ func columnSpaceName() *uiCommon.ListColumn {
 		return appStats.SpaceName
 	}
 	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -85,7 +101,7 @@ func columnOrgName() *uiCommon.ListColumn {
 		return appStats.OrgName
 	}
 	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -102,7 +118,7 @@ func columnReportingContainers() *uiCommon.ListColumn {
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
 	attentionFunc := notInDesiredStateAttentionFunc
-	c := uiCommon.NewListColumn2("reportingContainers", "RCR", 3,
+	c := uiCommon.NewListColumn("reportingContainers", "RCR", 3,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -120,7 +136,7 @@ func columnDesiredInstances() *uiCommon.ListColumn {
 		return strconv.Itoa(appStats.DesiredContainers)
 	}
 	attentionFunc := notInDesiredStateAttentionFunc
-	c := uiCommon.NewListColumn2("desiredInstances", "DCR", 3,
+	c := uiCommon.NewListColumn("desiredInstances", "DCR", 3,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -150,7 +166,7 @@ func columnTotalCpu() *uiCommon.ListColumn {
 		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
 	}
 	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -173,7 +189,7 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
 	}
 	c := uiCommon.NewListColumn("MEM", "MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -196,7 +212,7 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
 	}
 	c := uiCommon.NewListColumn("DISK", "DISK", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -218,7 +234,7 @@ func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.AvgResponseL60Time)
 	}
 	c := uiCommon.NewListColumn("avgResponseTimeL60", "RESP", 6,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -235,7 +251,7 @@ func columnLogStdout() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalLogStdout)
 	}
 	c := uiCommon.NewListColumn("TotalLogStdout", "LOG_OUT", 11,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -252,7 +268,7 @@ func columnLogStderr() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalLogStderr)
 	}
 	c := uiCommon.NewListColumn("TotalLogStderr", "LOG_ERR", 11,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -268,8 +284,16 @@ func columnReq1() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL1Rate)
 	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.TotalTraffic.EventL1Rate > 0 {
+			attentionType = uiCommon.ATTENTION_ACTIVITY
+		}
+		return attentionType
+	}
 	c := uiCommon.NewListColumn("REQ1", "REQ/1", 6,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -285,8 +309,9 @@ func columnReq10() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL10Rate)
 	}
+	attentionFunc := activityAttentionFunc
 	c := uiCommon.NewListColumn("REQ10", "REQ/10", 7,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -302,8 +327,16 @@ func columnReq60() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.EventL60Rate)
 	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.TotalTraffic.EventL60Rate > 0 {
+			attentionType = uiCommon.ATTENTION_ACTIVITY
+		}
+		return attentionType
+	}
 	c := uiCommon.NewListColumn("REQ60", "REQ/60", 7,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -320,7 +353,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
 	}
 	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 func column2XX() *uiCommon.ListColumn {
@@ -336,7 +369,7 @@ func column2XX() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http2xxCount)
 	}
 	c := uiCommon.NewListColumn("2XX", "2XX", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 func column3XX() *uiCommon.ListColumn {
@@ -352,7 +385,7 @@ func column3XX() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http3xxCount)
 	}
 	c := uiCommon.NewListColumn("3XX", "3XX", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -369,7 +402,7 @@ func column4XX() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http4xxCount)
 	}
 	c := uiCommon.NewListColumn("4XX", "4XX", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -386,7 +419,7 @@ func column5XX() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalTraffic.Http5xxCount)
 	}
 	c := uiCommon.NewListColumn("5XX", "5XX", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -404,6 +437,6 @@ func columnStackName() *uiCommon.ListColumn {
 		return appStats.StackName
 	}
 	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }

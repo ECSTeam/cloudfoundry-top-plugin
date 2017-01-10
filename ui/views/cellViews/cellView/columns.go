@@ -37,7 +37,7 @@ func columnCellIp() *uiCommon.ListColumn {
 		return cellStats.Ip
 	}
 	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -84,7 +84,7 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn2("CPU_PERCENT", "CPU%", defaultColSize,
+	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 
 	return c
@@ -110,7 +110,7 @@ func columnTotalReportingContainers() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.TotalReportingContainers)
 	}
 	c := uiCommon.NewListColumn("RCR", "RCR", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 func columnNumOfCpus() *uiCommon.ListColumn {
@@ -133,7 +133,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.NumOfCpus)
 	}
 	c := uiCommon.NewListColumn("CPUS", "CPUS", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -156,7 +156,7 @@ func columnCapacityTotalMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.CapacityTotalMemory)
 	}
 	c := uiCommon.NewListColumn("TOT_MEM", "TOT_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -192,7 +192,7 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn2("FREE_MEM", "FREE_MEM", 9,
+	c := uiCommon.NewListColumn("FREE_MEM", "FREE_MEM", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -216,7 +216,7 @@ func columnCapacityTotalDisk() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.CapacityTotalDisk)
 	}
 	c := uiCommon.NewListColumn("TOT_DISK", "TOT_DISK", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -256,7 +256,7 @@ func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn2("FREE_DISK", "FREE_DISK", 9,
+	c := uiCommon.NewListColumn("FREE_DISK", "FREE_DISK", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -281,7 +281,7 @@ func columnCapacityTotalContainers() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityTotalContainers)
 	}
 	c := uiCommon.NewListColumn("MAX_CNTR", "MAX_CNTR", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -305,7 +305,7 @@ func columnContainerCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.ContainerCount)
 	}
 	c := uiCommon.NewListColumn("CNTRS", "CNTRS", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -328,7 +328,7 @@ func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.TotalContainerReservedMemory)
 	}
 	c := uiCommon.NewListColumn("C_RSVD_MEM", "C_RSVD_MEM", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -351,7 +351,7 @@ func columnTotalContainerUsedMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.TotalContainerUsedMemory)
 	}
 	c := uiCommon.NewListColumn("C_USD_MEM", "C_USD_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -374,7 +374,7 @@ func columnTotalContainerReservedDisk() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.TotalContainerReservedDisk)
 	}
 	c := uiCommon.NewListColumn("C_RSVD_DSK", "C_RSVD_DSK", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -397,7 +397,7 @@ func columnTotalContainerUsedDisk() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.TotalContainerUsedDisk)
 	}
 	c := uiCommon.NewListColumn("C_USD_DSK", "C_USD_DSK", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -419,7 +419,7 @@ func columnStackName() *uiCommon.ListColumn {
 		return appStats.StackName
 	}
 	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -437,7 +437,7 @@ func columnDeploymentName() *uiCommon.ListColumn {
 		return cellStats.DeploymentName
 	}
 	c := uiCommon.NewListColumn("DNAME", "DNAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -455,7 +455,7 @@ func columnJobName() *uiCommon.ListColumn {
 		return cellStats.JobName
 	}
 	c := uiCommon.NewListColumn("JOB_NAME", "JOB_NAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -474,6 +474,6 @@ func columnJobIndex() *uiCommon.ListColumn {
 		return cellStats.JobIndex
 	}
 	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }

@@ -36,7 +36,7 @@ func columnEventType() *uiCommon.ListColumn {
 		return stats.EventTypeName
 	}
 	c := uiCommon.NewListColumn("EVENT_TYPE", "EVENT_TYPE", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -54,6 +54,6 @@ func columnEventCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.EventCount)
 	}
 	c := uiCommon.NewListColumn("COUNT", "COUNT", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

@@ -46,7 +46,7 @@ func columnIp() *uiCommon.ListColumn {
 		return cellStats.Ip
 	}
 	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -70,7 +70,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.NumOfCpus)
 	}
 	c := uiCommon.NewListColumn("CPUS", "CPUS", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -93,7 +93,7 @@ func columnCapacityTotalMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.CapacityTotalMemory)
 	}
 	c := uiCommon.NewListColumn("TOT_MEM", "TOT_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -116,7 +116,7 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.CapacityRemainingMemory)
 	}
 	c := uiCommon.NewListColumn("FREE_MEM", "FREE_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -140,7 +140,7 @@ func columnCapacityTotalContainers() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityTotalContainers)
 	}
 	c := uiCommon.NewListColumn("MAX_CNTR", "MAX_CNTR", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -164,7 +164,7 @@ func columnContainerCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.ContainerCount)
 	}
 	c := uiCommon.NewListColumn("CNTRS", "CNTRS", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -187,7 +187,7 @@ func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", CellStats.TotalContainerReservedMemory)
 	}
 	c := uiCommon.NewListColumn("C_RSVD_MEM", "C_RSVD_MEM", 10,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -211,7 +211,7 @@ func columnCapacityPlan0_5GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan0_5GMem)
 	}
 	c := uiCommon.NewListColumn("0.5GB", "  0.5GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -235,7 +235,7 @@ func columnCapacityPlan1_0GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan1_0GMem)
 	}
 	c := uiCommon.NewListColumn("1.0GB", "  1.0GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -259,7 +259,7 @@ func columnCapacityPlan1_5GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan1_5GMem)
 	}
 	c := uiCommon.NewListColumn("1.5GB", "  1.5GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -283,7 +283,7 @@ func columnCapacityPlan2_0GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan2_0GMem)
 	}
 	c := uiCommon.NewListColumn("2.0GB", "  2.0GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 func columnCapacityPlan2_5GMem() *uiCommon.ListColumn {
@@ -306,7 +306,7 @@ func columnCapacityPlan2_5GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan2_5GMem)
 	}
 	c := uiCommon.NewListColumn("2.5GB", "  2.5GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -330,7 +330,7 @@ func columnCapacityPlan3_0GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan3_0GMem)
 	}
 	c := uiCommon.NewListColumn("3.0GB", "  3.0GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -354,7 +354,7 @@ func columnCapacityPlan3_5GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan3_5GMem)
 	}
 	c := uiCommon.NewListColumn("3.5GB", "  3.5GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -378,6 +378,6 @@ func columnCapacityPlan4_0GMem() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.CapacityPlan4_0GMem)
 	}
 	c := uiCommon.NewListColumn("4.0GB", "  4.0GB", defaultColSize,
-		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

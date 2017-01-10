@@ -36,7 +36,7 @@ func columnDeploymentName() *uiCommon.ListColumn {
 		return cellStats.DeploymentName
 	}
 	c := uiCommon.NewListColumn("DNAME", "DNAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -54,7 +54,7 @@ func columnJobName() *uiCommon.ListColumn {
 		return cellStats.JobName
 	}
 	c := uiCommon.NewListColumn("JOB_NAME", "JOB_NAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -73,7 +73,7 @@ func columnJobIndex() *uiCommon.ListColumn {
 		return cellStats.JobIndex
 	}
 	c := uiCommon.NewListColumn("JOB_IDX", "JOB_IDX", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -91,7 +91,7 @@ func columnIp() *uiCommon.ListColumn {
 		return cellStats.Ip
 	}
 	c := uiCommon.NewListColumn("IP", "IP", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -109,6 +109,6 @@ func columnEventCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.EventCount)
 	}
 	c := uiCommon.NewListColumn("COUNT", "COUNT", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
