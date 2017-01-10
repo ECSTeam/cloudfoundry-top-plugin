@@ -3,7 +3,7 @@
 
 ### Application view:
 Shows all applications deployed to foundation (or your login has visibility to see). 
-The information provided inludes app CPU and memory usage, number of requests and response
+The information provided includes app CPU and memory usage, number of requests and response
 time of app.
 This is useful for finding the "top" CPU consumer on the foundation.  This screenshot 
 also shows an alert:
