@@ -18,7 +18,6 @@ package cellView
 import (
 	"fmt"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -243,10 +242,6 @@ func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 		attentionType := uiCommon.ATTENTION_NORMAL
 		if cellStats.CapacityTotalDisk > 0 {
 			cellCapacity := (1 - (float64(cellStats.CapacityRemainingDisk) / float64(cellStats.CapacityTotalDisk))) * 100
-
-			toplog.Info("CapacityRemainingDisk: %v, CapacityTotalDisk: %v, cellCapacity: %v",
-				cellStats.CapacityRemainingDisk, cellStats.CapacityTotalDisk, cellCapacity)
-
 			switch {
 			case cellCapacity >= 90:
 				attentionType = uiCommon.ATTENTION_HOT

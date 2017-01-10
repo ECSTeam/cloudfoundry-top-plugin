@@ -61,7 +61,6 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	//dataListView.SetColumnOwner(asUI)
 
-	//dataListView.PreRowDisplayCallback = asUI.preRowDisplay
 	// TODO: Add additional header rows such as "active apps"
 	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
@@ -230,20 +229,3 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 	asUI.DataListView.RefreshDisplayCallback = nil
 	return asUI.RefreshDisplay(g)
 }
-
-/*
-func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
-	appStats := data.(*dataCommon.DisplayAppStats)
-	colorString := ""
-	if asUI.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
-		if isSelected {
-			colorString = util.RED_TEXT_GREEN_BG
-		} else {
-			colorString = util.BRIGHT_RED
-		}
-	} else if !isSelected && appStats.TotalTraffic.EventL10Rate > 0 {
-		colorString = util.BRIGHT_WHITE
-	}
-	return colorString
-}
-*/

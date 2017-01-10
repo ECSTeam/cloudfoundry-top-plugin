@@ -217,10 +217,29 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 
 	topMargin := w.displayView.GetTopOffset()
 
+	// TODO: Debugging remove this later
+	/*
+		if w.name == "appListView" {
+			topMargin = topMargin + 10
+		}
+	*/
+
 	if topMargin >= bottom {
 		bottom = topMargin + 1
 	}
-	v, err := g.SetView(w.name, 0, topMargin, maxX-1, bottom)
+
+	// Check if the view has been resized, if not then do nothing
+	// This prevents non-visable views from doing more work then needed
+	v, err := g.View(w.name)
+	if err == nil {
+		x, y := v.Size()
+		if maxX-2 == x && bottom-topMargin-1 == y {
+			//toplog.Info("x:%v  maxX-1: %v  y: %v  bottom-topMargin: %v  ", x, maxX-2, y, bottom-topMargin-1)
+			return nil
+		}
+	}
+
+	v, err = g.SetView(w.name, 0, topMargin, maxX-1, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " (ListWidget) layout error:" + err.Error())
@@ -487,7 +506,7 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_NOT_DESIRED_STATE:
 				colorString = util.BRIGHT_RED
 			case ATTENTION_ACTIVITY:
-				colorString = util.BRIGHT_WHITE
+				colorString = util.BRIGHT_CYAN
 			}
 			if colorString != "" {
 				fmt.Fprintf(v, "%v", colorString)

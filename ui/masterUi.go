@@ -295,9 +295,6 @@ func (mui *MasterUI) CloseView(m managerUI.Manager) error {
 	mui.gui.DeleteView(m.Name())
 	mui.gui.DeleteKeybindings(m.Name())
 	nextForFocus := mui.layoutManager.Remove(m)
-
-	//toplog.Debug("type:%v", checkIfUpdatableView(nextForFocus))
-
 	nextViewName := nextForFocus.Name()
 	if err := mui.SetCurrentViewOnTop(mui.gui); err != nil {
 		return merry.Wrap(err).Appendf("SetCurrentViewOnTop viewName:[%v]", nextViewName)
