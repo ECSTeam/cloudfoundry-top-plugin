@@ -32,27 +32,30 @@ type actionCallback func(g *gocui.Gui, v *gocui.View) error
 type initializeCallback func(g *gocui.Gui, viewName string) error
 type preRowDisplayCallback func(data uiCommon.IData, isSelected bool) string
 type refreshDisplayCallback func(g *gocui.Gui) error
+type IColumnOwner interface{}
 
 type GetListData func() []uiCommon.IData
 
 type DataListView struct {
-	masterUI               masterUIInterface.MasterUIInterface
-	parentView             DataListViewInterface
-	detailView             DataListViewInterface
-	name                   string
-	topMargin              int
-	bottomMargin           int
-	eventProcessor         *eventdata.EventProcessor
-	appMdMgr               *app.AppMetadataManager
-	mu                     sync.Mutex
-	listWidget             *uiCommon.ListWidget
-	initialized            bool
-	Title                  string
-	HelpText               string
-	HelpTextTips           string
-	InitializeCallback     initializeCallback
-	UpdateHeaderCallback   updateHeaderCallback
-	PreRowDisplayCallback  preRowDisplayCallback
+	masterUI              masterUIInterface.MasterUIInterface
+	parentView            DataListViewInterface
+	detailView            DataListViewInterface
+	name                  string
+	topMargin             int
+	bottomMargin          int
+	eventProcessor        *eventdata.EventProcessor
+	appMdMgr              *app.AppMetadataManager
+	mu                    sync.Mutex
+	listWidget            *uiCommon.ListWidget
+	initialized           bool
+	Title                 string
+	HelpText              string
+	HelpTextTips          string
+	InitializeCallback    initializeCallback
+	UpdateHeaderCallback  updateHeaderCallback
+	PreRowDisplayCallback preRowDisplayCallback
+	columnOwner           IColumnOwner
+
 	RefreshDisplayCallback refreshDisplayCallback
 	GetListData            GetListData
 }
@@ -61,6 +64,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 	parentView DataListViewInterface,
 	name string, topMargin, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor,
+	columnOwner IColumnOwner,
 	columnDefinitions []*uiCommon.ListColumn,
 	defaultSortColumns []*uiCommon.SortColumn) *DataListView {
 
@@ -71,13 +75,13 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 		topMargin:      topMargin,
 		bottomMargin:   bottomMargin,
 		eventProcessor: eventProcessor,
+		columnOwner:    columnOwner,
 	}
 
 	asUI.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
 
 	listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-		asUI.bottomMargin, asUI, columnDefinitions)
-	listWidget.PreRowDisplayFunc = asUI.PreRowDisplay
+		asUI.bottomMargin, asUI, columnDefinitions, columnOwner)
 
 	listWidget.SetSortColumns(defaultSortColumns)
 

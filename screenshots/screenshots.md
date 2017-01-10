@@ -69,7 +69,7 @@ The Diego Cell view will colorize any value that might need attention.  A value 
 value is at 80% of cell capacity and red if its at 90% of cell capacity.  
 Example:  If the cell has 4 vCPUs and the cell CPU percentage consumed is at 350% (3.5 vCPUs are busy) 
 the field value will be yellow as this is 87.5% of the cell's total CPU capacity.
-Memory Free and Disk Free are colorized based on 80%/90% of resource consumed. 
+Memory Free and Disk Free are colorized based on 80% / 90% of resource consumed. 
 ![Screenshot](screenshot_cellView-attention.png?raw=true)
 
 

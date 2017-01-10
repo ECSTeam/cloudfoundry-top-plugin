@@ -69,7 +69,7 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 		cellStats := data.(*DisplayCellStats)
 		return fmt.Sprintf("%v", cellStats.TotalContainerCpuPercentage)
 	}
-	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
 		cellStats := data.(*DisplayCellStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
 
@@ -178,7 +178,7 @@ func columnCapacityRemainingMemory() *uiCommon.ListColumn {
 		cellStats := data.(*DisplayCellStats)
 		return fmt.Sprintf("%v", cellStats.CapacityRemainingMemory)
 	}
-	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
 		cellStats := data.(*DisplayCellStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
 		if cellStats.CapacityTotalMemory > 0 {
@@ -238,7 +238,7 @@ func columnCapacityRemainingDisk() *uiCommon.ListColumn {
 		CellStats := data.(*DisplayCellStats)
 		return fmt.Sprintf("%v", CellStats.CapacityRemainingDisk)
 	}
-	attentionFunc := func(data uiCommon.IData) uiCommon.AttentionType {
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
 		cellStats := data.(*DisplayCellStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
 		if cellStats.CapacityTotalDisk > 0 {

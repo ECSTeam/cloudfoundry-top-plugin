@@ -37,9 +37,20 @@ func columnAppName() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return appStats.AppName
 	}
-	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc)
+	attentionFunc := notInDesiredStateAttentionFunc
+	c := uiCommon.NewListColumn2("appName", "APPLICATION", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
+}
+
+func notInDesiredStateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	appStats := data.(*dataCommon.DisplayAppStats)
+	appListView := columnOwner.(*AppListView)
+	attentionType := uiCommon.ATTENTION_NORMAL
+	if appListView.isWarmupComplete && appStats.DesiredContainers > appStats.TotalReportingContainers {
+		attentionType = uiCommon.ATTENTION_NOT_DESIRED_STATE
+	}
+	return attentionType
 }
 
 func columnSpaceName() *uiCommon.ListColumn {
@@ -90,8 +101,9 @@ func columnReportingContainers() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
-	c := uiCommon.NewListColumn("reportingContainers", "RCR", 3,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	attentionFunc := notInDesiredStateAttentionFunc
+	c := uiCommon.NewListColumn2("reportingContainers", "RCR", 3,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -107,8 +119,9 @@ func columnDesiredInstances() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return strconv.Itoa(appStats.DesiredContainers)
 	}
-	c := uiCommon.NewListColumn("desiredInstances", "DCR", 3,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc)
+	attentionFunc := notInDesiredStateAttentionFunc
+	c := uiCommon.NewListColumn2("desiredInstances", "DCR", 3,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 

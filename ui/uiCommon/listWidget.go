@@ -51,7 +51,8 @@ const (
 type getRowDisplayFunc func(data IData, isSelected bool) string
 type getRowRawValueFunc func(data IData) string
 type getDisplayHeaderFunc func() string
-type getRowAttentionFunc func(data IData) AttentionType
+type getRowAttentionFunc func(data IData, columnOwner IColumnOwner) AttentionType
+type IColumnOwner interface{}
 
 type changeSelectionCallbackFunc func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool
 
@@ -111,6 +112,7 @@ type ListWidget struct {
 	displayColIndexOffset int
 
 	PreRowDisplayFunc  getRowDisplayFunc
+	columnOwner        IColumnOwner
 	listData           []IData
 	unfilteredListData []IData
 
@@ -205,7 +207,7 @@ func NewListColumn2(
 
 func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	bottomMargin int, displayView DisplayViewInterface,
-	columns []*ListColumn) *ListWidget {
+	columns []*ListColumn, columnOwner IColumnOwner) *ListWidget {
 	w := &ListWidget{
 		masterUI:        masterUI,
 		name:            name,
@@ -214,6 +216,7 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 		columns:         columns,
 		columnMap:       make(map[string]*ListColumn),
 		filterColumnMap: make(map[string]*FilterColumn),
+		columnOwner:     columnOwner,
 	}
 	for _, col := range columns {
 		w.columnMap[col.id] = col
@@ -499,12 +502,14 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 		}
 
 		if !isSelected && column.attentionFunc != nil {
-			attentionLevel := column.attentionFunc(rowData)
+			attentionLevel := column.attentionFunc(rowData, asUI.columnOwner)
 			switch attentionLevel {
 			case ATTENTION_HOT:
 				colorString = util.BRIGHT_RED
 			case ATTENTION_WARM:
 				colorString = util.BRIGHT_YELLOW
+			case ATTENTION_NOT_DESIRED_STATE:
+				colorString = util.BRIGHT_RED
 			}
 			if colorString != "" {
 				fmt.Fprintf(v, "%v", colorString)

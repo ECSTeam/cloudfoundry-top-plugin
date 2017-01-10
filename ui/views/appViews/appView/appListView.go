@@ -31,7 +31,6 @@ import (
 	"github.com/jroimartin/gocui"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appDetailView"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 type AppListView struct {
@@ -56,11 +55,13 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
 		name, 0, bottomMargin,
-		eventProcessor, asUI.columnDefinitions(),
+		eventProcessor, asUI, asUI.columnDefinitions(),
 		defaultSortColumns)
 
 	dataListView.InitializeCallback = asUI.initializeCallback
-	dataListView.PreRowDisplayCallback = asUI.preRowDisplay
+	//dataListView.SetColumnOwner(asUI)
+
+	//dataListView.PreRowDisplayCallback = asUI.preRowDisplay
 	// TODO: Add additional header rows such as "active apps"
 	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
@@ -230,6 +231,7 @@ func (asUI *AppListView) detailViewClosed(g *gocui.Gui) error {
 	return asUI.RefreshDisplay(g)
 }
 
+/*
 func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) string {
 	appStats := data.(*dataCommon.DisplayAppStats)
 	colorString := ""
@@ -244,3 +246,4 @@ func (asUI *AppListView) preRowDisplay(data uiCommon.IData, isSelected bool) str
 	}
 	return colorString
 }
+*/

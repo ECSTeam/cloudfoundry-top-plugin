@@ -56,7 +56,7 @@ func NewEventDetailListView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
 		name, topMargin, bottomMargin,
-		eventProcessor, asUI.columnDefinitions(),
+		eventProcessor, asUI, asUI.columnDefinitions(),
 		defaultSortColumns)
 
 	dataListView.InitializeCallback = asUI.initializeCallback

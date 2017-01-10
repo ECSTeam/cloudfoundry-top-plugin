@@ -56,8 +56,8 @@ func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 		if appsNotInDesiredState > 1 {
 			plural = "s"
 		}
-		msg := fmt.Sprintf("ALERT: %v application%v not in desired state (row%v colored red) ",
-			appsNotInDesiredState, plural, plural)
+		msg := fmt.Sprintf("ALERT: %v application%v not in desired state ",
+			appsNotInDesiredState, plural)
 		am.ShowUserMessage(g, msg)
 	} else if am.isUserMessageOpen(g) {
 		am.ClearUserMessage(g)
