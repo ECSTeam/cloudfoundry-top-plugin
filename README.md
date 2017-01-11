@@ -1,4 +1,4 @@
-# top-plugin
+# top-plugin by Kurt Kellner of ECS Team (www.ECSTeam.com)
 
 This is a Cloud Foundry command-line cf interactive plugin for showing live statistics of the targeted Cloud Foundry foundation.
 The live statistics include application statistics and route statistics among others.
@@ -20,9 +20,8 @@ More [screenshots here](screenshots/screenshots.md)
 
 # Usage Documentation
 
-[Top usage documentation](docs/doc.md)
-
-[Frequently Asked Questions (FAQ)](docs/faq.md)
+After installation be sure to view the [full `top` documentation](docs/doc.md) as
+well as the [Frequently Asked Questions (FAQ)](docs/faq.md) page.
 
 # Installation
 There are two options for installation; use the plugin repo (recommended) or manual installation.
@@ -95,8 +94,10 @@ a logout and login.
 
 # Usage
 
-User must be logged in as admin or cloud foundry user with permissions as described above.
-The plugin does not require any arguments.  Simply run:
+Although `top` does not *require* any special permissions, foundation operators 
+will want to run `top` in privileged mode as described in the
+[Assign permissions](#Assign-permissions-if-privileged-mode-is-needed)
+section above.  The plugin does not require arguments.  Simply run:
 ```
 cf top
 ```
