@@ -18,7 +18,7 @@ load balancer, go-routers, doppler and traffic controller instances.
 
 `top` has been tested with over 30,000 events per second without dropping events.
 
-## Sometime when I run top, for the first few seconds I see garbage for the application name.  Is this a bug?
+## Sometimes when I run top, for the first few seconds I see garbage for the application name.  Is this a bug?
 This is not a bug.  When `top` starts, its goal is to start capturing events and to 
 display data as quickly as possible.  What you are seeing is not "garbage" but the 
 application's GUID.  In the background requests are made for metadata that help
@@ -33,14 +33,14 @@ Linux, using Putty to ssh into Linux OS seems to work well to display `top`.
 
 ## Why do I sometimes get a big red window inside my session when running top?
 `top` maintains an internal log of messages.  This log is accessible by pressing ctrl-shift-D.
-The log window is normally has a blue backgound but will change to a red background if
+The log window normally has a blue background but will change to a red background if
 there are any errors that have been logged.  The log view will automatically open when
 an error is logged. 
 
 ## Why does it take 60 seconds to "warm-up" when top starts?
 When `top` is started, it has no information or history on the foundation its monitoring.
 To be friendly to the foundation, it does not submit 100s of API requests to get the
-current status of the foundation and all applications.  `top` starts to monitor the 
+current status of the foundation and all applications.  Instead `top` monitors the 
 firehose for events and "learns" what it needs to know by passively listening.  This
 can take up to 60 seconds to learn all that is needed and have accurate information to
 display.  You should never jump to any conclusion about the health of a foundation
@@ -60,7 +60,8 @@ To determine root cause of why this field is colorized, use the Cell Stats scree
 determine which of the cells are running warm/hot on CPU resource. 
 
 ## Why is `top` still showing application instances (containers) that are no longer running?
-`top` tracks containers based on events in the firehose.  A container checks in with 
-health information periodically.  When `top` does not see this health information
+`top` tracks containers based on events in the firehose.  A container will output health
+information periodically to the firehose.  When `top` does not see this health information
 from a container for 90 seconds, it assumes the container is dead.  This means that it 
 can take `top` up to 90 seconds to clear old containers from the list / count.
+
