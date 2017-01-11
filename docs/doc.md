@@ -1,7 +1,7 @@
 
 # Cloud Foundry `top` plugin by Kurt Kellner of ECS Team (www.ECSTeam.com)
 
-Be sure to also check [Frequently Asked Questions (FAQ)](docs/faq.md) page
+Be sure to also check [Frequently Asked Questions (FAQ)](faq.md) page
 for additional information about `top`.
 
 # Background
@@ -21,13 +21,13 @@ but is simple and easily accessible.
 From this need, the Cloud Foundry cf cli `top` plugin was born.
 
 # Overview
-The `top` plugin is unlike most `cf` plugins which run with various command-line
-arguments and output information to terminal and exit.  Instead, when you run
-`cf top` on the command-line, it will initialize a text-based interface that
-will allow user interaction with the screen.  It works much like the UNIX top
-command.
+The `top` plugin is unlike most `cf` plugins which typically run using various
+command-line arguments, output information to the terminal and then exit.  
+Instead, when you run `cf top` on the command-line, it will initialize a text-based 
+interface that will allow user interaction with the screen.  It works much like
+the UNIX top command.
 
-There are 5 top-level views.  When switching between view using 'd', you
+There are 5 top-level data views.  When switching between data views using 'd', you
 must be at a top-level view.  When in a subview, you can press 'x' to exit
 back.  If you need help you can look at the bottom of the window which 
 provides a quick-help of common commands or press 'h' for verbose help
