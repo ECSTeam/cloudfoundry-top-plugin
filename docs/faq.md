@@ -25,11 +25,12 @@ application's GUID.  In the background requests are made for metadata that help
 translate internal GUIDs into human readable names (e.g., app, space and org names).
 
 ## When I run top the interface looks terrible, nothing like the screenshots I've seen.  Why?
-`top` uses several characters to draw borders and other indicators that can be problematic
-on some terminal emulators / font-types / character sets.  If `top` is not displaying
-correctly try changing the font-type or character set within your terminal emulator.  If
-this still does not work, try a different terminal emulator.  For Windows users accessing
-Linux, using Putty to ssh into Linux OS seems to work well to display `top`.
+`top` uses special characters to draw borders and other indicators that can be problematic
+on some terminal emulators / font-types / character sets.  The normal cause of this is
+using a non-UTF8 character set.  For example, when using ISO-8859-1 character set the boarder
+will show as `âââââ` characters.  If you are using Windows with Putty, change the character set 
+in Putty `Configuration-->Window-->Translation-->Remote character set translation` and choose
+"UTF-8".  Tested with Putty v0.66.
 
 ## Why do I sometimes get a big red window inside my session when running top?
 `top` maintains an internal log of messages.  This log is accessible by pressing ctrl-shift-D.
