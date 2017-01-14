@@ -21,23 +21,18 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 type EventRouter struct {
-	eventCount       uint64
-	eventRateCounter *util.RateCounter
-	eventRatePeak    int
-	startTime        time.Time
-	processor        *eventdata.EventProcessor
+	eventCount uint64
+	startTime  time.Time
+	processor  *eventdata.EventProcessor
 }
 
 func NewEventRouter(processor *eventdata.EventProcessor) *EventRouter {
 	return &EventRouter{
-		processor:        processor,
-		startTime:        time.Now(),
-		eventRateCounter: util.NewRateCounter(time.Second),
+		processor: processor,
+		startTime: time.Now(),
 	}
 }
 
@@ -49,32 +44,17 @@ func (er *EventRouter) GetEventCount() uint64 {
 	return atomic.LoadUint64(&er.eventCount)
 }
 
-func (er *EventRouter) GetEventRatePeak() int {
-	return er.eventRatePeak
-}
-
-func (er *EventRouter) GetEventRate() int {
-	rate := er.eventRateCounter.Rate()
-	if rate > er.eventRatePeak {
-		er.eventRatePeak = rate
-		toplog.Info("New event rate per second peak: %v", rate)
-	}
-	return rate
-}
-
 func (er *EventRouter) GetStartTime() time.Time {
 	return er.startTime
 }
 
 func (er *EventRouter) Clear() {
 	atomic.StoreUint64(&er.eventCount, 0)
-	er.eventRatePeak = 0
 	er.startTime = time.Now()
 	er.processor.ClearStats()
 }
 
 func (er *EventRouter) Route(instanceId int, msg *events.Envelope) {
 	atomic.AddUint64(&er.eventCount, 1)
-	er.eventRateCounter.Incr()
 	er.processor.Process(instanceId, msg)
 }

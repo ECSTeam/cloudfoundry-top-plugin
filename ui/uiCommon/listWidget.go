@@ -25,7 +25,6 @@ import (
 
 	"github.com/Knetic/govaluate"
 	"github.com/ansel1/merry"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -204,12 +203,6 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 
 func (w *ListWidget) Name() string {
 	return w.name
-}
-
-// TODO: Delete this method
-func (w *ListWidget) SetTopMarginX(topMargin int) {
-	toplog.Info("topMarginX: %v", topMargin)
-	//w.topMargin = topMargin
 }
 
 func (w *ListWidget) Layout(g *gocui.Gui) error {
@@ -457,9 +450,10 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 		stopRowIndex := maxRows + asUI.displayRowIndexOffset
 		asUI.writeHeader(g, v)
 
-		toplog.Info("listWidget listSize: %v  stopRowIndex: %v  maxRows: %v  offset: %v",
-			listSize, stopRowIndex, maxRows, asUI.displayRowIndexOffset)
-
+		/*
+			toplog.Info("listWidget listSize: %v  stopRowIndex: %v  maxRows: %v  offset: %v",
+				listSize, stopRowIndex, maxRows, asUI.displayRowIndexOffset)
+		*/
 		// Loop through all rows
 		for i := 0; i < listSize && i < stopRowIndex; i++ {
 			if i < asUI.displayRowIndexOffset {
@@ -797,7 +791,7 @@ func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
 func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
 	listSize := len(asUI.listData)
 	callbackFunc := func(g *gocui.Gui, v *gocui.View, rowIndex int, lastKey string) bool {
-		if rowIndex+1 < listSize {
+		if rowIndex < listSize {
 			_, viewY := v.Size()
 			viewSize := viewY - 1
 			offset := 0
@@ -809,7 +803,7 @@ func (asUI *ListWidget) pageDownAction(g *gocui.Gui, v *gocui.View) error {
 			if offset > listSize-1 {
 				offset = listSize - 1
 			}
-			if offset > (asUI.displayRowIndexOffset + viewSize) {
+			if offset > (asUI.displayRowIndexOffset + viewSize - 1) {
 				asUI.displayRowIndexOffset = offset - viewSize + 1
 			}
 			asUI.highlightKey = asUI.listData[offset].Id()

@@ -36,8 +36,6 @@ import (
 
 type EventProcessor struct {
 	eventCount         int64
-	eventRateCounter   *util.RateCounter
-	eventRatePeak      int
 	mu                 *sync.Mutex
 	currentEventData   *EventData
 	displayedEventData *EventData
@@ -47,8 +45,7 @@ type EventProcessor struct {
 
 	eventRateHistory *EventRateHistory
 
-	eventRateCounterMap map[events.Envelope_EventType]*util.RateCounter
-	//rateCounterLock sync.RWMutex
+	eventRateCounterMap     map[events.Envelope_EventType]*util.RateCounter
 	eventRateCounterMapLock sync.Mutex
 }
 
@@ -63,7 +60,6 @@ func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *Eve
 		cliConnection:       cliConnection,
 		privileged:          privileged,
 		metadataManager:     metadataManager,
-		eventRateCounter:    util.NewRateCounter(time.Second),
 		eventRateCounterMap: make(map[events.Envelope_EventType]*util.RateCounter),
 	}
 

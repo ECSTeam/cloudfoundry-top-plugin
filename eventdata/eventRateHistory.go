@@ -16,6 +16,7 @@
 package eventdata
 
 import (
+	"sync"
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
@@ -36,32 +37,6 @@ type EventRate struct {
 	TotalLow           int
 	TotalAvg           int
 }
-
-/*
-func (er *EventRate) TotalHigh() int {
-	value := 0
-	for _, eventRateDetail := range er.EventRateDetailMap {
-		value += eventRateDetail.RateHigh
-	}
-	return value
-}
-
-func (er *EventRate) TotalLow() int {
-	value := 0
-	for _, eventRateDetail := range er.EventRateDetailMap {
-		value += eventRateDetail.RateLow
-	}
-	return value
-}
-
-func (er *EventRate) TotalAvg() int {
-	value := 0
-	for _, eventRateDetail := range er.EventRateDetailMap {
-		value += eventRateDetail.RateAvg
-	}
-	return value
-}
-*/
 
 type HistoryRangeType int
 
@@ -88,10 +63,10 @@ type EventRateHistory struct {
 	eventProcessor         *EventProcessor
 	eventRateByDurationMap map[HistoryRangeType][]*EventRate
 	lastTimeHistoryCapture time.Time
+	mu                     sync.Mutex
 }
 
 func NewEventRateHistory(ep *EventProcessor) *EventRateHistory {
-
 	erh := &EventRateHistory{
 		eventProcessor:         ep,
 		eventRateByDurationMap: make(map[HistoryRangeType][]*EventRate),
@@ -102,11 +77,25 @@ func NewEventRateHistory(ep *EventProcessor) *EventRateHistory {
 func (erh *EventRateHistory) GetHistory() []*EventRate {
 	// Merge all the buckets
 	// TODO: Might need to thread product this
+	erh.mu.Lock()
+	defer erh.mu.Unlock()
 	mergedHistory := make([]*EventRate, 0)
 	for _, eventRate := range erh.eventRateByDurationMap {
 		mergedHistory = append(mergedHistory, eventRate...)
 	}
 	return mergedHistory
+}
+
+func (erh *EventRateHistory) GetCurrentRate() int {
+	erh.mu.Lock()
+	defer erh.mu.Unlock()
+	currentRate := 0
+	eventRateList := erh.eventRateByDurationMap[BY_SECOND]
+	if eventRateList != nil && len(eventRateList) > 0 {
+		eventRate := eventRateList[len(eventRateList)-1]
+		currentRate = eventRate.TotalHigh
+	}
+	return currentRate
 }
 
 func (erh *EventRateHistory) start() {
@@ -122,7 +111,8 @@ func (erh *EventRateHistory) start() {
 
 func (erh *EventRateHistory) captureCurrentRates(time time.Time) {
 
-	//toplog.Info("EventRateHistory>>captureCurrentRates")
+	erh.mu.Lock()
+	defer erh.mu.Unlock()
 
 	er := &EventRate{
 		EventRateDetailMap: make(map[events.Envelope_EventType]*EventRateDetail),
@@ -143,7 +133,6 @@ func (erh *EventRateHistory) captureCurrentRates(time time.Time) {
 		er.TotalLow += rate
 		erd.RateAvg = rate
 		er.TotalAvg += rate
-		//toplog.Info("type: %v RateHigh: %v", eventType, erd.RateHigh)
 	}
 
 	rateBySecondList := erh.eventRateByDurationMap[BY_SECOND]
