@@ -456,6 +456,10 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 	if listSize > 0 || asUI.selectColumnMode {
 		stopRowIndex := maxRows + asUI.displayRowIndexOffset
 		asUI.writeHeader(g, v)
+
+		toplog.Info("listWidget listSize: %v  stopRowIndex: %v  maxRows: %v  offset: %v",
+			listSize, stopRowIndex, maxRows, asUI.displayRowIndexOffset)
+
 		// Loop through all rows
 		for i := 0; i < listSize && i < stopRowIndex; i++ {
 			if i < asUI.displayRowIndexOffset {
@@ -704,7 +708,7 @@ func (asUI *ListWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
 			viewSize := viewY - 1
 			asUI.highlightKey = lastKey
 			offset := rowIndex - 1
-			if offset > listSize-viewSize {
+			if listSize > viewSize && offset > listSize-viewSize {
 				offset = listSize - viewSize
 			}
 			if asUI.displayRowIndexOffset > offset || rowIndex > asUI.displayRowIndexOffset+viewSize {
@@ -744,14 +748,22 @@ func (asUI *ListWidget) moveHighlight(g *gocui.Gui, v *gocui.View, callback chan
 		}
 	} else {
 		lastKey := ""
+		foundMatch := false
 		for rowIndex := 0; rowIndex < listSize; rowIndex++ {
 			if asUI.listData[rowIndex].Id() == asUI.highlightKey {
+				foundMatch = true
 				if callback(g, v, rowIndex, lastKey) {
 					break
 				}
 			}
 			lastKey = asUI.listData[rowIndex].Id()
 		}
+		if !foundMatch {
+			if listSize > 0 {
+				asUI.highlightKey = asUI.listData[0].Id()
+			}
+		}
+
 	}
 	return asUI.RefreshDisplay(g)
 

@@ -40,6 +40,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/cellViews/cellView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventRateHistoryView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/headerView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeViews/routeView"
@@ -368,7 +369,7 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	if mui.privileged {
 		menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
 	}
-	menuItems = append(menuItems, uiCommon.NewMenuItem("eventhistory", "TODO: Event Rate History"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventRateHistoryListView", "Event Rate History"))
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	selectDisplayView.SetMenuId(mui.displayMenuId)
 
@@ -405,7 +406,8 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 		dataView = eventView.NewEventListView(mui, "eventListView", mui.helpTextTipsViewSize, ep)
 	case "capacityPlanView":
 		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.helpTextTipsViewSize, ep)
-
+	case "eventRateHistoryListView":
+		dataView = eventRateHistoryView.NewEventRateHistoryView(mui, "eventRateHistoryListView", mui.helpTextTipsViewSize, ep)
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}

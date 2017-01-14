@@ -16,11 +16,9 @@
 package util
 
 import (
-	//"strconv"
-	"time"
-	//"fmt"
 	"sync"
-	//"gopkg.in/eapache/queue.v1"
+	"time"
+
 	"github.com/eapache/queue"
 )
 
@@ -39,16 +37,15 @@ func main() {
 // A RateCounter is a thread-safe counter which returns the number of times
 // 'Incr' has been called in the last interval
 type RateCounter struct {
-	//counter  Counter
 	interval time.Duration
 	queue    *queue.Queue
 	mu       sync.Mutex
 }
 
 // Constructs a new RateCounter, for the interval provided
-func NewRateCounter(intrvl time.Duration) *RateCounter {
+func NewRateCounter(interval time.Duration) *RateCounter {
 	return &RateCounter{
-		interval: intrvl,
+		interval: interval,
 		queue:    queue.New(),
 	}
 }
@@ -78,7 +75,6 @@ func (r *RateCounter) removeOld() {
 
 func (r *RateCounter) removeOldFromTime(timeMark time.Time) {
 	if r.queue.Length() > 0 {
-		//now := time.Now()
 		for r.queue.Length() > 0 {
 			ts := r.queue.Peek().(time.Time)
 			if timeMark.Sub(ts) < r.interval {

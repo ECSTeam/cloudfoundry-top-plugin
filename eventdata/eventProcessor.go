@@ -38,13 +38,18 @@ type EventProcessor struct {
 	eventCount         int64
 	eventRateCounter   *util.RateCounter
 	eventRatePeak      int
-	startTime          time.Time
 	mu                 *sync.Mutex
 	currentEventData   *EventData
 	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
 	privileged         bool
 	metadataManager    *metadata.Manager
+
+	eventRateHistory *EventRateHistory
+
+	eventRateCounterMap map[events.Envelope_EventType]*util.RateCounter
+	//rateCounterLock sync.RWMutex
+	eventRateCounterMapLock sync.Mutex
 }
 
 func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *EventProcessor {
@@ -54,22 +59,33 @@ func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *Eve
 	metadataManager := metadata.NewManager(cliConnection)
 
 	ep := &EventProcessor{
-		mu:               mu,
-		cliConnection:    cliConnection,
-		privileged:       privileged,
-		metadataManager:  metadataManager,
-		startTime:        time.Now(),
-		eventRateCounter: util.NewRateCounter(time.Second),
+		mu:                  mu,
+		cliConnection:       cliConnection,
+		privileged:          privileged,
+		metadataManager:     metadataManager,
+		eventRateCounter:    util.NewRateCounter(time.Second),
+		eventRateCounterMap: make(map[events.Envelope_EventType]*util.RateCounter),
 	}
 
 	ep.currentEventData = NewEventData(mu, ep)
 	ep.displayedEventData = NewEventData(mu, ep)
-
+	ep.eventRateHistory = NewEventRateHistory(ep)
+	ep.eventRateHistory.start()
 	return ep
 
 }
 
 func (ep *EventProcessor) Process(instanceId int, msg *events.Envelope) {
+
+	eventType := msg.GetEventType()
+	ep.eventRateCounterMapLock.Lock()
+	eventCounter := ep.eventRateCounterMap[eventType]
+	if eventCounter == nil {
+		eventCounter = util.NewRateCounter(time.Second)
+		ep.eventRateCounterMap[eventType] = eventCounter
+	}
+	ep.eventRateCounterMapLock.Unlock()
+	eventCounter.Incr()
 	ep.currentEventData.Process(instanceId, msg)
 }
 
@@ -83,6 +99,10 @@ func (ep *EventProcessor) GetCurrentEventData() *EventData {
 
 func (ep *EventProcessor) GetDisplayedEventData() *EventData {
 	return ep.displayedEventData
+}
+
+func (ep *EventProcessor) GetEventRateHistory() *EventRateHistory {
+	return ep.eventRateHistory
 }
 
 func (ep *EventProcessor) GetMetadataManager() *metadata.Manager {
