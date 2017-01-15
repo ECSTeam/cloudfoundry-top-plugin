@@ -31,6 +31,7 @@ const UNKNOWN_STACK_NAME = "UNKNOWN"
 type StackSummaryStats struct {
 	StackId                     string
 	StackName                   string
+	TotalCells                  int
 	TotalApps                   int
 	TotalReportingAppInstances  int
 	TotalActiveApps             int
@@ -149,6 +150,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		sumStats := summaryStatsByStack[cellStats.StackId]
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
 		if sumStats != nil {
+			sumStats.TotalCells = sumStats.TotalCells + 1
 			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
 			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityTotalMemory
 			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityTotalDisk
@@ -185,7 +187,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 // Called for each stack - this should output 3 lines:
 //
-//  Stack: cflinuxfs2
+//  Stack: cflinuxfs2    Cells: 5
 //     CPU:  8.4% Used,  800% Max,       Mem:   7GB Used,  63GB Max,  22GB Rsrvd
 //     Apps:  122 Total, Cntrs:  127     Dsk:   7GB Used, 190GB Max,  27GB Rsrvd
 //
@@ -226,7 +228,7 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
 	}
 
-	fmt.Fprintf(v, "Stack: %v\n", stackSummaryStats.StackName)
+	fmt.Fprintf(v, "Stack: %-13v Cells: %v\n", stackSummaryStats.StackName, stackSummaryStats.TotalCells)
 	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"
