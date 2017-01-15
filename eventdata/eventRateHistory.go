@@ -50,7 +50,7 @@ const (
 )
 
 // Consolidate history data as follows
-// The following configuration results is a max of 864 records in 7 days
+// The following configuration results is a max of 764 records in 7 days
 // Then just 1 additional record for every day after that.
 var recordTimeRangeMaximums = []struct {
 	TimeRangeType HistoryRangeType

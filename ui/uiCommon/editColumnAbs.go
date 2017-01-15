@@ -160,10 +160,8 @@ func (w *EditColumnViewAbs) closeView(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	// TODO: Is this the correct spot to do this?
-	w.masterUI.SetMinimizeHeader(g, false)
-
 	w.masterUI.SetDisplayPaused(w.priorStateOfDisplayPaused)
+	w.masterUI.SetMinimizeHeader(g, false)
 	w.listWidget.displayView.RefreshDisplay(g)
 	return nil
 }

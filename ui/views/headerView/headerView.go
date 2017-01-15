@@ -35,7 +35,8 @@ type HeaderWidget struct {
 	commonData *dataCommon.CommonData
 	name       string
 
-	HeaderSize int
+	HeaderSize      int
+	headerMinimized bool
 }
 
 func NewHeaderWidget(masterUI masterUIInterface.MasterUIInterface,
@@ -61,6 +62,10 @@ func (w *HeaderWidget) Layout(g *gocui.Gui) error {
 		//fmt.Fprint(v, w.body)
 	}
 	return nil
+}
+
+func (w *HeaderWidget) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
+	w.headerMinimized = minimizeHeader
 }
 
 func (w *HeaderWidget) UpdateDisplay(g *gocui.Gui) error {
@@ -101,15 +106,18 @@ func (w *HeaderWidget) UpdateDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "Target: %-78.78v\n", w.masterUI.GetTargetDisplay())
 	}
 
-	headerStackLines, err := w.updateHeaderStack(g, v)
-	if err != nil {
-		return err
+	// Base header is 2 rows plus 1 for border
+	headerLines := 3
+
+	if !w.headerMinimized {
+		headerStackLines, err := w.updateHeaderStack(g, v)
+		if err != nil {
+			return err
+		}
+		headerLines = headerLines + headerStackLines
 	}
 
-	// Base header is 2 rows plus 1 for border
-	headerLines := 3 + headerStackLines
 	w.HeaderSize = headerLines
-
 	return nil
 }
 

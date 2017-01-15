@@ -527,11 +527,11 @@ func (mui *MasterUI) IsWarmupComplete() bool {
 }
 
 func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
-	// TODO: The header needs to be the same accross data display types -- so need
-	// to move the responsability of displaying the summary stats to a common location
 	// TOOD: Need a way to minimize header for cases were we have a 25 row display -- for edit filter / sort
-	mui.RefeshNow()
-	//mui.updateHeaderDisplay(g)
+	toplog.Info("SetMinimizeHeader:%v", minimizeHeader)
+	mui.headerView.SetMinimizeHeader(g, minimizeHeader)
+	//mui.RefeshNow()
+	mui.updateHeaderDisplay(g)
 }
 
 func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
@@ -542,7 +542,7 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 
 	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
 	isWarmupComplete := mui.IsWarmupComplete()
-	if isWarmupComplete {
+	if !mui.displayPaused && isWarmupComplete {
 		mui.alertManager.CheckForAlerts(g)
 	}
 	return nil
