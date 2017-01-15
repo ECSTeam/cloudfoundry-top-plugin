@@ -97,7 +97,7 @@ func (ep *EventProcessor) GetDisplayedEventData() *EventData {
 	return ep.displayedEventData
 }
 
-func (ep *EventProcessor) GetEventRateHistory() *EventRateHistory {
+func (ep *EventProcessor) GetCurrentEventRateHistory() *EventRateHistory {
 	return ep.eventRateHistory
 }
 

@@ -54,10 +54,32 @@ func FormatUint64(n uint64) string {
 	}
 }
 
-func FormatDisplayData(value string, size int) string {
+func FormatDisplayDataRight(value string, size int) string {
+	return formatDisplayDataInternal(value, size, false)
+}
+
+func FormatDisplayDataLeft(value string, size int) string {
+	return formatDisplayDataInternal(value, size, true)
+}
+
+func formatDisplayDataInternal(value string, size int, leftJustified bool) string {
 	if len(value) > size {
 		value = value[0:size-1] + Ellipsis
 	}
-	format := fmt.Sprintf("%%-%v.%vv", size, size)
+	leftJustifiedStr := ""
+	if leftJustified {
+		leftJustifiedStr = "-"
+	}
+	format := fmt.Sprintf("%%%v%v.%vv", leftJustifiedStr, size, size)
+	return fmt.Sprintf(format, value)
+}
+
+// TODO: Old API -- replaced by FormatDisplayDataLeft
+func FormatDisplayData(value string, size int) string {
+	return formatDisplayDataInternal(value, size, true)
+}
+
+func FormatIntDisplayData(value int, size int) string {
+	format := fmt.Sprintf("%%%vv", size)
 	return fmt.Sprintf(format, value)
 }

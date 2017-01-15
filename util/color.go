@@ -15,9 +15,21 @@
 
 package util
 
+//
+// http://csbruce.com/software/utf-8.html
+//
+// Most of these do not work on Windows
+//
 // "▁▂▃▄▅▆▇█"
-// "▁▂▃▄▅▆▇█▉▊▋▌▍▎▏"
-// ◐◑◒◓◔◕
+// "▁▂▃▄▅▆▇█
+// "█▉▊▋▌▍▎▏"
+//
+// ▁ ▂ ▃ ▄ ▅ ▆ ▇ █   u2580
+// ▁▂▃▄▅▆▇█   This one has two odd chars display on MacOS
+// ▁▂▃▅▆▇  This one looks better on MacOS
+//
+// ◐◑◒◓◔◕   u25C0
+// ☠  ⚡ ❌ ❗
 // https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 
 const (

@@ -34,8 +34,8 @@ func NewEventRateHistoryView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &EventRateHistoryView{}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
+		uiCommon.NewSortColumn("TOTAL", true),
 		uiCommon.NewSortColumn("BEGIN_TIME", true),
-		//uiCommon.NewSortColumn("EVENT_TYPE", true),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
@@ -45,7 +45,7 @@ func NewEventRateHistoryView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Event Rate History")
+	dataListView.SetTitle("Event Rate Peak History")
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 
@@ -60,7 +60,7 @@ func (asUI *EventRateHistoryView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, columnEventBeginTime())
 	columns = append(columns, columnEventEndTime())
-	columns = append(columns, columnDuration())
+	columns = append(columns, columnInterval())
 
 	columns = append(columns, columnTotalRateHigh())
 	//columns = append(columns, columnTotalRateLow())
@@ -110,8 +110,8 @@ func (asUI *EventRateHistoryView) GetListData() []uiCommon.IData {
 func (asUI *EventRateHistoryView) postProcessData() []*DisplayEventRateHistoryStats {
 
 	ep := asUI.GetEventProcessor()
-	erh := ep.GetEventRateHistory()
-	eventRateList := erh.GetHistory()
+	erh := ep.GetCurrentEventRateHistory()
+	eventRateList := erh.GetDisplayedHistory()
 
 	displayList := make([]*DisplayEventRateHistoryStats, 0, len(eventRateList))
 	for _, eventRate := range eventRateList {

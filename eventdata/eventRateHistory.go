@@ -21,6 +21,7 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/mohae/deepcopy"
 )
 
 type EventRateDetail struct {
@@ -48,15 +49,18 @@ const (
 	BY_DAY
 )
 
+// Consolidate history data as follows
+// The following configuration results is a max of 864 records in 7 days
+// Then just 1 additional record for every day after that.
 var recordTimeRangeMaximums = []struct {
 	TimeRangeType HistoryRangeType
 	RecordMax     int
 }{
-	{BY_SECOND, 10},
-	{BY_MINUTE, 10},
-	{BY_10MINUTE, 10},
-	{BY_HOUR, 10},
-	{BY_DAY, 0},
+	{BY_SECOND, 60 * 2},    // Keep 60 seconds minimum of second resolution
+	{BY_MINUTE, 10 * 2},    // Keep 60 minutes minimum of minute resolution
+	{BY_10MINUTE, 144 * 2}, // Keep 144 10-min records (24 hours) minimum of 10-min resolution
+	{BY_HOUR, 168 * 2},     // Keep 168 hours (7 days) minimum of 1 hour resolution
+	{BY_DAY, 0},            // Keep 1 day resolution forever
 }
 
 type EventRateHistory struct {
@@ -64,6 +68,10 @@ type EventRateHistory struct {
 	eventRateByDurationMap map[HistoryRangeType][]*EventRate
 	lastTimeHistoryCapture time.Time
 	mu                     sync.Mutex
+
+	// This is used when display is "paused" to allow a snapshot
+	// of data at the time of the cause
+	frozenEventRate []*EventRate
 }
 
 func NewEventRateHistory(ep *EventProcessor) *EventRateHistory {
@@ -74,7 +82,7 @@ func NewEventRateHistory(ep *EventProcessor) *EventRateHistory {
 	return erh
 }
 
-func (erh *EventRateHistory) GetHistory() []*EventRate {
+func (erh *EventRateHistory) GetCurrentHistory() []*EventRate {
 	// Merge all the buckets
 	// TODO: Might need to thread product this
 	erh.mu.Lock()
@@ -84,6 +92,23 @@ func (erh *EventRateHistory) GetHistory() []*EventRate {
 		mergedHistory = append(mergedHistory, eventRate...)
 	}
 	return mergedHistory
+}
+
+func (erh *EventRateHistory) GetDisplayedHistory() []*EventRate {
+	if erh.frozenEventRate != nil {
+		return erh.frozenEventRate
+	} else {
+		return erh.GetCurrentHistory()
+	}
+}
+
+// SetFreezeData is called when user pauses/unpauses display
+func (erh *EventRateHistory) SetFreezeData(freezeData bool) {
+	if freezeData {
+		erh.frozenEventRate = deepcopy.Copy(erh.GetCurrentHistory()).([]*EventRate)
+	} else {
+		erh.frozenEventRate = nil
+	}
 }
 
 func (erh *EventRateHistory) GetCurrentRate() int {

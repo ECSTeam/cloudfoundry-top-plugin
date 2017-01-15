@@ -20,14 +20,31 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
 const HelpText = HelpOverviewText + helpView.HelpHeaderText + HelpColumnsText + helpView.HelpTopLevelDataViewKeybindings + helpView.HelpCommonDataViewKeybindings
 
 const HelpOverviewText = `
-**Event Rate History View**
+**Event Rate Peak History View**
 
-Event rate history shows the rate of events coming from the firehose.
+Event rate peak history shows the peak rate of events per second coming
+from the firehose. This peak rate is measured from the perspective of
+the top client.  Two instance of top running against the same foundation
+can record different peak events because of network hopes and process
+scheduling.
 `
 
 const HelpColumnsText = `
- **Event Columns:**
+ **Event Rate Peak Columns:**
 
-  EVENT_TYPE - Event type
-  COUNT - Number of events that have occured 
+  BEGIN_TIME - Date/Time of when the peak rate measurment was started
+  END_TIME - Date/Time of when the peak rate measurment was ended
+  INTR - The interval, in seconds, of the history record (end-begin time)
+  TOTAL - Total events per second that occured during the time interval
+  HTTP - Peak HTTP events per second that occured during the time
+       interval
+  CONTAINER - Peak CONTAINER events per second that occured during the
+       time interval
+  LOG - Peak LOG events per second that occured during the time interval
+  VALUE - Peak VALUE events per second that occured during the time
+       interval
+  COUNTER - Peak COUNTER events per second that occured during the time
+       interval
+  ERROR - Peak ERROR events per second that occured during the time
+       interval
 `

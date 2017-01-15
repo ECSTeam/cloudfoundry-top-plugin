@@ -69,14 +69,14 @@ func columnEventEndTime() *uiCommon.ListColumn {
 	return c
 }
 
-func columnDuration() *uiCommon.ListColumn {
+func columnInterval() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int { return int(stats.Duration.Seconds() + 0.25) }
-	return columnRateTemplate("DUR", getValueFunc)
+	return columnTemplate("INTR", getValueFunc, 5)
 }
 
 func columnTotalRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int { return stats.TotalHigh }
-	return columnRateTemplate("TOTAL_HIGH", getValueFunc)
+	return columnRateTemplate("TOTAL", getValueFunc)
 }
 func columnTotalRateLow() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int { return stats.TotalLow }
@@ -87,7 +87,7 @@ func columnHttpStartStopEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_HttpStartStop, RATE_HIGH)
 	}
-	return columnRateTemplate("HTTP_HIGH", getValueFunc)
+	return columnRateTemplate("HTTP", getValueFunc)
 }
 
 func columnHttpStartStopEventRateLow() *uiCommon.ListColumn {
@@ -101,7 +101,7 @@ func columnContainerMetricEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_ContainerMetric, RATE_HIGH)
 	}
-	return columnRateTemplate("CONTNR_HIGH", getValueFunc)
+	return columnRateTemplate("CONTAINER", getValueFunc)
 }
 
 func columnContainerMetricEventRateLow() *uiCommon.ListColumn {
@@ -115,7 +115,7 @@ func columnLogMessageEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_LogMessage, RATE_HIGH)
 	}
-	return columnRateTemplate("LOG_HIGH", getValueFunc)
+	return columnRateTemplate("LOG", getValueFunc)
 }
 func columnLogMessageEventRateLow() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
@@ -128,7 +128,7 @@ func columnValueMetricEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_ValueMetric, RATE_HIGH)
 	}
-	return columnRateTemplate("VALUE_HIGH", getValueFunc)
+	return columnRateTemplate("VALUE", getValueFunc)
 }
 
 func columnValueMetricEventRateLow() *uiCommon.ListColumn {
@@ -142,7 +142,7 @@ func columnCounterEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_CounterEvent, RATE_HIGH)
 	}
-	return columnRateTemplate("COUNTER_HIGH", getValueFunc)
+	return columnRateTemplate("COUNTER", getValueFunc)
 }
 func columnCounterEventRateLow() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
@@ -155,7 +155,7 @@ func columnErrorEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_Error, RATE_HIGH)
 	}
-	return columnRateTemplate("ERROR_HIGH", getValueFunc)
+	return columnRateTemplate("ERROR", getValueFunc)
 }
 func columnErrorEventRateLow() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
@@ -181,6 +181,10 @@ func getRateValue(stats *DisplayEventRateHistoryStats, eventType events.Envelope
 }
 
 func columnRateTemplate(columnName string, getValueFunc GetValueFunction) *uiCommon.ListColumn {
+	return columnTemplate(columnName, getValueFunc, 10)
+}
+
+func columnTemplate(columnName string, getValueFunc GetValueFunction, width int) *uiCommon.ListColumn {
 	defaultColSize := 12
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return getValueFunc(c1.(*DisplayEventRateHistoryStats)) < getValueFunc(c2.(*DisplayEventRateHistoryStats))
@@ -188,7 +192,7 @@ func columnRateTemplate(columnName string, getValueFunc GetValueFunction) *uiCom
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayEventRateHistoryStats)
 		value := getValueFunc(stats)
-		return fmt.Sprintf("%12v", util.Format(int64(value)))
+		return util.FormatDisplayDataRight(util.Format(int64(value)), defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*DisplayEventRateHistoryStats)

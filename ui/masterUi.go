@@ -365,11 +365,12 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 		menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
 	}
 	menuItems = append(menuItems, uiCommon.NewMenuItem("routeListView", "Route Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("eventRateHistoryListView", "Event Rate History"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("eventListView", "Event Stats"))
 	if mui.privileged {
 		menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
 	}
-	menuItems = append(menuItems, uiCommon.NewMenuItem("eventRateHistoryListView", "Event Rate History"))
+
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	selectDisplayView.SetMenuId(mui.displayMenuId)
 
@@ -473,6 +474,8 @@ func (mui *MasterUI) GetDisplayPaused() bool {
 
 func (mui *MasterUI) SetDisplayPaused(paused bool) {
 	mui.displayPaused = paused
+	mui.router.GetProcessor().GetCurrentEventRateHistory().SetFreezeData(paused)
+
 	if !paused {
 		mui.snapshotLiveData()
 	}
