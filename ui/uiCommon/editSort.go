@@ -68,8 +68,8 @@ func NewEditSortView(masterUI masterUIInterface.MasterUIInterface, name string, 
 	w.oldSortColumns = make([]*SortColumn, len(listWidget.sortColumns))
 	for i, sc := range listWidget.sortColumns {
 		scClone := &SortColumn{
-			id:          sc.id,
-			reverseSort: sc.reverseSort,
+			Id:          sc.Id,
+			ReverseSort: sc.ReverseSort,
 		}
 		w.oldSortColumns[i] = scClone
 	}
@@ -118,10 +118,10 @@ func (w *EditSortView) refreshDisplayCallback(g *gocui.Gui, v *gocui.View) error
 		displayName := "--none--"
 		if sc != nil {
 			sortDirection := AscendingText
-			if sc.reverseSort {
+			if sc.ReverseSort {
 				sortDirection = DescendingText
 			}
-			columnLabel := w.listWidget.columnMap[sc.id].label
+			columnLabel := w.listWidget.columnMap[sc.Id].label
 			displayName = fmt.Sprintf("%-13v %v", columnLabel, sortDirection)
 		}
 		fmt.Fprintf(v, " Sort #%v: %v \n", i+1, displayName)
@@ -174,16 +174,16 @@ func (w *EditSortView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 	columnId := w.listWidget.selectedColumnId
 	if sc == nil {
 		sc = &SortColumn{
-			id:          columnId,
-			reverseSort: w.listWidget.columnMap[columnId].defaultReverseSort,
+			Id:          columnId,
+			ReverseSort: w.listWidget.columnMap[columnId].defaultReverseSort,
 		}
 		w.sortColumns[w.sortPosition] = sc
 	} else {
-		if sc.id == columnId {
-			sc.reverseSort = !sc.reverseSort
+		if sc.Id == columnId {
+			sc.ReverseSort = !sc.ReverseSort
 		} else {
-			sc.id = columnId
-			sc.reverseSort = w.listWidget.columnMap[columnId].defaultReverseSort
+			sc.Id = columnId
+			sc.ReverseSort = w.listWidget.columnMap[columnId].defaultReverseSort
 		}
 
 	}

@@ -16,11 +16,14 @@
 package eventRateHistoryView
 
 import (
+	"log"
+
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/jroimartin/gocui"
 )
 
 type EventRateHistoryView struct {
@@ -43,6 +46,7 @@ func NewEventRateHistoryView(masterUI masterUIInterface.MasterUIInterface,
 		eventProcessor, asUI, asUI.columnDefinitions(),
 		defaultSortColumns)
 
+	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
 	dataListView.SetTitle("Event Rate Peak History")
@@ -87,6 +91,54 @@ func (asUI *EventRateHistoryView) columnDefinitions() []*uiCommon.ListColumn {
 	//columns = append(columns, columnOtherEventRateLow())
 
 	return columns
+}
+
+func (asUI *EventRateHistoryView) initializeCallback(g *gocui.Gui, viewName string) error {
+
+	keys := [...]gocui.Key{gocui.KeyArrowUp, gocui.KeyArrowDown, gocui.KeyPgdn, gocui.KeyPgup, gocui.KeyArrowRight, gocui.KeyArrowLeft}
+	for _, key := range keys {
+		if err := g.SetKeybinding(viewName, key, gocui.ModNone, asUI.highlightNavigationAction); err != nil {
+			log.Panicln(err)
+		}
+	}
+	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.highlightNavigationEscAction); err != nil {
+		log.Panicln(err)
+	}
+	return nil
+}
+
+func (asUI *EventRateHistoryView) highlightNavigationEscAction(g *gocui.Gui, v *gocui.View) error {
+	return asUI.highlightNavigationPauseIfNeeded(g, v, true)
+
+}
+
+func (asUI *EventRateHistoryView) highlightNavigationAction(g *gocui.Gui, v *gocui.View) error {
+	return asUI.highlightNavigationPauseIfNeeded(g, v, false)
+}
+
+// To make the user's experience with scrolling through rows a better experience
+// we auto-pause the display update if we are sorted by BEGIN_TIME or END_TIME in reverse order
+// This is because new records are coming in every second and with reverse order sort on
+// these time fields, its difficult to navigate as the highlighted row keeps shifting down.
+// The ESC key will (like on all screens) de-select row and reset to top of list
+func (asUI *EventRateHistoryView) highlightNavigationPauseIfNeeded(g *gocui.Gui, v *gocui.View, isEscKey bool) error {
+
+	sortColumns := asUI.GetListWidget().GetSortColumns()
+	if len(sortColumns) > 0 {
+		sortColumn := sortColumns[0]
+		if (sortColumn.Id == "BEGIN_TIME" || sortColumn.Id == "END_TIME") && sortColumn.ReverseSort {
+			if isEscKey {
+				if asUI.GetMasterUI().GetDisplayPaused() {
+					asUI.GetMasterUI().SetDisplayPaused(false)
+				}
+			} else {
+				if !asUI.GetMasterUI().GetDisplayPaused() {
+					asUI.GetMasterUI().SetDisplayPaused(true)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (asUI *EventRateHistoryView) GetListData() []uiCommon.IData {

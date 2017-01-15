@@ -129,8 +129,8 @@ type ListWidget struct {
 }
 
 type SortColumn struct {
-	id          string
-	reverseSort bool
+	Id          string
+	ReverseSort bool
 }
 
 type FilterColumn struct {
@@ -152,7 +152,7 @@ func init() {
 }
 
 func NewSortColumn(id string, reverseSort bool) *SortColumn {
-	return &SortColumn{id: id, reverseSort: reverseSort}
+	return &SortColumn{Id: id, ReverseSort: reverseSort}
 }
 
 func NewListColumn(
@@ -270,6 +270,7 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyEsc, gocui.ModNone,
 			func(g *gocui.Gui, v *gocui.View) error {
 				w.highlightKey = ""
+				w.displayRowIndexOffset = 0
 				w.RefreshDisplay(g)
 				return nil
 			}); err != nil {
@@ -405,16 +406,20 @@ func (asUI *ListWidget) SetSortColumns(sortColumns []*SortColumn) {
 	asUI.sortColumns = sortColumns
 }
 
+func (asUI *ListWidget) GetSortColumns() []*SortColumn {
+	return asUI.sortColumns
+}
+
 func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
 
 	sortFunctions := make([]util.LessFunc, 0)
 	for _, sortColumn := range asUI.sortColumns {
-		sc := asUI.columnMap[sortColumn.id]
+		sc := asUI.columnMap[sortColumn.Id]
 		if sc == nil {
-			log.Panic(merry.Errorf("Unable to find sort column: %v", sortColumn.id))
+			log.Panic(merry.Errorf("Unable to find sort column: %v", sortColumn.Id))
 		}
 		sortFunc := sc.sortFunc
-		if sortColumn.reverseSort {
+		if sortColumn.ReverseSort {
 			sortFunc = util.Reverse(sortFunc)
 		}
 		sortFunctions = append(sortFunctions, sortFunc)
@@ -482,7 +487,7 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 
 	sortColumnId := ""
 	if len(asUI.sortColumns) > 0 {
-		sortColumnId = asUI.sortColumns[0].id
+		sortColumnId = asUI.sortColumns[0].Id
 	}
 
 	if asUI.PreRowDisplayFunc != nil {
@@ -566,11 +571,11 @@ func (asUI *ListWidget) writeHeader(g *gocui.Gui, v *gocui.View) {
 
 		if len(asUI.sortColumns) > 0 {
 			sortCol := asUI.sortColumns[0]
-			if sortCol != nil && sortCol.id == column.id {
+			if sortCol != nil && sortCol.Id == column.id {
 				if !editSortColumn {
 					colorString = util.BRIGHT_WHITE
 				}
-				if sortCol.reverseSort {
+				if sortCol.ReverseSort {
 					label = label + DownArrow
 				} else {
 					label = label + UpArrow

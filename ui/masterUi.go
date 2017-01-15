@@ -464,7 +464,7 @@ func (mui *MasterUI) clearStats(g *gocui.Gui, v *gocui.View) error {
 
 func (mui *MasterUI) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error {
 	mui.SetDisplayPaused(!mui.GetDisplayPaused())
-	mui.updateHeaderDisplay(mui.gui)
+	//mui.updateHeaderDisplay(mui.gui)
 	return mui.currentDataView.RefreshDisplay(mui.gui)
 }
 
@@ -479,6 +479,8 @@ func (mui *MasterUI) SetDisplayPaused(paused bool) {
 	if !paused {
 		mui.snapshotLiveData()
 	}
+	// Moved updateHeaderDisplay here from toggleDisplayPauseAction
+	mui.updateHeaderDisplay(mui.gui)
 }
 
 func (mui *MasterUI) RefeshNow() {
