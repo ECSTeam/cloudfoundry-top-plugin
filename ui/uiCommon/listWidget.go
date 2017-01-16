@@ -208,16 +208,7 @@ func (w *ListWidget) Name() string {
 func (w *ListWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	bottom := maxY - w.bottomMargin
-
 	topMargin := w.displayView.GetTopOffset()
-
-	// TODO: Debugging remove this later
-	/*
-		if w.name == "appListView" {
-			topMargin = topMargin + 10
-		}
-	*/
-
 	if topMargin >= bottom {
 		bottom = topMargin + 1
 	}

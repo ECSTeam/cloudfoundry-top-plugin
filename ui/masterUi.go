@@ -36,6 +36,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/aboutView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/alertView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/capacityPlanView"
@@ -51,12 +52,13 @@ const DefaultRefreshInternalMS = 1000
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
 
 type MasterUI struct {
-	layoutManager *uiCommon.LayoutManager
-	gui           *gocui.Gui
-	cliConnection plugin.CliConnection
-	privileged    bool
-	username      string
-	targetDisplay string
+	layoutManager  *uiCommon.LayoutManager
+	gui            *gocui.Gui
+	cliConnection  plugin.CliConnection
+	pluginMetadata *plugin.PluginMetadata
+	privileged     bool
+	username       string
+	targetDisplay  string
 
 	headerView      *headerView.HeaderWidget
 	alertManager    *alertView.AlertManager
@@ -75,12 +77,13 @@ type MasterUI struct {
 	displayMenuId string
 }
 
-func NewMasterUI(cliConnection plugin.CliConnection, privileged bool) *MasterUI {
+func NewMasterUI(cliConnection plugin.CliConnection, pluginMetadata *plugin.PluginMetadata, privileged bool) *MasterUI {
 
 	mui := &MasterUI{
-		cliConnection: cliConnection,
-		privileged:    privileged,
-		refreshNow:    make(chan bool),
+		cliConnection:  cliConnection,
+		pluginMetadata: pluginMetadata,
+		privileged:     privileged,
+		refreshNow:     make(chan bool),
 	}
 
 	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection, privileged)
@@ -370,6 +373,7 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 	if mui.privileged {
 		menuItems = append(menuItems, uiCommon.NewMenuItem("capacityPlanView", "Capacity Plan (memory)"))
 	}
+	menuItems = append(menuItems, uiCommon.NewMenuItem("aboutView", "About Top"))
 
 	selectDisplayView := uiCommon.NewSelectMenuWidget(mui, "selectDisplayView", "Select Display", menuItems, mui.selectDisplayCallback)
 	selectDisplayView.SetMenuId(mui.displayMenuId)
@@ -409,6 +413,9 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 		dataView = capacityPlanView.NewCapacityPlanView(mui, "capacityPlanView", mui.helpTextTipsViewSize, ep)
 	case "eventRateHistoryListView":
 		dataView = eventRateHistoryView.NewEventRateHistoryView(mui, "eventRateHistoryListView", mui.helpTextTipsViewSize, ep)
+	case "aboutView":
+		dataView = aboutView.NewTopView(mui, "aboutView", mui.helpTextTipsViewSize, ep, mui.pluginMetadata)
+
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}

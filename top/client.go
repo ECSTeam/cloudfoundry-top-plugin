@@ -43,11 +43,12 @@ const MAX_APPS_TO_MONITOR = 50
 
 // Client struct
 type Client struct {
-	options       *ClientOptions
-	ui            terminal.UI
-	cliConnection plugin.CliConnection
-	eventrouting  *eventrouting.EventRouter
-	router        *eventrouting.EventRouter
+	options        *ClientOptions
+	ui             terminal.UI
+	cliConnection  plugin.CliConnection
+	pluginMetadata *plugin.PluginMetadata
+	eventrouting   *eventrouting.EventRouter
+	router         *eventrouting.EventRouter
 }
 
 // ClientOptions needed to start the Client
@@ -59,12 +60,13 @@ type ClientOptions struct {
 }
 
 // NewClient instantiating the top client
-func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI) *Client {
+func NewClient(cliConnection plugin.CliConnection, options *ClientOptions, ui terminal.UI, pluginMetadata *plugin.PluginMetadata) *Client {
 
 	return &Client{
-		options:       options,
-		ui:            ui,
-		cliConnection: cliConnection,
+		options:        options,
+		ui:             ui,
+		cliConnection:  cliConnection,
+		pluginMetadata: pluginMetadata,
 	}
 }
 
@@ -110,7 +112,7 @@ func (c *Client) Start() {
 		return
 	}
 
-	ui := ui.NewMasterUI(conn, privileged)
+	ui := ui.NewMasterUI(conn, c.pluginMetadata, privileged)
 	c.router = ui.GetRouter()
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
