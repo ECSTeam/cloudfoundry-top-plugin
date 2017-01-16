@@ -26,8 +26,8 @@ import (
 
 type EventRateDetail struct {
 	RateHigh int
-	RateLow  int
-	RateAvg  int
+	//RateLow  int
+	//RateAvg  int
 }
 
 type EventRate struct {
@@ -35,8 +35,8 @@ type EventRate struct {
 	EndTime            time.Time
 	EventRateDetailMap map[events.Envelope_EventType]*EventRateDetail
 	TotalHigh          int
-	TotalLow           int
-	TotalAvg           int
+	//TotalLow           int
+	//TotalAvg           int
 }
 
 type HistoryRangeType int
@@ -154,10 +154,10 @@ func (erh *EventRateHistory) captureCurrentRates(time time.Time) {
 		rate := rateCounter.Rate()
 		erd.RateHigh = rate
 		er.TotalHigh += rate
-		erd.RateLow = rate
-		er.TotalLow += rate
-		erd.RateAvg = rate
-		er.TotalAvg += rate
+		//erd.RateLow = rate
+		//er.TotalLow += rate
+		//erd.RateAvg = rate
+		//er.TotalAvg += rate
 	}
 
 	rateBySecondList := erh.eventRateByDurationMap[BY_SECOND]
@@ -194,8 +194,12 @@ func (erh *EventRateHistory) consolidateHistoryDataByTimeRange(timeRangeType His
 	if maxRecords > 0 && len(rateBySecondList) > maxRecords {
 		consolidateQuantity := maxRecords / 2
 		olderRecords := rateBySecondList[0:consolidateQuantity]
+		// I'm not sure if there is a memory leak hear or not (slice holding onto backing array)
 		newerRecords := rateBySecondList[consolidateQuantity:len(rateBySecondList)]
 		erh.eventRateByDurationMap[timeRangeType] = newerRecords
+
+		toplog.Debug("RateHistory: newer len: %v cap: %v   older len: %v cap: %v",
+			len(newerRecords), cap(newerRecords), len(olderRecords), cap(olderRecords))
 
 		eventRate := erh.createConsolidatedEventRate(olderRecords)
 		rateByMinuteList := erh.eventRateByDurationMap[nextTimeRangeType]
@@ -214,7 +218,7 @@ func (erh *EventRateHistory) createConsolidatedEventRate(eventRateList []*EventR
 	for _, eventRate := range eventRateList {
 
 		SetMax(&consolidatedEventRate.TotalHigh, eventRate.TotalHigh)
-		SetMin(&consolidatedEventRate.TotalLow, eventRate.TotalLow)
+		//SetMin(&consolidatedEventRate.TotalLow, eventRate.TotalLow)
 
 		for eventType, eventRateDetail := range eventRate.EventRateDetailMap {
 			consolidatedEventRateDetail := consolidatedEventRate.EventRateDetailMap[eventType]
@@ -225,7 +229,7 @@ func (erh *EventRateHistory) createConsolidatedEventRate(eventRateList []*EventR
 			consolidatedEventRate.EventRateDetailMap[eventType] = consolidatedEventRateDetail
 			//toplog.Info("createConsolidatedEventRate: %v", eventRateDetail.RateHigh)
 			SetMax(&consolidatedEventRateDetail.RateHigh, eventRateDetail.RateHigh)
-			SetMin(&consolidatedEventRateDetail.RateLow, eventRateDetail.RateLow)
+			//SetMin(&consolidatedEventRateDetail.RateLow, eventRateDetail.RateLow)
 		}
 	}
 	return consolidatedEventRate

@@ -77,7 +77,12 @@ func NewTopView(masterUI masterUIInterface.MasterUIInterface,
 
 	asciiArtTopLines := strings.Split(asciiArtTop1, "\n")
 
-	return &TopView{masterUI: masterUI, name: name, bottomMargin: bottomMargin, pluginMetadata: pluginMetadata, asciiArtTopLines: asciiArtTopLines}
+	return &TopView{masterUI: masterUI,
+		name:             name,
+		bottomMargin:     bottomMargin,
+		pluginMetadata:   pluginMetadata,
+		asciiArtTopLines: asciiArtTopLines,
+	}
 }
 
 func (w *TopView) Name() string {
@@ -152,8 +157,8 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
-	maxX, _ := v.Size()
 
+	//maxX, _ := v.Size()
 	//_, maxY := v.Size()
 	//maxRows := maxY - 1
 	asUI.textLines = 20
@@ -165,13 +170,7 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 	v.Clear()
 	fmt.Fprintln(v)
 
-	leftPaddingSize := (maxX / 2) - (26 / 2)
-	leftPadding := strings.Repeat(" ", leftPaddingSize)
-	for _, line := range asUI.asciiArtTopLines {
-		if line != "" {
-			fmt.Fprintf(v, "%v%v\n", leftPadding, line)
-		}
-	}
+	asUI.writeAsciiArt(g, v)
 
 	fmt.Fprintf(v, " Version: %v\n", currentVersion)
 	fmt.Fprintf(v, " Lastest: %v\n", lastestVersionMsg)
@@ -187,6 +186,17 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintln(v, " Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved")
 
 	return nil
+}
+
+func (asUI *TopView) writeAsciiArt(g *gocui.Gui, v *gocui.View) {
+	maxX, _ := v.Size()
+	leftPaddingSize := (maxX / 2) - (26 / 2)
+	leftPadding := strings.Repeat(" ", leftPaddingSize)
+	for _, line := range asUI.asciiArtTopLines {
+		if line != "" {
+			fmt.Fprintf(v, "%v%v\n", leftPadding, line)
+		}
+	}
 }
 
 // Get the top offset where the data view should open

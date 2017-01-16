@@ -78,11 +78,13 @@ func columnTotalRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int { return stats.TotalHigh }
 	return columnRateTemplate("TOTAL", getValueFunc)
 }
+
+/*
 func columnTotalRateLow() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int { return stats.TotalLow }
 	return columnRateTemplate("TOTAL_LOW", getValueFunc)
 }
-
+*/
 func columnHttpStartStopEventRateHigh() *uiCommon.ListColumn {
 	getValueFunc := func(stats *DisplayEventRateHistoryStats) int {
 		return getRateValue(stats, events.Envelope_HttpStartStop, RATE_HIGH)
@@ -172,9 +174,9 @@ func getRateValue(stats *DisplayEventRateHistoryStats, eventType events.Envelope
 		case RATE_HIGH:
 			value = rateDetail.RateHigh
 		case RATE_LOW:
-			value = rateDetail.RateLow
+			//value = rateDetail.RateLow
 		case RATE_AVG:
-			value = rateDetail.RateAvg
+			//value = rateDetail.RateAvg
 		}
 	}
 	return value
