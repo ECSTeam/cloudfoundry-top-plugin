@@ -24,9 +24,19 @@ const HelpOverviewText = `
 
 Event rate peak history shows the peak rate of events per second coming
 from the firehose. This peak rate is measured from the perspective of
-the top client.  Two instance of top running against the same foundation
-can record different peak events because of network hopes and process
-scheduling.
+the top client. Two instance of top running against the same foundation
+can record different peak events because of network hops and process
+scheduling. To conserve memory, history data is consolidated as follows:
+
+  Keep 60 seconds minimum of second resolution
+  Keep 60 minutes minimum of minute resolution
+  Keep 144 10-min records (24 hours) minimum of 10-min resolution
+  Keep 168 hours (7 days) minimum of 1 hour resolution
+  Keep 1 day resolution forever
+
+This configuration results is a max of 764 records in 7 days then just
+1 additional record for every day after that.
+
 `
 
 const HelpColumnsText = `

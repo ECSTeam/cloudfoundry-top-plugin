@@ -1,5 +1,5 @@
 - name: top
-  description: An interactive interface that shows top statistics similar in concept as the UNIX top command. No longer requires admin.
+  description: An interactive interface that shows top statistics similar in concept as the UNIX top command.
   version: __TAG__
   created: 2016-11-07T00:00:00Z
   updated: __TODAY__
