@@ -277,37 +277,41 @@ func (asUI *TopView) updateLastestVersion(g *gocui.Gui, v *gocui.View) {
 
 func (asUI *TopView) asyncUpdateLastestVersion(g *gocui.Gui, v *gocui.View) {
 
-	latestVersion := asUI.getLastestVersion()
+	latestVersion, err := asUI.getLastestVersion()
 	if asUI.getCurrentVersion() == latestVersion {
 		lastestVersionMsg = "You are on the latest version"
 	} else {
-		lastestVersionMsg = fmt.Sprintf("%v (upgrade available)", latestVersion)
+		if err != nil {
+			lastestVersionMsg = fmt.Sprintf("%v", latestVersion)
+		} else {
+			lastestVersionMsg = fmt.Sprintf("%v (upgrade available)", latestVersion)
+		}
 	}
 	g.Execute(func(g *gocui.Gui) error {
 		return asUI.RefreshDisplay(g)
 	})
 }
 
-func (asUI *TopView) getLastestVersion() string {
-	lastestVersion = asUI.checkVersion()
-	return lastestVersion
+func (asUI *TopView) getLastestVersion() (string, error) {
+	lastestVersion, err := asUI.checkVersion()
+	return lastestVersion, err
 }
 
 type githubReleaseStruct struct{ Tag_name string }
 
-func (asUI *TopView) checkVersion() string {
+func (asUI *TopView) checkVersion() (string, error) {
 	githubRelease := new(githubReleaseStruct)
 
 	err := asUI.getJson(latestVersionUrl, githubRelease)
 	if err != nil {
-		return err.Error()
+		return err.Error(), err
 	}
 	version := githubRelease.Tag_name
 	version = strings.TrimPrefix(version, "v")
 
 	toplog.Debug("in checkVersion version:%v", version)
 
-	return version
+	return version, nil
 }
 
 func (asUI *TopView) getJson(url string, target interface{}) error {
