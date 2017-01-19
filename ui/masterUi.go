@@ -404,7 +404,7 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 	var dataView masterUIInterface.UpdatableView
 	switch viewName {
 	case "appListView":
-		dataView = appView.NewAppListView(mui, "appListView", mui.helpTextTipsViewSize, ep)
+		dataView = appView.NewAppListView(mui, nil, "appListView", mui.helpTextTipsViewSize, ep, "")
 	case "orgListView":
 		dataView = orgView.NewOrgListView(mui, "orgListView", mui.helpTextTipsViewSize, ep)
 	case "cellListView":

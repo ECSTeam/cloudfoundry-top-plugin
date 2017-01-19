@@ -13,22 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orgView
+package spaceView
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
 
 const HelpText = HelpOverviewText + helpView.HelpHeaderText + HelpColumnsText + HelpLocalViewKeybindings + helpView.HelpTopLevelDataViewKeybindings + helpView.HelpCommonDataViewKeybindings
 
 const HelpOverviewText = `
-**Organization View**
+**Space View**
 
-Organization view shows a list of all organizations on the foundation.
+Space view shows a list of all spaces in the selected organization on the foundation.
 `
 
 const HelpColumnsText = `
-**Organization Columns:**
+**Space Columns:**
 
-  ORG - Organization name
+  SPACE - Space name
 
 `
 

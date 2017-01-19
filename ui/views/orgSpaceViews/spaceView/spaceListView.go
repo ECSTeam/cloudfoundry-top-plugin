@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appView
+package spaceView
 
 import (
 	"fmt"
@@ -28,40 +28,27 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
 	"github.com/jroimartin/gocui"
-
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appDetailView"
 )
 
-type AppListView struct {
+type SpaceListView struct {
 	*dataView.DataListView
 	displayAppStatsMap map[string]*dataCommon.DisplayAppStats
-	isWarmupComplete   bool
-	// If this is non-empty, we filter the app list by the supplied spaceId
-	// Used to support apps-by-space view.
-	spaceIdFilter string
+	orgId              string
 }
 
-func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
+func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
 	parentView dataView.DataListViewInterface,
 	name string, bottomMargin int,
 	eventProcessor *eventdata.EventProcessor,
-	spaceIdFilter string) *AppListView {
+	orgId string) *SpaceListView {
 
-	asUI := &AppListView{spaceIdFilter: spaceIdFilter}
+	asUI := &SpaceListView{orgId: orgId}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
 		uiCommon.NewSortColumn("CPU", true),
-		uiCommon.NewSortColumn("REQ60", true),
-		uiCommon.NewSortColumn("appName", false),
-	}
-
-	if asUI.spaceIdFilter == "" {
-		addSortColumns := []*uiCommon.SortColumn{
-			uiCommon.NewSortColumn("spaceName", false),
-			uiCommon.NewSortColumn("orgName", false),
-		}
-		defaultSortColumns = append(defaultSortColumns, addSortColumns...)
+		uiCommon.NewSortColumn("spaceName", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
@@ -70,21 +57,9 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 		defaultSortColumns)
 
 	dataListView.InitializeCallback = asUI.initializeCallback
-
-	// TODO: Add additional header rows such as "active apps"
-	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	title := "App List"
-
-	if asUI.spaceIdFilter != "" {
-		spaceMd := space.FindSpaceMetadata(asUI.spaceIdFilter)
-		orgMd := org.FindOrgMetadata(spaceMd.OrgGuid)
-		title = fmt.Sprintf("%v in space %v org %v", title, spaceMd.Name, orgMd.Name)
-	}
-
-	dataListView.SetTitle(title)
-
+	dataListView.SetTitle("Space List")
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 
@@ -94,78 +69,61 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 
 }
 
-func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error {
+func (asUI *SpaceListView) initializeCallback(g *gocui.Gui, viewName string) error {
 
 	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, asUI.copyAction); err != nil {
 		log.Panicln(err)
 	}
-	if asUI.spaceIdFilter != "" {
-		if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, asUI.CloseDetailView); err != nil {
-			log.Panicln(err)
-		}
-		if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.CloseDetailView); err != nil {
-			log.Panicln(err)
-		}
+
+	if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, asUI.CloseDetailView); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.CloseDetailView); err != nil {
+		log.Panicln(err)
 	}
 
 	if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
 		log.Panicln(err)
 	}
-
 	return nil
 }
 
-func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
+func (asUI *SpaceListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 	highlightKey := asUI.GetListWidget().HighlightKey()
 	if asUI.GetListWidget().HighlightKey() != "" {
 		_, bottomMargin := asUI.GetMargins()
 
-		detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",
+		// TODO: This should be changed to space view
+		detailView := appView.NewAppListView(asUI.GetMasterUI(), asUI, "appBySpaceView",
 			bottomMargin,
 			asUI.GetEventProcessor(),
 			highlightKey)
+
 		asUI.SetDetailView(detailView)
 		asUI.GetMasterUI().OpenView(g, detailView)
 	}
 	return nil
 }
 
-func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
+func (asUI *SpaceListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
-	columns = append(columns, columnAppName())
-
-	if asUI.spaceIdFilter == "" {
-		columns = append(columns, columnSpaceName())
-		columns = append(columns, columnOrgName())
-	}
-
-	columns = append(columns, columnDesiredInstances())
+	columns = append(columns, columnSpaceName())
+	columns = append(columns, columnNumberOfApps())
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
 	columns = append(columns, columnTotalMemoryUsed())
 	columns = append(columns, columnTotalDiskUsed())
 
-	columns = append(columns, columnAvgResponseTimeL60Info())
 	columns = append(columns, columnLogStdout())
 	columns = append(columns, columnLogStderr())
 
-	columns = append(columns, columnReq1())
-	columns = append(columns, columnReq10())
-	columns = append(columns, columnReq60())
-
 	columns = append(columns, columnTotalReq())
-	columns = append(columns, column2XX())
-	columns = append(columns, column3XX())
-	columns = append(columns, column4XX())
-	columns = append(columns, column5XX())
-
-	columns = append(columns, columnStackName())
 
 	return columns
 }
 
-func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
+func (asUI *SpaceListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 
 	selectedAppId := asUI.GetListWidget().HighlightKey()
 	if selectedAppId == "" {
@@ -185,7 +143,7 @@ func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+func (asUI *SpaceListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
 
 	clipboardValue := ""
 
@@ -218,50 +176,69 @@ func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId s
 	return nil
 }
 
-func (asUI *AppListView) getAppStatsMap() map[string]*dataCommon.DisplayAppStats {
-	displayStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
-	if asUI.spaceIdFilter != "" {
-		filteredMap := make(map[string]*dataCommon.DisplayAppStats)
-		for appId, appStats := range displayStatsMap {
-			if appStats.SpaceId == asUI.spaceIdFilter {
-				filteredMap[appId] = appStats
-			}
-		}
-		return filteredMap
-	}
-	return displayStatsMap
-}
-
-func (asUI *AppListView) GetListData() []uiCommon.IData {
+func (asUI *SpaceListView) GetListData() []uiCommon.IData {
 	displayDataList := asUI.postProcessData()
 	listData := asUI.convertToListData(displayDataList)
 	return listData
 }
 
-func (asUI *AppListView) postProcessData() map[string]*dataCommon.DisplayAppStats {
+func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 
-	displayStatsMap := asUI.getAppStatsMap()
+	orgId := asUI.orgId
 
-	for appId, appStats := range displayStatsMap {
-		logStdoutCount := int64(0)
-		logStderrCount := int64(0)
-		for _, cs := range appStats.ContainerArray {
-			if cs != nil {
-				logStdoutCount = logStdoutCount + cs.OutCount
-				logStderrCount = logStderrCount + cs.ErrCount
-			}
+	// Get list of space in selected org
+	allSpaces := space.All()
+	orgSpaces := make([]space.Space, 0)
+	for _, spaceMetadata := range allSpaces {
+		if spaceMetadata.OrgGuid == orgId {
+			orgSpaces = append(orgSpaces, spaceMetadata)
 		}
-		displayAppStats := displayStatsMap[appId]
-		displayAppStats.TotalLogStdout = logStdoutCount + appStats.NonContainerStdout
-		displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
 	}
 
-	asUI.displayAppStatsMap = displayStatsMap
-	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
-	return displayStatsMap
+	// Build map of all apps by Space
+	displayStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
+	appsBySpaceMap := make(map[string][]*dataCommon.DisplayAppStats)
+	for _, appStats := range displayStatsMap {
+		if appStats.OrgId == orgId {
+			appsList := appsBySpaceMap[appStats.SpaceId]
+			if appsList == nil {
+				appsList = make([]*dataCommon.DisplayAppStats, 0)
+			}
+			appsList = append(appsList, appStats)
+			appsBySpaceMap[appStats.SpaceId] = appsList
+		}
+	}
+
+	// Build Map of Spaces
+	displaySpaceMap := make(map[string]*DisplaySpace)
+	for _, spaceMetadata := range orgSpaces {
+		aSpaceMetadata := spaceMetadata
+		displaySpace := NewDisplaySpace(&aSpaceMetadata)
+		displaySpaceMap[spaceMetadata.Guid] = displaySpace
+		displaySpace.NumberOfApps = len(appsBySpaceMap[spaceMetadata.Guid])
+
+		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
+			displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage
+			displaySpace.TotalUsedMemory += appStats.TotalUsedMemory
+			displaySpace.TotalUsedDisk += appStats.TotalUsedDisk
+			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
+
+			if appStats.TotalTraffic != nil {
+				displaySpace.HttpAllCount += appStats.TotalTraffic.HttpAllCount
+			}
+
+			for _, cs := range appStats.ContainerArray {
+				if cs != nil {
+					displaySpace.TotalLogStdout += cs.OutCount
+					displaySpace.TotalLogStderr += cs.ErrCount
+				}
+			}
+		}
+	}
+	return displaySpaceMap
 }
 
-func (asUI *AppListView) convertToListData(statsMap map[string]*dataCommon.DisplayAppStats) []uiCommon.IData {
+func (asUI *SpaceListView) convertToListData(statsMap map[string]*DisplaySpace) []uiCommon.IData {
 	listData := make([]uiCommon.IData, 0, len(statsMap))
 	for _, d := range statsMap {
 		listData = append(listData, d)

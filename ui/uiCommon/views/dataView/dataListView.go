@@ -221,6 +221,13 @@ func (asUI *DataListView) UpdateDisplay(g *gocui.Gui) error {
 	return asUI.RefreshDisplay(g)
 }
 
+func (asUI *DataListView) CloseDetailView(g *gocui.Gui, v *gocui.View) error {
+	if err := asUI.GetMasterUI().CloseView(asUI); err != nil {
+		return err
+	}
+	return nil
+}
+
 // XXX
 func (asUI *DataListView) updateData() {
 	//asUI.eventProcessor.UpdateData()

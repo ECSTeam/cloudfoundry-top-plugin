@@ -30,14 +30,13 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/jroimartin/gocui"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appDetailView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/orgSpaceViews/spaceView"
 )
 
 type OrgListView struct {
 	*dataView.DataListView
 	displayAppStatsMap map[string]*dataCommon.DisplayAppStats
-	isWarmupComplete   bool
 }
 
 func NewOrgListView(masterUI masterUIInterface.MasterUIInterface,
@@ -88,12 +87,12 @@ func (asUI *OrgListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 		_, bottomMargin := asUI.GetMargins()
 
 		// TODO: This should be changed to space view
-		detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",
+		view := spaceView.NewSpaceListView(asUI.GetMasterUI(), asUI, "spaceListView",
 			bottomMargin,
 			asUI.GetEventProcessor(),
 			highlightKey)
-		asUI.SetDetailView(detailView)
-		asUI.GetMasterUI().OpenView(g, detailView)
+		asUI.SetDetailView(view)
+		asUI.GetMasterUI().OpenView(g, view)
 	}
 	return nil
 }
