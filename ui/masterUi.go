@@ -44,6 +44,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventRateHistoryView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/eventViews/eventView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/headerView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/orgSpaceViews/orgView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/routeViews/routeView"
 	"github.com/jroimartin/gocui"
 )
@@ -364,6 +365,7 @@ func (mui *MasterUI) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
 
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appListView", "App Stats"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("orgListView", "Org Stats"))
 	if mui.privileged {
 		menuItems = append(menuItems, uiCommon.NewMenuItem("cellListView", "Cell Stats"))
 	}
@@ -403,6 +405,8 @@ func (mui *MasterUI) createAndOpenView(g *gocui.Gui, viewName string) error {
 	switch viewName {
 	case "appListView":
 		dataView = appView.NewAppListView(mui, "appListView", mui.helpTextTipsViewSize, ep)
+	case "orgListView":
+		dataView = orgView.NewOrgListView(mui, "orgListView", mui.helpTextTipsViewSize, ep)
 	case "cellListView":
 		dataView = cellView.NewCellListView(mui, "cellListView", mui.helpTextTipsViewSize, ep)
 	case "routeListView":

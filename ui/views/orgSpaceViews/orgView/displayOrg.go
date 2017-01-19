@@ -13,23 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package dataCommon
+package orgView
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 
-type DisplayAppStats struct {
-	*eventApp.AppStats
-
-	AppName           string
-	SpaceId           string
-	SpaceName         string
-	OrgId             string
-	OrgName           string
-	DesiredContainers int
-	StackId           string
-	StackName         string
-
-	//TotalTraffic *eventdata.TrafficStats
+type DisplayOrg struct {
+	*org.Org
+	NumberOfSpaces int
+	NumberOfApps   int
 
 	TotalCpuPercentage float64
 	TotalUsedMemory    uint64
@@ -38,10 +29,16 @@ type DisplayAppStats struct {
 	TotalReportingContainers int
 	TotalLogStdout           int64
 	TotalLogStderr           int64
+
+	HttpAllCount int64
 }
 
-func NewDisplayAppStats(appStats *eventApp.AppStats) *DisplayAppStats {
-	stats := &DisplayAppStats{}
-	stats.AppStats = appStats
+func NewDisplayOrg(Org *org.Org) *DisplayOrg {
+	stats := &DisplayOrg{}
+	stats.Org = Org
 	return stats
+}
+
+func (do *DisplayOrg) Id() string {
+	return do.Guid
 }

@@ -47,6 +47,10 @@ var (
 	spacesMetadataCache []Space
 )
 
+func All() []Space {
+	return spacesMetadataCache
+}
+
 func FindSpaceMetadata(spaceGuid string) Space {
 	for _, space := range spacesMetadataCache {
 		if space.Guid == spaceGuid {

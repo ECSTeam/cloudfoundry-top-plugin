@@ -89,8 +89,9 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
 
 		displayAppStats.AppName = appMetadata.Name
+		displayAppStats.SpaceId = appMetadata.SpaceGuid
 		displayAppStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
-		displayAppStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+		displayAppStats.OrgId, displayAppStats.OrgName = org.FindBySpaceGuid(appMetadata.SpaceGuid)
 
 		totalCpuPercentage := 0.0
 		totalUsedMemory := uint64(0)

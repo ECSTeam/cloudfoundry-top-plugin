@@ -38,13 +38,25 @@ type OrgResource struct {
 }
 
 type Org struct {
-	Guid string `json:"guid"`
-	Name string `json:"name"`
+	Guid                 string `json:"guid"`
+	Name                 string `json:"name"`
+	QuotaGuid            string `json:"quota_definition_guid"`
+	Status               string `json:"status"`
+	Domains_url          string `json:"domains_url"`
+	Private_domains_url  string `json:"private_domains_url"`
+	Users_url            string `json:"users_url"`
+	Managers_url         string `json:"managers_url"`
+	Billing_managers_url string `json:"billing_managers_url"`
+	Auditors_url         string `json:"auditors_url"`
 }
 
 var (
 	orgsMetadataCache []Org
 )
+
+func All() []Org {
+	return orgsMetadataCache
+}
 
 func FindOrgMetadata(orgGuid string) Org {
 	for _, org := range orgsMetadataCache {
@@ -56,14 +68,20 @@ func FindOrgMetadata(orgGuid string) Org {
 }
 
 func FindOrgNameBySpaceGuid(spaceGuid string) string {
+	_, orgName := FindBySpaceGuid(spaceGuid)
+	return orgName
+}
+
+func FindBySpaceGuid(spaceGuid string) (orgId string, orgName string) {
 	spaceMetadata := space.FindSpaceMetadata(spaceGuid)
-	orgMetadata := FindOrgMetadata(spaceMetadata.OrgGuid)
-	orgName := orgMetadata.Name
+	orgId = spaceMetadata.OrgGuid
+	orgMetadata := FindOrgMetadata(orgId)
+	orgName = orgMetadata.Name
 	//toplog.Info("Lookup name for org via space guid: %v found name:[%v]", spaceGuid, orgName)
 	if orgName == "" {
 		orgName = UnknownName
 	}
-	return orgName
+	return orgId, orgName
 }
 
 func LoadOrgCache(cliConnection plugin.CliConnection) {
