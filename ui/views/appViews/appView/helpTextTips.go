@@ -16,7 +16,7 @@
 package appView
 
 const HelpTextTips = `**d**:display  **o**:order  **f**:filter  **q**:quit  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+**ENTER** to select highlighted row,  **LEFT**/**RIGHT** arrow to scroll columns`
 
 const HelpTextTipsFiltered = `**x**:exit view  **o**:order  **f**:filter  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+**ENTER** to select highlighted row,  **LEFT**/**RIGHT** arrow to scroll columns`

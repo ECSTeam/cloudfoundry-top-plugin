@@ -46,8 +46,8 @@ type Org struct {
 	Private_domains_url  string `json:"private_domains_url"`
 	Users_url            string `json:"users_url"`
 	Managers_url         string `json:"managers_url"`
-	Billing_managers_url string `json:"billing_managers_url"`
 	Auditors_url         string `json:"auditors_url"`
+	Billing_managers_url string `json:"billing_managers_url"`
 }
 
 var (

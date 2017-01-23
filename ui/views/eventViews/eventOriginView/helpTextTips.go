@@ -15,5 +15,5 @@
 
 package eventOriginView
 
-const HelpTextTips = `**x**:exit view  **o**:order  **f**:filter  **h**:help **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+const HelpTextTips = `**x**:exit view  **o**:order  **f**:filter  **h**:help  **UP**/**DOWN** arrow to highlight row
+**ENTER** to select highlighted row,  **LEFT**/**RIGHT** arrow to scroll columns`

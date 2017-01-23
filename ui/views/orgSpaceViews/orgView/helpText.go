@@ -29,6 +29,19 @@ const HelpColumnsText = `
 **Organization Columns:**
 
   ORG - Organization name
+  STATUS -
+  QUOTA_NAME
+  SPACES
+  APPS
+  RCR
+  CPU%
+  MAX_MEM
+  USED_MEM
+  MEM%
+  USED_DISK
+  LOG_OUT
+  LOG_ERR
+  TOT_REQ
 
 `
 

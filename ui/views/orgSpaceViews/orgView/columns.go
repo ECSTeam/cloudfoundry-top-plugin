@@ -163,11 +163,11 @@ func columnMemoryLimit() *uiCommon.ListColumn {
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
 		totalMemInfo := ""
-		//if appStats.MemoryLimitInBytes == 0 {
-		//	totalMemInfo = fmt.Sprintf("%9v", "--")
-		//} else {
-		totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.MemoryLimitInBytes).StringWithPrecision(1))
-		//}
+		if appStats.MemoryLimitInBytes == 0 {
+			totalMemInfo = fmt.Sprintf("%9v", "--")
+		} else {
+			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.MemoryLimitInBytes).StringWithPrecision(1))
+		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
@@ -198,7 +198,7 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
 	}
 	c := uiCommon.NewListColumn("USED_MEM", "USED_MEM", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, closeToMemoryQuotaAttentionFunc)
 	return c
 }
 
@@ -209,7 +209,7 @@ func columnTotalUsedMemoryPercentOfQuota() *uiCommon.ListColumn {
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
 		totalMemInfo := ""
-		if appStats.TotalReportingContainers == 0 {
+		if appStats.TotalReportingContainers == 0 || appStats.MemoryLimitInBytes == 0 {
 			totalMemInfo = fmt.Sprintf("%5v", "--")
 		} else {
 			totalMemInfo = fmt.Sprintf("%5.1f", appStats.TotalUsedMemoryPercentOfQuota)
@@ -221,8 +221,23 @@ func columnTotalUsedMemoryPercentOfQuota() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.TotalUsedMemoryPercentOfQuota)
 	}
 	c := uiCommon.NewListColumn("QUOTA_MEM_PER", "MEM%", 5,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, closeToMemoryQuotaAttentionFunc)
 	return c
+}
+
+func closeToMemoryQuotaAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	stats := data.(*DisplayOrg)
+	attentionType := uiCommon.ATTENTION_NORMAL
+	if stats.TotalReportingContainers > 0 && stats.MemoryLimitInBytes > 0 {
+		percentOfQuota := stats.TotalUsedMemoryPercentOfQuota
+		switch {
+		case percentOfQuota >= 90:
+			attentionType = uiCommon.ATTENTION_HOT
+		case percentOfQuota >= 80:
+			attentionType = uiCommon.ATTENTION_WARM
+		}
+	}
+	return attentionType
 }
 
 func columnTotalDiskUsed() *uiCommon.ListColumn {
