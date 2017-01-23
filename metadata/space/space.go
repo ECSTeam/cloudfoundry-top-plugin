@@ -38,9 +38,13 @@ type SpaceResource struct {
 }
 
 type Space struct {
-	Guid    string `json:"guid"`
-	Name    string `json:"name"`
-	OrgGuid string `json:"organization_guid"`
+	Guid           string `json:"guid"`
+	Name           string `json:"name"`
+	OrgGuid        string `json:"organization_guid"`
+	QuotaGuid      string `json:"space_quota_definition_guid"`
+	Managers_url   string `json:"managers_url"`
+	Auditors_url   string `json:"auditors_url"`
+	Developers_url string `json:"developers_url"`
 }
 
 var (

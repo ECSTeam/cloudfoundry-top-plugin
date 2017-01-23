@@ -23,8 +23,8 @@ type DisplaySpace struct {
 	NumberOfApps   int
 
 	TotalCpuPercentage float64
-	TotalUsedMemory    uint64
-	TotalUsedDisk      uint64
+	TotalUsedMemory    int64
+	TotalUsedDisk      int64
 
 	TotalReportingContainers int
 	TotalLogStdout           int64

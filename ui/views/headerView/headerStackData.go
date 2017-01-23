@@ -35,8 +35,8 @@ type StackSummaryStats struct {
 	TotalApps                   int
 	TotalReportingAppInstances  int
 	TotalActiveApps             int
-	TotalUsedMemoryAppInstances uint64
-	TotalUsedDiskAppInstances   uint64
+	TotalUsedMemoryAppInstances int64
+	TotalUsedDiskAppInstances   int64
 	TotalCpuPercentage          float64
 	TotalCellCPUs               int
 	// This is the hightest CPU percent of all the cells

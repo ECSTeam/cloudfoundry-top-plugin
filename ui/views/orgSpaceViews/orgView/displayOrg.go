@@ -19,12 +19,18 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 
 type DisplayOrg struct {
 	*org.Org
+
+	QuotaName          string
+	MemoryLimitInBytes int64
+
 	NumberOfSpaces int
 	NumberOfApps   int
 
-	TotalCpuPercentage float64
-	TotalUsedMemory    uint64
-	TotalUsedDisk      uint64
+	TotalCpuPercentage            float64
+	TotalUsedMemory               int64
+	TotalUsedMemoryPercentOfQuota float64
+
+	TotalUsedDisk int64
 
 	TotalReportingContainers int
 	TotalLogStdout           int64

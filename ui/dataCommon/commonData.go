@@ -94,8 +94,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.OrgId, displayAppStats.OrgName = org.FindBySpaceGuid(appMetadata.SpaceGuid)
 
 		totalCpuPercentage := 0.0
-		totalUsedMemory := uint64(0)
-		totalUsedDisk := uint64(0)
+		totalUsedMemory := int64(0)
+		totalUsedDisk := int64(0)
 		totalReportingContainers := 0
 
 		if appMetadata.State == "STARTED" {
@@ -114,8 +114,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 					continue
 				}
 				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
-				totalUsedMemory = totalUsedMemory + *cs.ContainerMetric.MemoryBytes
-				totalUsedDisk = totalUsedDisk + *cs.ContainerMetric.DiskBytes
+				totalUsedMemory = totalUsedMemory + int64(*cs.ContainerMetric.MemoryBytes)
+				totalUsedDisk = totalUsedDisk + int64(*cs.ContainerMetric.DiskBytes)
 				totalReportingContainers++
 			}
 		}

@@ -22,6 +22,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/orgQuota"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
@@ -34,6 +35,7 @@ type Manager struct {
 	appMdMgr *app.AppMetadataManager
 	//orgMdMgr *OrgMetadataManager
 	//spaceMdMgr *SpaceMetadataManager
+	orgQuotaMdMgr *orgQuota.OrgQuotaMetadataManager
 
 	mu sync.Mutex
 
@@ -49,6 +51,7 @@ func NewManager(conn plugin.CliConnection) *Manager {
 	mgr := &Manager{}
 
 	mgr.appMdMgr = app.NewAppMetadataManager()
+	mgr.orgQuotaMdMgr = orgQuota.NewOrgQuotaMetadataManager(mgr)
 
 	mgr.appDeleteQueue = make(map[string]string)
 
@@ -63,6 +66,14 @@ func NewManager(conn plugin.CliConnection) *Manager {
 
 func (mgr *Manager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
+}
+
+func (mgr *Manager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager {
+	return mgr.orgQuotaMdMgr
+}
+
+func (mgr *Manager) GetCliConnection() plugin.CliConnection {
+	return mgr.cliConnection
 }
 
 // Load all the metadata.  This is a blocking call.

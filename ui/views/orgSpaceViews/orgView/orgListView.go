@@ -28,6 +28,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
@@ -86,7 +87,6 @@ func (asUI *OrgListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 	if asUI.GetListWidget().HighlightKey() != "" {
 		_, bottomMargin := asUI.GetMargins()
 
-		// TODO: This should be changed to space view
 		view := spaceView.NewSpaceListView(asUI.GetMasterUI(), asUI, "spaceListView",
 			bottomMargin,
 			asUI.GetEventProcessor(),
@@ -101,12 +101,19 @@ func (asUI *OrgListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, columnOrgName())
 	columns = append(columns, columnStatus())
+
+	columns = append(columns, columnQuotaName())
+
 	columns = append(columns, columnNumberOfSpaces())
 	columns = append(columns, columnNumberOfApps())
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
+
+	columns = append(columns, columnMemoryLimit())
 	columns = append(columns, columnTotalMemoryUsed())
+	columns = append(columns, columnTotalUsedMemoryPercentOfQuota())
+
 	columns = append(columns, columnTotalDiskUsed())
 
 	columns = append(columns, columnLogStdout())
@@ -178,6 +185,8 @@ func (asUI *OrgListView) GetListData() []uiCommon.IData {
 
 func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 
+	orgQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetOrgQuotaMdManager()
+
 	// Build map of all spaces by Org
 	spaces := space.All()
 	spaceByOrgMap := make(map[string][]space.Space)
@@ -212,6 +221,10 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 		displayOrg.NumberOfSpaces = len(spaceByOrgMap[org.Guid])
 		displayOrg.NumberOfApps = len(appsByOrgMap[org.Guid])
 
+		orgQuotaMd := orgQuotaMdMgr.Find(org.QuotaGuid)
+		displayOrg.QuotaName = orgQuotaMd.Name
+		displayOrg.MemoryLimitInBytes = int64(orgQuotaMd.MemoryLimit) * util.MEGABYTE
+
 		for _, appStats := range appsByOrgMap[org.Guid] {
 			displayOrg.TotalCpuPercentage += appStats.TotalCpuPercentage
 			displayOrg.TotalUsedMemory += appStats.TotalUsedMemory
@@ -231,6 +244,10 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 				}
 			}
 
+		}
+
+		if displayOrg.MemoryLimitInBytes > 0 {
+			displayOrg.TotalUsedMemoryPercentOfQuota = (float64(displayOrg.TotalUsedMemory) / float64(displayOrg.MemoryLimitInBytes)) * 100
 		}
 
 	}

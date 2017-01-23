@@ -86,7 +86,11 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.SetTitle(title)
 
 	dataListView.HelpText = HelpText
-	dataListView.HelpTextTips = HelpTextTips
+	if asUI.spaceIdFilter == "" {
+		dataListView.HelpTextTips = HelpTextTips
+	} else {
+		dataListView.HelpTextTips = HelpTextTipsFiltered
+	}
 
 	asUI.DataListView = dataListView
 

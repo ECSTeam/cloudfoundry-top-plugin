@@ -1,4 +1,4 @@
-// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
+// Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appView
+package mdGlobalManagerInterface
 
-const HelpTextTips = `**d**:display  **o**:order  **f**:filter  **q**:quit  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+import "code.cloudfoundry.org/cli/plugin"
 
-const HelpTextTipsFiltered = `**x**:exit view  **o**:order  **f**:filter  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+type MdGlobalManagerInterface interface {
+	GetCliConnection() plugin.CliConnection
+	//GetAppMdManager() *app.AppMetadataManager
+	//GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager
+}

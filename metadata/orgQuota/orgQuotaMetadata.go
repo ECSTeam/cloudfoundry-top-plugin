@@ -1,4 +1,4 @@
-// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
+// Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package appView
+package orgQuota
 
-const HelpTextTips = `**d**:display  **o**:order  **f**:filter  **q**:quit  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+import "time"
 
-const HelpTextTipsFiltered = `**x**:exit view  **o**:order  **f**:filter  **h**:help  **UP**/**DOWN** arrow to highlight row
-**ENTER** to select highlighted row, **LEFT**/**RIGHT** arrow to scroll columns`
+type OrgQuotaMetadata struct {
+	*OrgQuota
+	cacheTime time.Time
+}
+
+func NewOrgQuotaMetadata(orgQuota OrgQuota) *OrgQuotaMetadata {
+	metadata := &OrgQuotaMetadata{}
+	metadata.OrgQuota = &orgQuota
+	metadata.cacheTime = time.Now()
+	return metadata
+}
+
+func NewOrgQuotaMetadataById(id string) *OrgQuotaMetadata {
+	return NewOrgQuotaMetadata(OrgQuota{Guid: id, Name: id})
+}

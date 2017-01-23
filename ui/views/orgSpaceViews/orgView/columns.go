@@ -59,6 +59,24 @@ func columnStatus() *uiCommon.ListColumn {
 	return c
 }
 
+func columnQuotaName() *uiCommon.ListColumn {
+	defaultColSize := 11
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*DisplayOrg).QuotaName, c2.(*DisplayOrg).QuotaName)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayOrg)
+		return util.FormatDisplayData(stats.QuotaName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*DisplayOrg)
+		return stats.QuotaName
+	}
+	c := uiCommon.NewListColumn("QUOTA_NAME", "QUOTA_NAME", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}
+
 func columnNumberOfSpaces() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayOrg).NumberOfSpaces < c2.(*DisplayOrg).NumberOfSpaces
@@ -138,6 +156,28 @@ func columnTotalCpu() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
+func columnMemoryLimit() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayOrg).MemoryLimitInBytes < c2.(*DisplayOrg).MemoryLimitInBytes
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayOrg)
+		totalMemInfo := ""
+		//if appStats.MemoryLimitInBytes == 0 {
+		//	totalMemInfo = fmt.Sprintf("%9v", "--")
+		//} else {
+		totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.MemoryLimitInBytes).StringWithPrecision(1))
+		//}
+		return fmt.Sprintf("%9v", totalMemInfo)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayOrg)
+		return fmt.Sprintf("%v", appStats.MemoryLimitInBytes)
+	}
+	c := uiCommon.NewListColumn("MAX_MEM", "MAX_MEM", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
 
 func columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -157,7 +197,30 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
 	}
-	c := uiCommon.NewListColumn("MEM", "MEM", 9,
+	c := uiCommon.NewListColumn("USED_MEM", "USED_MEM", 9,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func columnTotalUsedMemoryPercentOfQuota() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayOrg).TotalUsedMemoryPercentOfQuota < c2.(*DisplayOrg).TotalUsedMemoryPercentOfQuota
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayOrg)
+		totalMemInfo := ""
+		if appStats.TotalReportingContainers == 0 {
+			totalMemInfo = fmt.Sprintf("%5v", "--")
+		} else {
+			totalMemInfo = fmt.Sprintf("%5.1f", appStats.TotalUsedMemoryPercentOfQuota)
+		}
+		return fmt.Sprintf("%5v", totalMemInfo)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayOrg)
+		return fmt.Sprintf("%v", appStats.TotalUsedMemoryPercentOfQuota)
+	}
+	c := uiCommon.NewListColumn("QUOTA_MEM_PER", "MEM%", 5,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -170,17 +233,17 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		totalDiskInfo := ""
 		if appStats.TotalReportingContainers == 0 {
-			totalDiskInfo = fmt.Sprintf("%9v", "--")
+			totalDiskInfo = fmt.Sprintf("%10v", "--")
 		} else {
-			totalDiskInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedDisk).StringWithPrecision(1))
+			totalDiskInfo = fmt.Sprintf("%10v", util.ByteSize(appStats.TotalUsedDisk).StringWithPrecision(1))
 		}
-		return fmt.Sprintf("%9v", totalDiskInfo)
+		return fmt.Sprintf("%10v", totalDiskInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
 	}
-	c := uiCommon.NewListColumn("DISK", "DISK", 9,
+	c := uiCommon.NewListColumn("USED_DISK", "USED_DISK", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
