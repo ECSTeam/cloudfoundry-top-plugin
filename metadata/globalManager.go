@@ -31,11 +31,11 @@ import (
 	"code.cloudfoundry.org/cli/plugin"
 )
 
-type Manager struct {
+type GlobalManager struct {
 	appMdMgr *app.AppMetadataManager
 	//orgMdMgr *OrgMetadataManager
 	//spaceMdMgr *SpaceMetadataManager
-	orgQuotaMdMgr *orgQuota.OrgQuotaMetadataManager
+	orgQuotaMdMgr *orgQuota.OrgQuotaMetadataManagerNew
 
 	mu sync.Mutex
 
@@ -46,9 +46,9 @@ type Manager struct {
 	cliConnection plugin.CliConnection
 }
 
-func NewManager(conn plugin.CliConnection) *Manager {
+func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
-	mgr := &Manager{}
+	mgr := &GlobalManager{}
 
 	mgr.appMdMgr = app.NewAppMetadataManager()
 	mgr.orgQuotaMdMgr = orgQuota.NewOrgQuotaMetadataManager(mgr)
@@ -64,21 +64,21 @@ func NewManager(conn plugin.CliConnection) *Manager {
 	return mgr
 }
 
-func (mgr *Manager) GetAppMdManager() *app.AppMetadataManager {
+func (mgr *GlobalManager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
 }
 
-func (mgr *Manager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager {
+func (mgr *GlobalManager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManagerNew {
 	return mgr.orgQuotaMdMgr
 }
 
-func (mgr *Manager) GetCliConnection() plugin.CliConnection {
+func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 	return mgr.cliConnection
 }
 
 // Load all the metadata.  This is a blocking call.
-func (mgr *Manager) LoadMetadata() {
-	toplog.Info("Manager>loadMetadata")
+func (mgr *GlobalManager) LoadMetadata() {
+	toplog.Info("GlobalManager>loadMetadata")
 
 	stack.LoadStackCache(mgr.cliConnection)
 
@@ -91,25 +91,25 @@ func (mgr *Manager) LoadMetadata() {
 
 }
 
-func (mgr *Manager) IsAppDeleted(appId string) bool {
+func (mgr *GlobalManager) IsAppDeleted(appId string) bool {
 	return mgr.appDeleteQueue[appId] != ""
 }
 
-func (mgr *Manager) RemoveAppFromDeletedQueue(appId string) {
+func (mgr *GlobalManager) RemoveAppFromDeletedQueue(appId string) {
 	delete(mgr.appDeleteQueue, appId)
 }
 
 // Request a refresh of specific app metadata
-func (mgr *Manager) RequestRefreshAppMetadata(appId string) {
+func (mgr *GlobalManager) RequestRefreshAppMetadata(appId string) {
 	mgr.refreshQueue[appId] = appId
 	mgr.wakeRefreshThread()
 }
 
-func (mgr *Manager) wakeRefreshThread() {
+func (mgr *GlobalManager) wakeRefreshThread() {
 	mgr.refreshNow <- true
 }
 
-func (mgr *Manager) loadMetadataThread() {
+func (mgr *GlobalManager) loadMetadataThread() {
 
 	minimumLoadTimeMS := time.Millisecond * 10000
 	veryLongtime := time.Hour * 10000

@@ -32,3 +32,20 @@ func NewOrgQuotaMetadata(orgQuota OrgQuota) *OrgQuotaMetadata {
 func NewOrgQuotaMetadataById(id string) *OrgQuotaMetadata {
 	return NewOrgQuotaMetadata(OrgQuota{Guid: id, Name: id})
 }
+
+// TODO: Move this into common parent sturct
+func (md *OrgQuotaMetadata) SetCacheTime(time time.Time) {
+	md.cacheTime = time
+}
+
+func (md *OrgQuotaMetadata) GetCacheTime() time.Time {
+	return md.cacheTime
+}
+
+func (md *OrgQuotaMetadata) GetGuid() string {
+	return md.Guid
+}
+
+func (md *OrgQuotaMetadata) SetGuid(guid string) {
+	md.Guid = guid
+}

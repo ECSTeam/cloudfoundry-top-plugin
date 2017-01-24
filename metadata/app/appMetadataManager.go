@@ -42,7 +42,6 @@ func (mdMgr *AppMetadataManager) AppMetadataSize() int {
 	return len(mdMgr.appMetadataMap)
 }
 
-// TODO: Remove this method once metadata is refactored
 func (mdMgr *AppMetadataManager) GetAppMetadataMap() map[string]*AppMetadata {
 	return mdMgr.appMetadataMap
 }

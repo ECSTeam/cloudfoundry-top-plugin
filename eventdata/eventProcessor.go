@@ -41,7 +41,7 @@ type EventProcessor struct {
 	displayedEventData *EventData
 	cliConnection      plugin.CliConnection
 	privileged         bool
-	metadataManager    *metadata.Manager
+	metadataManager    *metadata.GlobalManager
 
 	eventRateHistory *EventRateHistory
 
@@ -53,7 +53,7 @@ func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *Eve
 
 	mu := &sync.Mutex{}
 
-	metadataManager := metadata.NewManager(cliConnection)
+	metadataManager := metadata.NewGlobalManager(cliConnection)
 
 	ep := &EventProcessor{
 		mu:                  mu,
@@ -101,7 +101,7 @@ func (ep *EventProcessor) GetCurrentEventRateHistory() *EventRateHistory {
 	return ep.eventRateHistory
 }
 
-func (ep *EventProcessor) GetMetadataManager() *metadata.Manager {
+func (ep *EventProcessor) GetMetadataManager() *metadata.GlobalManager {
 	return ep.metadataManager
 }
 
