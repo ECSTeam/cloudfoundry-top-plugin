@@ -43,6 +43,11 @@ Shows all instances (containers) of selected application.
 Shows additional information about selected application.
 ![Screenshot](screenshot_appDetailViewAppInfo.png?raw=true)
 
+### Org and Space view:
+Shows a list of all organizations with memory quota information.  When an organization is selected a list
+of all spaces within the organization is shown along with space quota information.
+![Screenshot](screenshot_orgSpaceView.png?raw=true)
+
 
 ### Route view:
 Shows all routes registered with the foundation (or your login has visibility to see).
