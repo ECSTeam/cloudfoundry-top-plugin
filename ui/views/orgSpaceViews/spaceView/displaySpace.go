@@ -28,13 +28,13 @@ type DisplaySpace struct {
 
 	TotalCpuPercentage float64
 
-	TotalReservedMemory                    int64
-	TotalUsedMemory                        int64
-	TotalReservedMemoryPercentOfSpaceQuota float64
-	TotalReservedMemoryPercentOfOrgQuota   float64
+	TotalMemoryReserved                    int64
+	TotalMemoryUsed                        int64
+	TotalMemoryReservedPercentOfSpaceQuota float64
+	TotalMemoryReservedPercentOfOrgQuota   float64
 
-	TotalReservedDisk int64
-	TotalUsedDisk     int64
+	TotalDiskReserved int64
+	TotalDiskUsed     int64
 
 	DesiredContainers        int
 	TotalReportingContainers int

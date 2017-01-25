@@ -74,9 +74,9 @@ func (asUI *CapacityPlanView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, columnNumOfCpus())
 
-	columns = append(columns, columnCapacityTotalMemory())
-	columns = append(columns, columnCapacityRemainingMemory())
-	columns = append(columns, columnTotalContainerReservedMemory())
+	columns = append(columns, columnCapacityMemoryTotal())
+	columns = append(columns, columnCapacityMemoryRemaining())
+	columns = append(columns, columnTotalContainerMemoryReserved())
 
 	columns = append(columns, columnCapacityTotalContainers())
 	columns = append(columns, columnContainerCount())
@@ -133,15 +133,15 @@ func (asUI *CapacityPlanView) postProcessData() map[string]*cellView.DisplayCell
 		displayStat := cellView.NewDisplayCellStats(cellStats)
 		displayCellMap[ip] = displayStat
 
-		if cellStats.CapacityTotalMemory > 0 {
-			displayStat.CapacityPlan0_5GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 0.5))
-			displayStat.CapacityPlan1_0GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 1))
-			displayStat.CapacityPlan1_5GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 1.5))
-			displayStat.CapacityPlan2_0GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 2))
-			displayStat.CapacityPlan2_5GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 2.5))
-			displayStat.CapacityPlan3_0GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 3))
-			displayStat.CapacityPlan3_5GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 3.5))
-			displayStat.CapacityPlan4_0GMem = int(cellStats.CapacityRemainingMemory / (util.GIGABYTE * 4))
+		if cellStats.CapacityMemoryTotal > 0 {
+			displayStat.CapacityPlan0_5GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 0.5))
+			displayStat.CapacityPlan1_0GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 1))
+			displayStat.CapacityPlan1_5GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 1.5))
+			displayStat.CapacityPlan2_0GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 2))
+			displayStat.CapacityPlan2_5GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 2.5))
+			displayStat.CapacityPlan3_0GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 3))
+			displayStat.CapacityPlan3_5GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 3.5))
+			displayStat.CapacityPlan4_0GMem = int(cellStats.CapacityMemoryRemaining / (util.GIGABYTE * 4))
 		} else {
 			displayStat.CapacityPlan0_5GMem = UNKNOWN
 			displayStat.CapacityPlan1_0GMem = UNKNOWN
@@ -171,10 +171,10 @@ func (asUI *CapacityPlanView) postProcessData() map[string]*cellView.DisplayCell
 					if containerStats.ContainerMetric != nil {
 
 						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
-						cellStats.TotalContainerReservedMemory = cellStats.TotalContainerReservedMemory + uint64(appMetadata.MemoryMB*util.MEGABYTE)
+						cellStats.TotalContainerMemoryReserved = cellStats.TotalContainerMemoryReserved + uint64(appMetadata.MemoryMB*util.MEGABYTE)
 
 						usedMemoryValue := containerStats.ContainerMetric.GetMemoryBytes()
-						cellStats.TotalContainerUsedMemory = cellStats.TotalContainerUsedMemory + usedMemoryValue
+						cellStats.TotalContainerMemoryUsed = cellStats.TotalContainerMemoryUsed + usedMemoryValue
 
 					}
 				}
@@ -204,9 +204,9 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 	totalDisplayStat.CapacityPlan4_0GMem = UNKNOWN
 
 	NumOfCpus := 0
-	CapacityTotalMemory := int64(0)
-	CapacityRemainingMemory := int64(0)
-	TotalContainerReservedMemory := uint64(0)
+	CapacityMemoryTotal := int64(0)
+	CapacityMemoryRemaining := int64(0)
+	TotalContainerMemoryReserved := uint64(0)
 	CapacityTotalContainers := 0
 	ContainerCount := 0
 	CapacityPlan0_5GMem := 0
@@ -222,12 +222,12 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 	for _, cellStats := range displayCellMap {
 
 		NumOfCpus = NumOfCpus + cellStats.NumOfCpus
-		CapacityTotalMemory = CapacityTotalMemory + cellStats.CapacityTotalMemory
-		CapacityRemainingMemory = CapacityRemainingMemory + cellStats.CapacityRemainingMemory
-		TotalContainerReservedMemory = TotalContainerReservedMemory + cellStats.TotalContainerReservedMemory
+		CapacityMemoryTotal = CapacityMemoryTotal + cellStats.CapacityMemoryTotal
+		CapacityMemoryRemaining = CapacityMemoryRemaining + cellStats.CapacityMemoryRemaining
+		TotalContainerMemoryReserved = TotalContainerMemoryReserved + cellStats.TotalContainerMemoryReserved
 		CapacityTotalContainers = CapacityTotalContainers + cellStats.CapacityTotalContainers
 		ContainerCount = ContainerCount + cellStats.ContainerCount
-		if cellStats.CapacityTotalMemory > 0 {
+		if cellStats.CapacityMemoryTotal > 0 {
 			capacityPlanHasValue = true
 			CapacityPlan0_5GMem = CapacityPlan0_5GMem + cellStats.CapacityPlan0_5GMem
 			CapacityPlan1_0GMem = CapacityPlan1_0GMem + cellStats.CapacityPlan1_0GMem
@@ -240,9 +240,9 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 		}
 	}
 	totalDisplayStat.NumOfCpus = NumOfCpus
-	totalDisplayStat.CapacityTotalMemory = CapacityTotalMemory
-	totalDisplayStat.CapacityRemainingMemory = CapacityRemainingMemory
-	totalDisplayStat.TotalContainerReservedMemory = TotalContainerReservedMemory
+	totalDisplayStat.CapacityMemoryTotal = CapacityMemoryTotal
+	totalDisplayStat.CapacityMemoryRemaining = CapacityMemoryRemaining
+	totalDisplayStat.TotalContainerMemoryReserved = TotalContainerMemoryReserved
 	totalDisplayStat.CapacityTotalContainers = CapacityTotalContainers
 	totalDisplayStat.ContainerCount = ContainerCount
 

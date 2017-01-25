@@ -32,8 +32,8 @@ type DisplayAppStats struct {
 	//TotalTraffic *eventdata.TrafficStats
 
 	TotalCpuPercentage float64
-	TotalUsedMemory    int64
-	TotalUsedDisk      int64
+	TotalMemoryUsed    int64
+	TotalDiskUsed      int64
 
 	TotalReportingContainers int
 	TotalLogStdout           int64

@@ -23,10 +23,10 @@ type CellStats struct {
 	JobIndex       string
 
 	NumOfCpus                   int
-	CapacityTotalMemory         int64
-	CapacityRemainingMemory     int64
-	CapacityTotalDisk           int64
-	CapacityRemainingDisk       int64
+	CapacityMemoryTotal         int64
+	CapacityMemoryRemaining     int64
+	CapacityDiskTotal           int64
+	CapacityDiskRemaining       int64
 	CapacityTotalContainers     int
 	CapacityRemainingContainers int
 	ContainerCount              int

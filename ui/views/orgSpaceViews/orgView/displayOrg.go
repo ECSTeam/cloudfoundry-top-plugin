@@ -28,12 +28,12 @@ type DisplayOrg struct {
 
 	TotalCpuPercentage float64
 
-	TotalReservedMemory               int64
-	TotalUsedMemory                   int64
-	TotalReservedMemoryPercentOfQuota float64
+	TotalMemoryReserved               int64
+	TotalMemoryUsed                   int64
+	TotalMemoryReservedPercentOfQuota float64
 
-	TotalReservedDisk int64
-	TotalUsedDisk     int64
+	TotalDiskReserved int64
+	TotalDiskUsed     int64
 
 	DesiredContainers        int
 	TotalReportingContainers int

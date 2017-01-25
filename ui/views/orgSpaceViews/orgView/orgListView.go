@@ -114,11 +114,11 @@ func (asUI *OrgListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnTotalCpu())
 
 	columns = append(columns, columnMemoryLimit())
-	columns = append(columns, columnTotalReservedMemory())
-	columns = append(columns, columnTotalReservedMemoryPercentOfQuota())
+	columns = append(columns, columnTotalMemoryReserved())
+	columns = append(columns, columnTotalMemoryReservedPercentOfQuota())
 	columns = append(columns, columnTotalMemoryUsed())
 
-	columns = append(columns, columnTotalReservedDisk())
+	columns = append(columns, columnTotalDiskReserved())
 	columns = append(columns, columnTotalDiskUsed())
 
 	columns = append(columns, columnLogStdout())
@@ -233,14 +233,14 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 
 		for _, appStats := range appsByOrgMap[org.Guid] {
 			displayOrg.TotalCpuPercentage += appStats.TotalCpuPercentage
-			displayOrg.TotalUsedMemory += appStats.TotalUsedMemory
-			displayOrg.TotalUsedDisk += appStats.TotalUsedDisk
+			displayOrg.TotalMemoryUsed += appStats.TotalMemoryUsed
+			displayOrg.TotalDiskUsed += appStats.TotalDiskUsed
 			displayOrg.TotalReportingContainers += appStats.TotalReportingContainers
 			displayOrg.DesiredContainers += appStats.DesiredContainers
 
 			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
-			displayOrg.TotalReservedMemory += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
-			displayOrg.TotalReservedDisk += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			displayOrg.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			displayOrg.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
 				displayOrg.HttpAllCount += appStats.TotalTraffic.HttpAllCount
@@ -256,7 +256,7 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 		}
 
 		if displayOrg.MemoryLimitInBytes > 0 {
-			displayOrg.TotalReservedMemoryPercentOfQuota = (float64(displayOrg.TotalReservedMemory) / float64(displayOrg.MemoryLimitInBytes)) * 100
+			displayOrg.TotalMemoryReservedPercentOfQuota = (float64(displayOrg.TotalMemoryReserved) / float64(displayOrg.MemoryLimitInBytes)) * 100
 		}
 
 	}

@@ -35,8 +35,8 @@ type StackSummaryStats struct {
 	TotalApps                   int
 	TotalReportingAppInstances  int
 	TotalActiveApps             int
-	TotalUsedMemoryAppInstances int64
-	TotalUsedDiskAppInstances   int64
+	TotalMemoryUsedAppInstances int64
+	TotalDiskUsedAppInstances   int64
 	TotalCpuPercentage          float64
 	TotalCellCPUs               int
 	// This is the hightest CPU percent of all the cells
@@ -122,8 +122,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		}
 
 		sumStats.TotalReportingAppInstances = sumStats.TotalReportingAppInstances + appStats.TotalReportingContainers
-		sumStats.TotalUsedMemoryAppInstances = sumStats.TotalUsedMemoryAppInstances + appStats.TotalUsedMemory
-		sumStats.TotalUsedDiskAppInstances = sumStats.TotalUsedDiskAppInstances + appStats.TotalUsedDisk
+		sumStats.TotalMemoryUsedAppInstances = sumStats.TotalMemoryUsedAppInstances + appStats.TotalMemoryUsed
+		sumStats.TotalDiskUsedAppInstances = sumStats.TotalDiskUsedAppInstances + appStats.TotalDiskUsed
 		sumStats.TotalCpuPercentage = sumStats.TotalCpuPercentage + appStats.TotalCpuPercentage
 		if appStats.TotalTraffic.EventL60Rate > 0 {
 			sumStats.TotalActiveApps++
@@ -152,8 +152,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if sumStats != nil {
 			sumStats.TotalCells = sumStats.TotalCells + 1
 			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
-			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityTotalMemory
-			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityTotalDisk
+			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityMemoryTotal
+			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityDiskTotal
 
 			cellCpu := cpuByCellMap[cellStats.Ip]
 			if cellCpu > sumStats.CellMaxCpuPercentage {
@@ -193,12 +193,12 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 //
 func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stackSummaryStats *StackSummaryStats) int {
 
-	totalUsedMemoryAppInstancesDisplay := "--"
-	totalUsedDiskAppInstancesDisplay := "--"
+	TotalMemoryUsedAppInstancesDisplay := "--"
+	TotalDiskUsedAppInstancesDisplay := "--"
 	totalCpuPercentageDisplay := "--"
 	if stackSummaryStats.TotalReportingAppInstances > 0 {
-		totalUsedMemoryAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalUsedMemoryAppInstances).StringWithPrecision(0)
-		totalUsedDiskAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalUsedDiskAppInstances).StringWithPrecision(0)
+		TotalMemoryUsedAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalMemoryUsedAppInstances).StringWithPrecision(0)
+		TotalDiskUsedAppInstancesDisplay = util.ByteSize(stackSummaryStats.TotalDiskUsedAppInstances).StringWithPrecision(0)
 		if stackSummaryStats.TotalCpuPercentage >= 100 {
 			totalCpuPercentageDisplay = fmt.Sprintf("%.0f%%", stackSummaryStats.TotalCpuPercentage)
 		} else {
@@ -219,13 +219,13 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		cellTotalCPUCapacityDisplay = fmt.Sprintf("%v%%", (stackSummaryStats.TotalCellCPUs * 100))
 	}
 
-	capacityTotalMemoryDisplay := "--"
+	CapacityMemoryTotalDisplay := "--"
 	if stackSummaryStats.TotalCapacityMemory > 0 {
-		capacityTotalMemoryDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityMemory).StringWithPrecision(0))
+		CapacityMemoryTotalDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityMemory).StringWithPrecision(0))
 	}
-	capacityTotalDiskDisplay := "--"
+	CapacityDiskTotalDisplay := "--"
 	if stackSummaryStats.TotalCapacityDisk > 0 {
-		capacityTotalDiskDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
+		CapacityDiskTotalDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
 	}
 
 	fmt.Fprintf(v, "Stack: %-13v Cells: %v\n", stackSummaryStats.StackName, stackSummaryStats.TotalCells)
@@ -236,9 +236,9 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 	if totalMem > 0 {
 		displayTotalMem = util.ByteSize(totalMem).StringWithPrecision(0)
 	}
-	fmt.Fprintf(v, "Mem:%6v Used,", totalUsedMemoryAppInstancesDisplay)
+	fmt.Fprintf(v, "Mem:%6v Used,", TotalMemoryUsedAppInstancesDisplay)
 	// Total quota memory of all running app instances
-	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalMemoryDisplay, displayTotalMem)
+	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", CapacityMemoryTotalDisplay, displayTotalMem)
 
 	// Reporting containers are containers that reported metrics in last 'StaleContainerSeconds'
 	fmt.Fprintf(v, "   Apps:%5v Total, Cntrs:%5v     ",
@@ -251,8 +251,8 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		displayTotalDisk = util.ByteSize(totalDisk).StringWithPrecision(0)
 	}
 
-	fmt.Fprintf(v, "Dsk:%6v Used,", totalUsedDiskAppInstancesDisplay)
-	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", capacityTotalDiskDisplay, displayTotalDisk)
+	fmt.Fprintf(v, "Dsk:%6v Used,", TotalDiskUsedAppInstancesDisplay)
+	fmt.Fprintf(v, "%6v Max,%6v Rsrvd\n", CapacityDiskTotalDisplay, displayTotalDisk)
 
 	// Number of lines written
 	return 3

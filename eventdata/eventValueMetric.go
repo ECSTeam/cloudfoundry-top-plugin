@@ -36,13 +36,13 @@ func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 		case "numCPUS":
 			cellStats.NumOfCpus = int(value)
 		case "CapacityTotalMemory":
-			cellStats.CapacityTotalMemory = int64(value)
+			cellStats.CapacityMemoryTotal = int64(value)
 		case "CapacityRemainingMemory":
-			cellStats.CapacityRemainingMemory = int64(value)
+			cellStats.CapacityMemoryRemaining = int64(value)
 		case "CapacityTotalDisk":
-			cellStats.CapacityTotalDisk = int64(value)
+			cellStats.CapacityDiskTotal = int64(value)
 		case "CapacityRemainingDisk":
-			cellStats.CapacityRemainingDisk = int64(value)
+			cellStats.CapacityDiskRemaining = int64(value)
 		case "CapacityTotalContainers":
 			cellStats.CapacityTotalContainers = int(value)
 		case "CapacityRemainingContainers":

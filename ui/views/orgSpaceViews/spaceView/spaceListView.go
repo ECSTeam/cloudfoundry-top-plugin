@@ -122,12 +122,12 @@ func (asUI *SpaceListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnTotalCpu())
 
 	columns = append(columns, columnMemoryLimit())
-	columns = append(columns, columnTotalReservedMemory())
-	columns = append(columns, columnTotalReservedMemoryPercentOfSpaceQuota())
-	columns = append(columns, columnTotalReservedMemoryPercentOfOrgQuota())
+	columns = append(columns, columnTotalMemoryReserved())
+	columns = append(columns, columnTotalMemoryReservedPercentOfSpaceQuota())
+	columns = append(columns, columnTotalMemoryReservedPercentOfOrgQuota())
 	columns = append(columns, columnTotalMemoryUsed())
 
-	columns = append(columns, columnTotalReservedDisk())
+	columns = append(columns, columnTotalDiskReserved())
 	columns = append(columns, columnTotalDiskUsed())
 
 	columns = append(columns, columnLogStdout())
@@ -244,14 +244,14 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
 			displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage
-			displaySpace.TotalUsedMemory += appStats.TotalUsedMemory
-			displaySpace.TotalUsedDisk += appStats.TotalUsedDisk
+			displaySpace.TotalMemoryUsed += appStats.TotalMemoryUsed
+			displaySpace.TotalDiskUsed += appStats.TotalDiskUsed
 			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
 			displaySpace.DesiredContainers += appStats.DesiredContainers
 
 			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
-			displaySpace.TotalReservedMemory += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
-			displaySpace.TotalReservedDisk += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			displaySpace.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			displaySpace.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
 				displaySpace.HttpAllCount += appStats.TotalTraffic.HttpAllCount
@@ -265,7 +265,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			}
 		}
 		if displaySpace.MemoryLimitInBytes > 0 {
-			displaySpace.TotalReservedMemoryPercentOfSpaceQuota = (float64(displaySpace.TotalReservedMemory) / float64(displaySpace.MemoryLimitInBytes)) * 100
+			displaySpace.TotalMemoryReservedPercentOfSpaceQuota = (float64(displaySpace.TotalMemoryReserved) / float64(displaySpace.MemoryLimitInBytes)) * 100
 		}
 
 		org := org.FindOrgMetadata(orgId)
@@ -273,7 +273,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 		orgQuotaMd := orgQuotaMdMgr.Find(org.QuotaGuid)
 		orgQuotaMemoryLimitInBytes := orgQuotaMd.MemoryLimit * util.MEGABYTE
 		if orgQuotaMemoryLimitInBytes > 0 {
-			displaySpace.TotalReservedMemoryPercentOfOrgQuota = (float64(displaySpace.TotalReservedMemory) / float64(orgQuotaMemoryLimitInBytes)) * 100
+			displaySpace.TotalMemoryReservedPercentOfOrgQuota = (float64(displaySpace.TotalMemoryReserved) / float64(orgQuotaMemoryLimitInBytes)) * 100
 		}
 
 	}

@@ -74,48 +74,48 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 	return c
 }
 
-func columnCapacityTotalMemory() *uiCommon.ListColumn {
+func columnCapacityMemoryTotal() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*cellView.DisplayCellStats).CapacityTotalMemory < c2.(*cellView.DisplayCellStats).CapacityTotalMemory
+		return c1.(*cellView.DisplayCellStats).CapacityMemoryTotal < c2.(*cellView.DisplayCellStats).CapacityMemoryTotal
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
-		if CellStats.CapacityTotalMemory == 0 {
+		if CellStats.CapacityMemoryTotal == 0 {
 			display = fmt.Sprintf("%9v", "--")
 		} else {
-			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.CapacityTotalMemory).StringWithPrecision(1))
+			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.CapacityMemoryTotal).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		CellStats := data.(*cellView.DisplayCellStats)
-		return fmt.Sprintf("%v", CellStats.CapacityTotalMemory)
+		return fmt.Sprintf("%v", CellStats.CapacityMemoryTotal)
 	}
-	c := uiCommon.NewListColumn("TOT_MEM", "TOT_MEM", 9,
+	c := uiCommon.NewListColumn("MEM_TOT", "MEM_TOT", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
-func columnCapacityRemainingMemory() *uiCommon.ListColumn {
+func columnCapacityMemoryRemaining() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*cellView.DisplayCellStats).CapacityRemainingMemory < c2.(*cellView.DisplayCellStats).CapacityRemainingMemory
+		return c1.(*cellView.DisplayCellStats).CapacityMemoryRemaining < c2.(*cellView.DisplayCellStats).CapacityMemoryRemaining
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
-		if CellStats.CapacityRemainingMemory == 0 {
+		if CellStats.CapacityMemoryRemaining == 0 {
 			display = fmt.Sprintf("%9v", "--")
 		} else {
-			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.CapacityRemainingMemory).StringWithPrecision(1))
+			display = fmt.Sprintf("%9v", util.ByteSize(CellStats.CapacityMemoryRemaining).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		CellStats := data.(*cellView.DisplayCellStats)
-		return fmt.Sprintf("%v", CellStats.CapacityRemainingMemory)
+		return fmt.Sprintf("%v", CellStats.CapacityMemoryRemaining)
 	}
-	c := uiCommon.NewListColumn("FREE_MEM", "FREE_MEM", 9,
+	c := uiCommon.NewListColumn("MEM_FREE", "MEM_FREE", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -168,25 +168,25 @@ func columnContainerCount() *uiCommon.ListColumn {
 	return c
 }
 
-func columnTotalContainerReservedMemory() *uiCommon.ListColumn {
+func columnTotalContainerMemoryReserved() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*cellView.DisplayCellStats).TotalContainerReservedMemory < c2.(*cellView.DisplayCellStats).TotalContainerReservedMemory
+		return c1.(*cellView.DisplayCellStats).TotalContainerMemoryReserved < c2.(*cellView.DisplayCellStats).TotalContainerMemoryReserved
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		CellStats := data.(*cellView.DisplayCellStats)
 		display := ""
-		if CellStats.TotalContainerReservedMemory == 0 {
+		if CellStats.TotalContainerMemoryReserved == 0 {
 			display = fmt.Sprintf("%10v", "--")
 		} else {
-			display = fmt.Sprintf("%10v", util.ByteSize(CellStats.TotalContainerReservedMemory).StringWithPrecision(1))
+			display = fmt.Sprintf("%10v", util.ByteSize(CellStats.TotalContainerMemoryReserved).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%10v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		CellStats := data.(*cellView.DisplayCellStats)
-		return fmt.Sprintf("%v", CellStats.TotalContainerReservedMemory)
+		return fmt.Sprintf("%v", CellStats.TotalContainerMemoryReserved)
 	}
-	c := uiCommon.NewListColumn("C_RSVD_MEM", "C_RSVD_MEM", 10,
+	c := uiCommon.NewListColumn("C_MEM_RSVD", "C_MEM_RSVD", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

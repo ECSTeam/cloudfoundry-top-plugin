@@ -33,14 +33,14 @@ const HelpColumnsText = `
   CPU%% - CPU percent consumed by all containers on cell
   RCR - Reporting containers
   CPUS - Number of CPUs in cell VM
-  TOT_MEM - Total Memory in cell VM available for containers
-  FREE_MEM - Free Memory in cell VM available for containers
-  C_RSVD_MEM - Memory reserved by all containers on cell
-  C_USD_MEM - Memory actually in use by all containers
-  TOT_DISK - Total Disk space in cell VM
-  FREE_DISK - Free Disk space in cell VM available for containers
-  C_RSVD_DSK - Total disk reserved by all containers on cell
-  C_USD_DSK - Total disk actually in use by all containers
+  MEM_TOT - Total Memory in cell VM available for containers
+  MEM_FREE - Free Memory in cell VM available for containers
+  C_MEM_RSVD - Memory reserved by all containers on cell
+  C_MEM_USD - Memory actually in use by all containers
+  DISK_TOT - Total Disk space in cell VM
+  DISK_FREE - Free Disk space in cell VM available for containers
+  C_DSK_RSVD - Total disk reserved by all containers on cell
+  C_DSK_USD - Total disk actually in use by all containers
   MAX_CNTR - Max containers a cell can handle
   CNTRS - Number of containers running on cell reported by cell
   DNAME - BOSH deployment name

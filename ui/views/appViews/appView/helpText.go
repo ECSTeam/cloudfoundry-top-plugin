@@ -38,18 +38,20 @@ const HelpColumnsText = `
   ORG - Organization name
   RCR - Total reporting Containers
   CPU%% - Total CPU percent consumed by all containers
-  MEM - Total memory used by all containers
-  DISK - Total disk used by all containers
+  MEM_USED - Total memory used by all containers
+  DSK_USED - Total disk used by all containers
   RESP - Avg response time in milliseconds over last 60 seconds
-  LOGS - Total number of log events for all instance of app
+  LOG_OUT - Total number of stdout log events for all instance of app
+  LOG_ERR - Total number of stderr log events for all instance of app
   REQ/1 - Number of HTTP(S) request/responses in last 1 second
   REQ/10 - Number of HTTP(S) request/responses in last 10 seconds
   REQ/60 - Number of HTTP(S) request/responses in last 60 seconds
-  TOT-REQ - Count of all of the HTTP(S) request/responses
+  TOT_REQ - Count of all of the HTTP(S) request/responses
   2XX - Count of HTTP(S) responses with status code 200-299
   3XX - Count of HTTP(S) responses with status code 300-399
   4XX - Count of HTTP(S) responses with status code 400-499
   5XX - Count of HTTP(S) responses with status code 500-599
+  STACK - The Cloud Foundry stack used by this app 
 
 NOTE: The HTTP counters are based on traffic through the 
 go-router.  Applications that talk directly container-to-

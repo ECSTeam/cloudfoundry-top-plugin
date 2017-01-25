@@ -45,7 +45,7 @@ func columnAppName() *uiCommon.ListColumn {
 		return attentionType
 	}
 
-	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
+	c := uiCommon.NewListColumn("APPLICATION", "APPLICATION", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -82,7 +82,7 @@ func columnSpaceName() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return appStats.SpaceName
 	}
-	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
+	c := uiCommon.NewListColumn("SPACE", "SPACE", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -100,7 +100,7 @@ func columnOrgName() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return appStats.OrgName
 	}
-	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
+	c := uiCommon.NewListColumn("ORG", "ORG", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -165,14 +165,14 @@ func columnTotalCpu() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
 	}
-	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
+	c := uiCommon.NewListColumn("CPU_PER", "CPU%", 6,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
 func columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalUsedMemory < c2.(*dataCommon.DisplayAppStats).TotalUsedMemory
+		return c1.(*dataCommon.DisplayAppStats).TotalMemoryUsed < c2.(*dataCommon.DisplayAppStats).TotalMemoryUsed
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
@@ -180,22 +180,22 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalMemInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedMemory).StringWithPrecision(1))
+			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalMemoryUsed).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
+		return fmt.Sprintf("%v", appStats.TotalMemoryUsed)
 	}
-	c := uiCommon.NewListColumn("MEM", "MEM", 9,
+	c := uiCommon.NewListColumn("MEM_USED", "MEM_USED", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
 func columnTotalDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalUsedDisk < c2.(*dataCommon.DisplayAppStats).TotalUsedDisk
+		return c1.(*dataCommon.DisplayAppStats).TotalDiskUsed < c2.(*dataCommon.DisplayAppStats).TotalDiskUsed
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
@@ -203,15 +203,15 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalDiskInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalDiskInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedDisk).StringWithPrecision(1))
+			totalDiskInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalDiskUsed).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalDiskInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
+		return fmt.Sprintf("%v", appStats.TotalDiskUsed)
 	}
-	c := uiCommon.NewListColumn("DISK", "DISK", 9,
+	c := uiCommon.NewListColumn("DSK_USED", "DSK_USED", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -233,7 +233,7 @@ func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.AvgResponseL60Time)
 	}
-	c := uiCommon.NewListColumn("avgResponseTimeL60", "RESP", 6,
+	c := uiCommon.NewListColumn("RESP", "RESP", 6,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -250,7 +250,7 @@ func columnLogStdout() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalLogStdout)
 	}
-	c := uiCommon.NewListColumn("TotalLogStdout", "LOG_OUT", 11,
+	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -267,7 +267,7 @@ func columnLogStderr() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalLogStderr)
 	}
-	c := uiCommon.NewListColumn("TotalLogStderr", "LOG_ERR", 11,
+	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -352,7 +352,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
 	}
-	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 10,
+	c := uiCommon.NewListColumn("TOT_REQ", "TOT_REQ", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -436,7 +436,7 @@ func columnStackName() *uiCommon.ListColumn {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		return appStats.StackName
 	}
-	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
+	c := uiCommon.NewListColumn("STACK", "STACK", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }

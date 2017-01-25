@@ -22,10 +22,10 @@ type DisplayCellStats struct {
 	StackName string
 
 	TotalContainerCpuPercentage  float64
-	TotalContainerReservedMemory uint64
-	TotalContainerUsedMemory     uint64
-	TotalContainerReservedDisk   uint64
-	TotalContainerUsedDisk       uint64
+	TotalContainerMemoryReserved uint64
+	TotalContainerMemoryUsed     uint64
+	TotalContainerDiskReserved   uint64
+	TotalContainerDiskUsed       uint64
 	TotalReportingContainers     int
 	TotalLogOutCount             int64
 	TotalLogErrCount             int64

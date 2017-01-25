@@ -51,15 +51,15 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &AppListView{spaceIdFilter: spaceIdFilter}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		uiCommon.NewSortColumn("CPU", true),
+		uiCommon.NewSortColumn("CPU_PER", true),
 		uiCommon.NewSortColumn("REQ60", true),
-		uiCommon.NewSortColumn("appName", false),
+		uiCommon.NewSortColumn("APPLICATION", false),
 	}
 
 	if asUI.spaceIdFilter == "" {
 		addSortColumns := []*uiCommon.SortColumn{
-			uiCommon.NewSortColumn("spaceName", false),
-			uiCommon.NewSortColumn("orgName", false),
+			uiCommon.NewSortColumn("SPACE", false),
+			uiCommon.NewSortColumn("ORG", false),
 		}
 		defaultSortColumns = append(defaultSortColumns, addSortColumns...)
 	}
@@ -80,7 +80,7 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	if asUI.spaceIdFilter != "" {
 		spaceMd := space.FindSpaceMetadata(asUI.spaceIdFilter)
 		orgMd := org.FindOrgMetadata(spaceMd.OrgGuid)
-		title = fmt.Sprintf("%v in space %v Org %v", title, spaceMd.Name, orgMd.Name)
+		title = fmt.Sprintf("%v in Space %v Org %v", title, spaceMd.Name, orgMd.Name)
 	}
 
 	dataListView.SetTitle(title)

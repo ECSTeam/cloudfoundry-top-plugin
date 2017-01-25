@@ -73,15 +73,15 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, columnNumOfCpus())
 
-	columns = append(columns, columnCapacityTotalMemory())
-	columns = append(columns, columnCapacityRemainingMemory())
-	columns = append(columns, columnTotalContainerReservedMemory())
-	columns = append(columns, columnTotalContainerUsedMemory())
+	columns = append(columns, columnCapacityMemoryTotal())
+	columns = append(columns, columnCapacityMemoryRemaining())
+	columns = append(columns, columnTotalContainerMemoryReserved())
+	columns = append(columns, columnTotalContainerMemoryUsed())
 
-	columns = append(columns, columnCapacityTotalDisk())
-	columns = append(columns, columnCapacityRemainingDisk())
-	columns = append(columns, columnTotalContainerReservedDisk())
-	columns = append(columns, columnTotalContainerUsedDisk())
+	columns = append(columns, columnCapacityDiskTotal())
+	columns = append(columns, columnCapacityDiskRemaining())
+	columns = append(columns, columnTotalContainerDiskReserved())
+	columns = append(columns, columnTotalContainerDiskUsed())
 
 	columns = append(columns, columnCapacityTotalContainers())
 	columns = append(columns, columnContainerCount())
@@ -167,15 +167,15 @@ func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 						cpuValue := containerStats.ContainerMetric.GetCpuPercentage()
 						displayCellStat.TotalContainerCpuPercentage = displayCellStat.TotalContainerCpuPercentage + cpuValue
 
-						displayCellStat.TotalContainerReservedMemory = displayCellStat.TotalContainerReservedMemory + uint64(appMetadata.MemoryMB*util.MEGABYTE)
+						displayCellStat.TotalContainerMemoryReserved = displayCellStat.TotalContainerMemoryReserved + uint64(appMetadata.MemoryMB*util.MEGABYTE)
 
 						usedMemoryValue := containerStats.ContainerMetric.GetMemoryBytes()
-						displayCellStat.TotalContainerUsedMemory = displayCellStat.TotalContainerUsedMemory + usedMemoryValue
+						displayCellStat.TotalContainerMemoryUsed = displayCellStat.TotalContainerMemoryUsed + usedMemoryValue
 
-						displayCellStat.TotalContainerReservedDisk = displayCellStat.TotalContainerReservedDisk + uint64(appMetadata.DiskQuotaMB*util.MEGABYTE)
+						displayCellStat.TotalContainerDiskReserved = displayCellStat.TotalContainerDiskReserved + uint64(appMetadata.DiskQuotaMB*util.MEGABYTE)
 
 						usedDiskValue := containerStats.ContainerMetric.GetDiskBytes()
-						displayCellStat.TotalContainerUsedDisk = displayCellStat.TotalContainerUsedDisk + usedDiskValue
+						displayCellStat.TotalContainerDiskUsed = displayCellStat.TotalContainerDiskUsed + usedDiskValue
 					}
 				}
 			}

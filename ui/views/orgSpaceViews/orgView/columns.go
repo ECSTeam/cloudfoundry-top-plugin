@@ -205,14 +205,14 @@ func columnMemoryLimit() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.MemoryLimitInBytes)
 	}
-	c := uiCommon.NewListColumn("MAX_MEM", "MAX_MEM", 9,
+	c := uiCommon.NewListColumn("MEM_MAX", "MEM_MAX", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
-func columnTotalReservedMemory() *uiCommon.ListColumn {
+func columnTotalMemoryReserved() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayOrg).TotalReservedMemory < c2.(*DisplayOrg).TotalReservedMemory
+		return c1.(*DisplayOrg).TotalMemoryReserved < c2.(*DisplayOrg).TotalMemoryReserved
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
@@ -220,22 +220,22 @@ func columnTotalReservedMemory() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalMemInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalReservedMemory).StringWithPrecision(1))
+			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalMemoryReserved).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
-		return fmt.Sprintf("%v", appStats.TotalReservedMemory)
+		return fmt.Sprintf("%v", appStats.TotalMemoryReserved)
 	}
-	c := uiCommon.NewListColumn("RSVD_MEM", "RSVD_MEM", 9,
+	c := uiCommon.NewListColumn("MEM_RSVD", "MEM_RSVD", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, closeToMemoryQuotaAttentionFunc)
 	return c
 }
 
-func columnTotalReservedMemoryPercentOfQuota() *uiCommon.ListColumn {
+func columnTotalMemoryReservedPercentOfQuota() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayOrg).TotalReservedMemoryPercentOfQuota < c2.(*DisplayOrg).TotalReservedMemoryPercentOfQuota
+		return c1.(*DisplayOrg).TotalMemoryReservedPercentOfQuota < c2.(*DisplayOrg).TotalMemoryReservedPercentOfQuota
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
@@ -243,13 +243,13 @@ func columnTotalReservedMemoryPercentOfQuota() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 || appStats.MemoryLimitInBytes == 0 {
 			totalMemInfo = fmt.Sprintf("%7v", "--")
 		} else {
-			totalMemInfo = fmt.Sprintf("%7.1f", appStats.TotalReservedMemoryPercentOfQuota)
+			totalMemInfo = fmt.Sprintf("%7.1f", appStats.TotalMemoryReservedPercentOfQuota)
 		}
 		return fmt.Sprintf("%7v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
-		return fmt.Sprintf("%v", appStats.TotalReservedMemoryPercentOfQuota)
+		return fmt.Sprintf("%v", appStats.TotalMemoryReservedPercentOfQuota)
 	}
 	c := uiCommon.NewListColumn("O_MEM_PER", "O_MEM%", 7,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, closeToMemoryQuotaAttentionFunc)
@@ -260,7 +260,7 @@ func closeToMemoryQuotaAttentionFunc(data uiCommon.IData, columnOwner uiCommon.I
 	stats := data.(*DisplayOrg)
 	attentionType := uiCommon.ATTENTION_NORMAL
 	if stats.TotalReportingContainers > 0 && stats.MemoryLimitInBytes > 0 {
-		percentOfQuota := stats.TotalReservedMemoryPercentOfQuota
+		percentOfQuota := stats.TotalMemoryReservedPercentOfQuota
 		switch {
 		case percentOfQuota >= ATTENTION_HOT_PERCENT:
 			attentionType = uiCommon.ATTENTION_HOT
@@ -273,7 +273,7 @@ func closeToMemoryQuotaAttentionFunc(data uiCommon.IData, columnOwner uiCommon.I
 
 func columnTotalMemoryUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayOrg).TotalUsedMemory < c2.(*DisplayOrg).TotalUsedMemory
+		return c1.(*DisplayOrg).TotalMemoryUsed < c2.(*DisplayOrg).TotalMemoryUsed
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
@@ -281,22 +281,22 @@ func columnTotalMemoryUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalMemInfo = fmt.Sprintf("%9v", "--")
 		} else {
-			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalUsedMemory).StringWithPrecision(1))
+			totalMemInfo = fmt.Sprintf("%9v", util.ByteSize(appStats.TotalMemoryUsed).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%9v", totalMemInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
-		return fmt.Sprintf("%v", appStats.TotalUsedMemory)
+		return fmt.Sprintf("%v", appStats.TotalMemoryUsed)
 	}
-	c := uiCommon.NewListColumn("USED_MEM", "USED_MEM", 9,
+	c := uiCommon.NewListColumn("MEM_USED", "MEM_USED", 9,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
-func columnTotalReservedDisk() *uiCommon.ListColumn {
+func columnTotalDiskReserved() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayOrg).TotalReservedDisk < c2.(*DisplayOrg).TotalReservedDisk
+		return c1.(*DisplayOrg).TotalDiskReserved < c2.(*DisplayOrg).TotalDiskReserved
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
@@ -304,22 +304,22 @@ func columnTotalReservedDisk() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalDiskInfo = fmt.Sprintf("%10v", "--")
 		} else {
-			totalDiskInfo = fmt.Sprintf("%10v", util.ByteSize(appStats.TotalReservedDisk).StringWithPrecision(1))
+			totalDiskInfo = fmt.Sprintf("%10v", util.ByteSize(appStats.TotalDiskReserved).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%10v", totalDiskInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
-		return fmt.Sprintf("%v", appStats.TotalReservedDisk)
+		return fmt.Sprintf("%v", appStats.TotalDiskReserved)
 	}
-	c := uiCommon.NewListColumn("RSVD_DSK", "RSVD_DSK", 10,
+	c := uiCommon.NewListColumn("DSK_RSVD", "DSK_RSVD", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
 func columnTotalDiskUsed() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayOrg).TotalUsedDisk < c2.(*DisplayOrg).TotalUsedDisk
+		return c1.(*DisplayOrg).TotalDiskUsed < c2.(*DisplayOrg).TotalDiskUsed
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayOrg)
@@ -327,15 +327,15 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 		if appStats.TotalReportingContainers == 0 {
 			totalDiskInfo = fmt.Sprintf("%10v", "--")
 		} else {
-			totalDiskInfo = fmt.Sprintf("%10v", util.ByteSize(appStats.TotalUsedDisk).StringWithPrecision(1))
+			totalDiskInfo = fmt.Sprintf("%10v", util.ByteSize(appStats.TotalDiskUsed).StringWithPrecision(1))
 		}
 		return fmt.Sprintf("%10v", totalDiskInfo)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayOrg)
-		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
+		return fmt.Sprintf("%v", appStats.TotalDiskUsed)
 	}
-	c := uiCommon.NewListColumn("USED_DSK", "USED_DSK", 10,
+	c := uiCommon.NewListColumn("DSK_USED", "DSK_USED", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

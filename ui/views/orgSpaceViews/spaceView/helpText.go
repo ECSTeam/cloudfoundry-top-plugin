@@ -17,7 +17,12 @@ package spaceView
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
 
-const HelpText = HelpOverviewText + helpView.HelpHeaderText + HelpColumnsText + HelpLocalViewKeybindings + helpView.HelpTopLevelDataViewKeybindings + helpView.HelpCommonDataViewKeybindings
+const HelpText = HelpOverviewText +
+	helpView.HelpHeaderText +
+	HelpColumnsText +
+	HelpLocalViewKeybindings +
+	helpView.HelpTopLevelDataViewKeybindings +
+	helpView.HelpCommonDataViewKeybindings
 
 const HelpOverviewText = `
 **Space View**
@@ -31,19 +36,20 @@ const HelpColumnsText = `
   SPACE - Space name
   QUOTA_NAME - Space quota name if one is assigned
   APPS - Number of apps within the space
-  DCR - Number of desired containers
-  RCR - Number of reporting containers
-  CPU% - Total CPU used by all containers within space
-  MAX_MEM - Maximum memory space can used based on quota limits
-  RSVD_MEM - Total memory reserved by all desired containers
+  DCR - Number of desired containers (app instances)
+  RCR - Number of reporting containers which are the the actual number of app
+      instances running.  Normally DCR and RCR are equal.
+  CPU%% - Total CPU used by all containers within space
+  MEM_MAX - Maximum memory space can used based on quota limits
+  MEM_RSVD - Total memory reserved by all desired containers
   S_MEM% - Percent of space quota consumed
   O_MEM% - Percent of org quota consumed
-  USED_MEM -
-  RSVD_DSK -
-  USED_DSK -
-  LOG_OUT -
-  LOG_ERR -
-  TOT_REQ -
+  MEM_USED - Memory actually in use by all containers
+  DSK_RSVD - Disk reserved by all containers on cell
+  DSK_USED - Disk actually in use by all containers
+  LOG_OUT - Total number of stdout log events for all instance of app
+  LOG_ERR - Total number of stderr log events for all instance of app
+  TOT_REQ - Count of all of the HTTP(S) request/responses
 
 `
 

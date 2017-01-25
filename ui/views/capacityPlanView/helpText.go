@@ -35,10 +35,10 @@ const HelpColumnsText = `
 
   CELL_IP - IP address of Cloud Foundry cell
   CPUS - Number of CPUs in cell VM
-  TOT_MEM - Total Memory in cell VM available for containers
-  FREE_MEM - Free Memory in cell VM available for containers
-  C_RSVD_MEM - Memory reserved by all containers on cell
-  C_USD_MEM - Memory actually in use by all containers
+  MEM_TOT - Total Memory in cell VM available for containers
+  MEM_FREE - Free Memory in cell VM available for containers
+  C_MEM_RSVD - Memory reserved by all containers on cell
+  C_MEM_USD - Memory actually in use by all containers
   MAX_CNTR - Max containers a cell can handle
   CNTRS - Number of containers running on cell reported by cell
   0.5GB - Number of 500Meg containers that could be deployed to foundation
