@@ -118,7 +118,7 @@ func columnReportingContainers() *uiCommon.ListColumn {
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
 	attentionFunc := notInDesiredStateAttentionFunc
-	c := uiCommon.NewListColumn("reportingContainers", "RCR", 3,
+	c := uiCommon.NewListColumn("RCR", "RCR", 3,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -136,7 +136,7 @@ func columnDesiredInstances() *uiCommon.ListColumn {
 		return strconv.Itoa(appStats.DesiredContainers)
 	}
 	attentionFunc := notInDesiredStateAttentionFunc
-	c := uiCommon.NewListColumn("desiredInstances", "DCR", 3,
+	c := uiCommon.NewListColumn("DCR", "DCR", 3,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }

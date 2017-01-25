@@ -41,7 +41,7 @@ func columnSpaceName() *uiCommon.ListColumn {
 		stats := data.(*DisplaySpace)
 		return stats.Name
 	}
-	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
+	c := uiCommon.NewListColumn("SPACE", "SPACE", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -81,6 +81,23 @@ func columnNumberOfApps() *uiCommon.ListColumn {
 	return c
 }
 
+func columnDesiredContainers() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplaySpace).DesiredContainers < c2.(*DisplaySpace).DesiredContainers
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplaySpace)
+		return fmt.Sprintf("%7v", appStats.DesiredContainers)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplaySpace)
+		return strconv.Itoa(appStats.DesiredContainers)
+	}
+	c := uiCommon.NewListColumn("DCR", "DCR", 7,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notInDesiredStateAttentionFunc)
+	return c
+}
+
 func columnReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplaySpace).TotalReportingContainers < c2.(*DisplaySpace).TotalReportingContainers
@@ -93,9 +110,19 @@ func columnReportingContainers() *uiCommon.ListColumn {
 		appStats := data.(*DisplaySpace)
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
-	c := uiCommon.NewListColumn("reportingContainers", "RCR", 7,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	c := uiCommon.NewListColumn("RCR", "RCR", 7,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notInDesiredStateAttentionFunc)
 	return c
+}
+
+func notInDesiredStateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	stats := data.(*DisplaySpace)
+	appListView := columnOwner.(*SpaceListView)
+	attentionType := uiCommon.ATTENTION_NORMAL
+	if appListView.isWarmupComplete && stats.DesiredContainers > stats.TotalReportingContainers {
+		attentionType = uiCommon.ATTENTION_NOT_DESIRED_STATE
+	}
+	return attentionType
 }
 
 func columnTotalCpu() *uiCommon.ListColumn {
@@ -122,7 +149,7 @@ func columnTotalCpu() *uiCommon.ListColumn {
 		appStats := data.(*DisplaySpace)
 		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
 	}
-	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
+	c := uiCommon.NewListColumn("CPU_PER", "CPU%", 6,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -347,7 +374,7 @@ func columnLogStdout() *uiCommon.ListColumn {
 		appStats := data.(*DisplaySpace)
 		return fmt.Sprintf("%v", appStats.TotalLogStdout)
 	}
-	c := uiCommon.NewListColumn("TotalLogStdout", "LOG_OUT", 11,
+	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -364,7 +391,7 @@ func columnLogStderr() *uiCommon.ListColumn {
 		appStats := data.(*DisplaySpace)
 		return fmt.Sprintf("%v", appStats.TotalLogStderr)
 	}
-	c := uiCommon.NewListColumn("TotalLogStderr", "LOG_ERR", 11,
+	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -381,7 +408,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 		appStats := data.(*DisplaySpace)
 		return fmt.Sprintf("%v", appStats.HttpAllCount)
 	}
-	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 11,
+	c := uiCommon.NewListColumn("TOT_REQ", "TOT_REQ", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

@@ -29,6 +29,21 @@ const HelpColumnsText = `
 **Space Columns:**
 
   SPACE - Space name
+  QUOTA_NAME - Space quota name if one is assigned
+  APPS - Number of apps within the space
+  DCR - Number of desired containers
+  RCR - Number of reporting containers
+  CPU% - Total CPU used by all containers within space
+  MAX_MEM - Maximum memory space can used based on quota limits
+  RSVD_MEM - Total memory reserved by all desired containers
+  S_MEM% - Percent of space quota consumed
+  O_MEM% - Percent of org quota consumed
+  USED_MEM -
+  RSVD_DSK -
+  USED_DSK -
+  LOG_OUT -
+  LOG_ERR -
+  TOT_REQ -
 
 `
 

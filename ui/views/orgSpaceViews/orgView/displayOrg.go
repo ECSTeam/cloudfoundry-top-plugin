@@ -35,6 +35,7 @@ type DisplayOrg struct {
 	TotalReservedDisk int64
 	TotalUsedDisk     int64
 
+	DesiredContainers        int
 	TotalReportingContainers int
 	TotalLogStdout           int64
 	TotalLogStderr           int64

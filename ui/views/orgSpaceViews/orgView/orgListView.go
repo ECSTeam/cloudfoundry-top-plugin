@@ -38,6 +38,7 @@ import (
 type OrgListView struct {
 	*dataView.DataListView
 	displayAppStatsMap map[string]*dataCommon.DisplayAppStats
+	isWarmupComplete   bool
 }
 
 func NewOrgListView(masterUI masterUIInterface.MasterUIInterface,
@@ -47,8 +48,8 @@ func NewOrgListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &OrgListView{}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		uiCommon.NewSortColumn("CPU", true),
-		uiCommon.NewSortColumn("orgName", false),
+		uiCommon.NewSortColumn("CPU_PER", true),
+		uiCommon.NewSortColumn("ORG", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, nil,
@@ -106,6 +107,8 @@ func (asUI *OrgListView) columnDefinitions() []*uiCommon.ListColumn {
 
 	columns = append(columns, columnNumberOfSpaces())
 	columns = append(columns, columnNumberOfApps())
+
+	columns = append(columns, columnDesiredContainers())
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
@@ -233,6 +236,7 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 			displayOrg.TotalUsedMemory += appStats.TotalUsedMemory
 			displayOrg.TotalUsedDisk += appStats.TotalUsedDisk
 			displayOrg.TotalReportingContainers += appStats.TotalReportingContainers
+			displayOrg.DesiredContainers += appStats.DesiredContainers
 
 			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
 			displayOrg.TotalReservedMemory += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
@@ -256,6 +260,7 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 		}
 
 	}
+	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
 	return displayOrgMap
 }
 

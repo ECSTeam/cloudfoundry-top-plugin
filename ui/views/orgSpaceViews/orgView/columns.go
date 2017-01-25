@@ -39,7 +39,7 @@ func columnOrgName() *uiCommon.ListColumn {
 		stats := data.(*DisplayOrg)
 		return stats.Name
 	}
-	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
+	c := uiCommon.NewListColumn("ORG", "ORG", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -114,6 +114,23 @@ func columnNumberOfApps() *uiCommon.ListColumn {
 	return c
 }
 
+func columnDesiredContainers() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayOrg).DesiredContainers < c2.(*DisplayOrg).DesiredContainers
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayOrg)
+		return fmt.Sprintf("%7v", appStats.DesiredContainers)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayOrg)
+		return strconv.Itoa(appStats.DesiredContainers)
+	}
+	c := uiCommon.NewListColumn("DCR", "DCR", 7,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notInDesiredStateAttentionFunc)
+	return c
+}
+
 func columnReportingContainers() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayOrg).TotalReportingContainers < c2.(*DisplayOrg).TotalReportingContainers
@@ -126,9 +143,19 @@ func columnReportingContainers() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return strconv.Itoa(appStats.TotalReportingContainers)
 	}
-	c := uiCommon.NewListColumn("reportingContainers", "RCR", 7,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	c := uiCommon.NewListColumn("RCR", "RCR", 7,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notInDesiredStateAttentionFunc)
 	return c
+}
+
+func notInDesiredStateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	stats := data.(*DisplayOrg)
+	appListView := columnOwner.(*OrgListView)
+	attentionType := uiCommon.ATTENTION_NORMAL
+	if appListView.isWarmupComplete && stats.DesiredContainers > stats.TotalReportingContainers {
+		attentionType = uiCommon.ATTENTION_NOT_DESIRED_STATE
+	}
+	return attentionType
 }
 
 func columnTotalCpu() *uiCommon.ListColumn {
@@ -155,7 +182,7 @@ func columnTotalCpu() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%.2f", appStats.TotalCpuPercentage)
 	}
-	c := uiCommon.NewListColumn("CPU", "CPU%", 6,
+	c := uiCommon.NewListColumn("CPU_PER", "CPU%", 6,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -285,7 +312,7 @@ func columnTotalReservedDisk() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalReservedDisk)
 	}
-	c := uiCommon.NewListColumn("RSVD_DISK", "RSVD_DISK", 10,
+	c := uiCommon.NewListColumn("RSVD_DSK", "RSVD_DSK", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -308,7 +335,7 @@ func columnTotalDiskUsed() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalUsedDisk)
 	}
-	c := uiCommon.NewListColumn("USED_DISK", "USED_DISK", 10,
+	c := uiCommon.NewListColumn("USED_DSK", "USED_DSK", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -325,7 +352,7 @@ func columnLogStdout() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalLogStdout)
 	}
-	c := uiCommon.NewListColumn("TotalLogStdout", "LOG_OUT", 11,
+	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -342,7 +369,7 @@ func columnLogStderr() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.TotalLogStderr)
 	}
-	c := uiCommon.NewListColumn("TotalLogStderr", "LOG_ERR", 11,
+	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -359,7 +386,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 		appStats := data.(*DisplayOrg)
 		return fmt.Sprintf("%v", appStats.HttpAllCount)
 	}
-	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", 11,
+	c := uiCommon.NewListColumn("TOT_REQ", "TOT_REQ", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

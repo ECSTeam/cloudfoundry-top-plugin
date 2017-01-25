@@ -37,6 +37,7 @@ type SpaceListView struct {
 	*dataView.DataListView
 	displayAppStatsMap map[string]*dataCommon.DisplayAppStats
 	orgId              string
+	isWarmupComplete   bool
 }
 
 func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
@@ -48,8 +49,8 @@ func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI := &SpaceListView{orgId: orgId}
 
 	defaultSortColumns := []*uiCommon.SortColumn{
-		uiCommon.NewSortColumn("CPU", true),
-		uiCommon.NewSortColumn("spaceName", false),
+		uiCommon.NewSortColumn("CPU_PER", true),
+		uiCommon.NewSortColumn("SPACE", false),
 	}
 
 	dataListView := dataView.NewDataListView(masterUI, parentView,
@@ -114,6 +115,8 @@ func (asUI *SpaceListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnQuotaName())
 
 	columns = append(columns, columnNumberOfApps())
+
+	columns = append(columns, columnDesiredContainers())
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
@@ -244,6 +247,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			displaySpace.TotalUsedMemory += appStats.TotalUsedMemory
 			displaySpace.TotalUsedDisk += appStats.TotalUsedDisk
 			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
+			displaySpace.DesiredContainers += appStats.DesiredContainers
 
 			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
 			displaySpace.TotalReservedMemory += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
@@ -273,6 +277,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 		}
 
 	}
+	asUI.isWarmupComplete = asUI.GetMasterUI().IsWarmupComplete()
 	return displaySpaceMap
 }
 

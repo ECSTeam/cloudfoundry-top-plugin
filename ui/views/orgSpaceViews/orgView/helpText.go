@@ -33,12 +33,15 @@ const HelpColumnsText = `
   QUOTA_NAME
   SPACES
   APPS
+  DCR
   RCR
   CPU%
   MAX_MEM
+  RSVD_MEM
+  O_MEM%
   USED_MEM
-  MEM%
-  USED_DISK
+  RSVD_DSK
+  USED_DSK
   LOG_OUT
   LOG_ERR
   TOT_REQ
