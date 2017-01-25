@@ -13,33 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orgQuota
+package spaceQuota
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 const UnknownName = "unknown"
 
-type OrgQuotaResponse struct {
-	Count     int                `json:"total_results"`
-	Pages     int                `json:"total_pages"`
-	Resources []OrgQuotaResource `json:"resources"`
+type SpaceQuotaResponse struct {
+	Count     int                  `json:"total_results"`
+	Pages     int                  `json:"total_pages"`
+	Resources []SpaceQuotaResource `json:"resources"`
 }
 
-type OrgQuotaResource struct {
+type SpaceQuotaResource struct {
 	Meta   common.Meta `json:"metadata"`
-	Entity OrgQuota    `json:"entity"`
+	Entity SpaceQuota  `json:"entity"`
 }
 
-type OrgQuota struct {
+type SpaceQuota struct {
 	//Guid                    string `json:"guid"`
 	common.EntityCommon
 	Name                    string `json:"name"`
+	OrganizationGuid        string `json:"organization_guid"`
 	NonBasicServicesAllowed bool   `json:"non_basic_services_allowed"`
 	TotalServices           int    `json:"total_services"`
 	TotalRoutes             int    `json:"total_routes"`
-	TotalPrivateDomains     int    `json:"total_private_domains"`
 	MemoryLimit             int    `json:"memory_limit"`
-	TrialDbAllowed          bool   `json:"trial_db_allowed"`
 	InstanceMemoryLimit     int    `json:"instance_memory_limit"`
 	AppInstanceLimit        int    `json:"app_instance_limit"`
+	AppTaskLimit            int    `json:"app_task_limit"`
+	TotalServiceKeys        int    `json:"total_service_keys"`
+	TotalReservedRoutePorts int    `json:"total_reserved_route_ports"`
 }

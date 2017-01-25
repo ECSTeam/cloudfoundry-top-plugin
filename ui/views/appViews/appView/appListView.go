@@ -80,7 +80,7 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	if asUI.spaceIdFilter != "" {
 		spaceMd := space.FindSpaceMetadata(asUI.spaceIdFilter)
 		orgMd := org.FindOrgMetadata(spaceMd.OrgGuid)
-		title = fmt.Sprintf("%v in space %v org %v", title, spaceMd.Name, orgMd.Name)
+		title = fmt.Sprintf("%v in space %v Org %v", title, spaceMd.Name, orgMd.Name)
 	}
 
 	dataListView.SetTitle(title)

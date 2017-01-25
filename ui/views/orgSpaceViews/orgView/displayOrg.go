@@ -26,11 +26,14 @@ type DisplayOrg struct {
 	NumberOfSpaces int
 	NumberOfApps   int
 
-	TotalCpuPercentage            float64
-	TotalUsedMemory               int64
-	TotalUsedMemoryPercentOfQuota float64
+	TotalCpuPercentage float64
 
-	TotalUsedDisk int64
+	TotalReservedMemory               int64
+	TotalUsedMemory                   int64
+	TotalReservedMemoryPercentOfQuota float64
+
+	TotalReservedDisk int64
+	TotalUsedDisk     int64
 
 	TotalReportingContainers int
 	TotalLogStdout           int64

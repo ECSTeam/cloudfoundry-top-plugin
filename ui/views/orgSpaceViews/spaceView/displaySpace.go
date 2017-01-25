@@ -19,12 +19,22 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 
 type DisplaySpace struct {
 	*space.Space
+
+	QuotaName          string
+	MemoryLimitInBytes int64
+
 	NumberOfSpaces int
 	NumberOfApps   int
 
 	TotalCpuPercentage float64
-	TotalUsedMemory    int64
-	TotalUsedDisk      int64
+
+	TotalReservedMemory                    int64
+	TotalUsedMemory                        int64
+	TotalReservedMemoryPercentOfSpaceQuota float64
+	TotalReservedMemoryPercentOfOrgQuota   float64
+
+	TotalReservedDisk int64
+	TotalUsedDisk     int64
 
 	TotalReportingContainers int
 	TotalLogStdout           int64

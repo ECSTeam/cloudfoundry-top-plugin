@@ -531,7 +531,7 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 }
 
 func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
-	go mui.router.GetProcessor().LoadCacheAndSeedData()
+	go mui.router.GetProcessor().FlushCache()
 	return nil
 }
 

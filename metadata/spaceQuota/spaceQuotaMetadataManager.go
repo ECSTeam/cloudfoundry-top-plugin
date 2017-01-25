@@ -13,43 +13,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package orgQuota
+package spaceQuota
 
 import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 )
 
-type OrgQuotaMetadataManager struct {
+type SpaceQuotaMetadataManager struct {
 	*common.MdCommonManager
 }
 
-func NewOrgQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *OrgQuotaMetadataManager {
-	url := "/v2/quota_definitions"
-	mdMgr := &OrgQuotaMetadataManager{}
+func NewSpaceQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *SpaceQuotaMetadataManager {
+	url := "/v2/space_quota_definitions"
+	mdMgr := &SpaceQuotaMetadataManager{}
 	commonMgr := common.NewMdCommonManager(mdGlobalManager, url, mdMgr.createResponseObject, mdMgr.createMetadataEntityObject, mdMgr.processResponse)
 	mdMgr.MdCommonManager = commonMgr
 	return mdMgr
 }
 
-func (mdMgr *OrgQuotaMetadataManager) createResponseObject() common.IResponse {
-	return &OrgQuotaResponse{}
+func (mdMgr *SpaceQuotaMetadataManager) createResponseObject() common.IResponse {
+	return &SpaceQuotaResponse{}
 }
 
-func (mdMgr *OrgQuotaMetadataManager) createMetadataEntityObject(guid string) common.IMetadata {
-	return NewOrgQuotaMetadataById(guid)
+func (mdMgr *SpaceQuotaMetadataManager) createMetadataEntityObject(guid string) common.IMetadata {
+	return NewSpaceQuotaMetadataById(guid)
 }
 
-func (mdMgr *OrgQuotaMetadataManager) processResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
-	resp := response.(*OrgQuotaResponse)
+func (mdMgr *SpaceQuotaMetadataManager) processResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
+	resp := response.(*SpaceQuotaResponse)
 	for _, item := range resp.Resources {
 		item.Entity.Guid = item.Meta.Guid
-		metadata := NewOrgQuotaMetadata(item.Entity)
+		metadata := NewSpaceQuotaMetadata(item.Entity)
 		metadataArray = append(metadataArray, metadata)
 	}
 	return metadataArray
 }
 
-func (mdMgr *OrgQuotaMetadataManager) Find(guid string) *OrgQuotaMetadata {
-	return mdMgr.MdCommonManager.Find(guid).(*OrgQuotaMetadata)
+func (mdMgr *SpaceQuotaMetadataManager) Find(guid string) *SpaceQuotaMetadata {
+	return mdMgr.MdCommonManager.Find(guid).(*SpaceQuotaMetadata)
 }

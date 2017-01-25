@@ -15,46 +15,15 @@
 
 package common
 
-import "time"
-
-type IResponse interface {
-	//Count() int
-	//Pages() int
-	//Resources() []IResource
-}
-
-type IResource interface {
-	//Guid() string
-	//Meta() IResourceMetadata
-	//Entity() IEntity
-}
-
-type IResourceMetadata interface {
-	//GetGuid() string
-	//SetGuid(string)
-	//SetCreatedAt(string)
-	//SetUpdatedAt(string)
-}
-
-type IEntity interface {
-	GetGuid() string
-	SetGuid(string)
-}
-
-type IMetadata interface {
+type EntityCommon struct {
+	Guid string `json:"guid"`
 	IEntity
-	SetCacheTime(time.Time)
-	GetCacheTime() time.Time
 }
 
-type Metadata struct {
-	cacheTime time.Time
+func (entity *EntityCommon) GetGuid() string {
+	return entity.Guid
 }
 
-func (md *Metadata) SetCacheTime(time time.Time) {
-	md.cacheTime = time
-}
-
-func (md *Metadata) GetCacheTime() time.Time {
-	return md.cacheTime
+func (entity *EntityCommon) SetGuid(guid string) {
+	entity.Guid = guid
 }

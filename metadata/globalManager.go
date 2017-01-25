@@ -25,6 +25,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/orgQuota"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/spaceQuota"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 
@@ -35,7 +36,8 @@ type GlobalManager struct {
 	appMdMgr *app.AppMetadataManager
 	//orgMdMgr *OrgMetadataManager
 	//spaceMdMgr *SpaceMetadataManager
-	orgQuotaMdMgr *orgQuota.OrgQuotaMetadataManagerNew
+	orgQuotaMdMgr   *orgQuota.OrgQuotaMetadataManager
+	spaceQuotaMdMgr *spaceQuota.SpaceQuotaMetadataManager
 
 	mu sync.Mutex
 
@@ -52,6 +54,7 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 	mgr.appMdMgr = app.NewAppMetadataManager()
 	mgr.orgQuotaMdMgr = orgQuota.NewOrgQuotaMetadataManager(mgr)
+	mgr.spaceQuotaMdMgr = spaceQuota.NewSpaceQuotaMetadataManager(mgr)
 
 	mgr.appDeleteQueue = make(map[string]string)
 
@@ -68,8 +71,12 @@ func (mgr *GlobalManager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
 }
 
-func (mgr *GlobalManager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManagerNew {
+func (mgr *GlobalManager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager {
 	return mgr.orgQuotaMdMgr
+}
+
+func (mgr *GlobalManager) GetSpaceQuotaMdManager() *spaceQuota.SpaceQuotaMetadataManager {
+	return mgr.spaceQuotaMdMgr
 }
 
 func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
@@ -89,6 +96,12 @@ func (mgr *GlobalManager) LoadMetadata() {
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
 
+}
+
+func (mgr *GlobalManager) FlushCache() {
+	mgr.LoadMetadata()
+	mgr.orgQuotaMdMgr.FlushCache()
+	mgr.spaceQuotaMdMgr.FlushCache()
 }
 
 func (mgr *GlobalManager) IsAppDeleted(appId string) bool {

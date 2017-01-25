@@ -29,6 +29,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
@@ -59,7 +60,8 @@ func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Space List")
+	org := org.FindOrgMetadata(orgId)
+	dataListView.SetTitle(fmt.Sprintf("Space List of Org %v", org.Name))
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 
@@ -108,11 +110,21 @@ func (asUI *SpaceListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 func (asUI *SpaceListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, columnSpaceName())
+
+	columns = append(columns, columnQuotaName())
+
 	columns = append(columns, columnNumberOfApps())
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
+
+	columns = append(columns, columnMemoryLimit())
+	columns = append(columns, columnTotalReservedMemory())
+	columns = append(columns, columnTotalReservedMemoryPercentOfSpaceQuota())
+	columns = append(columns, columnTotalReservedMemoryPercentOfOrgQuota())
 	columns = append(columns, columnTotalMemoryUsed())
+
+	columns = append(columns, columnTotalReservedDisk())
 	columns = append(columns, columnTotalDiskUsed())
 
 	columns = append(columns, columnLogStdout())
@@ -185,6 +197,8 @@ func (asUI *SpaceListView) GetListData() []uiCommon.IData {
 func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 
 	orgId := asUI.orgId
+	spaceQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetSpaceQuotaMdManager()
+	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
 
 	// Get list of space in selected org
 	allSpaces := space.All()
@@ -217,11 +231,23 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 		displaySpaceMap[spaceMetadata.Guid] = displaySpace
 		displaySpace.NumberOfApps = len(appsBySpaceMap[spaceMetadata.Guid])
 
+		if spaceMetadata.QuotaGuid != "" {
+			spaceQuotaMd := spaceQuotaMdMgr.Find(spaceMetadata.QuotaGuid)
+			displaySpace.QuotaName = spaceQuotaMd.Name
+			displaySpace.MemoryLimitInBytes = int64(spaceQuotaMd.MemoryLimit) * util.MEGABYTE
+		} else {
+			displaySpace.QuotaName = "-none-"
+		}
+
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
 			displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage
 			displaySpace.TotalUsedMemory += appStats.TotalUsedMemory
 			displaySpace.TotalUsedDisk += appStats.TotalUsedDisk
 			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
+
+			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
+			displaySpace.TotalReservedMemory += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			displaySpace.TotalReservedDisk += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
 				displaySpace.HttpAllCount += appStats.TotalTraffic.HttpAllCount
@@ -234,6 +260,18 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 				}
 			}
 		}
+		if displaySpace.MemoryLimitInBytes > 0 {
+			displaySpace.TotalReservedMemoryPercentOfSpaceQuota = (float64(displaySpace.TotalReservedMemory) / float64(displaySpace.MemoryLimitInBytes)) * 100
+		}
+
+		org := org.FindOrgMetadata(orgId)
+		orgQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetOrgQuotaMdManager()
+		orgQuotaMd := orgQuotaMdMgr.Find(org.QuotaGuid)
+		orgQuotaMemoryLimitInBytes := orgQuotaMd.MemoryLimit * util.MEGABYTE
+		if orgQuotaMemoryLimitInBytes > 0 {
+			displaySpace.TotalReservedMemoryPercentOfOrgQuota = (float64(displaySpace.TotalReservedMemory) / float64(orgQuotaMemoryLimitInBytes)) * 100
+		}
+
 	}
 	return displaySpaceMap
 }

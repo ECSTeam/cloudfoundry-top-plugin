@@ -15,37 +15,17 @@
 
 package orgQuota
 
-import "time"
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type OrgQuotaMetadata struct {
+	*common.Metadata
 	*OrgQuota
-	cacheTime time.Time
 }
 
 func NewOrgQuotaMetadata(orgQuota OrgQuota) *OrgQuotaMetadata {
-	metadata := &OrgQuotaMetadata{}
-	metadata.OrgQuota = &orgQuota
-	metadata.cacheTime = time.Now()
-	return metadata
+	return &OrgQuotaMetadata{Metadata: &common.Metadata{}, OrgQuota: &orgQuota}
 }
 
 func NewOrgQuotaMetadataById(id string) *OrgQuotaMetadata {
-	return NewOrgQuotaMetadata(OrgQuota{Guid: id, Name: id})
-}
-
-// TODO: Move this into common parent sturct
-func (md *OrgQuotaMetadata) SetCacheTime(time time.Time) {
-	md.cacheTime = time
-}
-
-func (md *OrgQuotaMetadata) GetCacheTime() time.Time {
-	return md.cacheTime
-}
-
-func (md *OrgQuotaMetadata) GetGuid() string {
-	return md.Guid
-}
-
-func (md *OrgQuotaMetadata) SetGuid(guid string) {
-	md.Guid = guid
+	return NewOrgQuotaMetadata(OrgQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
 }

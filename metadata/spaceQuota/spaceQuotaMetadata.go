@@ -13,48 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package common
+package spaceQuota
 
-import "time"
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-type IResponse interface {
-	//Count() int
-	//Pages() int
-	//Resources() []IResource
+type SpaceQuotaMetadata struct {
+	*common.Metadata
+	*SpaceQuota
 }
 
-type IResource interface {
-	//Guid() string
-	//Meta() IResourceMetadata
-	//Entity() IEntity
+func NewSpaceQuotaMetadata(SpaceQuota SpaceQuota) *SpaceQuotaMetadata {
+	return &SpaceQuotaMetadata{Metadata: &common.Metadata{}, SpaceQuota: &SpaceQuota}
 }
 
-type IResourceMetadata interface {
-	//GetGuid() string
-	//SetGuid(string)
-	//SetCreatedAt(string)
-	//SetUpdatedAt(string)
-}
-
-type IEntity interface {
-	GetGuid() string
-	SetGuid(string)
-}
-
-type IMetadata interface {
-	IEntity
-	SetCacheTime(time.Time)
-	GetCacheTime() time.Time
-}
-
-type Metadata struct {
-	cacheTime time.Time
-}
-
-func (md *Metadata) SetCacheTime(time time.Time) {
-	md.cacheTime = time
-}
-
-func (md *Metadata) GetCacheTime() time.Time {
-	return md.cacheTime
+func NewSpaceQuotaMetadataById(id string) *SpaceQuotaMetadata {
+	return NewSpaceQuotaMetadata(SpaceQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
 }

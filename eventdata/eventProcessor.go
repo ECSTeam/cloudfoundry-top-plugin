@@ -119,6 +119,11 @@ func (ep *EventProcessor) LoadCacheAndSeedData() {
 	ep.SeedStatsFromMetadata()
 }
 
+func (ep *EventProcessor) FlushCache() {
+	ep.metadataManager.FlushCache()
+	ep.SeedStatsFromMetadata()
+}
+
 func (ep *EventProcessor) SeedStatsFromMetadata() {
 
 	toplog.Info("EventProcessor>seedStatsFromMetadata")

@@ -48,14 +48,14 @@ func NewMdCommonManager(
 	createResponseObject createResponseObject,
 	createMetadataEntityObject createMetadataEntityObject,
 	processResponse processResponse) *MdCommonManager {
-	mgr := &MdCommonManager{
+	mdMgr := &MdCommonManager{
 		mdGlobalManager:            mdGlobalManager,
 		url:                        url,
 		createResponseObject:       createResponseObject,
 		createMetadataEntityObject: createMetadataEntityObject,
 		processResponse:            processResponse}
-	mgr.metadataMap = make(map[string]IMetadata)
-	return mgr
+	mdMgr.metadataMap = make(map[string]IMetadata)
+	return mdMgr
 }
 
 func (mdMgr *MdCommonManager) All() []IMetadata {
@@ -77,6 +77,12 @@ func (mdMgr *MdCommonManager) Find(guid string) IMetadata {
 	return metadata
 }
 
+// Flush cache.  This will not force a reload - must call LoadCache if immedently reload is desired
+func (mdMgr *MdCommonManager) FlushCache() {
+	mdMgr.metadataMap = make(map[string]IMetadata)
+	mdMgr.fullLoadCacheTime = time.Time{}
+}
+
 func (mdMgr *MdCommonManager) RequestLoadCacheIfOld() {
 	if time.Now().Sub(mdMgr.fullLoadCacheTime) > time.Hour*24 {
 		mdMgr.LoadCacheAysnc()
@@ -86,16 +92,16 @@ func (mdMgr *MdCommonManager) RequestLoadCacheIfOld() {
 func (mdMgr *MdCommonManager) LoadCacheAysnc() {
 
 	if mdMgr.loadInProgress {
-		toplog.Info("MdCommonManager.LoadCacheAysnc loadInProgress")
+		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadInProgress", mdMgr.url)
 		return
 	}
 
 	mdMgr.loadInProgress = true
 	loadAsync := func() {
-		toplog.Info("MdCommonManager.LoadCacheAysnc loadAsync thread started")
+		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadAsync thread started", mdMgr.url)
 		mdMgr.LoadCache(mdMgr.mdGlobalManager.GetCliConnection())
 		mdMgr.loadInProgress = false
-		toplog.Info("MdCommonManager.LoadCacheAysnc loadAsync thread complete")
+		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadAsync thread complete", mdMgr.url)
 	}
 	go loadAsync()
 }
