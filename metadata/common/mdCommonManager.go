@@ -92,16 +92,16 @@ func (mdMgr *MdCommonManager) RequestLoadCacheIfOld() {
 func (mdMgr *MdCommonManager) LoadCacheAysnc() {
 
 	if mdMgr.loadInProgress {
-		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadInProgress", mdMgr.url)
+		toplog.Debug("MdCommonManager.LoadCacheAysnc %v loadInProgress", mdMgr.url)
 		return
 	}
 
 	mdMgr.loadInProgress = true
 	loadAsync := func() {
-		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadAsync thread started", mdMgr.url)
+		toplog.Debug("MdCommonManager.LoadCacheAysnc %v loadAsync thread started", mdMgr.url)
 		mdMgr.LoadCache(mdMgr.mdGlobalManager.GetCliConnection())
 		mdMgr.loadInProgress = false
-		toplog.Info("MdCommonManager.LoadCacheAysnc %v loadAsync thread complete", mdMgr.url)
+		toplog.Debug("MdCommonManager.LoadCacheAysnc %v loadAsync thread complete", mdMgr.url)
 	}
 	go loadAsync()
 }
