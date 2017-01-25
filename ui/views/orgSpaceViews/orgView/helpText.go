@@ -44,7 +44,7 @@ const HelpColumnsText = `
   CPU%% - Total CPU used by all containers within space
   MEM_MAX - Maximum memory space can used based on quota limits
   MEM_RSVD - Total memory reserved by all desired containers
-  O_MEM% - Percent of org quota consumed
+  O_MEM%% - Percent of org quota consumed
   MEM_USED - Memory actually in use by all containers
   DSK_RSVD - Disk reserved by all containers on cell
   DSK_USED - Disk actually in use by all containers
