@@ -207,10 +207,10 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		switch {
 		case stackSummaryStats.CellMaxCpuCapacity >= 90:
 			colorString := util.BRIGHT_RED
-			totalCpuPercentageDisplay = fmt.Sprintf("%v%6v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+			totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
 		case stackSummaryStats.CellMaxCpuCapacity >= 80:
 			colorString := util.BRIGHT_YELLOW
-			totalCpuPercentageDisplay = fmt.Sprintf("%v%6v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+			totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
 		}
 	}
 
@@ -229,7 +229,7 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 	}
 
 	fmt.Fprintf(v, "Stack: %-13v Cells: %v\n", stackSummaryStats.StackName, stackSummaryStats.TotalCells)
-	fmt.Fprintf(v, "   CPU:%6v Used,%6v Max,       ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
+	fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"
 	totalMem := stackSummaryStats.ReservedMem

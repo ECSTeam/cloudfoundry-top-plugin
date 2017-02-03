@@ -242,14 +242,14 @@ func ColumnLogStdout() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%9v", util.Format(stats.OutCount))
-		return fmt.Sprintf("%9v", display)
+		display := fmt.Sprintf("%11v", util.Format(stats.OutCount))
+		return fmt.Sprintf("%11v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
 		return fmt.Sprintf("%v", appStats.OutCount)
 	}
-	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 9,
+	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
@@ -260,14 +260,14 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%9v", util.Format(stats.ErrCount))
-		return fmt.Sprintf("%9v", display)
+		display := fmt.Sprintf("%11v", util.Format(stats.ErrCount))
+		return fmt.Sprintf("%11v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
 		return fmt.Sprintf("%v", appStats.ErrCount)
 	}
-	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 9,
+	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 11,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
