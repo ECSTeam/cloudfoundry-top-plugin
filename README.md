@@ -84,6 +84,7 @@ Login and add two permission.  Note that the UAA password is NOT the
 look for password for "Admin Client Credentials".
 
 ```
+uaac target https://login.system.YOUR.DOMAIN --skip-ssl-validation
 uaac token client get admin -s [UAA Admin Client Credentials]  
 uaac member add cloud_controller.admin [username]
 uaac member add doppler.firehose [username]
