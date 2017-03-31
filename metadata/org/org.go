@@ -29,6 +29,7 @@ const UnknownName = "unknown"
 type OrgResponse struct {
 	Count     int           `json:"total_results"`
 	Pages     int           `json:"total_pages"`
+	NextUrl   string        `json:"next_url"`
 	Resources []OrgResource `json:"resources"`
 }
 
@@ -98,18 +99,18 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 	url := "/v2/organizations"
 	metadata := []Org{}
 
-	handleRequest := func(outputBytes []byte) (interface{}, error) {
+	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var response OrgResponse
-		err := json.Unmarshal(outputBytes, &response)
+		err = json.Unmarshal(outputBytes, &response)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return metadata, err
+			return metadata, "", err
 		}
 		for _, item := range response.Resources {
 			item.Entity.Guid = item.Meta.Guid
 			metadata = append(metadata, item.Entity)
 		}
-		return response, nil
+		return response, response.NextUrl, nil
 	}
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)

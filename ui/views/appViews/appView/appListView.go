@@ -164,6 +164,7 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, column4XX())
 	columns = append(columns, column5XX())
 
+	columns = append(columns, columnIsolationSegmentName())
 	columns = append(columns, columnStackName())
 
 	return columns

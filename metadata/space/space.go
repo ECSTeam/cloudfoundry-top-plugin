@@ -38,13 +38,14 @@ type SpaceResource struct {
 }
 
 type Space struct {
-	Guid           string `json:"guid"`
-	Name           string `json:"name"`
-	OrgGuid        string `json:"organization_guid"`
-	QuotaGuid      string `json:"space_quota_definition_guid"`
-	Managers_url   string `json:"managers_url"`
-	Auditors_url   string `json:"auditors_url"`
-	Developers_url string `json:"developers_url"`
+	Guid             string `json:"guid"`
+	Name             string `json:"name"`
+	OrgGuid          string `json:"organization_guid"`
+	QuotaGuid        string `json:"space_quota_definition_guid"`
+	IsolationSegGuid string `json:"isolation_segment_guid"`
+	Managers_url     string `json:"managers_url"`
+	Auditors_url     string `json:"auditors_url"`
+	Developers_url   string `json:"developers_url"`
 }
 
 var (
@@ -87,18 +88,18 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 	url := "/v2/spaces"
 	metadata := []Space{}
 
-	handleRequest := func(outputBytes []byte) (interface{}, error) {
+	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var response SpaceResponse
-		err := json.Unmarshal(outputBytes, &response)
+		err = json.Unmarshal(outputBytes, &response)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return metadata, err
+			return metadata, "", err
 		}
 		for _, item := range response.Resources {
 			item.Entity.Guid = item.Meta.Guid
 			metadata = append(metadata, item.Entity)
 		}
-		return response, nil
+		return response, response.NextUrl, nil
 	}
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)

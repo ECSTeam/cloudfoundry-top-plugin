@@ -133,15 +133,16 @@ func (mdMgr *MdCommonManager) GetMetadataFromUrl(cliConnection plugin.CliConnect
 
 	metadataArray := []IMetadata{}
 
-	handleRequest := func(outputBytes []byte) (interface{}, error) {
+	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		resp := mdMgr.createResponseObject()
-		err := json.Unmarshal(outputBytes, &resp)
+		err = json.Unmarshal(outputBytes, &resp)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return metadataArray, err
+			return metadataArray, "", err
 		}
 		metadataArray = mdMgr.processResponse(resp, metadataArray)
-		return resp, nil
+		nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
+		return resp, nextUrl, nil
 	}
 
 	err := CallPagableAPI(cliConnection, url, handleRequest)

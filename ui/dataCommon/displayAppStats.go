@@ -20,14 +20,16 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 type DisplayAppStats struct {
 	*eventApp.AppStats
 
-	AppName           string
-	SpaceId           string
-	SpaceName         string
-	OrgId             string
-	OrgName           string
-	DesiredContainers int
-	StackId           string
-	StackName         string
+	AppName              string
+	SpaceId              string
+	SpaceName            string
+	OrgId                string
+	OrgName              string
+	DesiredContainers    int
+	StackId              string
+	StackName            string
+	IsolationSegmentGuid string
+	IsolationSegmentName string
 
 	//TotalTraffic *eventdata.TrafficStats
 

@@ -21,6 +21,7 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/orgQuota"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
@@ -95,6 +96,8 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
+
+	isolationSegment.LoadCache(mgr.cliConnection)
 
 }
 

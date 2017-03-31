@@ -98,12 +98,12 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 
 	toplog.Debug("Domain>>getDomainMetadata %v start", url)
 
-	handleRequest := func(outputBytes []byte) (interface{}, error) {
+	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var response DomainResponse
-		err := json.Unmarshal(outputBytes, &response)
+		err = json.Unmarshal(outputBytes, &response)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return metadata, err
+			return metadata, "", err
 		}
 		for _, item := range response.Resources {
 			item.Entity.Guid = item.Meta.Guid
@@ -111,7 +111,7 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 			entity := item.Entity
 			metadata = append(metadata, &entity)
 		}
-		return response, nil
+		return response, response.NextUrl, nil
 	}
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)

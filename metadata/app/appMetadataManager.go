@@ -115,19 +115,19 @@ func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]*
 
 	appsMetadataArray := []*AppMetadata{}
 
-	handleRequest := func(outputBytes []byte) (interface{}, error) {
+	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var appResp AppResponse
-		err := json.Unmarshal(outputBytes, &appResp)
+		err = json.Unmarshal(outputBytes, &appResp)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return appsMetadataArray, err
+			return appsMetadataArray, "", err
 		}
 		for _, app := range appResp.Resources {
 			app.Entity.Guid = app.Meta.Guid
 			appMetadata := NewAppMetadata(app.Entity)
 			appsMetadataArray = append(appsMetadataArray, appMetadata)
 		}
-		return appResp, nil
+		return appResp, appResp.NextUrl, nil
 	}
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)

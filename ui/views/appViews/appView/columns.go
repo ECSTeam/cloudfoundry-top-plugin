@@ -440,3 +440,21 @@ func columnStackName() *uiCommon.ListColumn {
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
+
+func columnIsolationSegmentName() *uiCommon.ListColumn {
+	defaultColSize := 15
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*dataCommon.DisplayAppStats).IsolationSegmentName, c2.(*dataCommon.DisplayAppStats).IsolationSegmentName)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		return util.FormatDisplayData(appStats.IsolationSegmentName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		return appStats.IsolationSegmentName
+	}
+	c := uiCommon.NewListColumn("ISO_SEG", "ISO_SEG", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}

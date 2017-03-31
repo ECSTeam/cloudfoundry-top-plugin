@@ -34,7 +34,7 @@ var (
 	curlMutex sync.Mutex
 )
 
-type handleResponseFunc func(outputBytes []byte) (interface{}, error)
+type handleResponseFunc func(outputBytes []byte) (data interface{}, nextUrl string, err error)
 
 func CallAPI(cliConnection plugin.CliConnection, url string) (string, error) {
 	output, err := callCurlRetryable(cliConnection, url)
@@ -54,11 +54,11 @@ func CallPagableAPI(cliConnection plugin.CliConnection, url string, handleRespon
 		}
 		outputStr := strings.Join(output, "")
 		outputBytes := []byte(outputStr)
-		resp, err := handleResponse(outputBytes)
+		_, nextUrl, err = handleResponse(outputBytes)
 		if err != nil {
 			return err
 		}
-		nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
+		//nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 	}
 	return nil
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
@@ -90,7 +91,10 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 		displayAppStats.AppName = appMetadata.Name
 		displayAppStats.SpaceId = appMetadata.SpaceGuid
-		displayAppStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
+
+		spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
+		displayAppStats.SpaceName = spaceMetadata.Name
+
 		displayAppStats.OrgId, displayAppStats.OrgName = org.FindBySpaceGuid(appMetadata.SpaceGuid)
 
 		totalCpuPercentage := 0.0
@@ -105,6 +109,10 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		stack := stack.FindStackMetadata(appMetadata.StackGuid)
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
+
+		isoSeg := isolationSegment.FindMetadata(spaceMetadata.IsolationSegGuid)
+		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
+		displayAppStats.IsolationSegmentName = isoSeg.Name
 
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
