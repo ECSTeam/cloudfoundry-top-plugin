@@ -24,6 +24,7 @@ import (
 )
 
 const UnknownName = "unknown"
+const SharedIsolationSegmentName = "shared"
 
 type Link struct {
 	Href string `json:"href"`
@@ -46,12 +47,16 @@ type IsolationSegment struct {
 }
 
 var (
-	sharedIsolationSegment        = IsolationSegment{Name: "shared"}
+	sharedIsolationSegment        = IsolationSegment{Name: SharedIsolationSegmentName}
 	isolationSegmentMetadataCache []IsolationSegment
 )
 
 func All() []IsolationSegment {
 	return isolationSegmentMetadataCache
+}
+
+func GetDefault() IsolationSegment {
+	return sharedIsolationSegment
 }
 
 func FindMetadata(guid string) IsolationSegment {
@@ -75,6 +80,18 @@ func FindName(guid string) string {
 	return name
 }
 
+func FindMetadataByName(name string) IsolationSegment {
+	if name == "" {
+		return sharedIsolationSegment
+	}
+	for _, isoSeg := range isolationSegmentMetadataCache {
+		if isoSeg.Name == name {
+			return isoSeg
+		}
+	}
+	return IsolationSegment{Name: name}
+}
+
 func LoadCache(cliConnection plugin.CliConnection) {
 	data, err := getMetadata(cliConnection)
 	if err != nil {
@@ -84,6 +101,8 @@ func LoadCache(cliConnection plugin.CliConnection) {
 
 	//toplog.Info("isolation segments: %+v", data)
 	isolationSegmentMetadataCache = data
+	sharedIsolationSegment = FindMetadataByName(SharedIsolationSegmentName)
+
 }
 
 func getMetadata(cliConnection plugin.CliConnection) ([]IsolationSegment, error) {

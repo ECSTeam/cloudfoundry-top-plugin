@@ -27,6 +27,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
@@ -272,6 +273,8 @@ func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 				if containerStats != nil && cellStats.Ip == containerStats.Ip {
 					appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appStats.AppId)
 					cellStats.StackId = appMetadata.StackGuid
+					spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
+					cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegGuid
 					return cellStats
 				}
 			}

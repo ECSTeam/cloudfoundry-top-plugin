@@ -88,6 +88,7 @@ func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 func (mgr *GlobalManager) LoadMetadata() {
 	toplog.Info("GlobalManager>loadMetadata")
 
+	isolationSegment.LoadCache(mgr.cliConnection)
 	stack.LoadStackCache(mgr.cliConnection)
 
 	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
@@ -96,8 +97,6 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
-
-	isolationSegment.LoadCache(mgr.cliConnection)
 
 }
 

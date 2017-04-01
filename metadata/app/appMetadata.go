@@ -21,6 +21,7 @@ const MEGABYTE = (1024 * 1024)
 
 type AppMetadata struct {
 	*App
+	//IsolationSegmentGuid string
 	// TODO: Make this private
 	CacheTime time.Time
 }

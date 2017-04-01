@@ -16,11 +16,12 @@
 package eventCell
 
 type CellStats struct {
-	Ip             string
-	StackId        string
-	DeploymentName string
-	JobName        string
-	JobIndex       string
+	Ip                   string
+	StackId              string
+	IsolationSegmentGuid string
+	DeploymentName       string
+	JobName              string
+	JobIndex             string
 
 	NumOfCpus                   int
 	CapacityMemoryTotal         int64

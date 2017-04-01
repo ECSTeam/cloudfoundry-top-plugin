@@ -20,6 +20,7 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -86,6 +87,7 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnCapacityTotalContainers())
 	columns = append(columns, columnContainerCount())
 
+	columns = append(columns, columnIsolationSegmentName())
 	columns = append(columns, columnStackName())
 
 	columns = append(columns, columnDeploymentName())
@@ -153,6 +155,9 @@ func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 					if containerStats.ContainerMetric != nil {
 
 						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+
+						isoSegName := isolationSegment.FindName(displayCellStat.IsolationSegmentGuid)
+						displayCellStat.IsolationSegmentName = isoSegName
 
 						stack := stack.FindStackMetadata(appMetadata.StackGuid)
 						if displayCellStat.StackId == "" && appMetadata.StackGuid != "" {

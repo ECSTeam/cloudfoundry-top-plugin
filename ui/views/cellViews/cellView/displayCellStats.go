@@ -19,7 +19,8 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 
 type DisplayCellStats struct {
 	*eventCell.CellStats
-	StackName string
+	IsolationSegmentName string
+	StackName            string
 
 	TotalContainerCpuPercentage  float64
 	TotalContainerMemoryReserved uint64
