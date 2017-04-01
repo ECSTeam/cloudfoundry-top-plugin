@@ -23,8 +23,10 @@ const HelpHeaderText = `
                  information before stats are accurate.
   Duration     - Amount of time stats has been collecting data.
   Target       - The target URL of monitored foundation.
+  IsoSeg       - Isolation Segment (shown if foundation has more then 1).
   Stack        - The Cloud Foundry stack where indented fields below
                  pertain.
+  Cells        - Number of cells assigned to this IsoSeg & Stack.
     CPU (Used)   - Amount of CPU consumed by all app instances.
     CPU (Max)    - Sum of CPU capacity across all cells.
     Mem (Used)   - Amount of memory actually in use by all app

@@ -43,6 +43,7 @@ const HelpColumnsText = `
   C_DSK_USD - Total disk actually in use by all containers
   MAX_CNTR - Max containers a cell can handle
   CNTRS - Number of containers running on cell reported by cell
+  ISO_SEG - Isolation Segment cell belongs to
   DNAME - BOSH deployment name
   JOB_NAME - BOSH job name
   JOB_IDX - BOSH job index

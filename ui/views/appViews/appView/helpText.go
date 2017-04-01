@@ -51,6 +51,7 @@ const HelpColumnsText = `
   3XX - Count of HTTP(S) responses with status code 300-399
   4XX - Count of HTTP(S) responses with status code 400-499
   5XX - Count of HTTP(S) responses with status code 500-599
+  ISO_SEG - Isolation Segment assigned to space
   STACK - The Cloud Foundry stack used by this app 
 
 NOTE: The HTTP counters are based on traffic through the 
