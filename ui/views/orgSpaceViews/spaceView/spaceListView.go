@@ -21,6 +21,7 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
@@ -134,6 +135,7 @@ func (asUI *SpaceListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnLogStderr())
 
 	columns = append(columns, columnTotalReq())
+	columns = append(columns, columnIsolationSegmentName())
 
 	return columns
 }
@@ -241,6 +243,9 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 		} else {
 			displaySpace.QuotaName = "-none-"
 		}
+
+		isoSegName := isolationSegment.FindName(spaceMetadata.IsolationSegmentGuid)
+		displaySpace.IsolationSegmentName = isoSegName
 
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
 			displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage

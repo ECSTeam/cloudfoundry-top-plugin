@@ -412,3 +412,21 @@ func columnTotalReq() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
+
+func columnIsolationSegmentName() *uiCommon.ListColumn {
+	defaultColSize := 15
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return util.CaseInsensitiveLess(c1.(*DisplaySpace).IsolationSegmentName, c2.(*DisplaySpace).IsolationSegmentName)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		cellStats := data.(*DisplaySpace)
+		return util.FormatDisplayData(cellStats.IsolationSegmentName, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		cellStats := data.(*DisplaySpace)
+		return cellStats.IsolationSegmentName
+	}
+	c := uiCommon.NewListColumn("ISO_SEG", "ISO_SEG", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}

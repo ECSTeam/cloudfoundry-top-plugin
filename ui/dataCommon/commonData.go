@@ -110,7 +110,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
-		isoSeg := isolationSegment.FindMetadata(spaceMetadata.IsolationSegGuid)
+		isoSeg := isolationSegment.FindMetadata(spaceMetadata.IsolationSegmentGuid)
 		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
 		displayAppStats.IsolationSegmentName = isoSeg.Name
 

@@ -181,7 +181,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	appMdMgr := processor.GetMetadataManager().GetAppMdManager()
 	for _, app := range appMdMgr.AllApps() {
 		spaceMetadata := space.FindSpaceMetadata(app.SpaceGuid)
-		isolationSegGuid := spaceMetadata.IsolationSegGuid
+		isolationSegGuid := spaceMetadata.IsolationSegmentGuid
 		if isolationSegGuid == "" {
 			isolationSegGuid = isolationSegment.GetDefault().Guid
 		}

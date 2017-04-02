@@ -274,7 +274,7 @@ func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 					appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appStats.AppId)
 					cellStats.StackId = appMetadata.StackGuid
 					spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
-					cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegGuid
+					cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegmentGuid
 					return cellStats
 				}
 			}

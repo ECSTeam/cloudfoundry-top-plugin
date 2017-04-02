@@ -42,6 +42,8 @@ type DisplaySpace struct {
 	TotalLogStderr           int64
 
 	HttpAllCount int64
+
+	IsolationSegmentName string
 }
 
 func NewDisplaySpace(spaceMetadata *space.Space) *DisplaySpace {
