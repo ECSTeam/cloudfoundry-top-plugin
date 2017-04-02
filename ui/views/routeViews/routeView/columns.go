@@ -109,7 +109,7 @@ func columnHost() *uiCommon.ListColumn {
 }
 
 func columnDomain() *uiCommon.ListColumn {
-	defaultColSize := 25
+	defaultColSize := 30
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayRouteStats).Domain) < (c2.(*DisplayRouteStats).Domain)
 	}
@@ -127,7 +127,7 @@ func columnDomain() *uiCommon.ListColumn {
 }
 
 func columnPath() *uiCommon.ListColumn {
-	defaultColSize := 25
+	defaultColSize := 30
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayRouteStats).Path) < (c2.(*DisplayRouteStats).Path)
 	}

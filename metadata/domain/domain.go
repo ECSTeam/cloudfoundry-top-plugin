@@ -21,6 +21,7 @@ import (
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 type DomainResponse struct {
@@ -69,6 +70,12 @@ func FindDomainMetadataByName(domainName string) *Domain {
 		}
 	}
 	return nil
+}
+
+func AddDomainMetadata(domainName string) *Domain {
+	domain := &Domain{Guid: util.Pseudo_uuid(), Name: domainName}
+	domainsMetadataCache = append(domainsMetadataCache, domain)
+	return domain
 }
 
 func LoadDomainCache(cliConnection plugin.CliConnection) {

@@ -233,12 +233,14 @@ func (ep *EventProcessor) seedSpecialRouteData() {
 }
 
 func (ep *EventProcessor) addInternalRoute(domainName string, hostName string, pathName string, port int) *eventRoute.RouteStats {
-	domain := domain.FindDomainMetadataByName(domainName)
-	if domain == nil {
-		toplog.Warn("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v]", domainName, hostName, pathName)
-		return nil
+	domainItem := domain.FindDomainMetadataByName(domainName)
+	if domainItem == nil {
+		domainItem = domain.AddDomainMetadata(domainName)
+		toplog.Info("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v].  Dynamically added.", domainName, hostName, pathName)
+		//toplog.Warn("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v]", domainName, hostName, pathName)
+		//return nil
 	}
-	route := route.CreateInternalGeneratedRoute(hostName, pathName, domain.Guid, port)
+	route := route.CreateInternalGeneratedRoute(hostName, pathName, domainItem.Guid, port)
 	return ep.addRoute(domainName, hostName, pathName, port, route.Guid)
 }
 
