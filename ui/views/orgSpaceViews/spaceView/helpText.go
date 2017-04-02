@@ -50,7 +50,7 @@ const HelpColumnsText = `
   LOG_OUT - Total number of stdout log events for all instance of app
   LOG_ERR - Total number of stderr log events for all instance of app
   TOT_REQ - Count of all of the HTTP(S) request/responses
-
+  ISO_SEG - Isolation Segment assigned to space
 `
 
 const HelpLocalViewKeybindings = `
