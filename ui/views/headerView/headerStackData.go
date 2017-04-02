@@ -262,13 +262,17 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		} else {
 			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", stackSummaryStats.TotalCpuPercentage)
 		}
-		switch {
-		case stackSummaryStats.CellMaxCpuCapacity >= 90:
-			colorString := util.BRIGHT_RED
-			totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
-		case stackSummaryStats.CellMaxCpuCapacity >= 80:
-			colorString := util.BRIGHT_YELLOW
-			totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+
+		isWarmupComplete := asUI.masterUI.IsWarmupComplete()
+		if isWarmupComplete {
+			switch {
+			case stackSummaryStats.CellMaxCpuCapacity >= 90:
+				colorString := util.BRIGHT_RED
+				totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+			case stackSummaryStats.CellMaxCpuCapacity >= 80:
+				colorString := util.BRIGHT_YELLOW
+				totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
+			}
 		}
 	}
 
