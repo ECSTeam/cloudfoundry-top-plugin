@@ -249,6 +249,12 @@ func (w *ListWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyArrowLeft, gocui.ModNone, w.arrowLeft); err != nil {
 			log.Panicln(err)
 		}
+		if err := g.SetKeybinding(w.name, gocui.KeyHome, gocui.ModNone, w.arrowHome); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, gocui.KeyEnd, gocui.ModNone, w.arrowEnd); err != nil {
+			log.Panicln(err)
+		}
 
 		if err := g.SetKeybinding(w.name, 'o', gocui.ModNone, w.editSortAction); err != nil {
 			log.Panicln(err)
@@ -677,7 +683,6 @@ func (asUI *ListWidget) arrowRight(g *gocui.Gui, v *gocui.View) error {
 		asUI.displayColIndexOffset++
 	}
 	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
-
 	return asUI.RefreshDisplay(g)
 }
 
@@ -686,6 +691,26 @@ func (asUI *ListWidget) arrowLeft(g *gocui.Gui, v *gocui.View) error {
 	if asUI.displayColIndexOffset < 0 {
 		asUI.displayColIndexOffset = 0
 	}
+	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
+	return asUI.RefreshDisplay(g)
+}
+
+func (asUI *ListWidget) arrowHome(g *gocui.Gui, v *gocui.View) error {
+	asUI.displayColIndexOffset = 0
+	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
+	return asUI.RefreshDisplay(g)
+}
+
+func (asUI *ListWidget) arrowEnd(g *gocui.Gui, v *gocui.View) error {
+	for {
+		lastColumnCanDisplay := asUI.lastColumnCanDisplay(g, asUI.displayColIndexOffset)
+		if lastColumnCanDisplay < len(asUI.columns)-1 {
+			asUI.displayColIndexOffset++
+		} else {
+			break
+		}
+	}
+
 	asUI.columnOffsetFromVisability(g, asUI.selectedColumnId)
 	return asUI.RefreshDisplay(g)
 }
