@@ -289,11 +289,15 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 	if stackSummaryStats.TotalCapacityDisk > 0 {
 		CapacityDiskTotalDisplay = fmt.Sprintf("%v", util.ByteSize(stackSummaryStats.TotalCapacityDisk).StringWithPrecision(0))
 	}
+	TotalCellsDisplay := "--"
+	if stackSummaryStats.TotalCells > 0 {
+		TotalCellsDisplay = fmt.Sprintf("%v", stackSummaryStats.TotalCells)
+	}
 
 	if showIsolationSegment {
 		fmt.Fprintf(v, "IsoSeg: %-13v ", stackSummaryStats.IsolationSegmentName)
 	}
-	fmt.Fprintf(v, "Stack: %-13v Cells: %v\n", stackSummaryStats.StackName, stackSummaryStats.TotalCells)
+	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v\n", stackSummaryStats.StackName, TotalCellsDisplay)
 	fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"
