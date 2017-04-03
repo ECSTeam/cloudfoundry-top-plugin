@@ -16,10 +16,13 @@ Top supports displaying data from multiple stacks.  This screenshot shows a foun
 
 
 ### Header  - attention color:
-The header shows a summary overview of a foundation.  The `CPU% Used` value will be colorized if any cell's CPU utilization is at or above
-80% of the cell's capacity.  Yellow (>=80%), red (>=90%).  To determine root cause of why this field is colorized, use the `Cell Stats` screen
-which will indicate which of the cells are running warm/hot on CPU resource.
+The header shows a summary overview of a foundation.  The `CPU% Used` value will be colorized if any cell's CPU utilization is at or above 80% of the cell's capacity.  Yellow (>=80%), red (>=90%).  To determine root cause of why this field is colorized, use the `Cell Stats` screen which will indicate which of the cells are running warm/hot on CPU resource.
 ![Screenshot](screenshot_header.png?raw=true)
+
+
+### Header  - isolation segments (New with top 0.8.1):
+If isolation segments has been enabled, the header now summarizes cells by isolation segment as well as stack. 
+![Screenshot](screenshot_header_isoseg.png?raw=true)
 
 
 ### Application view - filters:
