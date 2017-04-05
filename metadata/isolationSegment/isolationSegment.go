@@ -23,8 +23,10 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
-const UnknownName = "unknown"
 const SharedIsolationSegmentName = "shared"
+const DefaultIsolationSegmentGuid = "-1"
+const UnknownIsolationSegmentGuid = ""
+const UnknownIsolationSegmentName = "unknown"
 
 type Link struct {
 	Href string `json:"href"`
@@ -47,49 +49,54 @@ type IsolationSegment struct {
 }
 
 var (
-	sharedIsolationSegment        = IsolationSegment{Name: SharedIsolationSegmentName}
-	isolationSegmentMetadataCache []IsolationSegment
+	DefaultIsolationSegment       = &IsolationSegment{Guid: DefaultIsolationSegmentGuid, Name: "default"}
+	SharedIsolationSegment        *IsolationSegment
+	UnknownIsolationSegment       = &IsolationSegment{Guid: UnknownIsolationSegmentGuid, Name: UnknownIsolationSegmentName}
+	isolationSegmentMetadataCache []*IsolationSegment
 )
 
-func All() []IsolationSegment {
+func All() []*IsolationSegment {
 	return isolationSegmentMetadataCache
 }
 
-func GetDefault() IsolationSegment {
-	return sharedIsolationSegment
+func GetDefault() *IsolationSegment {
+	return SharedIsolationSegment
 }
 
-func FindMetadata(guid string) IsolationSegment {
+func FindMetadata(guid string) *IsolationSegment {
 	if guid == "" {
-		return sharedIsolationSegment
+		return &IsolationSegment{Name: "unknown"}
+	}
+	if guid == DefaultIsolationSegmentGuid {
+		return SharedIsolationSegment
 	}
 	for _, isoSeg := range isolationSegmentMetadataCache {
 		if isoSeg.Guid == guid {
 			return isoSeg
 		}
 	}
-	return IsolationSegment{Guid: guid, Name: guid}
+	return &IsolationSegment{Guid: guid, Name: guid}
 }
 
 func FindName(guid string) string {
 	metadata := FindMetadata(guid)
 	name := metadata.Name
 	if name == "" {
-		name = UnknownName
+		name = UnknownIsolationSegmentName
 	}
 	return name
 }
 
-func FindMetadataByName(name string) IsolationSegment {
+func FindMetadataByName(name string) *IsolationSegment {
 	if name == "" {
-		return sharedIsolationSegment
+		return SharedIsolationSegment
 	}
 	for _, isoSeg := range isolationSegmentMetadataCache {
 		if isoSeg.Name == name {
 			return isoSeg
 		}
 	}
-	return IsolationSegment{Name: name}
+	return &IsolationSegment{Name: name}
 }
 
 func LoadCache(cliConnection plugin.CliConnection) {
@@ -101,14 +108,13 @@ func LoadCache(cliConnection plugin.CliConnection) {
 
 	//toplog.Info("isolation segments: %+v", data)
 	isolationSegmentMetadataCache = data
-	sharedIsolationSegment = FindMetadataByName(SharedIsolationSegmentName)
-
+	SharedIsolationSegment = FindMetadataByName(SharedIsolationSegmentName)
 }
 
-func getMetadata(cliConnection plugin.CliConnection) ([]IsolationSegment, error) {
+func getMetadata(cliConnection plugin.CliConnection) ([]*IsolationSegment, error) {
 
 	url := "/v3/isolation_segments"
-	metadata := []IsolationSegment{}
+	metadata := []*IsolationSegment{}
 
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var response IsolationSegmentResponse
@@ -118,6 +124,7 @@ func getMetadata(cliConnection plugin.CliConnection) ([]IsolationSegment, error)
 			return metadata, "", err
 		}
 		for _, item := range response.Resources {
+			item := &IsolationSegment{Guid: item.Guid, Name: item.Name}
 			metadata = append(metadata, item)
 		}
 		return response, response.Pagination.Next.Href, nil

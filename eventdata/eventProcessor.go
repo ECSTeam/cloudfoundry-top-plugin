@@ -106,8 +106,14 @@ func (ep *EventProcessor) GetMetadataManager() *metadata.GlobalManager {
 }
 
 func (ep *EventProcessor) UpdateData() {
-	processorCopy := ep.currentEventData.Clone()
-	ep.displayedEventData = processorCopy
+
+	//toplog.Info("Current ep: %v", ep.currentEventData.eventProcessor)
+
+	eventDataCopy := ep.currentEventData.Clone()
+	ep.displayedEventData = eventDataCopy
+
+	//toplog.Info("Display ep: %v", eventDataCopy.eventProcessor)
+
 }
 
 func (ep *EventProcessor) Start() {

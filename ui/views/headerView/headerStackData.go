@@ -114,8 +114,12 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	isolationSegments := isolationSegment.All()
 	if len(isolationSegments) == 0 {
 		// We must be running against a Cloud Foundry foundation prior to isolation segment support
-		isolationSegments = []isolationSegment.IsolationSegment{isolationSegment.GetDefault()}
+		isolationSegments = []*isolationSegment.IsolationSegment{isolationSegment.GetDefault()}
+	} else {
+		isolationSegments = append(isolationSegments, isolationSegment.UnknownIsolationSegment)
+		//isolationSegments = append(isolationSegments, isolationSegment.SharedIsolationSegment)
 	}
+
 	for _, isoSeg := range isolationSegments {
 		summaryStatsByIsoSeg[isoSeg.Guid] = make(map[string]*StackSummaryStats)
 		for _, stack := range stacks {
@@ -140,8 +144,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	for _, appStats := range asUI.commonData.GetDisplayAppStatsMap() {
 		isolationSegGuid := appStats.IsolationSegmentGuid
-		if isolationSegGuid == "" {
-			isolationSegGuid = isolationSegment.GetDefault().Guid
+		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
+			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
@@ -182,8 +186,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	for _, app := range appMdMgr.AllApps() {
 		spaceMetadata := space.FindSpaceMetadata(app.SpaceGuid)
 		isolationSegGuid := spaceMetadata.IsolationSegmentGuid
-		if isolationSegGuid == "" {
-			isolationSegGuid = isolationSegment.GetDefault().Guid
+		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
+			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][app.StackGuid]
 		if sumStats != nil {
@@ -197,8 +201,12 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	for _, cellStats := range processor.GetDisplayedEventData().CellMap {
 		//toplog.Info("cellStats.StackId:%v", cellStats.StackId)
 		isolationSegGuid := cellStats.IsolationSegmentGuid
-		if isolationSegGuid == "" {
-			isolationSegGuid = isolationSegment.GetDefault().Guid
+		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
+			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
+		} else if isolationSegGuid == isolationSegment.UnknownIsolationSegmentGuid {
+			// Do another attempt to resolve unknown IsoSeg before we display header
+			processor.GetDisplayedEventData().AssignIsolationSegment(cellStats)
+			isolationSegGuid = cellStats.IsolationSegmentGuid
 		}
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][cellStats.StackId]
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
@@ -226,7 +234,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	//toplog.Info("stackSummaryStatsArray:%v", len(stackSummaryStatsArray))
 	sort.Sort(stackSummaryStatsArray)
 
-	showIsolationSegment := len(isolationSegments) > 1
+	// Set check for greater then two because we force an 'unknown' segment.  If we only have 'shared'
+	// as a real segment, there is no need to show segment
+	showIsolationSegment := len(isolationSegments) > 2
 	linesWritten := 0
 	for _, stackSummaryStats := range stackSummaryStatsArray {
 		if stackSummaryStats.TotalApps > 0 || stackSummaryStats.TotalCellCPUs > 0 {

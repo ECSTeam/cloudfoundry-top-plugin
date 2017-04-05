@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -76,7 +77,11 @@ func columnSpaceName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return util.FormatDisplayData(appStats.SpaceName, defaultColSize)
+		spaceNameDisplay := "--"
+		if appStats.SpaceName != "" {
+			spaceNameDisplay = appStats.SpaceName
+		}
+		return util.FormatDisplayData(spaceNameDisplay, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
@@ -94,7 +99,11 @@ func columnOrgName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return util.FormatDisplayData(appStats.OrgName, defaultColSize)
+		orgName := "--"
+		if appStats.OrgId != "" {
+			orgName = appStats.OrgName
+		}
+		return util.FormatDisplayData(orgName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
@@ -448,7 +457,11 @@ func columnIsolationSegmentName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return util.FormatDisplayData(appStats.IsolationSegmentName, defaultColSize)
+		isolationSegmentName := "--"
+		if appStats.IsolationSegmentGuid != isolationSegment.UnknownIsolationSegmentGuid {
+			isolationSegmentName = appStats.IsolationSegmentName
+		}
+		return util.FormatDisplayData(isolationSegmentName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)

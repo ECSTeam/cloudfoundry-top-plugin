@@ -541,7 +541,7 @@ func (mui *MasterUI) IsWarmupComplete() bool {
 
 func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
 	// TOOD: Need a way to minimize header for cases were we have a 25 row display -- for edit filter / sort
-	toplog.Info("SetMinimizeHeader:%v", minimizeHeader)
+	toplog.Debug("SetMinimizeHeader:%v", minimizeHeader)
 	mui.headerView.SetMinimizeHeader(g, minimizeHeader)
 	//mui.RefeshNow()
 	mui.updateHeaderDisplay(g)

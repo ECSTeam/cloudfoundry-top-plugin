@@ -20,6 +20,7 @@ import (
 
 	"github.com/cloudfoundry/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -97,6 +98,9 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 		}
 		for _, item := range response.Resources {
 			item.Entity.Guid = item.Meta.Guid
+			if item.Entity.IsolationSegmentGuid == "" {
+				item.Entity.IsolationSegmentGuid = isolationSegment.DefaultIsolationSegmentGuid
+			}
 			metadata = append(metadata, item.Entity)
 		}
 		return response, response.NextUrl, nil

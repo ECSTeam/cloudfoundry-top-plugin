@@ -92,6 +92,9 @@ func (mgr *GlobalManager) LoadMetadata() {
 	stack.LoadStackCache(mgr.cliConnection)
 
 	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
+
+	//time.Sleep(time.Second * 60)
+
 	space.LoadSpaceCache(mgr.cliConnection)
 	org.LoadOrgCache(mgr.cliConnection)
 
