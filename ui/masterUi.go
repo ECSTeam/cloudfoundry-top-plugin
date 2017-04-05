@@ -257,6 +257,10 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		log.Panicln(err)
 	}
 
+	if err := g.SetKeybinding(viewName, 'E', gocui.ModNone, mui.logTestError); err != nil {
+		log.Panicln(err)
+	}
+
 	if err := g.SetKeybinding(viewName, 'Z', gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			toplog.Debug("Top: %v", mui.layoutManager.Top().Name())
@@ -477,6 +481,11 @@ func (mui *MasterUI) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error
 	mui.SetDisplayPaused(!mui.GetDisplayPaused())
 	//mui.updateHeaderDisplay(mui.gui)
 	return mui.currentDataView.RefreshDisplay(mui.gui)
+}
+
+func (mui *MasterUI) logTestError(g *gocui.Gui, v *gocui.View) error {
+	toplog.Error("test error")
+	return nil
 }
 
 func (mui *MasterUI) GetDisplayPaused() bool {

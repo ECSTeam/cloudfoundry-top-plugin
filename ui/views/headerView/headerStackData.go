@@ -29,6 +29,7 @@ import (
 )
 
 const UNKNOWN_STACK_NAME = "UNKNOWN"
+const UNKNOWN_ISOSEG_NAME = "UNKNOWN"
 
 type StackSummaryStats struct {
 	IsolationSegmentGuid        string
@@ -68,7 +69,7 @@ func (slice StackSummaryStatsArray) Less(i, j int) bool {
 	isoSegName2 := slice[j].IsolationSegmentName
 
 	if isoSegName1 == isoSegName2 {
-		// Always sort UNKNOWN to bottom
+		// Always sort UNKNOWN stack to bottom
 		stackName1 := slice[i].StackName
 		if strings.HasPrefix(stackName1, UNKNOWN_STACK_NAME) {
 			return false
@@ -80,13 +81,21 @@ func (slice StackSummaryStatsArray) Less(i, j int) bool {
 		return stackName1 < stackName2
 	}
 
-	// Always sort "shared" to top
+	// Always sort "shared" isolation segment to top
 	if strings.HasPrefix(isoSegName1, isolationSegment.SharedIsolationSegmentName) {
 		return true
 	}
 	if strings.HasPrefix(isoSegName2, isolationSegment.SharedIsolationSegmentName) {
 		return false
 	}
+	// Always sort UNKNOWN isolation segment to bottom
+	if strings.HasPrefix(isoSegName1, UNKNOWN_ISOSEG_NAME) {
+		return false
+	}
+	if strings.HasPrefix(isoSegName2, UNKNOWN_ISOSEG_NAME) {
+		return true
+	}
+
 	return isoSegName1 < isoSegName2
 
 }
@@ -136,7 +145,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if summaryStatsByIsoSeg[""] == nil {
 			summaryStatsByIsoSeg[""] = make(map[string]*StackSummaryStats)
 		}
-		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
+		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
 	}
 
 	// Key: cellIP

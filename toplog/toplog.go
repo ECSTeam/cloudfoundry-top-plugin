@@ -57,21 +57,27 @@ const (
 )
 
 var (
-	debugLines       []*LogLine
-	gui              *gocui.Gui
-	debugWidget      *DebugWidget
-	windowOpen       bool
-	freezeAutoScroll bool
-	mu               sync.Mutex
-	debugEnabled     bool
+	debugLines           []*LogLine
+	gui                  *gocui.Gui
+	debugWidget          *DebugWidget
+	windowOpen           bool
+	freezeAutoScroll     bool
+	mu                   sync.Mutex
+	debugEnabled         bool
+	autoShowErrorEnabled bool
 )
 
 func init() {
 	debugLines = []*LogLine{}
+	autoShowErrorEnabled = true
 }
 
 func SetDebugEnabled(isEnabled bool) {
 	debugEnabled = isEnabled
+}
+
+func SetAutoShowErrorEnabled(isEnabled bool) {
+	autoShowErrorEnabled = isEnabled
 }
 
 type LogLine struct {
@@ -101,7 +107,9 @@ func Warn(msg string, a ...interface{}) {
 
 func Error(msg string, a ...interface{}) {
 	logMsg(ErrorLevel, msg, a...)
-	Open()
+	if autoShowErrorEnabled {
+		Open()
+	}
 }
 
 func Open() {

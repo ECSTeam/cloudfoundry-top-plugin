@@ -18,6 +18,7 @@ package cellView
 import (
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -425,7 +426,11 @@ func columnIsolationSegmentName() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		cellStats := data.(*DisplayCellStats)
-		return util.FormatDisplayData(cellStats.IsolationSegmentName, defaultColSize)
+		isolationSegmentName := "--"
+		if cellStats.IsolationSegmentGuid != isolationSegment.UnknownIsolationSegmentGuid {
+			isolationSegmentName = cellStats.IsolationSegmentName
+		}
+		return util.FormatDisplayData(isolationSegmentName, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		cellStats := data.(*DisplayCellStats)
