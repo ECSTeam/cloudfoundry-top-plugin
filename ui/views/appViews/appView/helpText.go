@@ -36,7 +36,8 @@ const HelpColumnsText = `
   APPLICATION - Application name
   SPACE - Space name
   ORG - Organization name
-  RCR - Total reporting Containers
+  DCR - Desired containers (instances)
+  RCR - Total reporting containers (ideally should match DCR)
   CPU%% - Total CPU percent consumed by all containers
   MEM_USED - Total memory used by all containers
   DSK_USED - Total disk used by all containers

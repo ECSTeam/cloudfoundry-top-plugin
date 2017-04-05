@@ -204,7 +204,7 @@ func (w *DebugWidget) calulateViewDimensions(g *gocui.Gui) (left, top, right, bo
 
 func (w *DebugWidget) Layout(g *gocui.Gui) error {
 
-	baseTitle := "Log (press ENTER to close, DOWN/UP arrow to scroll)"
+	baseTitle := "Log (ENTER:to close, t:toggle auto-open, DOWN/UP arrow to scroll)"
 	left, top, right, bottom := w.calulateViewDimensions(g)
 	v, err := g.SetView(w.name, left, top, right, bottom)
 	if err != nil {
@@ -263,6 +263,9 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 			log.Panicln(err)
 		}
 		if err := g.SetKeybinding(w.name, 'D', gocui.ModNone, w.toggleDebugAction); err != nil {
+			log.Panicln(err)
+		}
+		if err := g.SetKeybinding(w.name, 't', gocui.ModNone, w.toggleAutoOpenAction); err != nil {
 			log.Panicln(err)
 		}
 
@@ -377,6 +380,13 @@ func (w *DebugWidget) testDebugMsg(g *gocui.Gui, v *gocui.View) error {
 
 func (w *DebugWidget) toggleDebugAction(g *gocui.Gui, v *gocui.View) error {
 	debugEnabled = !debugEnabled
+	Info("debugEnabled now set to %v", debugEnabled)
+	return nil
+}
+
+func (w *DebugWidget) toggleAutoOpenAction(g *gocui.Gui, v *gocui.View) error {
+	autoShowErrorEnabled = !autoShowErrorEnabled
+	Info("autoShowErrorEnabled now set to %v", autoShowErrorEnabled)
 	return nil
 }
 
