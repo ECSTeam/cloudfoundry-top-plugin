@@ -282,6 +282,10 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		log.Panicln(err)
 	}
 	// TODO: Testing -- remove later
+	if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, mui.test2ShowUserMessage); err != nil {
+		log.Panicln(err)
+	}
+	// TODO: Testing -- remove later
 	if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, mui.testClearUserMessage); err != nil {
 		log.Panicln(err)
 	}
@@ -290,13 +294,15 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 }
 
 func (mui *MasterUI) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
-	//return mui.alertView.ShowUserMessage(g, "ALERT: 1 application(s) not in desired state (EXAMPLE) ")
-	return nil
+	return mui.alertManager.ShowMessage(g, alertView.APPS_NOT_IN_DESIRED_STATE, 99, "s")
+}
+
+func (mui *MasterUI) test2ShowUserMessage(g *gocui.Gui, v *gocui.View) error {
+	return mui.alertManager.ShowMessage(g, alertView.AutoOpenOnErrorDisabled, 3)
 }
 
 func (mui *MasterUI) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
-	//return mui.alertView.ClearUserMessage(g)
-	return nil
+	return mui.alertManager.ClearUserMessage(g, alertView.AutoOpenOnErrorDisabled)
 }
 
 func (mui *MasterUI) CloseView(m managerUI.Manager) error {

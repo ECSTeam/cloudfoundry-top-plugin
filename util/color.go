@@ -45,7 +45,7 @@ const (
 	CYAN   = "\033[36"
 	WHITE  = "\033[37"
 
-	// Backgroun colors:
+	// Background colors:
 	// 40m - Black
 	// 41m - Red
 	// 42m - Green
@@ -61,9 +61,11 @@ const (
 	//FLASH = ";5m"
 	REVERSE = ";7m"
 
-	WHITE_TEXT_SOFT_BG = "\x1b[48;5;235m\x1b[37m"
-	RED_TEXT_GREEN_BG  = "\033[31m\033[42m"
-	WHITE_TEXT_RED_BG  = "\033[37m\033[41m"
+	WHITE_TEXT_SOFT_BG   = "\x1b[48;5;235m\x1b[37m"
+	RED_TEXT_GREEN_BG    = "\033[31m\033[42m"
+	WHITE_TEXT_RED_BG    = "\033[37m\033[41m"
+	WHITE_TEXT_YELLOW_BG = "\033[37m\033[43m"
+	WHITE_TEXT_BLUE_BG   = "\033[37m\033[44m"
 
 	BRIGHT_BLACK    = BLACK + BRIGHT
 	DIM_BLACK       = BLACK + DIM

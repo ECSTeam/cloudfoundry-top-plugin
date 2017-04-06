@@ -20,6 +20,7 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
@@ -29,6 +30,11 @@ type AlertManager struct {
 	commonData *dataCommon.CommonData
 
 	AlertSize int
+	//visableMessages map[string]*AlertMessage
+	visableMessages []*AlertMessage
+	expandedMessage map[string]string
+
+	//visableMessages map[string]interface{}
 
 	// TODO: We need an Alert object that contains the messages as well as level: INFO, WARN, ERROR
 	// We also need to hold onto an array of Alert objects
@@ -36,7 +42,10 @@ type AlertManager struct {
 }
 
 func NewAlertManager(masterUI masterUIInterface.MasterUIInterface, commonData *dataCommon.CommonData) *AlertManager {
-	return &AlertManager{masterUI: masterUI, commonData: commonData}
+	return &AlertManager{masterUI: masterUI, commonData: commonData,
+		visableMessages: make([]*AlertMessage, 0, 10),
+		expandedMessage: make(map[string]string),
+	}
 }
 
 func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
@@ -56,11 +65,10 @@ func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 		if appsNotInDesiredState > 1 {
 			plural = "s"
 		}
-		msg := fmt.Sprintf("ALERT: %v application%v not in desired state ",
-			appsNotInDesiredState, plural)
-		am.ShowUserMessage(g, msg)
+		am.ShowMessage(g, APPS_NOT_IN_DESIRED_STATE, appsNotInDesiredState, plural)
+
 	} else if am.isUserMessageOpen(g) {
-		am.ClearUserMessage(g)
+		am.ClearUserMessage(g, APPS_NOT_IN_DESIRED_STATE)
 	}
 	return nil
 }
@@ -75,21 +83,78 @@ func (am *AlertManager) isUserMessageOpen(g *gocui.Gui) bool {
 	}
 }
 
-func (am *AlertManager) ClearUserMessage(g *gocui.Gui) error {
-	alertViewName := "alertView"
-	view := am.masterUI.LayoutManager().GetManagerByViewName(alertViewName)
-	if view != nil {
-		am.masterUI.CloseView(view)
+func (am *AlertManager) ClearUserMessage(g *gocui.Gui, removeMessage *AlertMessage) error {
+
+	_, found := am.expandedMessage[removeMessage.Id]
+	if found {
+		delete(am.expandedMessage, removeMessage.Id)
+		visableMessages := make([]*AlertMessage, 0, 10)
+		for _, message := range am.visableMessages {
+			if message.Id != removeMessage.Id {
+				visableMessages = append(visableMessages, message)
+			}
+		}
+		am.visableMessages = visableMessages
+		return am.UpdateMessageView(g)
 	}
-	am.AlertSize = 0
 	return nil
+	/*
+		alertViewName := "alertView"
+		view := am.masterUI.LayoutManager().GetManagerByViewName(alertViewName)
+		if view != nil {
+			am.masterUI.CloseView(view)
+		}
+		am.AlertSize = 0
+		return nil
+	*/
 }
 
 // TODO: Have message levels which will colorize differently
-func (am *AlertManager) ShowUserMessage(g *gocui.Gui, message string) error {
-	alertViewName := "alertView"
-	alertHeight := 1
+func (am *AlertManager) ShowMessage(g *gocui.Gui, message *AlertMessage, args ...interface{}) error {
 
+	//message := MessageCatalog[messageId]
+	msgText := message.Text
+	expandedMessage := fmt.Sprintf(msgText, args...)
+	colorizeText := ""
+	switch message.Type {
+	case AlertType:
+		colorizeText = util.WHITE_TEXT_RED_BG
+	case WarnType:
+		colorizeText = util.WHITE_TEXT_YELLOW_BG
+	case InfoType:
+		colorizeText = util.WHITE_TEXT_BLUE_BG
+
+	}
+	expandedMessage = fmt.Sprintf(" %v %v: %v %v", colorizeText, message.Type, expandedMessage, util.CLEAR)
+
+	if am.expandedMessage[message.Id] == "" {
+		am.visableMessages = append(am.visableMessages, message)
+	}
+	am.expandedMessage[message.Id] = expandedMessage
+
+	return am.UpdateMessageView(g)
+}
+
+// TODO: Have message levels which will colorize differently
+func (am *AlertManager) UpdateMessageView(g *gocui.Gui) error {
+	alertViewName := "alertView"
+
+	/*
+		fmt.Fprintf(v, " %v", util.WHITE_TEXT_RED_BG)
+		if w.message != "" {
+			fmt.Fprintln(v, w.message)
+		} else {
+			fmt.Fprintln(v, "No ALERT message")
+		}
+		fmt.Fprintf(v, "%v", util.CLEAR)
+	*/
+
+	expandedMsg := ""
+	for _, message := range am.visableMessages {
+		expandedMsg = expandedMsg + am.expandedMessage[message.Id] + "\n"
+	}
+
+	alertHeight := len(am.visableMessages)
 	am.AlertSize = alertHeight
 
 	var alertView *AlertWidget
@@ -108,6 +173,7 @@ func (am *AlertManager) ShowUserMessage(g *gocui.Gui, message string) error {
 		alertView = view.(*AlertWidget)
 		alertView.SetHeight(alertHeight)
 	}
-	alertView.SetMessage(message)
+
+	alertView.SetMessage(expandedMsg)
 	return nil
 }

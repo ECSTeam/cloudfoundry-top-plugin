@@ -21,7 +21,6 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
@@ -69,13 +68,6 @@ func (w *AlertWidget) Layout(g *gocui.Gui) error {
 	}
 
 	v.Clear()
-	fmt.Fprintf(v, " %v", util.WHITE_TEXT_RED_BG)
-	if w.message != "" {
-		fmt.Fprintln(v, w.message)
-	} else {
-		fmt.Fprintln(v, "No ALERT message")
-	}
-	fmt.Fprintf(v, "%v", util.CLEAR)
-
+	fmt.Fprintln(v, w.message)
 	return nil
 }
