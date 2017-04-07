@@ -298,11 +298,11 @@ func (mui *MasterUI) testShowUserMessage(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (mui *MasterUI) test2ShowUserMessage(g *gocui.Gui, v *gocui.View) error {
-	return mui.alertManager.ShowMessage(g, alertView.AutoOpenOnErrorDisabled, 3)
+	return mui.alertManager.ShowMessage(g, alertView.TestMessage)
 }
 
 func (mui *MasterUI) testClearUserMessage(g *gocui.Gui, v *gocui.View) error {
-	return mui.alertManager.ClearUserMessage(g, alertView.AutoOpenOnErrorDisabled)
+	return mui.alertManager.ClearUserMessage(g, alertView.TestMessage)
 }
 
 func (mui *MasterUI) CloseView(m managerUI.Manager) error {
@@ -568,10 +568,5 @@ func (mui *MasterUI) updateHeaderDisplay(g *gocui.Gui) error {
 		return err
 	}
 
-	// TODO: Is this the best spot to check for alerts?? Seems out of place in the updateHeader method
-	isWarmupComplete := mui.IsWarmupComplete()
-	if !mui.displayPaused && isWarmupComplete {
-		mui.alertManager.CheckForAlerts(g)
-	}
-	return nil
+	return mui.alertManager.CheckForAlerts(g)
 }

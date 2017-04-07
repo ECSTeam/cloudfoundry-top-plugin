@@ -17,7 +17,9 @@ package alertView
 
 import (
 	"fmt"
+	"sort"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -31,7 +33,7 @@ type AlertManager struct {
 
 	AlertSize int
 	//visableMessages map[string]*AlertMessage
-	visableMessages []*AlertMessage
+	visableMessages AlertMessages
 	expandedMessage map[string]string
 
 	//visableMessages map[string]interface{}
@@ -49,6 +51,18 @@ func NewAlertManager(masterUI masterUIInterface.MasterUIInterface, commonData *d
 }
 
 func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
+	am.checkForAppsNotInDesiredState(g)
+	am.checkForErrorMsgDelta(g)
+	return nil
+}
+
+func (am *AlertManager) checkForAppsNotInDesiredState(g *gocui.Gui) error {
+
+	commonData := am.commonData
+
+	if am.masterUI.GetDisplayPaused() || !commonData.IsWarmupComplete() {
+		return nil
+	}
 
 	// TODO: We can't alert if we are not monitoring all the apps
 	// Update this alert only on monitored apps if non-privileged
@@ -57,20 +71,27 @@ func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 		return nil
 	}
 
-	commonData := am.commonData
 	appsNotInDesiredState := commonData.AppsNotInDesiredState()
-
 	if commonData.IsWarmupComplete() && appsNotInDesiredState > 0 {
 		plural := ""
 		if appsNotInDesiredState > 1 {
 			plural = "s"
 		}
-		am.ShowMessage(g, APPS_NOT_IN_DESIRED_STATE, appsNotInDesiredState, plural)
+		return am.ShowMessage(g, APPS_NOT_IN_DESIRED_STATE, appsNotInDesiredState, plural)
 
 	} else if am.isUserMessageOpen(g) {
-		am.ClearUserMessage(g, APPS_NOT_IN_DESIRED_STATE)
+		return am.ClearUserMessage(g, APPS_NOT_IN_DESIRED_STATE)
 	}
 	return nil
+}
+
+func (am *AlertManager) checkForErrorMsgDelta(g *gocui.Gui) error {
+	_, _, _, errorMsgDelta := toplog.GetMsgDeltas()
+	if errorMsgDelta > 0 {
+		return am.ShowMessage(g, ErrorsSinceViewed, errorMsgDelta)
+	} else {
+		return am.ClearUserMessage(g, ErrorsSinceViewed)
+	}
 }
 
 func (am *AlertManager) isUserMessageOpen(g *gocui.Gui) bool {
@@ -120,15 +141,16 @@ func (am *AlertManager) ShowMessage(g *gocui.Gui, message *AlertMessage, args ..
 	case AlertType:
 		colorizeText = util.WHITE_TEXT_RED_BG
 	case WarnType:
-		colorizeText = util.WHITE_TEXT_YELLOW_BG
+		colorizeText = util.BRIGHT_YELLOW
 	case InfoType:
-		colorizeText = util.WHITE_TEXT_BLUE_BG
+		colorizeText = util.BRIGHT_GREEN
 
 	}
 	expandedMessage = fmt.Sprintf(" %v %v: %v %v", colorizeText, message.Type, expandedMessage, util.CLEAR)
 
 	if am.expandedMessage[message.Id] == "" {
 		am.visableMessages = append(am.visableMessages, message)
+		sort.Sort(am.visableMessages)
 	}
 	am.expandedMessage[message.Id] = expandedMessage
 

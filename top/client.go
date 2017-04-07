@@ -391,6 +391,8 @@ func (c *Client) hasDopplerFirehoseScope() (bool, error) {
 		return false, err
 	}
 
+	//fmt.Printf("decodedAccessToken: %v\n", decodedAccessToken)
+
 	jsonParsed, err := gabs.ParseJSON(decodedAccessToken)
 	if err != nil {
 		return false, err

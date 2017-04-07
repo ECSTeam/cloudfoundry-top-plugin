@@ -33,7 +33,8 @@ const (
 
 var MessageCatalog = make(map[string]*AlertMessage)
 var APPS_NOT_IN_DESIRED_STATE = NewAlertMessage("ANIDS", AlertType, "%v application%v not in desired state")
-var AutoOpenOnErrorDisabled = NewAlertMessage("AOOE", InfoType, "Auto show errors is off. Errors since viewed: %v")
+var ErrorsSinceViewed = NewAlertMessage("ESV", AlertType, "%v monitoring errors (shift-D to display)")
+var TestMessage = NewAlertMessage("TM", InfoType, "Test Message")
 
 func init() {
 	MessageCatalog[APPS_NOT_IN_DESIRED_STATE.Id] = APPS_NOT_IN_DESIRED_STATE
@@ -45,6 +46,7 @@ type AlertMessage struct {
 	Type MessageType
 	Text string
 }
+type AlertMessages []*AlertMessage
 
 func NewAlertMessage(
 	id string,
@@ -55,4 +57,36 @@ func NewAlertMessage(
 		Type: msgType,
 		Text: text}
 	return alertMsg
+}
+
+func (f AlertMessages) Len() int {
+	return len(f)
+}
+
+func (f AlertMessages) Less(i, j int) bool {
+	type1 := f[i].Type
+	type2 := f[j].Type
+	if type1 == type2 {
+		// Secondary sort
+		return (f[i].Id < f[j].Id)
+	}
+	switch {
+	case type1 == AlertType:
+		return true
+	case type2 == AlertType:
+		return false
+	case type1 == WarnType:
+		return true
+	case type2 == WarnType:
+		return false
+	case type1 == InfoType:
+		return true
+	case type2 == InfoType:
+		return false
+	}
+	return false
+}
+
+func (f AlertMessages) Swap(i, j int) {
+	f[i], f[j] = f[j], f[i]
 }

@@ -145,7 +145,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if summaryStatsByIsoSeg[""] == nil {
 			summaryStatsByIsoSeg[""] = make(map[string]*StackSummaryStats)
 		}
-		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackId: "", StackName: (UNKNOWN_STACK_NAME + " (cells with no containers)")}
+		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackId: "", StackName: UNKNOWN_STACK_NAME}
 	}
 
 	// Key: cellIP
@@ -314,9 +314,13 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 	}
 
 	if showIsolationSegment {
-		fmt.Fprintf(v, "IsoSeg: %-13v ", stackSummaryStats.IsolationSegmentName)
+		fmt.Fprintf(v, "IsoSeg: %-12v ", stackSummaryStats.IsolationSegmentName)
 	}
-	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v\n", stackSummaryStats.StackName, TotalCellsDisplay)
+	notes := ""
+	if stackSummaryStats.StackName == UNKNOWN_STACK_NAME {
+		notes = "(cells with no containers)"
+	}
+	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v%v\n", stackSummaryStats.StackName, TotalCellsDisplay, notes)
 	fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"

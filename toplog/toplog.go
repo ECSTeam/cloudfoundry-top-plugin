@@ -65,11 +65,18 @@ var (
 	mu                   sync.Mutex
 	debugEnabled         bool
 	autoShowErrorEnabled bool
+
+	// msg delta fields are counts by message level of log lines that have
+	// occured since the log window has been closed.
+	debugMsgDelta int
+	infoMsgDelta  int
+	warnMsgDelta  int
+	errorMsgDelta int
 )
 
 func init() {
 	debugLines = []*LogLine{}
-	autoShowErrorEnabled = true
+	autoShowErrorEnabled = false
 }
 
 func SetDebugEnabled(isEnabled bool) {
@@ -78,6 +85,10 @@ func SetDebugEnabled(isEnabled bool) {
 
 func SetAutoShowErrorEnabled(isEnabled bool) {
 	autoShowErrorEnabled = isEnabled
+}
+
+func GetMsgDeltas() (int, int, int, int) {
+	return debugMsgDelta, infoMsgDelta, warnMsgDelta, errorMsgDelta
 }
 
 type LogLine struct {
@@ -94,19 +105,31 @@ func NewLogLine(level LogLevel, message string, timestamp time.Time) *LogLine {
 func Debug(msg string, a ...interface{}) {
 	if debugEnabled {
 		logMsg(DebugLevel, msg, a...)
+		if !windowOpen {
+			debugMsgDelta++
+		}
 	}
 }
 
 func Info(msg string, a ...interface{}) {
 	logMsg(InfoLevel, msg, a...)
+	if !windowOpen {
+		infoMsgDelta++
+	}
 }
 
 func Warn(msg string, a ...interface{}) {
 	logMsg(WarnLevel, msg, a...)
+	if !windowOpen {
+		warnMsgDelta++
+	}
 }
 
 func Error(msg string, a ...interface{}) {
 	logMsg(ErrorLevel, msg, a...)
+	if !windowOpen {
+		errorMsgDelta = errorMsgDelta + 1
+	}
 	if autoShowErrorEnabled {
 		Open()
 	}
@@ -173,6 +196,10 @@ func openView() {
 	}
 	windowOpen = true
 	debugWidget.Layout(gui)
+	debugMsgDelta = 0
+	infoMsgDelta = 0
+	warnMsgDelta = 0
+	errorMsgDelta = 0
 }
 
 func NewDebugWidget(masterUI MasterUIInterface, name string) *DebugWidget {
