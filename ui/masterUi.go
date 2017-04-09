@@ -276,20 +276,20 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		}); err != nil {
 		log.Panicln(err)
 	}
-
-	// TODO: Testing -- remove later
-	if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, mui.testShowUserMessage); err != nil {
-		log.Panicln(err)
-	}
-	// TODO: Testing -- remove later
-	if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, mui.test2ShowUserMessage); err != nil {
-		log.Panicln(err)
-	}
-	// TODO: Testing -- remove later
-	if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, mui.testClearUserMessage); err != nil {
-		log.Panicln(err)
-	}
-
+	/*
+		// TODO: Testing -- remove later
+		if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, mui.testShowUserMessage); err != nil {
+			log.Panicln(err)
+		}
+		// TODO: Testing -- remove later
+		if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, mui.test2ShowUserMessage); err != nil {
+			log.Panicln(err)
+		}
+		// TODO: Testing -- remove later
+		if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, mui.testClearUserMessage); err != nil {
+			log.Panicln(err)
+		}
+	*/
 	return nil
 }
 

@@ -29,7 +29,29 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+const (
+	// Forground color
+	BLACK  = "\033[30"
+	RED    = "\033[31"
+	GREEN  = "\033[32"
+	YELLOW = "\033[33"
+	BLUE   = "\033[34"
+	PURPLE = "\033[35"
+	CYAN   = "\033[36"
+	WHITE  = "\033[37"
+
+	BRIGHT = ";1m"
+	DIM    = ";2m"
+
+	WHITE_TEXT_CYAN_BG = "\033[37m\033[46m"
+)
+
 const MAX_LOG_FILES = 1000
+const WindowHeaderSize = 2
+const WindowHeaderText = "Top Internal Log View"
+const WindowHeaderHelpText = WHITE + BRIGHT + "ENTER" + WHITE + DIM + ":close  " +
+	WHITE + BRIGHT + "UP" + WHITE + DIM + "/" + WHITE + BRIGHT + "DOWN" + WHITE + DIM + " arrow to scroll  " +
+	WHITE + BRIGHT + "a" + WHITE + DIM + ":auto open toggle"
 
 type MasterUIInterface interface {
 	SetCurrentViewOnTop(*gocui.Gui) error
@@ -50,10 +72,11 @@ type MasterUIInterface interface {
 type LogLevel string
 
 const (
-	DebugLevel LogLevel = "D"
-	InfoLevel           = "I"
-	WarnLevel           = "W"
-	ErrorLevel          = "E"
+	DebugLevel  LogLevel = "D"
+	InfoLevel            = "I"
+	WarnLevel            = "W"
+	ErrorLevel           = "E"
+	MarkerLevel          = "M"
 )
 
 var (
@@ -135,6 +158,21 @@ func Error(msg string, a ...interface{}) {
 	}
 }
 
+func markLastLocation() {
+	foundIndex := -1
+	for index, logLine := range debugLines {
+		if logLine.level == MarkerLevel {
+			foundIndex = index
+			break
+		}
+	}
+	if foundIndex >= 0 {
+		debugLines = append(debugLines[:foundIndex], debugLines[foundIndex+1:]...)
+	}
+
+	logMsg(MarkerLevel, "------")
+}
+
 func Open() {
 	if gui != nil {
 		gui.Execute(func(gui *gocui.Gui) error {
@@ -153,7 +191,7 @@ func Open() {
 func scrollToLastLogLine() {
 	// Do not lock mutex here -- as callers should already have the lock
 	logSize := len(debugLines)
-	viewOffset := logSize - debugWidget.height
+	viewOffset := logSize - (debugWidget.height - WindowHeaderSize)
 	if viewOffset < 0 {
 		viewOffset = 0
 	}
@@ -231,7 +269,7 @@ func (w *DebugWidget) calulateViewDimensions(g *gocui.Gui) (left, top, right, bo
 
 func (w *DebugWidget) Layout(g *gocui.Gui) error {
 
-	baseTitle := "Log (ENTER:to close, t:toggle auto-open, DOWN/UP arrow to scroll)"
+	baseTitle := "Log"
 	left, top, right, bottom := w.calulateViewDimensions(g)
 	v, err := g.SetView(w.name, left, top, right, bottom)
 	if err != nil {
@@ -242,9 +280,15 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		v.Frame = true
 		v.Autoscroll = false
 		v.Wrap = false
-		bgColor := w.getBackgroundColor()
-		v.BgColor = bgColor
-		g.SelBgColor = bgColor
+		/*
+			bgColor := w.getBackgroundColor()
+			v.BgColor = bgColor
+			g.SelBgColor = bgColor
+		*/
+		//v.FgColor = gocui.ColorBlue
+		g.SelFgColor = gocui.ColorWhite // | gocui.AttrBold
+		//g.SelBgColor = gocui.ColorCyan
+		g.SelBgColor = gocui.ColorWhite
 		g.Highlight = true
 
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.closeDebugWidget); err != nil {
@@ -292,7 +336,7 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, 'D', gocui.ModNone, w.toggleDebugAction); err != nil {
 			log.Panicln(err)
 		}
-		if err := g.SetKeybinding(w.name, 't', gocui.ModNone, w.toggleAutoOpenAction); err != nil {
+		if err := g.SetKeybinding(w.name, 'a', gocui.ModNone, w.toggleAutoOpenAction); err != nil {
 			log.Panicln(err)
 		}
 
@@ -300,9 +344,11 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 			log.Panicln(err)
 		}
 	} else {
-		bgColor := w.getBackgroundColor()
-		v.BgColor = bgColor
-		g.SelBgColor = bgColor
+		/*
+			bgColor := w.getBackgroundColor()
+			v.BgColor = bgColor
+			g.SelBgColor = bgColor
+		*/
 		w.writeLogLines(g, v)
 
 		title := baseTitle
@@ -321,9 +367,12 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 
 func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
 	v.Clear()
-	h := w.height
+	h := w.height - WindowHeaderSize
 	mu.Lock()
 	defer mu.Unlock()
+	color := WHITE + DIM
+	fmt.Fprintf(v, "%v%v\n", color, WindowHeaderText)
+	fmt.Fprintf(v, "%v%v\n", color, WindowHeaderHelpText)
 	for index := w.viewOffset; (index-w.viewOffset) < (h) && index < len(debugLines); index++ {
 		line := w.getFormattedLogLine(index)
 		fmt.Fprintf(v, line)
@@ -338,19 +387,41 @@ func (w *DebugWidget) getFormattedLogLine(index int) string {
 	} else {
 		msg = ""
 	}
-	line := fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05 MST"), logLine.level, msg)
+
+	color := ""
+	switch logLine.level {
+	case ErrorLevel:
+		color = RED + DIM
+	case WarnLevel:
+		color = YELLOW + DIM
+	case InfoLevel:
+		color = WHITE + DIM
+	case MarkerLevel:
+		color = WHITE + BRIGHT
+	}
+
+	line := ""
+	if logLine.level == MarkerLevel {
+		line = fmt.Sprintf("%v%v", color, "_________________ New Messages Below _______________________\n")
+	} else {
+		//line = fmt.Sprintf("[%03v] %v %v %v\n", index, logLine.timestamp.Format("2006-01-02 15:04:05 MST"), logLine.level, msg)
+		line = fmt.Sprintf("%v%v %v %v\n", color, logLine.timestamp.Format("2006-01-02 15:04:05.000 MST"), logLine.level, msg)
+	}
 	return line
 }
 
 func (w *DebugWidget) getBackgroundColor() gocui.Attribute {
-	switch w.getMaxLogLevel() {
-	case ErrorLevel:
-		return gocui.ColorRed
-	case WarnLevel:
-		return gocui.ColorRed
-	default:
-		return gocui.ColorBlue
-	}
+	/*
+		switch w.getMaxLogLevel() {
+		case ErrorLevel:
+			return gocui.ColorRed
+		case WarnLevel:
+			return gocui.ColorRed
+		default:
+			return gocui.ColorBlue
+		}
+	*/
+	return gocui.ColorBlue
 }
 
 func (w *DebugWidget) getMaxLogLevel() LogLevel {
@@ -382,6 +453,7 @@ func (w *DebugWidget) closeDebugWidget(g *gocui.Gui, v *gocui.View) error {
 	}
 	windowOpen = false
 	freezeAutoScroll = false
+	markLastLocation()
 	return nil
 }
 
@@ -461,7 +533,7 @@ func (w *DebugWidget) arrowUp(g *gocui.Gui, v *gocui.View) error {
 func (w *DebugWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
 	mu.Lock()
 	defer mu.Unlock()
-	h := w.height
+	h := w.height - WindowHeaderSize
 	if w.viewOffset < len(debugLines) && (len(debugLines)-h) > w.viewOffset {
 		w.viewOffset++
 	}
@@ -475,7 +547,7 @@ func (w *DebugWidget) arrowDown(g *gocui.Gui, v *gocui.View) error {
 
 func (w *DebugWidget) pageUp(g *gocui.Gui, v *gocui.View) error {
 	if w.viewOffset > 0 {
-		w.viewOffset = w.viewOffset - w.height
+		w.viewOffset = w.viewOffset - (w.height - WindowHeaderSize)
 		if w.viewOffset < 0 {
 			w.viewOffset = 0
 		}
@@ -487,7 +559,7 @@ func (w *DebugWidget) pageUp(g *gocui.Gui, v *gocui.View) error {
 func (w *DebugWidget) pageDown(g *gocui.Gui, v *gocui.View) error {
 	mu.Lock()
 	defer mu.Unlock()
-	h := w.height
+	h := w.height - WindowHeaderSize
 	w.viewOffset = w.viewOffset + h
 	if !(w.viewOffset < len(debugLines) && (len(debugLines)-h) > w.viewOffset) {
 		w.viewOffset = len(debugLines) - h

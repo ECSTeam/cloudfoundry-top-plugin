@@ -47,6 +47,8 @@ type GlobalManager struct {
 	refreshNow    chan bool
 	refreshQueue  map[string]string
 	cliConnection plugin.CliConnection
+
+	loadMetadataInProgress bool
 }
 
 func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
@@ -87,6 +89,7 @@ func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 // Load all the metadata.  This is a blocking call.
 func (mgr *GlobalManager) LoadMetadata() {
 	toplog.Info("GlobalManager>loadMetadata")
+	mgr.loadMetadataInProgress = true
 
 	isolationSegment.LoadCache(mgr.cliConnection)
 	stack.LoadStackCache(mgr.cliConnection)
@@ -100,6 +103,8 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
+
+	mgr.loadMetadataInProgress = false
 
 }
 
