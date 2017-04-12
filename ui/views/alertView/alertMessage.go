@@ -33,6 +33,7 @@ const (
 
 var MessageCatalog = make(map[string]*AlertMessage)
 var APPS_NOT_IN_DESIRED_STATE = NewAlertMessage("ANIDS", AlertType, "%v application%v not in desired state")
+var CONTAINER_CRASHES = NewAlertMessage("CRASH", AlertType, "%v container%v crashed [in last hour] (todo)")
 var ErrorsSinceViewed = NewAlertMessage("ESV", AlertType, "%v monitoring errors. Data shown may be inaccurate. (shift-D to display)")
 var TestMessage = NewAlertMessage("TM", InfoType, "Test Message")
 

@@ -28,9 +28,42 @@ type ContainerStats struct {
 	LastUpdate      time.Time
 	OutCount        int64
 	ErrCount        int64
+	//CrashCount         int
+	//LastCrashTime      *time.Time
+	ContainerCrashInfo []*ContainerCrashInfo
 }
 
 func NewContainerStats(containerIndex int) *ContainerStats {
 	stats := &ContainerStats{ContainerIndex: containerIndex}
 	return stats
+}
+
+func (cs *ContainerStats) AddCrashInfo(crashTime *time.Time, exitDescription string) {
+	crashInfo := NewContainerCrashInfo(crashTime, exitDescription)
+	if cs.ContainerCrashInfo == nil {
+		cs.ContainerCrashInfo = make([]*ContainerCrashInfo, 0, 10)
+	}
+	cs.ContainerCrashInfo = append(cs.ContainerCrashInfo, crashInfo)
+}
+
+func (cs *ContainerStats) CrashCount() int {
+	return len(cs.ContainerCrashInfo)
+}
+
+func (cs *ContainerStats) LastCrashTime() *time.Time {
+	if cs.ContainerCrashInfo != nil && len(cs.ContainerCrashInfo) > 0 {
+		last := len(cs.ContainerCrashInfo) - 1
+		return cs.ContainerCrashInfo[last].CrashTime
+	}
+	return nil
+}
+
+type ContainerCrashInfo struct {
+	CrashTime       *time.Time
+	ExitDescription string
+}
+
+func NewContainerCrashInfo(crashTime *time.Time, exitDescription string) *ContainerCrashInfo {
+	info := &ContainerCrashInfo{CrashTime: crashTime, ExitDescription: exitDescription}
+	return info
 }

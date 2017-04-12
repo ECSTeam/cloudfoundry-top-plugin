@@ -471,3 +471,29 @@ func columnIsolationSegmentName() *uiCommon.ListColumn {
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
+
+func columnCrashCount() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*dataCommon.DisplayAppStats).CrashCount < c2.(*dataCommon.DisplayAppStats).CrashCount
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*dataCommon.DisplayAppStats)
+		display := fmt.Sprintf("%4v", util.Format(int64(stats.CrashCount)))
+		return fmt.Sprintf("%4v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		return fmt.Sprintf("%v", appStats.CrashCount)
+	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*dataCommon.DisplayAppStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.CrashCount > 0 {
+			attentionType = uiCommon.ATTENTION_ALERT
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn("CRH", "CRH", 4,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
+	return c
+}

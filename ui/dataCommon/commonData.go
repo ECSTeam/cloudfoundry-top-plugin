@@ -40,6 +40,7 @@ type CommonData struct {
 	// the correct number of containers running based on app
 	// instance setting
 	appsNotInDesiredState int
+	totalCrashCount       int
 }
 
 // TODO:  Create a common data struct -- which needs access to masterUI
@@ -67,6 +68,10 @@ func (cd *CommonData) AppsNotInDesiredState() int {
 	return cd.appsNotInDesiredState
 }
 
+func (cd *CommonData) TotalCrashCount() int {
+	return cd.totalCrashCount
+}
+
 func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 	eventData := cd.router.GetProcessor().GetDisplayedEventData()
@@ -80,6 +85,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
 	//appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
 	appsNotInDesiredState := 0
+	totalCrashCount := 0
 	//now := time.Now()
 
 	for appId, appStats := range appMap {
@@ -113,8 +119,19 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
 		displayAppStats.IsolationSegmentName = isoSeg.Name
 
+		crashCount := 0
+		var lastCrashTime *time.Time
+
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
+
+				crashCount = crashCount + cs.CrashCount()
+				if cs.LastCrashTime() != nil {
+					if lastCrashTime == nil || lastCrashTime.Before(*cs.LastCrashTime()) {
+						lastCrashTime = cs.LastCrashTime()
+					}
+				}
+
 				// If we haven't gotten a container update recently, ignore the old value
 				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
 					appStats.ContainerArray[containerIndex] = nil
@@ -124,6 +141,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 				totalMemoryUsed = totalMemoryUsed + int64(*cs.ContainerMetric.MemoryBytes)
 				totalDiskUsed = totalDiskUsed + int64(*cs.ContainerMetric.DiskBytes)
 				totalReportingContainers++
+
 			}
 		}
 		if totalReportingContainers < displayAppStats.DesiredContainers {
@@ -141,7 +159,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.TotalMemoryUsed = totalMemoryUsed
 		displayAppStats.TotalDiskUsed = totalDiskUsed
 		displayAppStats.TotalReportingContainers = totalReportingContainers
-
+		displayAppStats.CrashCount = crashCount
+		totalCrashCount = totalCrashCount + crashCount
 		/*
 			logStdoutCount := int64(0)
 			logStderrCount := int64(0)
@@ -157,5 +176,6 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	}
 	cd.displayAppStatsMap = displayStatsMap
 	cd.appsNotInDesiredState = appsNotInDesiredState
+	cd.totalCrashCount = totalCrashCount
 	return displayStatsMap
 }

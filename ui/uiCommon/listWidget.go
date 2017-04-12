@@ -78,6 +78,7 @@ const (
 	ATTENTION_WARM
 	ATTENTION_NOT_DESIRED_STATE
 	ATTENTION_ACTIVITY
+	ATTENTION_ALERT
 )
 
 type ListColumn struct {
@@ -509,6 +510,8 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_WARM:
 				colorString = util.BRIGHT_YELLOW
 			case ATTENTION_NOT_DESIRED_STATE:
+				colorString = util.BRIGHT_RED
+			case ATTENTION_ALERT:
 				colorString = util.BRIGHT_RED
 			case ATTENTION_ACTIVITY:
 				if column.id == sortColumnId {

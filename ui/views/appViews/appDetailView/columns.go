@@ -272,6 +272,67 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	return c
 }
 
+func ColumnCrashCount() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayContainerStats).CrashCount() < c2.(*DisplayContainerStats).CrashCount()
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		display := fmt.Sprintf("%8v", util.Format(int64(stats.CrashCount())))
+		return fmt.Sprintf("%8v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.CrashCount)
+	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*DisplayContainerStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.CrashCount() > 0 {
+			attentionType = uiCommon.ATTENTION_ALERT
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn("CRH", "CRH", 8,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
+	return c
+}
+
+func ColumnLastCrash() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		if c1.(*DisplayContainerStats).LastCrashTime == nil {
+			return true
+		}
+		if c2.(*DisplayContainerStats).LastCrashTime == nil {
+			return false
+		}
+		return c1.(*DisplayContainerStats).LastCrashTime().Before(*c2.(*DisplayContainerStats).LastCrashTime())
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		display := "--"
+		if stats.LastCrashTime() != nil {
+			display = stats.LastCrashTime().Format("01-02-2006 15:04:05")
+		}
+		return fmt.Sprintf("%-20v", display)
+	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*DisplayContainerStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.LastCrashTime != nil {
+			attentionType = uiCommon.ATTENTION_ALERT
+		}
+		return attentionType
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.LastCrashTime)
+	}
+	c := uiCommon.NewListColumn("LAST_CRASH", "LAST_CRASH", 20,
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
+	return c
+}
+
 func ColumnCellIp() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {

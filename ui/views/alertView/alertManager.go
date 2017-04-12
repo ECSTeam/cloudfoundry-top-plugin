@@ -53,6 +53,23 @@ func NewAlertManager(masterUI masterUIInterface.MasterUIInterface, commonData *d
 func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 	am.checkForAppsNotInDesiredState(g)
 	am.checkForErrorMsgDelta(g)
+	am.checkForCrashedApps(g)
+	return nil
+}
+
+func (am *AlertManager) checkForCrashedApps(g *gocui.Gui) error {
+
+	commonData := am.commonData
+	totalCrashCount := commonData.TotalCrashCount()
+	if totalCrashCount > 0 {
+		plural := ""
+		if totalCrashCount > 1 {
+			plural = "s"
+		}
+		return am.ShowMessage(g, CONTAINER_CRASHES, totalCrashCount, plural)
+	} else if am.isUserMessageOpen(g) {
+		return am.ClearUserMessage(g, CONTAINER_CRASHES)
+	}
 	return nil
 }
 

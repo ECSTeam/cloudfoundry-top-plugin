@@ -48,6 +48,8 @@ const HelpColumnsText = `
   DISK_FREE - Disk free in the container
   LOG_OUT - Total number of log stdout events  
   LOG_ERR - Total number of log stderr events 
+  CRH - Number of applicaiton instance crashes 
+  LAST_CRASH - Timestamp of last crash
   CELL_IP - IP address of the cell running the container
 `
 

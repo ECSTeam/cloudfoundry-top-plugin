@@ -15,7 +15,11 @@
 
 package dataCommon
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+import (
+	"time"
+
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+)
 
 type DisplayAppStats struct {
 	*eventApp.AppStats
@@ -40,6 +44,8 @@ type DisplayAppStats struct {
 	TotalReportingContainers int
 	TotalLogStdout           int64
 	TotalLogStderr           int64
+	CrashCount               int
+	LastCrashTime            *time.Time
 }
 
 func NewDisplayAppStats(appStats *eventApp.AppStats) *DisplayAppStats {

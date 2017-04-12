@@ -102,6 +102,9 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnDiskFree())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
+	columns = append(columns, ColumnCrashCount())
+	columns = append(columns, ColumnLastCrash())
+
 	columns = append(columns, ColumnCellIp())
 	return columns
 }

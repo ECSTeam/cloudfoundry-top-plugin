@@ -147,6 +147,8 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnReportingContainers())
 
 	columns = append(columns, columnTotalCpu())
+	columns = append(columns, columnCrashCount())
+
 	columns = append(columns, columnTotalMemoryUsed())
 	columns = append(columns, columnTotalDiskUsed())
 
