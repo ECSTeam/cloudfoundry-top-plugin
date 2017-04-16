@@ -106,6 +106,10 @@ func SetDebugEnabled(isEnabled bool) {
 	debugEnabled = isEnabled
 }
 
+func IsDebugEnabled() bool {
+	return debugEnabled
+}
+
 func SetAutoShowErrorEnabled(isEnabled bool) {
 	autoShowErrorEnabled = isEnabled
 }
@@ -256,7 +260,7 @@ func (w *DebugWidget) calulateViewDimensions(g *gocui.Gui) (left, top, right, bo
 	if right <= left {
 		right = left + 1
 	}
-	top = 4
+	top = 3
 	bottom = maxY - 2
 	w.height = bottom - top - 1
 	w.width = right - left
@@ -269,14 +273,13 @@ func (w *DebugWidget) calulateViewDimensions(g *gocui.Gui) (left, top, right, bo
 
 func (w *DebugWidget) Layout(g *gocui.Gui) error {
 
-	baseTitle := "Log"
 	left, top, right, bottom := w.calulateViewDimensions(g)
 	v, err := g.SetView(w.name, left, top, right, bottom)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
 		}
-		v.Title = baseTitle
+		v.Title = WindowHeaderText
 		v.Frame = true
 		v.Autoscroll = false
 		v.Wrap = false
@@ -350,19 +353,26 @@ func (w *DebugWidget) Layout(g *gocui.Gui) error {
 			g.SelBgColor = bgColor
 		*/
 		w.writeLogLines(g, v)
-
-		title := baseTitle
-		if debugEnabled {
-			title = fmt.Sprintf("%v DebugMode:ON", baseTitle)
-		}
-		if freezeAutoScroll {
-			title = fmt.Sprintf("%v - AUTO SCROLL OFF", title)
-		}
-		v.Title = title
-
+		v.Title = w.windowTitle(g, v)
 	}
 
 	return nil
+}
+
+func (w *DebugWidget) windowTitle(g *gocui.Gui, v *gocui.View) string {
+	title := WindowHeaderText
+
+	if autoShowErrorEnabled {
+		title = fmt.Sprintf("%v, autoShowError:ON", title)
+	}
+	if debugEnabled {
+		title = fmt.Sprintf("%v, DebugMode:ON", title)
+	}
+	if freezeAutoScroll {
+		color := YELLOW + DIM
+		title = fmt.Sprintf("%v, %vAUTO SCROLL OFF", title, color)
+	}
+	return title
 }
 
 func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
@@ -371,7 +381,10 @@ func (w *DebugWidget) writeLogLines(g *gocui.Gui, v *gocui.View) {
 	mu.Lock()
 	defer mu.Unlock()
 	color := WHITE + DIM
-	fmt.Fprintf(v, "%v%v\n", color, WindowHeaderText)
+	//fmt.Fprintf(v, "%v%v\n", color, WindowHeaderText)
+	title := w.windowTitle(g, v)
+	fmt.Fprintf(v, "%v%v\n", color, title)
+
 	fmt.Fprintf(v, "%v%v\n", color, WindowHeaderHelpText)
 	for index := w.viewOffset; (index-w.viewOffset) < (h) && index < len(debugLines); index++ {
 		line := w.getFormattedLogLine(index)
@@ -395,6 +408,8 @@ func (w *DebugWidget) getFormattedLogLine(index int) string {
 	case WarnLevel:
 		color = YELLOW + DIM
 	case InfoLevel:
+		color = WHITE + DIM
+	case DebugLevel:
 		color = WHITE + DIM
 	case MarkerLevel:
 		color = WHITE + BRIGHT

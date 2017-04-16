@@ -44,7 +44,8 @@ type DisplayAppStats struct {
 	TotalReportingContainers int
 	TotalLogStdout           int64
 	TotalLogStderr           int64
-	CrashCount               int
+	Crash1hCount             int
+	Crash24hCount            int
 	LastCrashTime            *time.Time
 }
 

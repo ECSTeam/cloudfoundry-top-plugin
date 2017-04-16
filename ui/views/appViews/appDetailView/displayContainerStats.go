@@ -15,7 +15,12 @@
 
 package appDetailView
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+import (
+	"strconv"
+	"time"
+
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+)
 
 type DisplayContainerStats struct {
 	*eventApp.ContainerStats
@@ -30,6 +35,10 @@ type DisplayContainerStats struct {
 	FreeDisk       uint64
 	ReservedDisk   uint64
 	key            string
+
+	Crash1hCount  int
+	Crash24hCount int
+	LastCrashTime *time.Time
 }
 
 func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats *eventApp.AppStats) *DisplayContainerStats {
@@ -41,7 +50,8 @@ func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats 
 
 func (cs *DisplayContainerStats) Id() string {
 	if cs.key == "" {
-		cs.key = cs.AppId + string(cs.ContainerIndex)
+		//cs.key = cs.AppId + "-" + strconv.FormatInt(int64(cs.ContainerIndex), 10)
+		cs.key = strconv.FormatInt(int64(cs.ContainerIndex), 10)
 	}
 	return cs.key
 }

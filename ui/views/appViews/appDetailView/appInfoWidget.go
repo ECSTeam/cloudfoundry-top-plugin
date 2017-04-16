@@ -66,7 +66,7 @@ func (w *AppInfoWidget) Layout(g *gocui.Gui) error {
 		}
 
 	}
-	w.refreshDisplay(g)
+	w.RefreshDisplay(g)
 	return nil
 }
 
@@ -78,10 +78,10 @@ func (w *AppInfoWidget) closeAppInfoWidget(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *AppInfoWidget) UpdateDisplay(g *gocui.Gui) error {
-	return w.refreshDisplay(g)
+	return w.RefreshDisplay(g)
 }
 
-func (w *AppInfoWidget) refreshDisplay(g *gocui.Gui) error {
+func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 
 	v, err := g.View(w.name)
 	if err != nil {

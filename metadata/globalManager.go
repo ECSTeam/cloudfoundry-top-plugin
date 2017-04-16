@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
@@ -65,6 +66,11 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 	mgr.refreshNow = make(chan bool)
 	mgr.cliConnection = conn
 
+	// Set set the time of event data end date/time here so we don't end up loading
+	// events after we've already started counting them from the firehose.
+	now := time.Now()
+	crashData.LoadEventsUntilTime = &now
+
 	go mgr.loadMetadataThread()
 
 	return mgr
@@ -89,6 +95,7 @@ func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 // Load all the metadata.  This is a blocking call.
 func (mgr *GlobalManager) LoadMetadata() {
 	toplog.Info("GlobalManager>loadMetadata")
+
 	mgr.loadMetadataInProgress = true
 
 	isolationSegment.LoadCache(mgr.cliConnection)
@@ -103,6 +110,7 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
+	crashData.LoadCrashDataCache(mgr.cliConnection)
 
 	mgr.loadMetadataInProgress = false
 

@@ -195,6 +195,12 @@ func (c *Client) createAndKeepAliveNozzle(subscriptionID, appGUID string, instan
 				break
 			}
 			toplog.Warn("Nozzle #%v - error: %v", instanceID, err)
+			/*
+				authorizationExpired := strings.Contains(errMsg, "auth request failed")
+				if authorizationExpired {
+					toplog.Error("Login authorization no longer valid.  Exit top and re-login")
+				}
+			*/
 		}
 		toplog.Warn("Nozzle #%v - Shutdown. Nozzle instance will be restarted", instanceID)
 		lastRetry := time.Now().Sub(startTime)

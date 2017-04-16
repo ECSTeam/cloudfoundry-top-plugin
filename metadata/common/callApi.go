@@ -48,6 +48,10 @@ func CallAPI(cliConnection plugin.CliConnection, url string) (string, error) {
 func CallPagableAPI(cliConnection plugin.CliConnection, url string, handleResponse handleResponseFunc) error {
 	nextUrl := url
 	for nextUrl != "" {
+		if toplog.IsDebugEnabled() {
+			encodedUrl := strings.Replace(nextUrl, "%", "%%", -1)
+			toplog.Debug("nextUrl: \"%v\"", encodedUrl)
+		}
 		output, err := callCurlRetryable(cliConnection, nextUrl)
 		if err != nil {
 			return err
@@ -58,7 +62,6 @@ func CallPagableAPI(cliConnection plugin.CliConnection, url string, handleRespon
 		if err != nil {
 			return err
 		}
-		//nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 	}
 	return nil
 }

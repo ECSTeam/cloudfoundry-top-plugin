@@ -474,22 +474,22 @@ func columnIsolationSegmentName() *uiCommon.ListColumn {
 
 func columnCrashCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).CrashCount < c2.(*dataCommon.DisplayAppStats).CrashCount
+		return c1.(*dataCommon.DisplayAppStats).Crash24hCount < c2.(*dataCommon.DisplayAppStats).Crash24hCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*dataCommon.DisplayAppStats)
-		display := fmt.Sprintf("%4v", util.Format(int64(stats.CrashCount)))
+		display := fmt.Sprintf("%4v", util.Format(int64(stats.Crash24hCount)))
 		return fmt.Sprintf("%4v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.CrashCount)
+		return fmt.Sprintf("%v", appStats.Crash24hCount)
 	}
 	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
 		appStats := data.(*dataCommon.DisplayAppStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
-		if appStats.CrashCount > 0 {
-			attentionType = uiCommon.ATTENTION_ALERT
+		if appStats.Crash24hCount > 0 {
+			attentionType = uiCommon.ATTENTION_WARM
 		}
 		return attentionType
 	}

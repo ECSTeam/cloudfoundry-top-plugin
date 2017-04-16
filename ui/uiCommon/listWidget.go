@@ -79,6 +79,7 @@ const (
 	ATTENTION_NOT_DESIRED_STATE
 	ATTENTION_ACTIVITY
 	ATTENTION_ALERT
+	ATTENTION_WARN
 )
 
 type ListColumn struct {
@@ -504,21 +505,28 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 
 		if !isSelected && column.attentionFunc != nil {
 			attentionLevel := column.attentionFunc(rowData, asUI.columnOwner)
+			attributeModifier := ""
+			if column.id == sortColumnId {
+				attributeModifier = util.BRIGHT
+			} else {
+				attributeModifier = util.DIM
+			}
 			switch attentionLevel {
 			case ATTENTION_HOT:
-				colorString = util.BRIGHT_RED
+				colorString = util.RED
 			case ATTENTION_WARM:
-				colorString = util.BRIGHT_YELLOW
+				colorString = util.YELLOW
 			case ATTENTION_NOT_DESIRED_STATE:
-				colorString = util.BRIGHT_RED
+				colorString = util.RED
 			case ATTENTION_ALERT:
-				colorString = util.BRIGHT_RED
+				colorString = util.RED
+			case ATTENTION_WARN:
+				colorString = util.YELLOW
 			case ATTENTION_ACTIVITY:
-				if column.id == sortColumnId {
-					colorString = util.BRIGHT_CYAN
-				} else {
-					colorString = util.DIM_CYAN
-				}
+				colorString = util.CYAN
+			}
+			if colorString != "" {
+				colorString = colorString + attributeModifier
 			}
 		}
 

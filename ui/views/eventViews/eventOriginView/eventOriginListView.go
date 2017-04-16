@@ -104,7 +104,7 @@ func (asUI *EventOriginListView) closeAppDetailView(g *gocui.Gui, v *gocui.View)
 func (asUI *EventOriginListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 
 	highlightKey := asUI.GetListWidget().HighlightKey()
-	if asUI.GetListWidget().HighlightKey() != "" {
+	if highlightKey != "" {
 		topMargin, bottomMargin := asUI.GetMargins()
 
 		detailView := eventDetailView.NewEventDetailListView(asUI.GetMasterUI(), asUI,

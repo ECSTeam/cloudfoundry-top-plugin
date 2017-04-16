@@ -16,12 +16,16 @@
 package appDetailView
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -33,6 +37,7 @@ type AppDetailView struct {
 	*dataView.DataListView
 	appId              string
 	requestsInfoWidget *RequestsInfoWidget
+	displayMenuId      string
 }
 
 func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
@@ -80,7 +85,63 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 	if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
+		log.Panicln(err)
+	}
 	return nil
+}
+
+func (asUI *AppDetailView) enterAction(g *gocui.Gui, v *gocui.View) error {
+
+	highlightKey := asUI.GetListWidget().HighlightKey()
+	if highlightKey != "" {
+		/*
+			_, bottomMargin := asUI.GetMargins()
+
+			detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",
+				bottomMargin,
+				asUI.GetEventProcessor(),
+				highlightKey)
+			asUI.SetDetailView(detailView)
+			asUI.GetMasterUI().OpenView(g, detailView)
+		*/
+		toplog.Info("highlightKey: [%v]", highlightKey)
+
+		menuItems := make([]*uiCommon.MenuItem, 0, 5)
+		menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View CRASH info"))
+		menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View Logs"))
+		menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "Todo"))
+
+		windowTitle := fmt.Sprintf("Select View for %v", highlightKey)
+		selectDisplayView := uiCommon.NewSelectMenuWidget(asUI.GetMasterUI(), "selectDisplayView", windowTitle, menuItems, asUI.selectDisplayCallback)
+		selectDisplayView.SetMenuId(asUI.displayMenuId)
+
+		asUI.GetMasterUI().LayoutManager().Add(selectDisplayView)
+		asUI.GetMasterUI().SetCurrentViewOnTop(g)
+
+	}
+	return nil
+}
+
+func (asUI *AppDetailView) selectDisplayCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
+	asUI.displayMenuId = menuId
+	asUI.createAndOpenView(g, menuId)
+	return nil
+}
+
+func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) error {
+
+	var view masterUIInterface.UpdatableView
+	switch viewName {
+	case "infoView":
+		infoWidgetName := "appInfoWidget"
+		view = NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 18, asUI)
+	case "xxx":
+		//view = orgView.NewOrgListView(mui, "orgListView", mui.helpTextTipsViewSize, ep)
+	default:
+		return errors.New("Unable to find view " + viewName)
+	}
+	return asUI.GetMasterUI().OpenView(g, view)
 }
 
 func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
@@ -102,7 +163,8 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnDiskFree())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
-	columns = append(columns, ColumnCrashCount())
+	columns = append(columns, ColumnCrash1hCount())
+	columns = append(columns, ColumnCrash24hCount())
 	columns = append(columns, ColumnLastCrash())
 
 	columns = append(columns, ColumnCellIp())
@@ -154,6 +216,25 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			displayContainerStats.FreeDisk = freeDisk
 			displayContainerStats.ReservedDisk = reservedDisk
 			displayStatsArray = append(displayStatsArray, displayContainerStats)
+
+			displayContainerStats.Crash1hCount = containerStats.Crash1hCount()
+			displayContainerStats.Crash1hCount = displayContainerStats.Crash1hCount +
+				crashData.FindCountSinceByAppAndInstance(appStats.AppId, containerStats.ContainerIndex, -1*time.Hour)
+
+			displayContainerStats.Crash24hCount = containerStats.Crash24hCount()
+			displayContainerStats.Crash24hCount = displayContainerStats.Crash24hCount +
+				crashData.FindCountSinceByAppAndInstance(appStats.AppId, containerStats.ContainerIndex, -24*time.Hour)
+
+			if displayContainerStats.Crash24hCount > 0 {
+				// Lookup crash time from container stats
+				displayContainerStats.LastCrashTime = containerStats.LastCrashTime()
+				if displayContainerStats.LastCrashTime == nil {
+					// If we don't find last crash in container stats, last crash must have occured
+					// before top was started.  Look for last crash time in metadata (/v2/event data)
+					displayContainerStats.LastCrashTime = crashData.FindLastCrashByAppAndInstance(appStats.AppId, containerStats.ContainerIndex)
+				}
+			}
+
 		}
 	}
 	return displayStatsArray

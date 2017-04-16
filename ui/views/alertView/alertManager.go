@@ -57,16 +57,22 @@ func (am *AlertManager) CheckForAlerts(g *gocui.Gui) error {
 	return nil
 }
 
+func (am *AlertManager) checkForMetadataLoading(g *gocui.Gui) error {
+
+	return nil
+}
+
 func (am *AlertManager) checkForCrashedApps(g *gocui.Gui) error {
 
-	commonData := am.commonData
-	totalCrashCount := commonData.TotalCrashCount()
-	if totalCrashCount > 0 {
+	crash1hCount := am.commonData.TotalCrash1hCount()
+	crash24hCount := am.commonData.TotalCrash24hCount()
+
+	if crash24hCount > 0 {
 		plural := ""
-		if totalCrashCount > 1 {
+		if crash24hCount > 1 {
 			plural = "s"
 		}
-		return am.ShowMessage(g, CONTAINER_CRASHES, totalCrashCount, plural)
+		return am.ShowMessage(g, CONTAINER_CRASHES, crash24hCount, plural, crash1hCount)
 	} else if am.isUserMessageOpen(g) {
 		return am.ClearUserMessage(g, CONTAINER_CRASHES)
 	}

@@ -121,7 +121,7 @@ func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error
 
 func (asUI *AppListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 	highlightKey := asUI.GetListWidget().HighlightKey()
-	if asUI.GetListWidget().HighlightKey() != "" {
+	if highlightKey != "" {
 		_, bottomMargin := asUI.GetMargins()
 
 		detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",

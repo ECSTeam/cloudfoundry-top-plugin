@@ -83,7 +83,7 @@ func (asUI *EventListView) initializeCallback(g *gocui.Gui, viewName string) err
 func (asUI *EventListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 
 	highlightKey := asUI.GetListWidget().HighlightKey()
-	if asUI.GetListWidget().HighlightKey() != "" {
+	if highlightKey != "" {
 		topMargin, bottomMargin := asUI.GetMargins()
 
 		detailView := eventOriginView.NewEventOriginListView(asUI.GetMasterUI(), asUI,

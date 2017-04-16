@@ -21,6 +21,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
@@ -40,7 +41,8 @@ type CommonData struct {
 	// the correct number of containers running based on app
 	// instance setting
 	appsNotInDesiredState int
-	totalCrashCount       int
+	totalCrash1hCount     int
+	totalCrash24hCount    int
 }
 
 // TODO:  Create a common data struct -- which needs access to masterUI
@@ -68,8 +70,12 @@ func (cd *CommonData) AppsNotInDesiredState() int {
 	return cd.appsNotInDesiredState
 }
 
-func (cd *CommonData) TotalCrashCount() int {
-	return cd.totalCrashCount
+func (cd *CommonData) TotalCrash1hCount() int {
+	return cd.totalCrash1hCount
+}
+
+func (cd *CommonData) TotalCrash24hCount() int {
+	return cd.totalCrash24hCount
 }
 
 func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
@@ -85,8 +91,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
 	//appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
 	appsNotInDesiredState := 0
-	totalCrashCount := 0
-	//now := time.Now()
+	totalCrash1hCount := 0
+	totalCrash24hCount := 0
 
 	for appId, appStats := range appMap {
 		displayAppStats := NewDisplayAppStats(appStats)
@@ -119,19 +125,17 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
 		displayAppStats.IsolationSegmentName = isoSeg.Name
 
-		crashCount := 0
-		var lastCrashTime *time.Time
+		// Crash count in last 1 hour (from call to /v2/events)
+		crash1hCount := crashData.FindCountSinceByApp(appId, -1*time.Hour)
+
+		// Crash count in last 24 hours (from call to /v2/events)
+		crash24hCount := crashData.FindCountSinceByApp(appId, -24*time.Hour)
 
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 
-				crashCount = crashCount + cs.CrashCount()
-				if cs.LastCrashTime() != nil {
-					if lastCrashTime == nil || lastCrashTime.Before(*cs.LastCrashTime()) {
-						lastCrashTime = cs.LastCrashTime()
-					}
-				}
-
+				crash1hCount = crash1hCount + cs.Crash1hCount()
+				crash24hCount = crash24hCount + cs.Crash24hCount()
 				// If we haven't gotten a container update recently, ignore the old value
 				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
 					appStats.ContainerArray[containerIndex] = nil
@@ -159,8 +163,10 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.TotalMemoryUsed = totalMemoryUsed
 		displayAppStats.TotalDiskUsed = totalDiskUsed
 		displayAppStats.TotalReportingContainers = totalReportingContainers
-		displayAppStats.CrashCount = crashCount
-		totalCrashCount = totalCrashCount + crashCount
+		displayAppStats.Crash1hCount = crash1hCount
+		displayAppStats.Crash24hCount = crash24hCount
+		totalCrash1hCount = totalCrash1hCount + crash1hCount
+		totalCrash24hCount = totalCrash24hCount + crash24hCount
 		/*
 			logStdoutCount := int64(0)
 			logStderrCount := int64(0)
@@ -176,6 +182,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	}
 	cd.displayAppStatsMap = displayStatsMap
 	cd.appsNotInDesiredState = appsNotInDesiredState
-	cd.totalCrashCount = totalCrashCount
+	cd.totalCrash1hCount = totalCrash1hCount
+	cd.totalCrash24hCount = totalCrash24hCount
 	return displayStatsMap
 }

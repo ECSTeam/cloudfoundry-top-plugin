@@ -272,28 +272,54 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	return c
 }
 
-func ColumnCrashCount() *uiCommon.ListColumn {
+func ColumnCrash1hCount() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*DisplayContainerStats).CrashCount() < c2.(*DisplayContainerStats).CrashCount()
+		return c1.(*DisplayContainerStats).Crash1hCount < c2.(*DisplayContainerStats).Crash1hCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%8v", util.Format(int64(stats.CrashCount())))
+		display := fmt.Sprintf("%8v", util.Format(int64(stats.Crash1hCount)))
 		return fmt.Sprintf("%8v", display)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%v", appStats.CrashCount)
+		return fmt.Sprintf("%v", appStats.Crash1hCount)
 	}
 	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
 		appStats := data.(*DisplayContainerStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
-		if appStats.CrashCount() > 0 {
-			attentionType = uiCommon.ATTENTION_ALERT
+		if appStats.Crash1hCount > 0 {
+			attentionType = uiCommon.ATTENTION_WARN
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn("CRH", "CRH", 8,
+	c := uiCommon.NewListColumn("CRH/1h", "CRH/1h", 8,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
+	return c
+}
+
+func ColumnCrash24hCount() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayContainerStats).Crash24hCount < c2.(*DisplayContainerStats).Crash24hCount
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		display := fmt.Sprintf("%8v", util.Format(int64(stats.Crash24hCount)))
+		return fmt.Sprintf("%8v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.Crash24hCount)
+	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*DisplayContainerStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.Crash24hCount > 0 {
+			attentionType = uiCommon.ATTENTION_WARN
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn("CRH/24h", "CRH/24h", 8,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -306,13 +332,13 @@ func ColumnLastCrash() *uiCommon.ListColumn {
 		if c2.(*DisplayContainerStats).LastCrashTime == nil {
 			return false
 		}
-		return c1.(*DisplayContainerStats).LastCrashTime().Before(*c2.(*DisplayContainerStats).LastCrashTime())
+		return c1.(*DisplayContainerStats).LastCrashTime.Before(*c2.(*DisplayContainerStats).LastCrashTime)
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		display := "--"
-		if stats.LastCrashTime() != nil {
-			display = stats.LastCrashTime().Format("01-02-2006 15:04:05")
+		if stats.LastCrashTime != nil {
+			display = stats.LastCrashTime.Local().Format("01-02-2006 15:04:05")
 		}
 		return fmt.Sprintf("%-20v", display)
 	}
@@ -320,13 +346,13 @@ func ColumnLastCrash() *uiCommon.ListColumn {
 		appStats := data.(*DisplayContainerStats)
 		attentionType := uiCommon.ATTENTION_NORMAL
 		if appStats.LastCrashTime != nil {
-			attentionType = uiCommon.ATTENTION_ALERT
+			attentionType = uiCommon.ATTENTION_WARN
 		}
 		return attentionType
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%v", appStats.LastCrashTime)
+		return fmt.Sprintf("%v", appStats.LastCrashTime.UnixNano)
 	}
 	c := uiCommon.NewListColumn("LAST_CRASH", "LAST_CRASH", 20,
 		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)

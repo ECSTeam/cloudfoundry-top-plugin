@@ -46,8 +46,37 @@ func (cs *ContainerStats) AddCrashInfo(crashTime *time.Time, exitDescription str
 	cs.ContainerCrashInfo = append(cs.ContainerCrashInfo, crashInfo)
 }
 
-func (cs *ContainerStats) CrashCount() int {
-	return len(cs.ContainerCrashInfo)
+// Crash count in last duration
+func (cs *ContainerStats) CrashCount(since time.Duration) int {
+
+	crashInfo := cs.ContainerCrashInfo
+	if crashInfo != nil {
+		sinceTime := time.Now().Add(since)
+		crashInfoSize := len(crashInfo)
+		crashCount := 0
+		for i := range crashInfo {
+			// Reverse loop through array
+			crashInfo := crashInfo[crashInfoSize-i-1]
+			if crashInfo.CrashTime == nil || crashInfo.CrashTime.Before(sinceTime) {
+				break
+			}
+			crashCount = i + 1
+		}
+		return crashCount
+	}
+	return 0
+}
+
+// Crash count in last 1 hour recorded since top started
+func (cs *ContainerStats) Crash1hCount() int {
+	//return cs.CrashCount(-1 * time.Minute)
+	return cs.CrashCount(-1 * time.Hour)
+}
+
+// Crash count in last 24 hours recorded since top started
+func (cs *ContainerStats) Crash24hCount() int {
+	//return cs.CrashCount(-2 * time.Minute)
+	return cs.CrashCount(-24 * time.Hour)
 }
 
 func (cs *ContainerStats) LastCrashTime() *time.Time {
