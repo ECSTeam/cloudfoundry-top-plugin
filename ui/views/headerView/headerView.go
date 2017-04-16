@@ -63,6 +63,10 @@ func (w *HeaderWidget) Layout(g *gocui.Gui) error {
 	return nil
 }
 
+func (w *HeaderWidget) IsMinimizeHeader() bool {
+	return w.headerMinimized
+}
+
 func (w *HeaderWidget) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
 	w.headerMinimized = minimizeHeader
 }

@@ -36,6 +36,7 @@ type MasterUIInterface interface {
 	GetTopMargin() int
 	//SetStatsSummarySize(statSummarySize int)
 	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
+	IsMinimizeHeader() bool
 	IsPrivileged() bool
 	GetCommonData() *dataCommon.CommonData
 	GetDisplayPaused() bool

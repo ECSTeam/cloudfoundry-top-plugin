@@ -293,7 +293,7 @@ func ColumnCrash1hCount() *uiCommon.ListColumn {
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn("CRH/1h", "CRH/1h", 8,
+	c := uiCommon.NewListColumn("CRH/1H", "CRH/1H", 8,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
@@ -319,7 +319,7 @@ func ColumnCrash24hCount() *uiCommon.ListColumn {
 		}
 		return attentionType
 	}
-	c := uiCommon.NewListColumn("CRH/24h", "CRH/24h", 8,
+	c := uiCommon.NewListColumn("CRH/24H", "CRH/24H", 8,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }

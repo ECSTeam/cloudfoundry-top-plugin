@@ -43,8 +43,15 @@ func (w *RequestsInfoWidget) Name() string {
 }
 
 func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
+
+	topOffset := w.detailView.GetTopOffset()
+	if w.masterUI.IsMinimizeHeader() {
+		// This will hide this view by displaying it off-view (negative top)
+		topOffset = 0
+	}
+
 	maxX, _ := g.Size()
-	top := w.detailView.GetTopOffset() - w.height - 1
+	top := topOffset - w.height - 1
 	width := maxX - 1
 
 	//v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))

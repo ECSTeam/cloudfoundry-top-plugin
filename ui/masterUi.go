@@ -219,7 +219,11 @@ func (mui *MasterUI) GetAlertSize() int {
 }
 
 func (mui *MasterUI) GetTopMargin() int {
-	return mui.headerView.HeaderSize + mui.alertManager.AlertSize
+	size := mui.headerView.HeaderSize
+	if !mui.IsMinimizeHeader() {
+		size = size + mui.alertManager.AlertSize
+	}
+	return size
 }
 
 // Add keybindings for top level data views -- note must also call addCommonDataViewKeybindings
@@ -552,6 +556,10 @@ func (mui *MasterUI) refreshMetadata(g *gocui.Gui, v *gocui.View) error {
 
 func (mui *MasterUI) IsWarmupComplete() bool {
 	return mui.commonData.IsWarmupComplete()
+}
+
+func (mui *MasterUI) IsMinimizeHeader() bool {
+	return mui.headerView.IsMinimizeHeader()
 }
 
 func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {

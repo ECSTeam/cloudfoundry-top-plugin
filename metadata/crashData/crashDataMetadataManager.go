@@ -19,12 +19,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 var (
@@ -53,7 +55,6 @@ func FindByApp(appGuid string) []*time.Time {
 	if crashDataByAppId != nil {
 		crashMap := crashDataByAppId[appGuid]
 		if crashMap != nil {
-
 			for _, crashTimestamps := range crashMap {
 				if crashTimestamps != nil {
 					allCrashTimestamps = append(allCrashTimestamps, crashTimestamps...)
@@ -61,6 +62,7 @@ func FindByApp(appGuid string) []*time.Time {
 			}
 		}
 	}
+	sort.Sort(util.TimeSlice(allCrashTimestamps))
 	return allCrashTimestamps
 }
 
@@ -111,21 +113,20 @@ func FindCountSinceByAppAndInstance(appGuid string, instanceIndex int, since tim
 	return 0
 }
 
-// Crashs since
 func filterSince(crashTimestamps []*time.Time, since time.Duration) []*time.Time {
 
 	if crashTimestamps != nil {
 		sinceTime := time.Now().Add(since)
 		crashTimestampsSize := len(crashTimestamps)
 		crashTimestampsSince := make([]*time.Time, 0, crashTimestampsSize)
-		for _, timestamp := range crashTimestamps {
+		for i, _ := range crashTimestamps {
 			// Reverse loop through array
-			//crashInfo := crashInfo[crashTimestampsSize-i-1]
-			if timestamp == nil || timestamp.Before(sinceTime) {
+			crashTS := crashTimestamps[crashTimestampsSize-i-1]
+			if crashTS == nil || crashTS.Before(sinceTime) {
 				break
 			}
 			//crashCount = i + 1
-			crashTimestampsSince = append(crashTimestampsSince, timestamp)
+			crashTimestampsSince = append(crashTimestampsSince, crashTS)
 		}
 		return crashTimestampsSince
 	}
