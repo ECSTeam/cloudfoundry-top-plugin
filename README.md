@@ -61,34 +61,45 @@ cf uninstall-plugin top
 cf install-plugin -r CF-Community "top"     (or use manual install method described above)
 ```
 
-## Assign permissions if privileged mode is needed
+## Assign scope if privileged mode is needed
 
-The `top` plugin will run without special permissions however it determines at runtime
-what permissions you have and displays the appropriate functionality based on those
-permissions.  If you are a foundation operator you will want the additional functionality
+The `top` plugin will run without special scope (permissions) however it determines at runtime
+what scopes you have and displays the appropriate functionality based on those
+scopes.  If you are a foundation operator you will want the additional functionality
 that top provides to privileged users.
 
-If you are logged in with the Cloud Foundry `admin` account, no additional permissions
+If you are logged in with the Cloud Foundry `admin` account, no additional scopes
 are needed, the `admin` account has everything it needs to run top with full functionality.
 
-For non-admin accounts, to run top in privileged mode you need to assign two permissions
-to an existing Cloud Foundry user.  To assign needed permissions:
+For non-admin accounts, to run top in privileged mode you need to assign two scopes
+to an existing Cloud Foundry user (or LDAP group).  To assign needed scopes:
 
 Install the uaac client CLI if you do not already have it:
 ```
 gem install cf-uaac
 ```
 
-Login and add two permission.  Note that the UAA password is NOT the
+Login and add two scopes.  Note that the UAA password is NOT the
 "Admin Credentials", the password is found in the ERT under Credentials tab,
 look for password for "Admin Client Credentials".
 
 ```
 uaac target https://login.system.YOUR.DOMAIN --skip-ssl-validation
 uaac token client get admin -s [UAA Admin Client Credentials]  
+```
+
+To assign scopes to a LDAP group (recommended if connected to LDAP/Active Directory):
+```
+uaac group map --name cloud_controller.admin [FULL DN to LDAP group]
+uaac group map --name doppler.firehose [FULL DN to LDAP group]
+```
+
+To assing scopes directly to a user:
+```
 uaac member add cloud_controller.admin [username]
 uaac member add doppler.firehose [username]
 ```
+
 Note: The change in permissions does not take effect until user username performs
 a logout and login.
 
