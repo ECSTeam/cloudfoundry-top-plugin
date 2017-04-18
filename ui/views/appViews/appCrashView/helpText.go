@@ -40,7 +40,7 @@ Java exit status codes:
 `
 
 const HelpColumnsText = `
- **CRASH List Columns:**
+**CRASH List Columns:**
 
   CRASH_TIME - Date/time of the crash (24 hour format in local timezone)
   IDX - Application container index that crashed

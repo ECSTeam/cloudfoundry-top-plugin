@@ -29,7 +29,7 @@ const HelpOverviewText = `
 Event Origin list view shows a list of all origins of selected event types. 
 `
 const HelpColumnsText = `
- **Event list stats:**
+**Event list stats:**
 
  ORIGIN - The event origin
  COUNT - Number of events that have occured

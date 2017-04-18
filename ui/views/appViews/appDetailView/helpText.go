@@ -35,17 +35,17 @@ seconds. The average response time in milliseconds is also displayed
 for the same 1/10/60 second intervals.
 
 NOTE: The HTTP(S) counters are based on traffic through the gorouter.
-Applications that talk directly container-to-container will not show
-up in the REQ/nXX counters.
+Applications that talk directly container-to-container will not be
+reflected in the rate and response time values.
 
 **Crash Info Section**
 Crash Info section shows how many application containers have crashed
 in the last 10 minutes, 1 hour, and 24 hours.  It also shows the last
-time a container crashed in the last 24 hours.
+time a container crashed in the previous 24 hours.
 `
 
 const HelpColumnsText = `
- **Container Columns:**
+**Container Columns:**
 
   IDX - Application container index
   CPU%% - CPU percent consumed by container

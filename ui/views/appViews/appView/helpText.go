@@ -39,6 +39,7 @@ const HelpColumnsText = `
   DCR - Desired containers (instances)
   RCR - Total reporting containers (ideally should match DCR)
   CPU%% - Total CPU percent consumed by all containers
+  CRH - Crashed container count in last 24 hours
   MEM_USED - Total memory used by all containers
   DSK_USED - Total disk used by all containers
   RESP - Avg response time in milliseconds over last 60 seconds

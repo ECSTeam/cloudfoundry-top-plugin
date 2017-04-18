@@ -27,7 +27,7 @@ type can be seen when selecting a type.
 `
 
 const HelpColumnsText = `
- **Event Columns:**
+**Event Columns:**
 
   EVENT_TYPE - Event type
   COUNT - Number of events that have occured 

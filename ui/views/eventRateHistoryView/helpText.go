@@ -40,7 +40,7 @@ This configuration results is a max of 764 records in 7 days then just
 `
 
 const HelpColumnsText = `
- **Event Rate Peak Columns:**
+**Event Rate Peak Columns:**
 
   BEGIN_TIME - Date/Time of when the peak rate measurment was started
   END_TIME - Date/Time of when the peak rate measurment was ended
