@@ -25,7 +25,7 @@ if [[ "$1" = "release" ]] ; then
 		MAJOR=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $1;}'`
 		MINOR=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $2;}'`
 		BUILD=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $3;}'`
-		VERSION=`echo $TAG | sed 's/^v//'
+		VERSION=`echo $TAG | sed 's/^v//'`
 
 		`sed -i "" -e "1,/Major:.*/s/Major:.*/Major: $MAJOR,/" \
 			-e "1,/Minor:.*/s/Minor:.*/Minor: $MINOR,/" \
