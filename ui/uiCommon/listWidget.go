@@ -288,6 +288,16 @@ func (asUI *ListWidget) HighlightKey() string {
 	return asUI.highlightKey
 }
 
+// Get the highlighted data row
+func (asUI *ListWidget) HighlightData() IData {
+	for _, data := range asUI.unfilteredListData {
+		if data.Id() == asUI.highlightKey {
+			return data
+		}
+	}
+	return nil
+}
+
 func (asUI *ListWidget) GetFilterColumnMap() map[string]*FilterColumn {
 	return asUI.filterColumnMap
 }

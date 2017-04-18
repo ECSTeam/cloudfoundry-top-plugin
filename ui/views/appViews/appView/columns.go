@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -478,8 +479,13 @@ func columnCrashCount() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*dataCommon.DisplayAppStats)
-		display := fmt.Sprintf("%4v", util.Format(int64(stats.Crash24hCount)))
-		return fmt.Sprintf("%4v", display)
+		crashCount := stats.Crash24hCount
+		if crashCount > 0 || crashData.IsCacheLoaded() {
+			display := fmt.Sprintf("%4v", util.Format(int64(crashCount)))
+			return display
+		} else {
+			return fmt.Sprintf("%4v", "--")
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)

@@ -31,10 +31,21 @@ import (
 var (
 	LoadEventsUntilTime *time.Time
 
+	// Time data was last loaded
+	cacheTime *time.Time
+
 	crashDataMetadataCache []EventData
 	// Map: [AppGuid] = array of crash timestamps
 	crashDataByAppId map[string][]*ContainerCrashInfo
 )
+
+func GetCacheTime() *time.Time {
+	return cacheTime
+}
+
+func IsCacheLoaded() bool {
+	return cacheTime != nil
+}
 
 func All() []EventData {
 	return crashDataMetadataCache
@@ -122,6 +133,8 @@ func LoadCrashDataCache(cliConnection plugin.CliConnection) {
 		crashInfo := NewContainerCrashInfo(instanceIndex, &crashTimestamp, exitDescription)
 		crashDataByAppId[crashData.Actor] = append(crashDataByAppId[crashData.Actor], crashInfo)
 	}
+	now := time.Now()
+	cacheTime = &now
 }
 
 func getCrashDataMetadata(cliConnection plugin.CliConnection) ([]EventData, error) {

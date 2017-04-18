@@ -21,6 +21,7 @@ import (
 	"math"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -105,14 +106,21 @@ func (w *CrashInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	fmt.Fprintf(v, "%11v", "    Crashes:  ")
 
-	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash10mCount), w.detailView.Crash10mCount)
-	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash1hCount), w.detailView.Crash1hCount)
-	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash24hCount), w.detailView.Crash24hCount)
+	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash10mCount), w.getCrashCount(w.detailView.Crash10mCount))
+	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash1hCount), w.getCrashCount(w.detailView.Crash1hCount))
+	fmt.Fprintf(v, "%v%6v", w.getCrashCountColor(w.detailView.Crash24hCount), w.getCrashCount(w.detailView.Crash24hCount))
 	fmt.Fprintf(v, "%v\n", util.CLEAR)
 	fmt.Fprintf(v, "%11v", " Last crash:")
 	fmt.Fprintf(v, " %v", lastCrashTimeDisplay)
 	fmt.Fprintf(v, "%v", util.CLEAR)
 	return nil
+}
+
+func (w *CrashInfoWidget) getCrashCount(crashCount int) string {
+	if crashCount > 0 || crashData.IsCacheLoaded() {
+		return fmt.Sprintf("%v", crashCount)
+	}
+	return "--"
 }
 
 func (w *CrashInfoWidget) getCrashCountColor(crashCount int) string {

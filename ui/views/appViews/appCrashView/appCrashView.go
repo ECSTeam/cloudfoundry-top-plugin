@@ -76,6 +76,24 @@ func (asUI *AppCrashView) initializeCallback(g *gocui.Gui, viewName string) erro
 	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppCrashView); err != nil {
 		log.Panicln(err)
 	}
+	if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
+		log.Panicln(err)
+	}
+	return nil
+}
+
+func (asUI *AppCrashView) enterAction(g *gocui.Gui, v *gocui.View) error {
+
+	highlightKey := asUI.GetListWidget().HighlightKey()
+	if highlightKey != "" {
+		widgetName := "crashItemView"
+		idata := asUI.GetListWidget().HighlightData()
+		if idata != nil {
+			crashInfo := idata.(*DisplayContainerCrashInfo)
+			view := NewAppCrashItemWidget(asUI.GetMasterUI(), widgetName, 70, 18, asUI, crashInfo)
+			return asUI.GetMasterUI().OpenView(g, view)
+		}
+	}
 	return nil
 }
 
