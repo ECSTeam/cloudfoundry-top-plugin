@@ -25,6 +25,7 @@ if [[ "$1" = "release" ]] ; then
 		MAJOR=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $1;}'`
 		MINOR=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $2;}'`
 		BUILD=`echo $TAG | sed 's/^v//' | awk 'BEGIN {FS = "." } ; { printf $3;}'`
+		VERSION=`echo $TAG | sed 's/^v//'
 
 		`sed -i "" -e "1,/Major:.*/s/Major:.*/Major: $MAJOR,/" \
 			-e "1,/Minor:.*/s/Minor:.*/Minor: $MINOR,/" \
@@ -57,7 +58,7 @@ cat repo-index.yml |
 sed "s/__osx-sha1__/$OSX_SHA1/" |
 sed "s/__win64-sha1__/$WIN64_SHA1/" |
 sed "s/__linux64-sha1__/$LINUX64_SHA1/" |
-sed "s/__TAG__/$TAG/" |
+sed "s/__TAG__/$VERSION/" |
 sed "s/__TODAY__/$NOW/" |
 cat
 
@@ -69,7 +70,7 @@ if [[ "$1" = "release" ]] ; then
 	$GOPATH/bin/github-release release \
     --tag $TAG \
     --name "Cloud Foundry top plugin $TAG" \
-    --description "$TAG release - Added Route Stats and Event Stats"
+    --description "$TAG release"
 
 	$GOPATH/bin/github-release upload \
     --tag $TAG \
