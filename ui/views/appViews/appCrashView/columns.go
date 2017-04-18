@@ -60,7 +60,7 @@ func ColumnCrashTime() *uiCommon.ListColumn {
 }
 
 func ColumnExitDescription() *uiCommon.ListColumn {
-	defaultColSize := 40
+	defaultColSize := 35
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerCrashInfo).ExitDescription < (c2.(*DisplayContainerCrashInfo).ExitDescription)
 	}

@@ -85,11 +85,9 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	runtimeSeconds := statsTime.Sub(cd.router.GetStartTime())
 	cd.isWarmupComplete = runtimeSeconds > time.Second*config.WarmUpSeconds
 
-	//displayStatsArray := make([]*DisplayAppStats, 0)
 	displayStatsMap := make(map[string]*DisplayAppStats)
 
 	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
-	//appStatsArray := eventApp.ConvertFromMap(appMap, cd.appMdMgr)
 	appsNotInDesiredState := 0
 	totalCrash1hCount := 0
 	totalCrash24hCount := 0
@@ -98,7 +96,6 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats := NewDisplayAppStats(appStats)
 
 		displayStatsMap[appId] = displayAppStats
-		//displayStatsArray = append(displayStatsArray, displayAppStats)
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
 
 		displayAppStats.AppName = appMetadata.Name
@@ -134,18 +131,17 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		crash24hCount = crash24hCount + appStats.Crash24hCount()
 
 		//for containerIndex, cs := range appStats.ContainerArray {
-		for _, cs := range appStats.ContainerArray {
+		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 
 				// If we haven't gotten a container update recently, ignore the old value
 				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
 					// TODO: Should we nil out the old container data??
-					// If we do, we will lose crash count info for this container
-					// appStats.ContainerArray[containerIndex] = nil
+					appStats.ContainerArray[containerIndex] = nil
 					continue
 				}
 				/*
-					TODO: How can we ignore crashed containers immediately?
+					TODO: How can we ignore crashed / stopped containers immediately?
 
 						lastCrashTime := cs.LastCrashTime()
 						if lastCrashTime != nil && cs.LastUpdate.Before(*lastCrashTime) {
