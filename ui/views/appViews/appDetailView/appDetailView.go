@@ -22,13 +22,14 @@ import (
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appCrashView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -37,7 +38,13 @@ type AppDetailView struct {
 	*dataView.DataListView
 	appId              string
 	requestsInfoWidget *RequestsInfoWidget
+	crashInfoWidget    *CrashInfoWidget
 	displayMenuId      string
+
+	Crash10mCount int
+	Crash1hCount  int
+	Crash24hCount int
+	LastCrashInfo *crashData.ContainerCrashInfo
 }
 
 func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
@@ -61,7 +68,6 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
-	dataListView.UpdateHeaderCallback = asUI.updateHeader
 
 	dataListView.SetTitle("Container List")
 	dataListView.HelpText = HelpText
@@ -71,6 +77,9 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget", requestViewHeight, asUI)
 	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
+
+	asUI.crashInfoWidget = NewCrashInfoWidget(masterUI, "crashInfoWidget", requestViewHeight, asUI)
+	masterUI.LayoutManager().Add(asUI.crashInfoWidget)
 
 	return asUI
 }
@@ -82,12 +91,36 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppDetailView); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
+	/*
+		if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
+			log.Panicln(err)
+		}
+	*/
+	if err := g.SetKeybinding(viewName, 'd', gocui.ModNone, asUI.selectDisplayAction); err != nil {
 		log.Panicln(err)
 	}
-	if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
-		log.Panicln(err)
-	}
+	/*
+		if err := g.SetKeybinding(viewName, gocui.KeyEnter, gocui.ModNone, asUI.enterAction); err != nil {
+			log.Panicln(err)
+		}
+	*/
+	return nil
+}
+
+func (asUI *AppDetailView) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {
+
+	menuItems := make([]*uiCommon.MenuItem, 0, 5)
+	menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "App Info"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("crashInfoView", "View CRASH List"))
+	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View App Logs"))
+	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "Todo"))
+
+	windowTitle := fmt.Sprintf("Select App Detail View")
+	selectDisplayView := uiCommon.NewSelectMenuWidget(asUI.GetMasterUI(), "selectDisplayView", windowTitle, menuItems, asUI.selectDisplayCallback)
+	selectDisplayView.SetMenuId(asUI.displayMenuId)
+
+	asUI.GetMasterUI().LayoutManager().Add(selectDisplayView)
+	asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	return nil
 }
 
@@ -95,18 +128,6 @@ func (asUI *AppDetailView) enterAction(g *gocui.Gui, v *gocui.View) error {
 
 	highlightKey := asUI.GetListWidget().HighlightKey()
 	if highlightKey != "" {
-		/*
-			_, bottomMargin := asUI.GetMargins()
-
-			detailView := appDetailView.NewAppDetailView(asUI.GetMasterUI(), asUI, "appDetailView",
-				bottomMargin,
-				asUI.GetEventProcessor(),
-				highlightKey)
-			asUI.SetDetailView(detailView)
-			asUI.GetMasterUI().OpenView(g, detailView)
-		*/
-		toplog.Info("highlightKey: [%v]", highlightKey)
-
 		menuItems := make([]*uiCommon.MenuItem, 0, 5)
 		menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View CRASH info"))
 		menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View Logs"))
@@ -136,8 +157,11 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 	case "infoView":
 		infoWidgetName := "appInfoWidget"
 		view = NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 18, asUI)
-	case "xxx":
-		//view = orgView.NewOrgListView(mui, "orgListView", mui.helpTextTipsViewSize, ep)
+	case "crashInfoView":
+		_, bottomMargin := asUI.GetMargins()
+		view = appCrashView.NewAppCrashView(asUI.GetMasterUI(), asUI, "crashInfoView", bottomMargin,
+			asUI.GetEventProcessor(),
+			asUI.appId)
 	default:
 		return errors.New("Unable to find view " + viewName)
 	}
@@ -163,9 +187,6 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnDiskFree())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
-	columns = append(columns, ColumnCrash1hCount())
-	columns = append(columns, ColumnCrash24hCount())
-	columns = append(columns, ColumnLastCrash())
 
 	columns = append(columns, ColumnCellIp())
 	return columns
@@ -192,15 +213,6 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	for _, containerStats := range appStats.ContainerArray {
 		if containerStats != nil {
 			displayContainerStats := NewDisplayContainerStats(containerStats, appStats)
-
-			/*
-				appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
-				appName := appMetadata.Name
-				if appName == "" {
-					appName = appStats.AppId
-				}
-			*/
-
 			displayContainerStats.AppName = appMetadata.Name
 			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
@@ -217,27 +229,37 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			displayContainerStats.ReservedDisk = reservedDisk
 			displayStatsArray = append(displayStatsArray, displayContainerStats)
 
-			displayContainerStats.Crash1hCount = containerStats.Crash1hCount()
-			displayContainerStats.Crash1hCount = displayContainerStats.Crash1hCount +
-				crashData.FindCountSinceByAppAndInstance(appStats.AppId, containerStats.ContainerIndex, -1*time.Hour)
+		}
+	}
 
-			displayContainerStats.Crash24hCount = containerStats.Crash24hCount()
-			displayContainerStats.Crash24hCount = displayContainerStats.Crash24hCount +
-				crashData.FindCountSinceByAppAndInstance(appStats.AppId, containerStats.ContainerIndex, -24*time.Hour)
+	displayStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
+	displayAppStats := displayStatsMap[asUI.appId]
 
-			if displayContainerStats.Crash24hCount > 0 {
-				// Lookup crash time from container stats
-				displayContainerStats.LastCrashTime = containerStats.LastCrashTime()
-				if displayContainerStats.LastCrashTime == nil {
-					// If we don't find last crash in container stats, last crash must have occured
-					// before top was started.  Look for last crash time in metadata (/v2/event data)
-					displayContainerStats.LastCrashTime = crashData.FindLastCrashByAppAndInstance(appStats.AppId, containerStats.ContainerIndex)
-				}
-			}
+	asUI.Crash1hCount = displayAppStats.Crash1hCount
+	asUI.Crash24hCount = displayAppStats.Crash24hCount
 
+	crash10mCount := crashData.FindCountSinceByApp(appStats.AppId, -10*time.Minute)
+	crash10mCount = crash10mCount + appStats.CrashCountSince(-10*time.Minute)
+	asUI.Crash10mCount = crash10mCount
+
+	if displayAppStats.Crash24hCount > 0 {
+		// Lookup crash time from container stats
+		asUI.LastCrashInfo = asUI.FindLastCrash(appStats)
+		if asUI.LastCrashInfo == nil {
+			// If we don't find last crash in container stats, last crash must have occured
+			// before top was started.  Look for last crash time in metadata (/v2/event data)
+			asUI.LastCrashInfo = crashData.FindLastCrashByApp(appStats.AppId)
 		}
 	}
 	return displayStatsArray
+}
+
+func (asUI *AppDetailView) FindLastCrash(appStats *eventApp.AppStats) *crashData.ContainerCrashInfo {
+	if appStats.ContainerCrashInfo != nil && len(appStats.ContainerCrashInfo) > 0 {
+		last := len(appStats.ContainerCrashInfo) - 1
+		return appStats.ContainerCrashInfo[last]
+	}
+	return nil
 }
 
 func (asUI *AppDetailView) convertToListData(containerStatsArray []*DisplayContainerStats) []uiCommon.IData {
@@ -253,6 +275,9 @@ func (asUI *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error
 		return err
 	}
 	if err := asUI.GetMasterUI().CloseView(asUI.requestsInfoWidget); err != nil {
+		return err
+	}
+	if err := asUI.GetMasterUI().CloseView(asUI.crashInfoWidget); err != nil {
 		return err
 	}
 	return nil
@@ -280,9 +305,4 @@ func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
 	*/
 	return nil
-}
-
-func (asUI *AppDetailView) updateHeader(g *gocui.Gui, v *gocui.View) (int, error) {
-	fmt.Fprintf(v, "\nTODO: Show summary stats")
-	return 3, nil
 }

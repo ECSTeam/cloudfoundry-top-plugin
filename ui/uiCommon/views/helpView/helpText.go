@@ -45,7 +45,7 @@ const HelpHeaderText = `
 `
 const HelpTopLevelDataViewKeybindings = `
 **Display: **
-Press 'd' to select data view.
+Press 'd' to show data view menu.
 
 **Quit: **
 Press 'q' to quit application.

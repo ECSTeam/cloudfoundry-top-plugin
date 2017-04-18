@@ -1,4 +1,4 @@
-// Copyright (c) 2016 ECS Team, Inc. - All Rights Reserved
+// Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventApp
+package appCrashView
 
-import (
-	"time"
-
-	"github.com/cloudfoundry/sonde-go/events"
-)
-
-type ContainerStats struct {
-	ContainerIndex  int
-	Ip              string
-	ContainerMetric *events.ContainerMetric
-	LastUpdate      time.Time
-	OutCount        int64
-	ErrCount        int64
-}
-
-func NewContainerStats(containerIndex int) *ContainerStats {
-	stats := &ContainerStats{ContainerIndex: containerIndex}
-	return stats
-}
+const HelpTextTips = `**x**:exit view  **o**:order  **f**:filter  **h**:help  **UP**/**DOWN** arrow to highlight row
+**LEFT**/**RIGHT** arrow to scroll columns`

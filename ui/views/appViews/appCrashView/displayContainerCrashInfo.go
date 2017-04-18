@@ -13,24 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package eventApp
+package appCrashView
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 )
 
-type ContainerStats struct {
-	ContainerIndex  int
-	Ip              string
-	ContainerMetric *events.ContainerMetric
-	LastUpdate      time.Time
-	OutCount        int64
-	ErrCount        int64
+type DisplayContainerCrashInfo struct {
+	*crashData.ContainerCrashInfo
+
+	CrashTimeFormatted string
+	key                string
 }
 
-func NewContainerStats(containerIndex int) *ContainerStats {
-	stats := &ContainerStats{ContainerIndex: containerIndex}
-	return stats
+func NewDisplayContainerCrashInfo(containerCrashInfo *crashData.ContainerCrashInfo) *DisplayContainerCrashInfo {
+	crashInfo := &DisplayContainerCrashInfo{}
+	crashInfo.ContainerCrashInfo = containerCrashInfo
+	return crashInfo
+}
+
+func (cs *DisplayContainerCrashInfo) Id() string {
+	if cs.key == "" {
+		cs.key = fmt.Sprintf("%v-%v", cs.CrashTime.Format("01022006150405"), cs.ContainerIndex)
+	}
+	return cs.key
 }

@@ -127,25 +127,38 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 		// Crash count in last 1 hour (from call to /v2/events)
 		crash1hCount := crashData.FindCountSinceByApp(appId, -1*time.Hour)
+		crash1hCount = crash1hCount + appStats.Crash1hCount()
 
 		// Crash count in last 24 hours (from call to /v2/events)
 		crash24hCount := crashData.FindCountSinceByApp(appId, -24*time.Hour)
+		crash24hCount = crash24hCount + appStats.Crash24hCount()
 
-		for containerIndex, cs := range appStats.ContainerArray {
+		//for containerIndex, cs := range appStats.ContainerArray {
+		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 
-				crash1hCount = crash1hCount + cs.Crash1hCount()
-				crash24hCount = crash24hCount + cs.Crash24hCount()
 				// If we haven't gotten a container update recently, ignore the old value
 				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
-					appStats.ContainerArray[containerIndex] = nil
+					// TODO: Should we nil out the old container data??
+					// If we do, we will lose crash count info for this container
+					// appStats.ContainerArray[containerIndex] = nil
 					continue
 				}
+				/*
+					TODO: How can we ignore crashed containers immediately?
+
+						lastCrashTime := cs.LastCrashTime()
+						if lastCrashTime != nil && cs.LastUpdate.Before(*lastCrashTime) {
+							// If the container has crashed since the last update, lets not
+							// count it as running
+							continue
+						}
+				*/
+
 				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
 				totalMemoryUsed = totalMemoryUsed + int64(*cs.ContainerMetric.MemoryBytes)
 				totalDiskUsed = totalDiskUsed + int64(*cs.ContainerMetric.DiskBytes)
 				totalReportingContainers++
-
 			}
 		}
 		if totalReportingContainers < displayAppStats.DesiredContainers {

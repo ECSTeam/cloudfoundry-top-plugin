@@ -27,14 +27,21 @@ const HelpText = HelpOverviewText +
 const HelpOverviewText = `
 **App Detail View**
 
-App detail view shows details of the selected application.  In App Request
-Info area shows HTTP request rates for the last 1/10/60 seconds.  The
-average response time in milliseconds is also displayed for the same
-1/10/60 second intervals.
+App detail view shows details of the selected application.  
 
-NOTE: The HTTP counters are based on traffic through the 
-gorouter.  Applications that talk directly container-to-
-container will not show up in the REQ/nXX counters.
+**Request Info Section**
+Request Info section shows HTTP(S) request rates for the last 1/10/60
+seconds. The average response time in milliseconds is also displayed 
+for the same 1/10/60 second intervals.
+
+NOTE: The HTTP(S) counters are based on traffic through the gorouter.
+Applications that talk directly container-to-container will not show
+up in the REQ/nXX counters.
+
+**Crash Info Section**
+Crash Info section shows how many application containers have crashed
+in the last 10 minutes, 1 hour, and 24 hours.  It also shows the last
+time a container crashed in the last 24 hours.
 `
 
 const HelpColumnsText = `
@@ -48,13 +55,10 @@ const HelpColumnsText = `
   DISK_FREE - Disk free in the container
   LOG_OUT - Total number of log stdout events  
   LOG_ERR - Total number of log stderr events 
-  CRH/1H - Number of container crashes in last hour
-  CRH/24H - Number of container crashes in last 24 hours
-  LAST_CRASH - Timestamp of last crash
   CELL_IP - IP address of the cell running the container
 `
 
 const HelpLocalViewKeybindings = `
-**Info View: **
-Press 'i' to display application info view.
+**Display: **
+Press 'd' to show app detail view menu.
 `

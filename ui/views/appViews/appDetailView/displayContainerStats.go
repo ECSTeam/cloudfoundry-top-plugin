@@ -17,7 +17,6 @@ package appDetailView
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 )
@@ -35,10 +34,6 @@ type DisplayContainerStats struct {
 	FreeDisk       uint64
 	ReservedDisk   uint64
 	key            string
-
-	Crash1hCount  int
-	Crash24hCount int
-	LastCrashTime *time.Time
 }
 
 func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats *eventApp.AppStats) *DisplayContainerStats {

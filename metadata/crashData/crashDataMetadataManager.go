@@ -26,15 +26,14 @@ import (
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
 var (
 	LoadEventsUntilTime *time.Time
 
 	crashDataMetadataCache []EventData
-	// Map: [AppGuid][instanceIndex] = array of crash timestamps
-	crashDataByAppId map[string]map[int][]*time.Time
+	// Map: [AppGuid] = array of crash timestamps
+	crashDataByAppId map[string][]*ContainerCrashInfo
 )
 
 func All() []EventData {
@@ -50,23 +49,13 @@ func Find(guid string) EventData {
 	return EventData{EntityCommon: common.EntityCommon{Guid: guid}}
 }
 
-func FindByApp(appGuid string) []*time.Time {
-	var allCrashTimestamps []*time.Time
-	if crashDataByAppId != nil {
-		crashMap := crashDataByAppId[appGuid]
-		if crashMap != nil {
-			for _, crashTimestamps := range crashMap {
-				if crashTimestamps != nil {
-					allCrashTimestamps = append(allCrashTimestamps, crashTimestamps...)
-				}
-			}
-		}
-	}
-	sort.Sort(util.TimeSlice(allCrashTimestamps))
-	return allCrashTimestamps
+func FindByApp(appGuid string) []*ContainerCrashInfo {
+	crashInfo := crashDataByAppId[appGuid]
+	sort.Sort(ContainerCrashInfoSlice(crashInfo))
+	return crashInfo
 }
 
-func FindSinceByApp(appGuid string, since time.Duration) []*time.Time {
+func FindSinceByApp(appGuid string, since time.Duration) []*ContainerCrashInfo {
 	crashTimestamps := FindByApp(appGuid)
 	return filterSince(crashTimestamps, since)
 }
@@ -79,56 +68,30 @@ func FindCountSinceByApp(appGuid string, since time.Duration) int {
 	return 0
 }
 
-func FindByAppAndInstance(appGuid string, instanceIndex int) []*time.Time {
-	if crashDataByAppId != nil {
-		crashMap := crashDataByAppId[appGuid]
-		if crashMap != nil {
-			crashTimestamps := crashMap[instanceIndex]
-			if crashTimestamps != nil {
-				return crashTimestamps
-			}
-		}
+func FindLastCrashByApp(appGuid string) *ContainerCrashInfo {
+	crashInfoList := FindByApp(appGuid)
+	if crashInfoList != nil && len(crashInfoList) > 0 {
+		return crashInfoList[len(crashInfoList)-1]
 	}
 	return nil
 }
 
-func FindLastCrashByAppAndInstance(appGuid string, instanceIndex int) *time.Time {
-	crashTimestamps := FindByAppAndInstance(appGuid, instanceIndex)
-	if crashTimestamps != nil && len(crashTimestamps) > 0 {
-		return crashTimestamps[len(crashTimestamps)-1]
-	}
-	return nil
-}
+func filterSince(crashInfoList []*ContainerCrashInfo, since time.Duration) []*ContainerCrashInfo {
 
-func FindSinceByAppAndInstance(appGuid string, instanceIndex int, since time.Duration) []*time.Time {
-	crashTimestamps := FindByAppAndInstance(appGuid, instanceIndex)
-	return filterSince(crashTimestamps, since)
-}
-
-func FindCountSinceByAppAndInstance(appGuid string, instanceIndex int, since time.Duration) int {
-	crashTimestamps := FindSinceByAppAndInstance(appGuid, instanceIndex, since)
-	if crashTimestamps != nil {
-		return len(crashTimestamps)
-	}
-	return 0
-}
-
-func filterSince(crashTimestamps []*time.Time, since time.Duration) []*time.Time {
-
-	if crashTimestamps != nil {
+	if crashInfoList != nil {
 		sinceTime := time.Now().Add(since)
-		crashTimestampsSize := len(crashTimestamps)
-		crashTimestampsSince := make([]*time.Time, 0, crashTimestampsSize)
-		for i, _ := range crashTimestamps {
+		crashInfoListSize := len(crashInfoList)
+		crashInfoListSince := make([]*ContainerCrashInfo, 0, crashInfoListSize)
+		for i, _ := range crashInfoList {
 			// Reverse loop through array
-			crashTS := crashTimestamps[crashTimestampsSize-i-1]
-			if crashTS == nil || crashTS.Before(sinceTime) {
+			crashInfo := crashInfoList[crashInfoListSize-i-1]
+			if crashInfo == nil || crashInfo.CrashTime.Before(sinceTime) {
 				break
 			}
 			//crashCount = i + 1
-			crashTimestampsSince = append(crashTimestampsSince, crashTS)
+			crashInfoListSince = append(crashInfoListSince, crashInfo)
 		}
-		return crashTimestampsSince
+		return crashInfoListSince
 	}
 	return nil
 }
@@ -141,26 +104,23 @@ func LoadCrashDataCache(cliConnection plugin.CliConnection) {
 	}
 	crashDataMetadataCache = data
 
-	crashDataByAppId = make(map[string]map[int][]*time.Time)
+	crashDataByAppId = make(map[string][]*ContainerCrashInfo)
 
 	layout := "2006-01-02T15:04:05Z"
 	for _, crashData := range data {
-		crashMap := crashDataByAppId[crashData.Actor]
-		if crashMap == nil {
-			crashMap = make(map[int][]*time.Time)
-			crashDataByAppId[crashData.Actor] = crashMap
+		crashInfoList := crashDataByAppId[crashData.Actor]
+		if crashInfoList == nil {
+			crashInfoList = make([]*ContainerCrashInfo, 0)
+			crashDataByAppId[crashData.Actor] = crashInfoList
 		}
 		crashTimestamp, err := time.Parse(layout, crashData.Timestamp)
 		if err != nil {
 			fmt.Println(err)
 		}
-
 		instanceIndex := crashData.Metadata.Index
-		crashTimestamps := crashMap[instanceIndex]
-		if crashTimestamps == nil {
-			crashTimestamps = make([]*time.Time, 0, 20)
-		}
-		crashDataByAppId[crashData.Actor][instanceIndex] = append(crashTimestamps, &crashTimestamp)
+		exitDescription := crashData.Metadata.Exit_description
+		crashInfo := NewContainerCrashInfo(instanceIndex, &crashTimestamp, exitDescription)
+		crashDataByAppId[crashData.Actor] = append(crashDataByAppId[crashData.Actor], crashInfo)
 	}
 }
 

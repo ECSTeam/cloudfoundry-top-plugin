@@ -135,13 +135,11 @@ func (ed *EventData) logApiCall(msg *events.Envelope) {
 			exitDescription = exitDescriptionField.Data().(string)
 		}
 
-		containerStats := ed.getContainerStats(appStats, instNum)
-
 		crashTimestampField := fields["crash_timestamp"]
 		if crashTimestampField != nil {
 			timestamp64 := crashTimestampField.Data().(float64)
 			timestamp := time.Unix(0, int64(timestamp64))
-			containerStats.AddCrashInfo(&timestamp, exitDescription)
+			appStats.AddCrashInfo(instNum, &timestamp, exitDescription)
 		}
 		toplog.Info("CRASH of app %v exit desc: %v", appMetadata.Name, exitDescription)
 

@@ -18,6 +18,7 @@ package appDetailView
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
@@ -52,9 +53,8 @@ func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 
 	maxX, _ := g.Size()
 	top := topOffset - w.height - 1
-	width := maxX - 1
+	width := int(math.Floor((float64(maxX) / 2) + 2))
 
-	//v, err := g.SetView(w.name, maxX/2-(w.width/2), maxY/2-(w.height/2), maxX/2+(w.width/2), maxY/2+(w.height/2))
 	v, err := g.SetView(w.name, 0, top, width, top+w.height)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -62,25 +62,16 @@ func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 		}
 		v.Frame = true
 	}
-	v.Title = "App Request Info for: " + w.getAppName()
+	//v.Title = "App Request Info"
+	v.Title = fmt.Sprintf("App: %v", w.getAppName())
 	w.refreshDisplay(g)
 	return nil
 }
 
 func (w *RequestsInfoWidget) getAppName() string {
-
-	//appMdMgr := w.detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
 	appMetadata := w.appMdMgr.FindAppMetadata(w.detailView.appId)
 	appName := appMetadata.Name
 	return appName
-	/*
-		m := w.detailView.GetDisplayedEventData().AppMap
-		appStats := m[w.detailView.appId]
-		if appStats == nil {
-			return w.detailView.appId
-		}
-		return appStats.AppName
-	*/
 }
 
 func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
@@ -121,20 +112,19 @@ func (w *RequestsInfoWidget) refreshDisplay(g *gocui.Gui) error {
 		avgResponseTimeL1Info = fmt.Sprintf("%8.1f", avgResponseTimeMs)
 	}
 
-	fmt.Fprintf(v, "%22v", "")
+	fmt.Fprintf(v, "%16v", "")
 	fmt.Fprintf(v, "    1sec   10sec   60sec\n")
 
-	fmt.Fprintf(v, "%22v", "HTTP(S) Event Rate:")
+	fmt.Fprintf(v, "%16v", "  HTTP(S) Rate:")
 	fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL1Rate)
 	fmt.Fprintf(v, "%8v", appStats.TotalTraffic.EventL10Rate)
 	fmt.Fprintf(v, "%8v\n", appStats.TotalTraffic.EventL60Rate)
 
-	fmt.Fprintf(v, "%22v", "Avg Rspnse Time(ms):")
+	fmt.Fprintf(v, "%16v", "Rspns Time(ms):")
 	fmt.Fprintf(v, "%8v", avgResponseTimeL1Info)
 	fmt.Fprintf(v, "%8v", avgResponseTimeL10Info)
 	fmt.Fprintf(v, "%8v\n", avgResponseTimeL60Info)
 	fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-	//fmt.Fprintf(v, "  Press 'i' for more app info")
 	fmt.Fprintf(v, "%v", util.CLEAR)
 	return nil
 }

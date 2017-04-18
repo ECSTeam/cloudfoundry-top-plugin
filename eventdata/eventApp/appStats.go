@@ -16,8 +16,11 @@
 package eventApp
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 )
 
 const (
@@ -39,6 +42,11 @@ type AppStats struct {
 
 	// ISSUE: Must do this at clone time because of AvgTracker counter
 	TotalTraffic *TrafficStats
+
+	// We save container info in AppStats and not in ContainerStats
+	// because container stats entries and come and go (scale up/down)
+	// but we want to keep all crash info regardless of container status
+	ContainerCrashInfo []*crashData.ContainerCrashInfo
 }
 
 func NewAppStats(appId string) *AppStats {
@@ -57,4 +65,53 @@ func ConvertFromMap(statsMap map[string]*AppStats, appMdMgr *app.AppMetadataMana
 		s = append(s, d)
 	}
 	return s
+}
+
+func (as *AppStats) AddCrashInfo(containerIndex int, crashTime *time.Time, exitDescription string) {
+	crashInfo := crashData.NewContainerCrashInfo(containerIndex, crashTime, exitDescription)
+	if as.ContainerCrashInfo == nil {
+		as.ContainerCrashInfo = make([]*crashData.ContainerCrashInfo, 0, 10)
+	}
+	as.ContainerCrashInfo = append(as.ContainerCrashInfo, crashInfo)
+}
+
+func (as *AppStats) CrashSince(since time.Duration) []*crashData.ContainerCrashInfo {
+
+	crashInfoList := as.ContainerCrashInfo
+	if crashInfoList != nil {
+		sinceTime := time.Now().Add(since)
+		crashInfoSize := len(crashInfoList)
+		filteredCrashInfoList := make([]*crashData.ContainerCrashInfo, 0)
+		for i := range crashInfoList {
+			// Reverse loop through array
+			crashInfo := crashInfoList[crashInfoSize-i-1]
+			if crashInfo.CrashTime == nil || crashInfo.CrashTime.Before(sinceTime) {
+				break
+			}
+			filteredCrashInfoList = append(filteredCrashInfoList, crashInfo)
+		}
+		return filteredCrashInfoList
+	}
+	return nil
+}
+
+// Crash count in last duration
+func (as *AppStats) CrashCountSince(since time.Duration) int {
+	crashInfoList := as.CrashSince(since)
+	if crashInfoList != nil {
+		return len(crashInfoList)
+	}
+	return 0
+}
+
+// Crash count in last 1 hour recorded since top started
+func (as *AppStats) Crash1hCount() int {
+	//return as.CrashCount(-1 * time.Minute)
+	return as.CrashCountSince(-1 * time.Hour)
+}
+
+// Crash count in last 24 hours recorded since top started
+func (as *AppStats) Crash24hCount() int {
+	//return as.CrashCount(-2 * time.Minute)
+	return as.CrashCountSince(-24 * time.Hour)
 }
