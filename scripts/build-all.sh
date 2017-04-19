@@ -58,7 +58,8 @@ cat repo-index.yml |
 sed "s/__osx-sha1__/$OSX_SHA1/" |
 sed "s/__win64-sha1__/$WIN64_SHA1/" |
 sed "s/__linux64-sha1__/$LINUX64_SHA1/" |
-sed "s/__TAG__/$VERSION/" |
+sed "s/__TAG__/$TAG/" |
+sed "s/__VERSION__/$VERSION/" |
 sed "s/__TODAY__/$NOW/" |
 cat
 
