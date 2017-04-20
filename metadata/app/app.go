@@ -47,6 +47,7 @@ type App struct {
 	StagingFailedReason string `json:"staging_failed_reason,omitempty"`
 	StagingFailedDesc   string `json:"staging_failed_description,omitempty"`
 	DetectedStartCmd    string `json:"detected_start_command,omitempty"`
+	DockerImage         string `json:"docker_image,omitempty"`
 	//DockerCredentials string  `json:"docker_credentials_json,omitempty"`
 	//audit.app.create event fields
 	Console           bool   `json:"console,omitempty"`

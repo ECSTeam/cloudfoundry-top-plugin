@@ -106,11 +106,27 @@ func (c *Client) Start() {
 
 	fmt.Printf("Loading...")
 
-	privileged, err := c.hasDopplerFirehoseScope()
+	scopes, err := c.getUserScopes()
 	if err != nil {
 		c.ui.Failed("Could not determine privileges. Are you logged in?\n%v", err)
 		return
 	}
+
+	hasCCAdminScope := c.hasCloudControllerAdminScope(scopes)
+	hasFirehoseScope := c.hasDopplerFirehoseScope(scopes)
+
+	if hasCCAdminScope != hasFirehoseScope {
+		if hasCCAdminScope {
+			c.ui.Warn("\nYour userid has 'cloud_controller.admin' but not 'doppler.firehose' scope.")
+		}
+		if hasFirehoseScope {
+			c.ui.Warn("Your userid has 'doppler.firehose' but not 'cloud_controller.admin' scope.")
+		}
+		c.ui.Warn("top cannot run in privileged mode in this configuration.")
+		c.ui.Warn("See: https://github.com/ECSTeam/cloudfoundry-top-plugin#assign-scope-if-privileged-mode-is-needed\n")
+	}
+
+	privileged := hasCCAdminScope && hasFirehoseScope
 
 	ui := ui.NewMasterUI(conn, c.pluginMetadata, privileged)
 	c.router = ui.GetRouter()
@@ -145,6 +161,19 @@ func (c *Client) setupFirehoseConnections(privileged bool) error {
 	// TODO: Can we do this through metadata package so we don't load Apps twice since
 	// metadata has to be loaded anyway.
 	// TODO: Can we do this async?  Wait for metadata load complete signal and then open streams
+	// NOTE: cliConnection.GetApps() and apps list via metadata are NOT the same.
+	//       cliConnection.GetApps() only returns apps in current space vs ALL apps (you have visability to)
+	/*
+		This should work to get a list of all apps:
+
+			appMdMgr = app.NewAppMetadataManager()
+			appMdMgr.LoadAppCache(mgr.cliConnection)
+			appMdMgr.AllApps()
+
+		However, would it be best to leave it as only apps in current space -- that way we don't have to deal with
+		a UI to allow developer to select which apps to monitor.  (max of 50)
+	*/
+
 	apps, err := c.cliConnection.GetApps()
 	if err != nil {
 		c.ui.Failed("Fetching all Apps failed: %v", err)
@@ -154,7 +183,7 @@ func (c *Client) setupFirehoseConnections(privileged bool) error {
 	if nozzlesToOpen > MAX_APPS_TO_MONITOR {
 		nozzlesToOpen = MAX_APPS_TO_MONITOR
 	}
-	toplog.Info("Running without doppler.firehose privileges - opening %v nozzles", nozzlesToOpen)
+	toplog.Info("Running without doppler.firehose scope - opening %v nozzles", nozzlesToOpen)
 	for i, application := range apps {
 		if i >= MAX_APPS_TO_MONITOR {
 			toplog.Warn("Max of %v apps to monitor was reached.  Some apps will not be monitored", MAX_APPS_TO_MONITOR)
@@ -386,36 +415,52 @@ func (c *Client) getNumberOfTopPluginsRunning() int {
 	return numberRunning
 }
 
-func (c *Client) hasDopplerFirehoseScope() (bool, error) {
+func (c *Client) hasDopplerFirehoseScope(scopes []string) bool {
+	return c.hasScope(scopes, "doppler.firehose")
+}
+
+func (c *Client) hasCloudControllerAdminScope(scopes []string) bool {
+	return c.hasScope(scopes, "cloud_controller.admin")
+}
+
+func (c *Client) hasScope(scopes []string, findScope string) bool {
+	for _, scope := range scopes {
+		if findScope == scope {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Client) getUserScopes() ([]string, error) {
 	authToken, err := c.cliConnection.AccessToken()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	decodedAccessToken, err := decodeAccessToken(authToken)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	//fmt.Printf("decodedAccessToken: %v\n", decodedAccessToken)
 
 	jsonParsed, err := gabs.ParseJSON(decodedAccessToken)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	scopes, err := jsonParsed.Search("scope").Children()
+	jsonScopes, err := jsonParsed.Search("scope").Children()
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	for _, scope := range scopes {
-		if scope.Data().(string) == "doppler.firehose" {
-			return true, nil
-		}
+	scopes := make([]string, 0, 5)
+	for _, scope := range jsonScopes {
+		scope := scope.Data().(string)
+		scopes = append(scopes, scope)
 	}
-
-	return false, nil
+	return scopes, nil
 }
 
 func decodeAccessToken(accessToken string) (tokenJSON []byte, err error) {

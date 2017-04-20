@@ -12,7 +12,7 @@ correct permissions are granted to your Cloud Foundry login (or if you are logge
 
 [Installation Instructions](#installation) 
 
-![Screenshot](screenshots/screencast1.gif?raw=true)
+![Screenshot](screenshots/screencast2.gif?raw=true)
 
 ## Screenshots
 

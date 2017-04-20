@@ -109,6 +109,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 			buildpack = appMetadata.DetectedBuildpack
 		}
 		packageUpdated := appMetadata.PackageUpdatedAt
+		dockerImage := appMetadata.DockerImage
 
 		appName := appMetadata.Name
 		spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
@@ -122,7 +123,11 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, " Organization:    %v\n", orgName)
 		fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
 		fmt.Fprintf(v, " State:           %v\n", state)
-		fmt.Fprintf(v, " Buildpack:       %v\n", buildpack)
+		if dockerImage != "" {
+			fmt.Fprintf(v, " Docker Image:    %v\n", dockerImage)
+		} else {
+			fmt.Fprintf(v, " Buildpack:       %v\n", buildpack)
+		}
 		fmt.Fprintf(v, " Package Updated: %v\n", packageUpdated)
 		fmt.Fprintf(v, "\n Reserved:\n")
 
