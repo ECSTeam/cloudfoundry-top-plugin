@@ -35,6 +35,7 @@ type CommonData struct {
 	appMdMgr *app.AppMetadataManager
 
 	displayAppStatsMap map[string]*DisplayAppStats
+	monitoredAppGuids  map[string]bool
 
 	isWarmupComplete bool
 	// This is a count of the number of apps that do not have
@@ -50,11 +51,11 @@ type CommonData struct {
 // appView to access this data through  masterUI so we don't process
 // the same data twice
 
-func NewCommonData(router *eventrouting.EventRouter) *CommonData {
+func NewCommonData(router *eventrouting.EventRouter, monitoredAppGuids map[string]bool) *CommonData {
 	cd := &CommonData{router: router}
 
 	cd.appMdMgr = router.GetProcessor().GetMetadataManager().GetAppMdManager()
-
+	cd.monitoredAppGuids = monitoredAppGuids
 	return cd
 }
 
@@ -78,6 +79,25 @@ func (cd *CommonData) TotalCrash24hCount() int {
 	return cd.totalCrash24hCount
 }
 
+func (cd *CommonData) SetMonitoredAppGuids(monitoredAppGuids map[string]bool) {
+	cd.monitoredAppGuids = monitoredAppGuids
+}
+
+func (cd *CommonData) GetMonitoredAppGuids() map[string]bool {
+	return cd.monitoredAppGuids
+}
+
+func (cd *CommonData) IsMonitoredAppGuid(appGuid string) bool {
+	// Check if we're only monitoring a subset of apps and if this app is one of them
+	if cd.monitoredAppGuids != nil {
+		if cd.monitoredAppGuids[appGuid] {
+			return true
+		}
+		return false
+	}
+	return true
+}
+
 func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 	eventData := cd.router.GetProcessor().GetDisplayedEventData()
@@ -94,6 +114,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 	for appId, appStats := range appMap {
 		displayAppStats := NewDisplayAppStats(appStats)
+
+		displayAppStats.Monitored = cd.IsMonitoredAppGuid(appId)
 
 		displayStatsMap[appId] = displayAppStats
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
@@ -157,7 +179,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 				totalReportingContainers++
 			}
 		}
-		if totalReportingContainers < displayAppStats.DesiredContainers {
+		if displayAppStats.Monitored && totalReportingContainers < displayAppStats.DesiredContainers {
 			appsNotInDesiredState = appsNotInDesiredState + 1
 		}
 		if totalReportingContainers > 0 {

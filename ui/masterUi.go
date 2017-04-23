@@ -139,12 +139,12 @@ func (mui *MasterUI) GetTargetDisplay() string {
 	return mui.targetDisplay
 }
 
-func (mui *MasterUI) Start() {
+func (mui *MasterUI) Start(monitoredAppGuids map[string]bool) {
 	mui.router.GetProcessor().Start()
-	mui.initGui()
+	mui.initGui(monitoredAppGuids)
 }
 
-func (mui *MasterUI) initGui() {
+func (mui *MasterUI) initGui(monitoredAppGuids map[string]bool) {
 
 	g, err := gocui.NewGui(gocui.Output256)
 	if err != nil {
@@ -163,7 +163,7 @@ func (mui *MasterUI) initGui() {
 	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
 	mui.layoutManager.Add(helpTextTipsView)
 
-	mui.commonData = dataCommon.NewCommonData(mui.router)
+	mui.commonData = dataCommon.NewCommonData(mui.router, monitoredAppGuids)
 
 	mui.alertManager = alertView.NewAlertManager(mui, mui.commonData)
 	//mui.baseHeaderSize = 3

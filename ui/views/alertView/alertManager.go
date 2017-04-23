@@ -87,13 +87,6 @@ func (am *AlertManager) checkForAppsNotInDesiredState(g *gocui.Gui) error {
 		return nil
 	}
 
-	// TODO: We can't alert if we are not monitoring all the apps
-	// Update this alert only on monitored apps if non-privileged
-	// for now we just don't alert
-	if !am.masterUI.IsPrivileged() {
-		return nil
-	}
-
 	appsNotInDesiredState := commonData.AppsNotInDesiredState()
 	if commonData.IsWarmupComplete() && appsNotInDesiredState > 0 {
 		plural := ""

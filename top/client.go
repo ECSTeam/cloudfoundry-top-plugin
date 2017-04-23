@@ -133,7 +133,7 @@ func (c *Client) Start() {
 
 	toplog.Info("Top started at " + time.Now().Format("01-02-2006 15:04:05"))
 
-	err = c.setupFirehoseConnections(privileged)
+	monitoredAppGuids, err := c.setupFirehoseConnections(privileged)
 	if err != nil {
 		return
 	}
@@ -141,11 +141,11 @@ func (c *Client) Start() {
 	// Clear the 'Loading...' message from screen
 	fmt.Printf("\r           \r")
 
-	ui.Start()
+	ui.Start(monitoredAppGuids)
 }
 
 // setupFirehoseConnections starts nozzle(s) aysnc and return if user is privileged
-func (c *Client) setupFirehoseConnections(privileged bool) error {
+func (c *Client) setupFirehoseConnections(privileged bool) (map[string]bool, error) {
 
 	// If user has correct privileges, use the "firehose" API
 	if privileged {
@@ -155,7 +155,7 @@ func (c *Client) setupFirehoseConnections(privileged bool) error {
 			go c.createAndKeepAliveNozzle(subscriptionID, "", i)
 		}
 		toplog.Info("Starting %v firehose nozzle instances", c.options.Nozzles)
-		return nil
+		return nil, nil
 	}
 
 	// TODO: Can we do this through metadata package so we don't load Apps twice since
@@ -177,13 +177,14 @@ func (c *Client) setupFirehoseConnections(privileged bool) error {
 	apps, err := c.cliConnection.GetApps()
 	if err != nil {
 		c.ui.Failed("Fetching all Apps failed: %v", err)
-		return err
+		return nil, err
 	}
 	nozzlesToOpen := len(apps)
 	if nozzlesToOpen > MAX_APPS_TO_MONITOR {
 		nozzlesToOpen = MAX_APPS_TO_MONITOR
 	}
 	toplog.Info("Running without doppler.firehose scope - opening %v nozzles", nozzlesToOpen)
+	monitoredAppGuids := make(map[string]bool)
 	for i, application := range apps {
 		if i >= MAX_APPS_TO_MONITOR {
 			toplog.Warn("Max of %v apps to monitor was reached.  Some apps will not be monitored", MAX_APPS_TO_MONITOR)
@@ -192,11 +193,12 @@ func (c *Client) setupFirehoseConnections(privileged bool) error {
 		}
 		toplog.Info("Starting app nozzle #%v instance for App %s", i, application.Name)
 		go c.createAndKeepAliveNozzle("", application.Guid, i)
+		monitoredAppGuids[application.Guid] = true
 		// TODO: Need to come up with a way for user to specify (or select on UI) which apps will be monitored
 		// if the max is reached -- does't make sense to just choose the first n apps returned from the API
 		// We don't want his unlimited as I'm fearful of opening 100s of connections to go-router/cloud-controller
 	}
-	return nil
+	return monitoredAppGuids, nil
 }
 
 func (c *Client) createAndKeepAliveNozzle(subscriptionID, appGUID string, instanceID int) error {

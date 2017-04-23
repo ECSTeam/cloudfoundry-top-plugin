@@ -35,6 +35,10 @@ type DisplayAppStats struct {
 	IsolationSegmentGuid string
 	IsolationSegmentName string
 
+	// Indicate if this app is monitored.  For privileged users
+	// this should always be true.
+	Monitored bool
+
 	//TotalTraffic *eventdata.TrafficStats
 
 	TotalCpuPercentage float64
