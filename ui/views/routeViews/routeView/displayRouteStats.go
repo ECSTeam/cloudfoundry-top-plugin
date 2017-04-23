@@ -32,10 +32,15 @@ type DisplayRouteStats struct {
 	Path      string
 	Port      int
 
+	// Indicate if this app is monitored.  For privileged users
+	// this should always be true.
+	Monitored bool
+
 	RoutedAppCount int
 
 	LastAccess            time.Time
 	ResponseContentLength int64
+	RecentActivity        bool
 
 	HttpAllCount   int64
 	Http2xxCount   int64

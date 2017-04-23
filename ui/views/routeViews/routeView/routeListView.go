@@ -18,9 +18,11 @@ package routeView
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -126,6 +128,19 @@ func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 	domainMap := asUI.GetDisplayedEventData().DomainMap
 	displayRouteArray := make([]*DisplayRouteStats, 0)
 
+	// Find the space guid we're currently monitoring (if non-privileged)
+	spaceGuid := ""
+	monitoredAppGuids := asUI.GetMasterUI().GetCommonData().GetMonitoredAppGuids()
+	if monitoredAppGuids != nil {
+		for appId := range monitoredAppGuids {
+			appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+			appMd := appMdMgr.FindAppMetadata(appId)
+			spaceGuid = appMd.SpaceGuid
+		}
+	}
+
+	now := time.Now()
+
 	for domainName, domainStats := range domainMap {
 		for hostName, hostStats := range domainStats.HostStatsMap {
 			// HTTP routes
@@ -133,6 +148,15 @@ func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 
 				displayRouteStat := NewDisplayRouteStats(routeStats, hostName, domainName, pathName, 0)
 				displayRouteArray = append(displayRouteArray, displayRouteStat)
+
+				if spaceGuid != "" {
+					routeMd := route.FindRouteMetadata(routeStats.RouteId)
+					if spaceGuid == routeMd.SpaceGuid {
+						displayRouteStat.Monitored = true
+					}
+				} else {
+					displayRouteStat.Monitored = true
+				}
 
 				for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 
@@ -145,6 +169,9 @@ func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 						displayRouteStat.ResponseContentLength = displayRouteStat.ResponseContentLength + httpMethodStats.ResponseContentLength
 						if displayRouteStat.LastAccess.Before(httpMethodStats.LastAccess) {
 							displayRouteStat.LastAccess = httpMethodStats.LastAccess
+						}
+						if now.Sub(displayRouteStat.LastAccess) < (time.Second * 10) {
+							displayRouteStat.RecentActivity = true
 						}
 
 						switch method {

@@ -152,7 +152,6 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		crash24hCount := crashData.FindCountSinceByApp(appId, -24*time.Hour)
 		crash24hCount = crash24hCount + appStats.Crash24hCount()
 
-		//for containerIndex, cs := range appStats.ContainerArray {
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 

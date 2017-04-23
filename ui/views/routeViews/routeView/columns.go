@@ -22,6 +22,17 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
+func attentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	stats := data.(*DisplayRouteStats)
+	if !stats.Monitored {
+		return uiCommon.ATTENTION_NOT_MONITORED
+	}
+	if stats.RecentActivity {
+		return uiCommon.ATTENTION_ACTIVITY
+	}
+	return uiCommon.ATTENTION_NORMAL
+}
+
 func columnRouteId() *uiCommon.ListColumn {
 	defaultColSize := 16
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -63,7 +74,7 @@ func columnRoutedAppCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.RoutedAppCount)
 	}
 	c := uiCommon.NewListColumn("R_APPS", "R_APPS", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -81,7 +92,7 @@ func columnRouteName() *uiCommon.ListColumn {
 		return stats.RouteName
 	}
 	c := uiCommon.NewListColumn("ROUTE_NAME", "ROUTE_NAME", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -104,7 +115,7 @@ func columnHost() *uiCommon.ListColumn {
 		return stats.Host
 	}
 	c := uiCommon.NewListColumn("HOST", "HOST", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -122,7 +133,7 @@ func columnDomain() *uiCommon.ListColumn {
 		return stats.Domain
 	}
 	c := uiCommon.NewListColumn("DOMAIN", "DOMAIN", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -140,7 +151,7 @@ func columnPath() *uiCommon.ListColumn {
 		return stats.Path
 	}
 	c := uiCommon.NewListColumn("PATH", "PATH", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -162,7 +173,7 @@ func columnPort() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.Port)
 	}
 	c := uiCommon.NewListColumn("PORT", "PORT", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -186,7 +197,7 @@ func columnTotalRequests() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpAllCount)
 	}
 	c := uiCommon.NewListColumn("TOTREQ", "TOT_REQ", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -208,7 +219,7 @@ func column2xx() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.Http2xxCount)
 	}
 	c := uiCommon.NewListColumn("2XX", "2XX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -230,7 +241,7 @@ func column3xx() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.Http3xxCount)
 	}
 	c := uiCommon.NewListColumn("3XX", "3XX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -252,7 +263,7 @@ func column4xx() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.Http4xxCount)
 	}
 	c := uiCommon.NewListColumn("4XX", "4XX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -274,7 +285,7 @@ func column5xx() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.Http5xxCount)
 	}
 	c := uiCommon.NewListColumn("5XX", "5XX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -297,7 +308,7 @@ func columnResponseContentLength() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.ResponseContentLength)
 	}
 	c := uiCommon.NewListColumn("RESP_DATA", "RESP_DATA", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 
 	return c
 }
@@ -320,7 +331,7 @@ func columnMethodGet() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpMethodGetCount)
 	}
 	c := uiCommon.NewListColumn("M_GET", "M_GET", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -342,7 +353,7 @@ func columnMethodPost() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpMethodPostCount)
 	}
 	c := uiCommon.NewListColumn("M_POST", "M_POST", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -364,7 +375,7 @@ func columnMethodPut() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpMethodPutCount)
 	}
 	c := uiCommon.NewListColumn("M_PUT", "M_PUT", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -386,7 +397,7 @@ func columnMethodDelete() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpMethodDeleteCount)
 	}
 	c := uiCommon.NewListColumn("M_DELETE", "M_DELETE", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
 
@@ -408,6 +419,6 @@ func columnLastAccess() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.LastAccess)
 	}
 	c := uiCommon.NewListColumn("LAST_ACCESS", "LAST_ACCESS", defaultColSize,
-		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
