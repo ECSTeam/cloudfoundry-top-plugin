@@ -59,6 +59,16 @@ const HelpColumnsText = `
 NOTE: The HTTP counters are based on traffic through the 
 go-router.  Applications that talk directly container-to-
 container will not show up in the REQ/TOT-REQ/nXX counters.
+
+Application Name Color Key:
+WHITE - Normal
+CYAN  - Active.  HTTP(S) traffic has been recieved in the last
+        10 seconds. 
+RED   - Not in desired state.  The application has been configured
+        for DCR instances, but only RCR are running.
+GRAY  - Not monitored (non-privileged only). In non-privileged only
+        the first 50 applications in the currently targeted org and
+        space are monitored.
 `
 
 const HelpLocalViewKeybindings = `
