@@ -93,7 +93,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 // Get the top offset where the data view should open
 func (asUI *DataListView) GetTopOffset() int {
 	size := asUI.masterUI.GetTopMargin() + 1
-	if !asUI.masterUI.IsMinimizeHeader() {
+	if !asUI.masterUI.IsHeaderMinimized() {
 		size = size + asUI.topMargin
 	}
 	return size

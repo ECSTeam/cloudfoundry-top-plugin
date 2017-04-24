@@ -50,7 +50,7 @@ NOTE: The HTTP counters are based on traffic through the
 go-router.  Applications that talk directly container-to-
 container will not show up in the REQ/TOT-REQ/nXX counters.
 
-Color Key:
+Route List Color Key:
 WHITE - Normal
 CYAN  - Active.  HTTP(S) traffic has been recieved in the last
         10 seconds. 

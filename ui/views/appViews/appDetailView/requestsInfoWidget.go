@@ -46,7 +46,7 @@ func (w *RequestsInfoWidget) Name() string {
 func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 
 	topOffset := w.detailView.GetTopOffset()
-	if w.masterUI.IsMinimizeHeader() {
+	if w.masterUI.IsHeaderMinimized() {
 		// This will hide this view by displaying it off-view (negative top)
 		topOffset = 0
 	}

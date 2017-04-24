@@ -35,8 +35,10 @@ type MasterUIInterface interface {
 	GetAlertSize() int
 	GetTopMargin() int
 	//SetStatsSummarySize(statSummarySize int)
-	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
-	IsMinimizeHeader() bool
+	SetHeaderMinimize(g *gocui.Gui, minimizeHeader bool)
+	IsHeaderMinimized() bool
+	SetEditColumnMode(g *gocui.Gui, editColumnMode bool)
+	IsEditColumnMode() bool
 	IsPrivileged() bool
 	GetCommonData() *dataCommon.CommonData
 	GetDisplayPaused() bool

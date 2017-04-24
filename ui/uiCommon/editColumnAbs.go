@@ -161,7 +161,7 @@ func (w *EditColumnViewAbs) closeView(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	w.masterUI.SetDisplayPaused(w.priorStateOfDisplayPaused)
-	w.masterUI.SetMinimizeHeader(g, false)
+	w.masterUI.SetEditColumnMode(g, false)
 	w.listWidget.displayView.RefreshDisplay(g)
 	return nil
 }

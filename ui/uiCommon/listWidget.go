@@ -877,7 +877,7 @@ func (asUI *ListWidget) editFilterAction(g *gocui.Gui, v *gocui.View) error {
 	asUI.masterUI.SetCurrentViewOnTop(g)
 
 	// TODO: Is this the correct spot to do this?
-	asUI.masterUI.SetMinimizeHeader(g, true)
+	asUI.masterUI.SetEditColumnMode(g, true)
 	return asUI.RefreshDisplay(g)
 }
 
@@ -891,7 +891,7 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 	asUI.masterUI.LayoutManager().Add(editView)
 	asUI.masterUI.SetCurrentViewOnTop(g)
 	// TODO: Is this the correct spot to do this?
-	asUI.masterUI.SetMinimizeHeader(g, true)
+	asUI.masterUI.SetEditColumnMode(g, true)
 	return asUI.RefreshDisplay(g)
 }
 

@@ -69,6 +69,8 @@ type MasterUI struct {
 	refreshNow        chan bool
 	refreshIntervalMS time.Duration
 	displayPaused     bool
+	editColumnMode    bool
+	headerMinimized   bool
 	commonData        *dataCommon.CommonData
 
 	//baseHeaderSize       int
@@ -220,7 +222,7 @@ func (mui *MasterUI) GetAlertSize() int {
 
 func (mui *MasterUI) GetTopMargin() int {
 	size := mui.headerView.HeaderSize
-	if !mui.IsMinimizeHeader() {
+	if !mui.IsEditColumnMode() {
 		size = size + mui.alertManager.AlertSize
 	}
 	return size
@@ -258,6 +260,9 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding(viewName, 'p', gocui.ModNone, mui.toggleDisplayPauseAction); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding(viewName, 'H', gocui.ModNone, mui.toggleHeaderMinimizeAction); err != nil {
 		log.Panicln(err)
 	}
 
@@ -493,6 +498,11 @@ func (mui *MasterUI) toggleDisplayPauseAction(g *gocui.Gui, v *gocui.View) error
 	return mui.currentDataView.RefreshDisplay(mui.gui)
 }
 
+func (mui *MasterUI) toggleHeaderMinimizeAction(g *gocui.Gui, v *gocui.View) error {
+	mui.SetHeaderMinimize(g, !mui.IsHeaderMinimized())
+	return mui.currentDataView.RefreshDisplay(mui.gui)
+}
+
 func (mui *MasterUI) logTestError(g *gocui.Gui, v *gocui.View) error {
 	toplog.Error("test error")
 	return nil
@@ -558,14 +568,22 @@ func (mui *MasterUI) IsWarmupComplete() bool {
 	return mui.commonData.IsWarmupComplete()
 }
 
-func (mui *MasterUI) IsMinimizeHeader() bool {
-	return mui.headerView.IsMinimizeHeader()
+func (mui *MasterUI) IsEditColumnMode() bool {
+	return mui.editColumnMode
 }
 
-func (mui *MasterUI) SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool) {
-	// TOOD: Need a way to minimize header for cases were we have a 25 row display -- for edit filter / sort
+func (mui *MasterUI) SetEditColumnMode(g *gocui.Gui, editColumnMode bool) {
+	mui.editColumnMode = editColumnMode
+	mui.updateHeaderDisplay(g)
+}
+
+func (mui *MasterUI) IsHeaderMinimized() bool {
+	return mui.editColumnMode || mui.headerMinimized
+}
+
+func (mui *MasterUI) SetHeaderMinimize(g *gocui.Gui, minimizeHeader bool) {
 	toplog.Debug("SetMinimizeHeader:%v", minimizeHeader)
-	mui.headerView.SetMinimizeHeader(g, minimizeHeader)
+	mui.headerMinimized = minimizeHeader
 	//mui.RefeshNow()
 	mui.updateHeaderDisplay(g)
 }

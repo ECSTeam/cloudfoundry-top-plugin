@@ -62,7 +62,7 @@ type MasterUIInterface interface {
 	GetHeaderSize() int
 	GetAlertSize() int
 	GetTopMargin() int
-	SetMinimizeHeader(g *gocui.Gui, minimizeHeader bool)
+	SetHeaderMinimize(g *gocui.Gui, minimizeHeader bool)
 	IsPrivileged() bool
 	GetDisplayPaused() bool
 	SetDisplayPaused(paused bool)
