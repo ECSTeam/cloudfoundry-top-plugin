@@ -30,10 +30,12 @@ func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
 		totalCpuInfo := ""
-		cpuPercentage := stats.ContainerMetric.GetCpuPercentage()
-		if cpuPercentage == 0 {
+		// We use MemoryBytes instead of CPU% as CPU% can be zero and if that is the case we want
+		// to display 0.
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
 			totalCpuInfo = fmt.Sprintf("%6v", "--")
 		} else {
+			cpuPercentage := stats.ContainerMetric.GetCpuPercentage()
 			if cpuPercentage >= 100.0 {
 				totalCpuInfo = fmt.Sprintf("%6.0f", cpuPercentage)
 			} else if cpuPercentage >= 10.0 {
