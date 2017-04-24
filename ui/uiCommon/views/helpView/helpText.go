@@ -70,7 +70,7 @@ sorting of any column.
 Press 'f' to show the filter window which allows for filtering
 which rows should be displayed
 
-**Scroll columns into view: **
+**Scroll columns into view:**
 Press RIGHT or LEFT arrow to scroll the columns into view if the
 window is not wide enough to view all columns.  You can also resize
 terminal window to show more columns/rows (resize of cmd.exe window
@@ -80,6 +80,9 @@ is not supported on windows while top is running).
 Press 'p' to toggle pause display update.  When display update is
 paused top will continue to capture statstics and display updated
 values when unpaused.
+
+**Header display toggle:**
+Press 'H' to toggle between full header display and minimal header.
 
 **Refresh screen interval: **
 Press 's' to set the sleep time between refreshes. Default
