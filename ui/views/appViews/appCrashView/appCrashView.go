@@ -59,7 +59,7 @@ func NewAppCrashView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle(fmt.Sprintf("App: %v - Container CRASH List", asUI.getAppName()))
+	dataListView.SetTitle(fmt.Sprintf("App: %v - Container CRASH List (last 24 hours)", asUI.getAppName()))
 
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips

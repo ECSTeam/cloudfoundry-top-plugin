@@ -92,23 +92,28 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 	containerTraffic := ed.getContainerTraffic(appStats, instId)
 
 	responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
-	containerTraffic.HttpAllCount++
+
 	containerTraffic.ResponseL60Time.Track(responseTimeMillis)
 	containerTraffic.ResponseL10Time.Track(responseTimeMillis)
 	containerTraffic.ResponseL1Time.Track(responseTimeMillis)
 
 	statusCode := httpStartStopEvent.GetStatusCode()
-	switch {
-	case statusCode >= 200 && statusCode < 300:
-		containerTraffic.Http2xxCount++
-	case statusCode >= 300 && statusCode < 400:
-		containerTraffic.Http3xxCount++
-	case statusCode >= 400 && statusCode < 500:
-		containerTraffic.Http4xxCount++
-	case statusCode >= 500 && statusCode < 600:
-		containerTraffic.Http5xxCount++
+	httpMethod := httpStartStopEvent.GetMethod()
+
+	httpStatusCodeMap := containerTraffic.HttpInfoMap[httpMethod]
+	if httpStatusCodeMap == nil {
+		httpStatusCodeMap = make(map[int32]*eventApp.HttpInfo)
+		containerTraffic.HttpInfoMap[httpMethod] = httpStatusCodeMap
 	}
 
+	httpInfo := httpStatusCodeMap[statusCode]
+	if httpInfo == nil {
+		httpInfo = eventApp.NewHttpInfo(httpMethod, statusCode)
+		containerTraffic.HttpInfoMap[httpMethod][statusCode] = httpInfo
+	}
+	httpInfo.HttpCount++
+	now := time.Unix(0, msg.GetTimestamp())
+	httpInfo.LastAcivity = &now
 }
 
 // Format of HttpStartStop in PCF 1.6

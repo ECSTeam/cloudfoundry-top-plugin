@@ -259,7 +259,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			displaySpace.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
-				displaySpace.HttpAllCount += appStats.TotalTraffic.HttpAllCount
+				displaySpace.HttpAllCount += appStats.HttpAllCount
 			}
 
 			for _, cs := range appStats.ContainerArray {

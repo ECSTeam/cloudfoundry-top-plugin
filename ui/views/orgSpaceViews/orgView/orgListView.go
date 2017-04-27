@@ -243,7 +243,7 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 			displayOrg.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
-				displayOrg.HttpAllCount += appStats.TotalTraffic.HttpAllCount
+				displayOrg.HttpAllCount += appStats.HttpAllCount
 			}
 
 			for _, cs := range appStats.ContainerArray {

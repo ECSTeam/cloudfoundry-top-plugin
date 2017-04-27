@@ -30,6 +30,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appCrashView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/views/appViews/appHttpView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -112,6 +113,7 @@ func (asUI *AppDetailView) selectDisplayAction(g *gocui.Gui, v *gocui.View) erro
 	menuItems := make([]*uiCommon.MenuItem, 0, 5)
 	menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "App Info"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("crashInfoView", "View CRASH List"))
+	menuItems = append(menuItems, uiCommon.NewMenuItem("appHttpView", "HTTP Response Info"))
 	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View App Logs"))
 	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "Todo"))
 
@@ -160,6 +162,11 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 	case "crashInfoView":
 		_, bottomMargin := asUI.GetMargins()
 		view = appCrashView.NewAppCrashView(asUI.GetMasterUI(), asUI, "crashInfoView", bottomMargin,
+			asUI.GetEventProcessor(),
+			asUI.appId)
+	case "appHttpView":
+		_, bottomMargin := asUI.GetMargins()
+		view = appHttpView.NewAppHttpView(asUI.GetMasterUI(), asUI, "appHttpView", bottomMargin,
 			asUI.GetEventProcessor(),
 			asUI.appId)
 	default:

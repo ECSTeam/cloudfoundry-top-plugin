@@ -158,12 +158,13 @@ func (ed *EventData) Clone() *EventData {
 		}
 
 		clonedAppStat := clone.AppMap[appStat.AppId]
-
-		httpAllCount := int64(0)
-		http2xxCount := int64(0)
-		http3xxCount := int64(0)
-		http4xxCount := int64(0)
-		http5xxCount := int64(0)
+		/*
+			httpAllCount := int64(0)
+			http2xxCount := int64(0)
+			http3xxCount := int64(0)
+			http4xxCount := int64(0)
+			http5xxCount := int64(0)
+		*/
 
 		responseL60TimeArray := make([]*util.AvgTracker, 0)
 		responseL10TimeArray := make([]*util.AvgTracker, 0)
@@ -190,11 +191,13 @@ func (ed *EventData) Clone() *EventData {
 
 			clone.AppMap[appStat.AppId].ContainerTrafficMap[instanceId].AvgResponseL1Time = containerTraffic.ResponseL1Time.Avg()
 
-			httpAllCount = httpAllCount + containerTraffic.HttpAllCount
-			http2xxCount = http2xxCount + containerTraffic.Http2xxCount
-			http3xxCount = http3xxCount + containerTraffic.Http3xxCount
-			http4xxCount = http4xxCount + containerTraffic.Http4xxCount
-			http5xxCount = http5xxCount + containerTraffic.Http5xxCount
+			/*
+				httpAllCount = httpAllCount + containerTraffic.HttpAllCount
+				http2xxCount = http2xxCount + containerTraffic.Http2xxCount
+				http3xxCount = http3xxCount + containerTraffic.Http3xxCount
+				http4xxCount = http4xxCount + containerTraffic.Http4xxCount
+				http5xxCount = http5xxCount + containerTraffic.Http5xxCount
+			*/
 
 			responseL60TimeArray = append(responseL60TimeArray, containerTraffic.ResponseL60Time)
 			responseL10TimeArray = append(responseL10TimeArray, containerTraffic.ResponseL10Time)
@@ -206,11 +209,13 @@ func (ed *EventData) Clone() *EventData {
 		totalTraffic.AvgResponseL10Time = util.AvgMultipleTrackers(responseL10TimeArray)
 		totalTraffic.AvgResponseL1Time = util.AvgMultipleTrackers(responseL1TimeArray)
 
-		totalTraffic.HttpAllCount = httpAllCount
-		totalTraffic.Http2xxCount = http2xxCount
-		totalTraffic.Http3xxCount = http3xxCount
-		totalTraffic.Http4xxCount = http4xxCount
-		totalTraffic.Http5xxCount = http5xxCount
+		/*
+			totalTraffic.HttpAllCount = httpAllCount
+			totalTraffic.Http2xxCount = http2xxCount
+			totalTraffic.Http3xxCount = http3xxCount
+			totalTraffic.Http4xxCount = http4xxCount
+			totalTraffic.Http5xxCount = http5xxCount
+		*/
 		clonedAppStat.TotalTraffic = totalTraffic
 
 	}

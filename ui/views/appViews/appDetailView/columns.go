@@ -244,8 +244,7 @@ func ColumnLogStdout() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%11v", util.Format(stats.OutCount))
-		return fmt.Sprintf("%11v", display)
+		return fmt.Sprintf("%11v", util.Format(stats.OutCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -262,8 +261,7 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%11v", util.Format(stats.ErrCount))
-		return fmt.Sprintf("%11v", display)
+		return fmt.Sprintf("%11v", util.Format(stats.ErrCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)

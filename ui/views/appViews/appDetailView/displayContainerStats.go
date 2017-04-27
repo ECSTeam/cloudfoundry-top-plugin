@@ -16,6 +16,7 @@
 package appDetailView
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
@@ -45,8 +46,8 @@ func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats 
 
 func (cs *DisplayContainerStats) Id() string {
 	if cs.key == "" {
-		//cs.key = cs.AppId + "-" + strconv.FormatInt(int64(cs.ContainerIndex), 10)
-		cs.key = strconv.FormatInt(int64(cs.ContainerIndex), 10)
+		// NOTE: Must include AppId and Index because this view is used by Diego cell view as well as App Detail view
+		cs.key = fmt.Sprintf("%v-%v", cs.AppId, strconv.FormatInt(int64(cs.ContainerIndex), 10))
 	}
 	return cs.key
 }

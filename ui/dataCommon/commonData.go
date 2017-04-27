@@ -127,6 +127,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.SpaceName = spaceMetadata.Name
 
 		displayAppStats.OrgId, displayAppStats.OrgName = org.FindBySpaceGuid(appMetadata.SpaceGuid)
+
 		totalCpuPercentage := 0.0
 		totalMemoryUsed := int64(0)
 		totalDiskUsed := int64(0)
@@ -151,6 +152,26 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		// Crash count in last 24 hours (from call to /v2/events)
 		crash24hCount := crashData.FindCountSinceByApp(appId, -24*time.Hour)
 		crash24hCount = crash24hCount + appStats.Crash24hCount()
+
+		for _, containerTraffic := range appStats.ContainerTrafficMap {
+			for _, httpStatusCodeMap := range containerTraffic.HttpInfoMap {
+				for statusCode, httpCountInfo := range httpStatusCodeMap {
+					if httpCountInfo != nil {
+						displayAppStats.HttpAllCount += httpCountInfo.HttpCount
+						switch {
+						case statusCode >= 200 && statusCode < 300:
+							displayAppStats.Http2xxCount += httpCountInfo.HttpCount
+						case statusCode >= 300 && statusCode < 400:
+							displayAppStats.Http3xxCount += httpCountInfo.HttpCount
+						case statusCode >= 400 && statusCode < 500:
+							displayAppStats.Http4xxCount += httpCountInfo.HttpCount
+						case statusCode >= 500 && statusCode < 600:
+							displayAppStats.Http5xxCount += httpCountInfo.HttpCount
+						}
+					}
+				}
+			}
+		}
 
 		for containerIndex, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
@@ -210,6 +231,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 			displayAppStats.TotalLogStderr = logStderrCount + appStats.NonContainerStderr
 		*/
 	}
+
 	cd.displayAppStatsMap = displayStatsMap
 	cd.appsNotInDesiredState = appsNotInDesiredState
 	cd.totalCrash1hCount = totalCrash1hCount

@@ -51,6 +51,13 @@ type DisplayAppStats struct {
 	Crash1hCount             int
 	Crash24hCount            int
 	LastCrashTime            *time.Time
+
+	// Summerize HTTP response codes
+	HttpAllCount int64
+	Http2xxCount int64
+	Http3xxCount int64
+	Http4xxCount int64
+	Http5xxCount int64
 }
 
 func NewDisplayAppStats(appStats *eventApp.AppStats) *DisplayAppStats {

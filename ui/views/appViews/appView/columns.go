@@ -382,15 +382,15 @@ func columnReq60() *uiCommon.ListColumn {
 
 func columnTotalReq() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.HttpAllCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.HttpAllCount
+		return c1.(*dataCommon.DisplayAppStats).HttpAllCount < c2.(*dataCommon.DisplayAppStats).HttpAllCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.HttpAllCount))
+		return fmt.Sprintf("%10v", util.Format(appStats.HttpAllCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalTraffic.HttpAllCount)
+		return fmt.Sprintf("%v", appStats.HttpAllCount)
 	}
 	c := uiCommon.NewListColumn("TOT_REQ", "TOT_REQ", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notMonitoredAttentionFunc)
@@ -398,15 +398,15 @@ func columnTotalReq() *uiCommon.ListColumn {
 }
 func column2XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http2xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http2xxCount
+		return c1.(*dataCommon.DisplayAppStats).Http2xxCount < c2.(*dataCommon.DisplayAppStats).Http2xxCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http2xxCount))
+		return fmt.Sprintf("%10v", util.Format(appStats.Http2xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalTraffic.Http2xxCount)
+		return fmt.Sprintf("%v", appStats.Http2xxCount)
 	}
 	c := uiCommon.NewListColumn("2XX", "2XX", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notMonitoredAttentionFunc)
@@ -414,15 +414,15 @@ func column2XX() *uiCommon.ListColumn {
 }
 func column3XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http3xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http3xxCount
+		return c1.(*dataCommon.DisplayAppStats).Http3xxCount < c2.(*dataCommon.DisplayAppStats).Http3xxCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http3xxCount))
+		return fmt.Sprintf("%10v", util.Format(appStats.Http3xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalTraffic.Http3xxCount)
+		return fmt.Sprintf("%v", appStats.Http3xxCount)
 	}
 	c := uiCommon.NewListColumn("3XX", "3XX", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notMonitoredAttentionFunc)
@@ -431,15 +431,15 @@ func column3XX() *uiCommon.ListColumn {
 
 func column4XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http4xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http4xxCount
+		return c1.(*dataCommon.DisplayAppStats).Http4xxCount < c2.(*dataCommon.DisplayAppStats).Http4xxCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http4xxCount))
+		return fmt.Sprintf("%10v", util.Format(appStats.Http4xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalTraffic.Http4xxCount)
+		return fmt.Sprintf("%v", appStats.Http4xxCount)
 	}
 	c := uiCommon.NewListColumn("4XX", "4XX", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notMonitoredAttentionFunc)
@@ -448,15 +448,15 @@ func column4XX() *uiCommon.ListColumn {
 
 func column5XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return c1.(*dataCommon.DisplayAppStats).TotalTraffic.Http5xxCount < c2.(*dataCommon.DisplayAppStats).TotalTraffic.Http5xxCount
+		return c1.(*dataCommon.DisplayAppStats).Http5xxCount < c2.(*dataCommon.DisplayAppStats).Http5xxCount
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%10v", util.Format(appStats.TotalTraffic.Http5xxCount))
+		return fmt.Sprintf("%10v", util.Format(appStats.Http5xxCount))
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*dataCommon.DisplayAppStats)
-		return fmt.Sprintf("%v", appStats.TotalTraffic.Http5xxCount)
+		return fmt.Sprintf("%v", appStats.Http5xxCount)
 	}
 	c := uiCommon.NewListColumn("5XX", "5XX", 10,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, notMonitoredAttentionFunc)

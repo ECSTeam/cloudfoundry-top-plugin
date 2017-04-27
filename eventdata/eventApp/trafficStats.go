@@ -15,7 +15,19 @@
 
 package eventApp
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/util"
+import (
+	"time"
+
+	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
+)
+
+type HttpInfo struct {
+	HttpMethod     events.Method
+	HttpStatusCode int32
+	HttpCount      int64
+	LastAcivity    *time.Time
+}
 
 type TrafficStats struct {
 	ResponseL60Time    *util.AvgTracker
@@ -30,14 +42,15 @@ type TrafficStats struct {
 	AvgResponseL1Time float64 // updated after a clone of this object
 	EventL1Rate       int     // updated after a clone of this object
 
-	HttpAllCount int64
-	Http2xxCount int64
-	Http3xxCount int64
-	Http4xxCount int64
-	Http5xxCount int64
+	HttpInfoMap map[events.Method]map[int32]*HttpInfo
 }
 
 func NewTrafficStats() *TrafficStats {
-	stats := &TrafficStats{}
+	httpInfoMap := make(map[events.Method]map[int32]*HttpInfo)
+	stats := &TrafficStats{HttpInfoMap: httpInfoMap}
 	return stats
+}
+
+func NewHttpInfo(httpMethod events.Method, httpStatusCode int32) *HttpInfo {
+	return &HttpInfo{HttpMethod: httpMethod, HttpStatusCode: httpStatusCode}
 }
