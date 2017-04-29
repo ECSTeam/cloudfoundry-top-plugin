@@ -71,7 +71,7 @@ func ColumnLastAcivity() *uiCommon.ListColumn {
 		stats := data.(*DisplayHttpInfo)
 		return fmt.Sprintf("%v", stats.LastAcivity.UnixNano())
 	}
-	c := uiCommon.NewListColumn("LAST_ACTIVITY", "LAST_ACTIVITY", defaultColSize,
+	c := uiCommon.NewListColumn("LAST_RESPONSE", "LAST_RESPONSE", defaultColSize,
 		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

@@ -17,19 +17,26 @@ package appHttpView
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 )
 
 type DisplayHttpInfo struct {
-	*eventApp.HttpInfo
+	//*eventApp.HttpInfo
+
+	HttpMethod     events.Method
+	HttpStatusCode int32
+	HttpCount      int64
+	LastAcivity    *time.Time
+
 	LastAcivityFormatted string
 	key                  string
 }
 
 func NewDisplayHttpInfo(info *eventApp.HttpInfo) *DisplayHttpInfo {
-	displayInfo := &DisplayHttpInfo{}
-	displayInfo.HttpInfo = info
+	displayInfo := &DisplayHttpInfo{HttpMethod: info.HttpMethod, HttpStatusCode: info.HttpStatusCode}
 	return displayInfo
 }
 

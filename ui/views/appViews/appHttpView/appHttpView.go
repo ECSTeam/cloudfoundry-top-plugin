@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
@@ -104,16 +105,36 @@ func (asUI *AppHttpView) postProcessData() []*DisplayHttpInfo {
 		return displayInfoList
 	}
 
-	// TODO: This is wrong -- need to deal with multiple containers worth of info not overwriting data
+	displayHttpInfoMap := make(map[events.Method]map[int32]*DisplayHttpInfo)
+
 	for _, containerTraffic := range appStats.ContainerTrafficMap {
-		for _, httpStatusCodeMap := range containerTraffic.HttpInfoMap {
-			for _, httpInfo := range httpStatusCodeMap {
+		for httpMethod, httpMethodMap := range containerTraffic.HttpInfoMap {
+
+			displayHttpInfoByStatusCodeMap := displayHttpInfoMap[httpMethod]
+			if displayHttpInfoByStatusCodeMap == nil {
+				displayHttpInfoByStatusCodeMap = make(map[int32]*DisplayHttpInfo)
+				displayHttpInfoMap[httpMethod] = displayHttpInfoByStatusCodeMap
+			}
+			for statusCode, httpInfo := range httpMethodMap {
 				if httpInfo != nil {
-					displayHttpInfo := NewDisplayHttpInfo(httpInfo)
-					displayInfoList = append(displayInfoList, displayHttpInfo)
-					displayHttpInfo.LastAcivityFormatted = httpInfo.LastAcivity.Local().Format("01-02-2006 15:04:05")
+					displayHttpInfo := displayHttpInfoByStatusCodeMap[statusCode]
+					if displayHttpInfo == nil {
+						displayHttpInfo = NewDisplayHttpInfo(httpInfo)
+						displayHttpInfoByStatusCodeMap[statusCode] = displayHttpInfo
+					}
+					displayHttpInfo.HttpCount += httpInfo.HttpCount
+					if displayHttpInfo.LastAcivity == nil || displayHttpInfo.LastAcivity.Before(*httpInfo.LastAcivity) {
+						displayHttpInfo.LastAcivity = httpInfo.LastAcivity
+						displayHttpInfo.LastAcivityFormatted = httpInfo.LastAcivity.Local().Format("01-02-2006 15:04:05")
+					}
 				}
 			}
+		}
+	}
+
+	for _, httpMethodMap := range displayHttpInfoMap {
+		for _, httpInfo := range httpMethodMap {
+			displayInfoList = append(displayInfoList, httpInfo)
 		}
 	}
 

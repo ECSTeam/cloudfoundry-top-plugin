@@ -25,26 +25,20 @@ const HelpText = HelpOverviewText +
 	helpView.HelpCommonDataViewKeybindings
 
 const HelpOverviewText = `
-**App Container CRASH View**
+**App HTTP(S) Response Info**
 
-App Container CRASH view shows a list of all application containers
-that have crashed.  A crash normally happens when the application 
-running in the container stops or exits unexpectedly.  Often an exit
-status code is recorded in the EXIT_DESCRIPTION which may help
-understand what happened.  
-
-Java exit status codes:
-    137 = OutOfMemory error
-    143 = SIGTERM (sometimes as a result of OutOfMemory error)
-    255 = OutOfMemory, file descriptors, other error
+App HTTP(S) response info view shows all the HTTP and HTTPS responses
+that have occured from the selected application. 
 `
 
 const HelpColumnsText = `
-**CRASH List Columns:**
+**HTTP(S) Response Columns:**
 
-  CRASH_TIME - Date/time of the crash (24 hour format in local timezone)
-  IDX - Application container index that crashed
-  EXIT_DESCRIPTION - Container exit desscription often showing exit code  
+  METHOD - The HTTP method used for the request
+  CODE - The HTTP response code.
+  LAST_RESPONSE - Last time this METHOD+CODE combination occured. 
+  COUNT - Number of responses that have occured for this METHOD+CODE
+          combination.
 `
 
 const HelpLocalViewKeybindings = `
