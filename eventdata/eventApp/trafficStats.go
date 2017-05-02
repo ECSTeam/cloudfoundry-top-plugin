@@ -27,6 +27,8 @@ type HttpInfo struct {
 	HttpStatusCode int32
 	HttpCount      int64
 	LastAcivity    *time.Time
+	// Last response time in nano-seconds
+	LastResponseTime int64
 }
 
 type TrafficStats struct {

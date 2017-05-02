@@ -33,10 +33,13 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 	sourceType := logMessage.GetSourceType()
 	switch {
 	case sourceType == "CELL":
+		// The Diego cell emits CELL logs when it starts or stops the app. These actions implement the
+		// desired state requested by the user. The Diego cell also emits messages when an app crashes.
 		// PCF 1.10 has "CELL" for non-app related logging: e.g. "Container became healthy"
 		fallthrough
 	case strings.HasPrefix(sourceType, "APP"):
-		// PCF 1.6 - 1.9 used "APP" but 1.10 changed to "APP/PROC/WEB"
+		// PCF 1.6 - 1.9 used "APP" but 1.10 changed to "APP/PROC/WEB/0" and "APP/TASK/f7e79060/0"
+		// TODO: Is this wrong? Can a TASK stdout/stderr output be attributed to instance 0 of real app?
 		instNum, err := strconv.Atoi(*logMessage.SourceInstance)
 		if err == nil {
 			containerStats := ed.getContainerStats(appStats, instNum)

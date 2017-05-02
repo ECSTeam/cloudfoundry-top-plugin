@@ -21,8 +21,10 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
@@ -112,15 +114,25 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 		dockerImage := appMetadata.DockerImage
 
 		appName := appMetadata.Name
-		spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
 		orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
+		spaceMd := space.FindSpaceMetadata(appMetadata.SpaceGuid)
+		spaceName := spaceMd.Name
+		isoSegName := isolationSegment.FindMetadata(spaceMd.IsolationSegmentGuid).Name
+
+		stackMd := stack.FindStackMetadata(appMetadata.StackGuid)
+		stackName := stackMd.Name
 
 		fmt.Fprintf(v, " \n")
 		fmt.Fprintf(v, " App Name:        %v%v%v\n", util.BRIGHT_WHITE, appName, util.CLEAR)
 		fmt.Fprintf(v, " AppId:           %v\n", appStats.AppId)
 		fmt.Fprintf(v, " AppUUID:         %v\n", appStats.AppUUID)
-		fmt.Fprintf(v, " Space:           %v\n", spaceName)
 		fmt.Fprintf(v, " Organization:    %v\n", orgName)
+		fmt.Fprintf(v, " Space:           %v\n", spaceName)
+
+		fmt.Fprintf(v, " Stack:           %v\n", stackName)
+		fmt.Fprintf(v, " Isolation Seg:   %v\n", isoSegName)
+
 		fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
 		fmt.Fprintf(v, " State:           %v\n", state)
 		if dockerImage != "" {

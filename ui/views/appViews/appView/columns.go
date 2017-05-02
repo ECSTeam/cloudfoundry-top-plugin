@@ -259,7 +259,13 @@ func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 		avgResponseTimeL60Info := "--"
 		if appStats.TotalTraffic.AvgResponseL60Time >= 0 {
 			avgResponseTimeMs := appStats.TotalTraffic.AvgResponseL60Time / 1000000
-			avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
+			if avgResponseTimeMs >= 10 {
+				avgResponseTimeL60Info = fmt.Sprintf("%6.0f", avgResponseTimeMs)
+			} else if avgResponseTimeMs >= 1 {
+				avgResponseTimeL60Info = fmt.Sprintf("%6.1f", avgResponseTimeMs)
+			} else {
+				avgResponseTimeL60Info = fmt.Sprintf("%6.2f", avgResponseTimeMs)
+			}
 		}
 		return fmt.Sprintf("%6v", avgResponseTimeL60Info)
 	}

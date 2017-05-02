@@ -25,20 +25,21 @@ const HelpText = HelpOverviewText +
 	helpView.HelpCommonDataViewKeybindings
 
 const HelpOverviewText = `
-**App HTTP(S) Response Info**
+**App HTTP Response Info**
 
-App HTTP(S) response info view shows all the HTTP and HTTPS responses
+App HTTP response info view shows all the HTTP and HTTPS responses
 that have occured from the selected application. 
 `
 
 const HelpColumnsText = `
-**HTTP(S) Response Columns:**
+**HTTP Response Columns:**
 
   METHOD - The HTTP method used for the request
   CODE - The HTTP response code.
   LAST_RESPONSE - Last time this METHOD+CODE combination occured. 
   COUNT - Number of responses that have occured for this METHOD+CODE
           combination.
+  L_RESP - Last response time in milliseconds.
 `
 
 const HelpLocalViewKeybindings = `

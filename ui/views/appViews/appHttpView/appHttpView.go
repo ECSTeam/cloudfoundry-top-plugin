@@ -59,7 +59,7 @@ func NewAppHttpView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle(fmt.Sprintf("App: %v - HTTP(S) Response Info", asUI.getAppName()))
+	dataListView.SetTitle(fmt.Sprintf("App: %v - HTTP Response Info", asUI.getAppName()))
 
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
@@ -85,6 +85,7 @@ func (asUI *AppHttpView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnStatusCode())
 	columns = append(columns, ColumnLastAcivity())
 	columns = append(columns, ColumnCount())
+	columns = append(columns, ColumnLastResponseTime())
 
 	return columns
 }
@@ -126,6 +127,7 @@ func (asUI *AppHttpView) postProcessData() []*DisplayHttpInfo {
 					if displayHttpInfo.LastAcivity == nil || displayHttpInfo.LastAcivity.Before(*httpInfo.LastAcivity) {
 						displayHttpInfo.LastAcivity = httpInfo.LastAcivity
 						displayHttpInfo.LastAcivityFormatted = httpInfo.LastAcivity.Local().Format("01-02-2006 15:04:05")
+						displayHttpInfo.LastResponseTime = httpInfo.LastResponseTime
 					}
 				}
 			}

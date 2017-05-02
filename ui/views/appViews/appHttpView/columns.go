@@ -65,7 +65,7 @@ func ColumnLastAcivity() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayHttpInfo)
-		return fmt.Sprintf("%20v", stats.LastAcivityFormatted)
+		return fmt.Sprintf("%-20v", stats.LastAcivityFormatted)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*DisplayHttpInfo)
@@ -90,6 +90,35 @@ func ColumnCount() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.HttpCount)
 	}
 	c := uiCommon.NewListColumn("COUNT", "COUNT", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnLastResponseTime() *uiCommon.ListColumn {
+	defaultColSize := 8
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*DisplayHttpInfo).LastResponseTime < c2.(*DisplayHttpInfo).LastResponseTime)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayHttpInfo)
+		responseTimeFormatted := "--"
+		if stats.LastResponseTime >= 0 {
+			responseTimeMs := float64(stats.LastResponseTime) / 1000000
+			if responseTimeMs >= 100 {
+				responseTimeFormatted = fmt.Sprintf("%8.0f", responseTimeMs)
+			} else if responseTimeMs >= 10 {
+				responseTimeFormatted = fmt.Sprintf("%8.1f", responseTimeMs)
+			} else {
+				responseTimeFormatted = fmt.Sprintf("%8.2f", responseTimeMs)
+			}
+		}
+		return fmt.Sprintf("%8v", responseTimeFormatted)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*DisplayHttpInfo)
+		return fmt.Sprintf("%v", stats.LastResponseTime)
+	}
+	c := uiCommon.NewListColumn("L_RESP", "L_RESP", defaultColSize,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

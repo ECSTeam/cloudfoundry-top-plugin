@@ -158,7 +158,7 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 	switch viewName {
 	case "infoView":
 		infoWidgetName := "appInfoWidget"
-		view = NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 18, asUI)
+		view = NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 20, asUI)
 	case "crashInfoView":
 		_, bottomMargin := asUI.GetMargins()
 		view = appCrashView.NewAppCrashView(asUI.GetMasterUI(), asUI, "crashInfoView", bottomMargin,

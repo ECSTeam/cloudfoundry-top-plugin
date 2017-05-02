@@ -91,11 +91,11 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 
 	containerTraffic := ed.getContainerTraffic(appStats, instId)
 
-	responseTimeMillis := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
+	responseTimeNano := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
 
-	containerTraffic.ResponseL60Time.Track(responseTimeMillis)
-	containerTraffic.ResponseL10Time.Track(responseTimeMillis)
-	containerTraffic.ResponseL1Time.Track(responseTimeMillis)
+	containerTraffic.ResponseL60Time.Track(responseTimeNano)
+	containerTraffic.ResponseL10Time.Track(responseTimeNano)
+	containerTraffic.ResponseL1Time.Track(responseTimeNano)
 
 	statusCode := httpStartStopEvent.GetStatusCode()
 	httpMethod := httpStartStopEvent.GetMethod()
@@ -114,6 +114,7 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 	httpInfo.HttpCount++
 	now := time.Unix(0, msg.GetTimestamp())
 	httpInfo.LastAcivity = &now
+	httpInfo.LastResponseTime = responseTimeNano
 }
 
 // Format of HttpStartStop in PCF 1.6
