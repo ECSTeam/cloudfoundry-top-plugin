@@ -4,6 +4,8 @@ This is a Cloud Foundry command-line cf interactive plugin for showing live stat
 The live statistics include application statistics and route statistics among others.
 The primary source of information that the top plugin uses is via monitoring the Cloud Foundry firehose.
 
+[Cloud Foundry Summit 2017 session about TOP](https://www.youtube.com/watch?v=XDY64HKB7CI&t=7m48s)
+
 The plugin will run in one of two modes, privileged or non-privileged depending on your Cloud Foundry user permission.
 If you are a foundation operator you will want to use top in privileged mode.  This is done automatically if the
 correct permissions are granted to your Cloud Foundry login (or if you are logged in via `admin` account).  See
