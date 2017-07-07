@@ -19,3 +19,6 @@
   - platform: linux64
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
     checksum: __linux64-sha1__
+  - platform: linux-arm6
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux-arm6
+    checksum: __linuxarm6-sha1__

@@ -36,6 +36,7 @@ fi
 LINUX_FILENAME="top-plugin-linux"
 MAC_FILENAME="top-plugin-darwin"
 WIN_FILENAME="top-plugin.exe"
+LINUX_ARM6_FILENAME="top-plugin-linux-arm6"
 
 GOOS=linux GOARCH=amd64 go build -o $LINUX_FILENAME
 LINUX64_SHA1=`cat $LINUX_FILENAME | openssl sha1`
@@ -52,12 +53,19 @@ WIN64_SHA1=`cat $WIN_FILENAME | openssl sha1`
 mkdir -p bin/win64
 mv $WIN_FILENAME bin/win64
 
+GOOS=linux GOARCH=arm GOARM=6 go build -o $LINUX_ARM6_FILENAME
+LINUXARM6_SHA1=`cat $WIN_FILENAME | openssl sha1`
+mkdir -p bin/linux_arm6
+mv $LINUX_ARM6_FILENAME bin/linux_arm6
+
+
 NOW=`TZ=UC date +'%Y-%m-%dT%TZ'`
 
 cat repo-index.yml |
 sed "s/__osx-sha1__/$OSX_SHA1/" |
 sed "s/__win64-sha1__/$WIN64_SHA1/" |
 sed "s/__linux64-sha1__/$LINUX64_SHA1/" |
+sed "s/__linuxarm6-sha1__/$LINUXARM6_SHA1/" |
 sed "s/__TAG__/$TAG/" |
 sed "s/__VERSION__/$VERSION/" |
 sed "s/__TODAY__/$NOW/" |
@@ -87,6 +95,11 @@ if [[ "$1" = "release" ]] ; then
     --tag $TAG \
     --name "top-plugin.exe" \
     --file bin/win64/top-plugin.exe
+
+	$GOPATH/bin/github-release upload \
+    --tag $TAG \
+    --name "top-plugin-linux-arm6" \
+    --file bin/linux_arm6/top-plugin-linux-arm6
 
 	#git commit -am "Build version $TAG"
 	#git tag -a $TAG -m "Top Plugin v$TAG"
