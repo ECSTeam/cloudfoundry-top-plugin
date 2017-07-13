@@ -22,6 +22,7 @@ import (
 
 	"github.com/Jeffail/gabs"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -36,6 +37,7 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		// The Diego cell emits CELL logs when it starts or stops the app. These actions implement the
 		// desired state requested by the user. The Diego cell also emits messages when an app crashes.
 		// PCF 1.10 has "CELL" for non-app related logging: e.g. "Container became healthy"
+		ed.logCellMsg(msg, logMessage, appStats)
 		fallthrough
 	case strings.HasPrefix(sourceType, "APP"):
 		// PCF 1.6 - 1.9 used "APP" but 1.10 changed to "APP/PROC/WEB/0" and "APP/TASK/f7e79060/0"
@@ -73,6 +75,50 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		}
 	}
 
+}
+
+func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMessage, appStats *eventApp.AppStats) {
+	instNum, err := strconv.Atoi(*logMessage.SourceInstance)
+	if err != nil {
+		return
+	}
+	containerStats := ed.getContainerStats(appStats, instNum)
+	msgTime := time.Unix(0, msg.GetTimestamp())
+
+	msgBytes := logMessage.GetMessage()
+	msgText := ""
+	if msgBytes != nil {
+		msgText = string(logMessage.GetMessage())
+	}
+
+	// We need the last "Creating container" time so we can ignore "Destroying container" and "Successfully destroyed container"
+	// messages that occur after this time.
+	// We need to do tall this because the destroying of a container is async so a new container can be created while the old
+	// container is still being destroyed.   We don't want to capture the last cell message of "Successfully destroyed container"
+	// When a new container is running hand healthy.
+	switch {
+	case strings.HasPrefix(msgText, "Exit status"):
+		containerStats.CellLastExitStatus = &msgTime
+	case strings.HasPrefix(msgText, "Creating container"):
+		containerStats.CellLastCreatingContainer = &msgTime
+		containerStats.Ip = msg.GetIp()
+	case strings.Contains(msgText, "estroying"): // Removed the leading "D" since we don't want to deal with upper/lower case
+		fallthrough
+	case strings.Contains(msgText, "estroyed"): // Removed the leading "D" since we don't want to deal with upper/lower case
+		if containerStats.CellLastExitStatus == nil ||
+			(containerStats.CellLastCreatingContainer != nil &&
+				containerStats.CellLastExitStatus != nil &&
+				containerStats.CellLastCreatingContainer.After(*containerStats.CellLastExitStatus)) {
+			// ignore this message (see comment above switch statement)
+			return
+		}
+	}
+
+	if containerStats.CellLastMsgTime == nil || containerStats.CellLastMsgTime.Before(msgTime) {
+
+		containerStats.CellLastMsgText = msgText
+		containerStats.CellLastMsgTime = &msgTime
+	}
 }
 
 func (ed *EventData) logApiCall(msg *events.Envelope) {

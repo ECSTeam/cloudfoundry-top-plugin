@@ -196,6 +196,8 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnLogStderr())
 
 	columns = append(columns, ColumnCellIp())
+	columns = append(columns, ColumnCellLastMsgText())
+	columns = append(columns, ColumnCellLastMsgTime())
 	return columns
 }
 

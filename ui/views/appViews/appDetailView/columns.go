@@ -279,11 +279,11 @@ func ColumnCellIp() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
-		if appStats.Ip != "" {
-			return util.FormatDisplayData(appStats.Ip, defaultColSize)
-		} else {
-			return "--"
+		ip := appStats.Ip
+		if ip == "" {
+			ip = "--"
 		}
+		return util.FormatDisplayData(ip, defaultColSize)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -291,5 +291,61 @@ func ColumnCellIp() *uiCommon.ListColumn {
 	}
 	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnCellLastMsgText() *uiCommon.ListColumn {
+	defaultColSize := 35
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*DisplayContainerStats).CellLastMsgText) < (c2.(*DisplayContainerStats).CellLastMsgText)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayContainerStats)
+		msgText := appStats.CellLastMsgText
+		if msgText == "" {
+			msgText = "--"
+		}
+		return util.FormatDisplayData(msgText, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return appStats.CellLastMsgText
+	}
+	c := uiCommon.NewListColumn("LAST_CELL_MSG", "LAST_CELL_MSG", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnCellLastMsgTime() *uiCommon.ListColumn {
+	defaultColSize := 19
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		t1 := c1.(*DisplayContainerStats).CellLastMsgTime
+		t2 := c2.(*DisplayContainerStats).CellLastMsgTime
+		if t1 == nil {
+			return true
+		}
+		if t2 == nil {
+			return false
+		}
+		if t1 == nil && t2 == nil {
+			return false
+		}
+		return t1.Before(*t2)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayContainerStats)
+		msgText := appStats.CellLastMsgText
+		if msgText == "" || appStats.CellLastMsgTime == nil {
+			return fmt.Sprintf("%19v", "--")
+		} else {
+			return fmt.Sprintf("%19v", appStats.CellLastMsgTime.Format("01-02-2006 15:04:05"))
+		}
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", stats.CellLastMsgTime)
+	}
+	c := uiCommon.NewListColumn("LAST_CELL_MSG_TIME", "LAST_CELL_MSG_TIME", defaultColSize,
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
