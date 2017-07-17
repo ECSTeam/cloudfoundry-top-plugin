@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
@@ -144,7 +145,8 @@ func (ed *EventData) Clone() *EventData {
 	defer ed.mu.Unlock()
 
 	clone := deepcopy.Copy(ed).(*EventData)
-	clone.StatsTime = time.Now()
+	now := time.Now()
+	clone.StatsTime = now
 	clone.eventProcessor = ed.eventProcessor
 
 	for _, appStat := range ed.AppMap {
@@ -217,6 +219,18 @@ func (ed *EventData) Clone() *EventData {
 			totalTraffic.Http5xxCount = http5xxCount
 		*/
 		clonedAppStat.TotalTraffic = totalTraffic
+
+		// Check if we need to remove data for any old containers -- containers that haven't reported in for awhile
+		for containerIndex, cs := range appStat.ContainerArray {
+			if cs != nil {
+				// If we haven't gotten a container update recently, ignore the old value
+				if cs.LastUpdateTime == nil || now.Sub(*cs.LastUpdateTime) > time.Second*config.StaleContainerSeconds {
+					// Remove container stats for realtime data and the clone
+					appStat.ContainerArray[containerIndex] = nil
+					clonedAppStat.ContainerArray[containerIndex] = nil
+				}
+			}
+		}
 
 	}
 

@@ -98,26 +98,30 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 	// When a new container is running hand healthy.
 	switch {
 	case strings.HasPrefix(msgText, "Exit status"):
-		containerStats.CellLastExitStatus = &msgTime
+		// This message comes out just before the container begins to get destroyed.  The real message is "Exit status 0" but
+		// not sure if there could be other exit status values so we just look for the begging of ths string
+		containerStats.CellLastExitStatusMsgTime = &msgTime
 	case strings.HasPrefix(msgText, "Creating container"):
-		containerStats.CellLastCreatingContainer = &msgTime
+		containerStats.CellLastCreatingContainerMsgTime = &msgTime
 		containerStats.Ip = msg.GetIp()
 	case strings.Contains(msgText, "estroying"): // Removed the leading "D" since we don't want to deal with upper/lower case
 		fallthrough
 	case strings.Contains(msgText, "estroyed"): // Removed the leading "D" since we don't want to deal with upper/lower case
-		if containerStats.CellLastExitStatus == nil ||
-			(containerStats.CellLastCreatingContainer != nil &&
-				containerStats.CellLastExitStatus != nil &&
-				containerStats.CellLastCreatingContainer.After(*containerStats.CellLastExitStatus)) {
-			// ignore this message (see comment above switch statement)
+		if containerStats.CellLastExitStatusMsgTime == nil ||
+			(containerStats.CellLastCreatingContainerMsgTime != nil &&
+				containerStats.CellLastExitStatusMsgTime != nil &&
+				containerStats.CellLastCreatingContainerMsgTime.After(*containerStats.CellLastExitStatusMsgTime)) {
+			// ignore this event message (see comment above switch statement)
 			return
 		}
+		// Since the container is about to die, we clear out the container metrics since they are no longer valid
+		containerStats.ContainerMetric = nil
 	}
 
 	if containerStats.CellLastMsgTime == nil || containerStats.CellLastMsgTime.Before(msgTime) {
-
 		containerStats.CellLastMsgText = msgText
 		containerStats.CellLastMsgTime = &msgTime
+		containerStats.LastUpdateTime = &msgTime
 	}
 }
 

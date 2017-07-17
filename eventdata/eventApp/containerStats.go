@@ -22,20 +22,21 @@ import (
 )
 
 type ContainerStats struct {
-	ContainerIndex  int
-	Ip              string
-	ContainerMetric *events.ContainerMetric
-	LastUpdate      time.Time
-	OutCount        int64
-	ErrCount        int64
-	CellLastMsgText string
-	CellLastMsgTime *time.Time
+	ContainerIndex          int
+	Ip                      string
+	ContainerMetric         *events.ContainerMetric
+	LastUpdateTime          *time.Time
+	LastContainerUpdateTime *time.Time
+	OutCount                int64
+	ErrCount                int64
+	CellLastMsgText         string
+	CellLastMsgTime         *time.Time
 	// We need the last "Creating container" time so we can ignore "Destroying container" and "Successfully destroyed container"
 	// messages that occur after this time.
 	// We need to do tall this because the destroying of a container is async so a new container can be created while the old
 	// container is still being destroyed.
-	CellLastCreatingContainer *time.Time
-	CellLastExitStatus        *time.Time
+	CellLastCreatingContainerMsgTime *time.Time
+	CellLastExitStatusMsgTime        *time.Time
 }
 
 func NewContainerStats(containerIndex int) *ContainerStats {

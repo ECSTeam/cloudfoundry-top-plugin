@@ -173,15 +173,17 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 			}
 		}
 
-		for containerIndex, cs := range appStats.ContainerArray {
+		for _, cs := range appStats.ContainerArray {
 			if cs != nil && cs.ContainerMetric != nil {
 
-				// If we haven't gotten a container update recently, ignore the old value
-				if statsTime.Sub(cs.LastUpdate) > time.Second*config.StaleContainerSeconds {
-					// TODO: Should we nil out the old container data??
-					appStats.ContainerArray[containerIndex] = nil
-					continue
+				// TODO: Need to test this logic
+				if cs.CellLastExitStatusMsgTime != nil {
+					if cs.CellLastCreatingContainerMsgTime == nil ||
+						cs.CellLastCreatingContainerMsgTime.Before(*cs.CellLastExitStatusMsgTime) {
+						continue
+					}
 				}
+
 				/*
 					TODO: How can we ignore crashed / stopped containers immediately?
 
