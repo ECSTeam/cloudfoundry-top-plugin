@@ -42,11 +42,21 @@ func (mdMgr *AppMetadataManager) AppMetadataSize() int {
 	return len(mdMgr.appMetadataMap)
 }
 
-func (mdMgr *AppMetadataManager) GetAppMetadataMap() map[string]*AppMetadata {
-	return mdMgr.appMetadataMap
+func (mdMgr *AppMetadataManager) AddAppMetadata(appMetadata *AppMetadata) {
+	mdMgr.mu.Lock()
+	defer mdMgr.mu.Unlock()
+	mdMgr.appMetadataMap[appMetadata.Guid] = appMetadata
+}
+
+func (mdMgr *AppMetadataManager) DeleteAppMetadata(appId string) {
+	mdMgr.mu.Lock()
+	defer mdMgr.mu.Unlock()
+	delete(mdMgr.appMetadataMap, appId)
 }
 
 func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
+	mdMgr.mu.Lock()
+	defer mdMgr.mu.Unlock()
 	appsMetadataArray := []*AppMetadata{}
 	for _, appMetadata := range mdMgr.appMetadataMap {
 		appsMetadataArray = append(appsMetadataArray, appMetadata)
@@ -59,6 +69,11 @@ func (mdMgr *AppMetadataManager) FindAppMetadata(appId string) *AppMetadata {
 }
 
 func (mdMgr *AppMetadataManager) FindAppMetadataInternal(appId string, requestLoadIfNotFound bool) *AppMetadata {
+
+	mdMgr.mu.Lock()
+	defer mdMgr.mu.Unlock()
+
+	//TODO: error: concurrent map read and map write
 	appMetadata := mdMgr.appMetadataMap[appId]
 	if appMetadata == nil {
 		appMetadata = NewAppMetadataById(appId)

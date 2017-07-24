@@ -19,13 +19,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appStatistics"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -187,6 +190,10 @@ func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
 func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, ColumnContainerIndex())
+
+	columns = append(columns, ColumnState())
+	columns = append(columns, ColumnUptime())
+
 	columns = append(columns, ColumnTotalCpuPercentage())
 	columns = append(columns, ColumnMemoryUsed())
 	columns = append(columns, ColumnMemoryFree())
@@ -196,8 +203,10 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnLogStderr())
 
 	columns = append(columns, ColumnCellIp())
-	columns = append(columns, ColumnCellLastMsgText())
-	columns = append(columns, ColumnCellLastMsgTime())
+	columns = append(columns, ColumnStartTime())
+
+	columns = append(columns, ColumnCellLastStartMsgText())
+	columns = append(columns, ColumnCellLastStartMsgTime())
 	return columns
 }
 
@@ -210,34 +219,57 @@ func (asUI *AppDetailView) GetListData() []uiCommon.IData {
 func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
 	displayStatsArray := make([]*DisplayContainerStats, 0)
+	now := time.Now().Truncate(time.Second)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStats := appMap[asUI.appId]
 	if appStats == nil {
 		return displayStatsArray
 	}
+	appId := appStats.AppId
+	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
 
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+	appInstStatsMap := appStatistics.FindAppStatisticMetadata(appId)
+	if appInstStatsMap == nil {
+		// Update the app instance statistics
+		asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppInstanceStatisticsMetadata(appId)
+		toplog.Debug("No app inst stat data loaded yet")
+	}
 
 	for _, containerStats := range appStats.ContainerArray {
+
 		if containerStats != nil {
 			displayContainerStats := NewDisplayContainerStats(containerStats, appStats)
 			displayContainerStats.AppName = appMetadata.Name
 			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
 
-			usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
-			reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE
-			freeMemory := reservedMemory - usedMemory
-			displayContainerStats.FreeMemory = freeMemory
-			displayContainerStats.ReservedMemory = reservedMemory
-			usedDisk := containerStats.ContainerMetric.GetDiskBytes()
-			reservedDisk := uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE
-			freeDisk := reservedDisk - usedDisk
-			displayContainerStats.FreeDisk = freeDisk
-			displayContainerStats.ReservedDisk = reservedDisk
+			if containerStats.ContainerMetric != nil {
+				usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
+				reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE
+				freeMemory := reservedMemory - usedMemory
+				displayContainerStats.FreeMemory = freeMemory
+				displayContainerStats.ReservedMemory = reservedMemory
+
+				usedDisk := containerStats.ContainerMetric.GetDiskBytes()
+				reservedDisk := uint64(appMetadata.DiskQuotaMB) * util.MEGABYTE
+				freeDisk := reservedDisk - usedDisk
+				displayContainerStats.FreeDisk = freeDisk
+				displayContainerStats.ReservedDisk = reservedDisk
+			}
+
 			displayStatsArray = append(displayStatsArray, displayContainerStats)
 
+			if appInstStatsMap != nil {
+				appInstStats := appInstStatsMap[strconv.Itoa(containerStats.ContainerIndex)]
+				if appInstStats != nil {
+					displayContainerStats.State = appInstStats.State
+					startTime := appInstStats.Stats.StartTime
+					displayContainerStats.StartTime = startTime
+					uptime := now.Sub(*startTime)
+					displayContainerStats.Uptime = &uptime
+				}
+			}
 		}
 	}
 

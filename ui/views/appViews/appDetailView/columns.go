@@ -22,6 +22,25 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
+func ColumnContainerIndex() *uiCommon.ListColumn {
+	defaultColSize := 4
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*DisplayContainerStats).ContainerIndex < c2.(*DisplayContainerStats).ContainerIndex)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		display := fmt.Sprintf("%4v", stats.ContainerIndex)
+		return fmt.Sprintf("%4v", display)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", stats.ContainerIndex)
+	}
+	c := uiCommon.NewListColumn("IDX", "IDX", defaultColSize,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
+
 func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
 	defaultColSize := 6
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -54,25 +73,6 @@ func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
 	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 
-	return c
-}
-
-func ColumnContainerIndex() *uiCommon.ListColumn {
-	defaultColSize := 4
-	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*DisplayContainerStats).ContainerIndex < c2.(*DisplayContainerStats).ContainerIndex)
-	}
-	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
-		stats := data.(*DisplayContainerStats)
-		display := fmt.Sprintf("%4v", stats.ContainerIndex)
-		return fmt.Sprintf("%4v", display)
-	}
-	rawValueFunc := func(data uiCommon.IData) string {
-		stats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%v", stats.ContainerIndex)
-	}
-	c := uiCommon.NewListColumn("IDX", "IDX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
 
@@ -136,8 +136,11 @@ func ColumnMemoryUsed() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ContainerMetric.GetMemoryBytes()).StringWithPrecision(1))
-		return fmt.Sprintf("%9v", memInfo)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.ContainerMetric.GetMemoryBytes()).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -154,8 +157,11 @@ func ColumnMemoryFree() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.FreeMemory).StringWithPrecision(1))
-		return fmt.Sprintf("%9v", memInfo)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.FreeMemory).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -172,8 +178,11 @@ func ColumnMemoryReserved() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedMemory).StringWithPrecision(1))
-		return fmt.Sprintf("%9v", memInfo)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.ReservedMemory).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -189,9 +198,12 @@ func ColumnDiskUsed() *uiCommon.ListColumn {
 		return c1.(*DisplayContainerStats).ContainerMetric.GetDiskBytes() < c2.(*DisplayContainerStats).ContainerMetric.GetDiskBytes()
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
-		appStats := data.(*DisplayContainerStats)
-		diskUsed := fmt.Sprintf("%9v", util.ByteSize(appStats.ContainerMetric.GetDiskBytes()).StringWithPrecision(1))
-		return diskUsed
+		stats := data.(*DisplayContainerStats)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.ContainerMetric.GetDiskBytes()).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -208,8 +220,11 @@ func ColumnDiskFree() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.FreeDisk).StringWithPrecision(1))
-		return fmt.Sprintf("%9v", memInfo)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.FreeDisk).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -226,8 +241,11 @@ func ColumnDiskReserved() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		memInfo := fmt.Sprintf("%9v", util.ByteSize(stats.ReservedDisk).StringWithPrecision(1))
-		return fmt.Sprintf("%9v", memInfo)
+		if stats.ContainerMetric.GetMemoryBytes() == 0 {
+			return fmt.Sprintf("%9v", "--")
+		} else {
+			return fmt.Sprintf("%9v", util.ByteSize(stats.ReservedDisk).StringWithPrecision(1))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
@@ -294,14 +312,14 @@ func ColumnCellIp() *uiCommon.ListColumn {
 	return c
 }
 
-func ColumnCellLastMsgText() *uiCommon.ListColumn {
-	defaultColSize := 35
+func ColumnState() *uiCommon.ListColumn {
+	defaultColSize := 9
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return (c1.(*DisplayContainerStats).CellLastMsgText) < (c2.(*DisplayContainerStats).CellLastMsgText)
+		return (c1.(*DisplayContainerStats).State) < (c2.(*DisplayContainerStats).State)
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
-		msgText := appStats.CellLastMsgText
+		msgText := appStats.State
 		if msgText == "" {
 			msgText = "--"
 		}
@@ -309,18 +327,96 @@ func ColumnCellLastMsgText() *uiCommon.ListColumn {
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
-		return appStats.CellLastMsgText
+		return appStats.State
 	}
-	c := uiCommon.NewListColumn("LAST_CELL_MSG", "LAST_CELL_MSG", defaultColSize,
+	c := uiCommon.NewListColumn("STATE", "STATE", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
 
-func ColumnCellLastMsgTime() *uiCommon.ListColumn {
+func ColumnUptime() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+
+		uptime1 := c1.(*DisplayContainerStats).Uptime
+		uptime2 := c2.(*DisplayContainerStats).Uptime
+		if uptime1 == nil {
+			return true
+		}
+		if uptime2 == nil {
+			return false
+		}
+		return uptime1.Seconds() < uptime2.Seconds()
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%11v", util.FormatDuration(stats.Uptime))
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.Uptime.Seconds())
+	}
+	c := uiCommon.NewListColumn("UPTIME", "UPTIME", 11,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnStartTime() *uiCommon.ListColumn {
 	defaultColSize := 19
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		t1 := c1.(*DisplayContainerStats).CellLastMsgTime
-		t2 := c2.(*DisplayContainerStats).CellLastMsgTime
+		t1 := c1.(*DisplayContainerStats).StartTime
+		t2 := c2.(*DisplayContainerStats).StartTime
+		if t1 == nil {
+			return true
+		}
+		if t2 == nil {
+			return false
+		}
+		return t1.Before(*t2)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayContainerStats)
+		if appStats.StartTime == nil {
+			return fmt.Sprintf("%-19v", "--")
+		} else {
+			return fmt.Sprintf("%-19v", appStats.StartTime.Format("01-02-2006 15:04:05"))
+		}
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		stats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", stats.StartTime)
+	}
+	c := uiCommon.NewListColumn("START_TIME", "START_TIME", defaultColSize,
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnCellLastStartMsgText() *uiCommon.ListColumn {
+	defaultColSize := 35
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return (c1.(*DisplayContainerStats).CellLastStartMsgText) < (c2.(*DisplayContainerStats).CellLastStartMsgText)
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		appStats := data.(*DisplayContainerStats)
+		msgText := appStats.CellLastStartMsgText
+		if msgText == "" {
+			msgText = "--"
+		}
+		return util.FormatDisplayData(msgText, defaultColSize)
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return appStats.CellLastStartMsgText
+	}
+	c := uiCommon.NewListColumn("LAST_CSTART_MSG", "LAST_CSTART_MSG", defaultColSize,
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+	return c
+}
+
+func ColumnCellLastStartMsgTime() *uiCommon.ListColumn {
+	defaultColSize := 19
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		t1 := c1.(*DisplayContainerStats).CellLastStartMsgTime
+		t2 := c2.(*DisplayContainerStats).CellLastStartMsgTime
 		if t1 == nil {
 			return true
 		}
@@ -334,18 +430,18 @@ func ColumnCellLastMsgTime() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayContainerStats)
-		msgText := appStats.CellLastMsgText
-		if msgText == "" || appStats.CellLastMsgTime == nil {
-			return fmt.Sprintf("%19v", "--")
+		msgText := appStats.CellLastStartMsgText
+		if msgText == "" || appStats.CellLastStartMsgTime == nil {
+			return fmt.Sprintf("%-19v", "--")
 		} else {
-			return fmt.Sprintf("%19v", appStats.CellLastMsgTime.Format("01-02-2006 15:04:05"))
+			return fmt.Sprintf("%-19v", appStats.CellLastStartMsgTime.Format("01-02-2006 15:04:05"))
 		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		stats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%v", stats.CellLastMsgTime)
+		return fmt.Sprintf("%v", stats.CellLastStartMsgTime)
 	}
-	c := uiCommon.NewListColumn("LAST_CELL_MSG_TIME", "LAST_CELL_MSG_TIME", defaultColSize,
+	c := uiCommon.NewListColumn("LAST_CSTART_MSG_TM", "LAST_CSTART_MSG_TM", defaultColSize,
 		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }

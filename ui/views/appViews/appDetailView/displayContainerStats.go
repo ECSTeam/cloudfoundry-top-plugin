@@ -34,7 +34,10 @@ type DisplayContainerStats struct {
 	ReservedMemory uint64
 	FreeDisk       uint64
 	ReservedDisk   uint64
-	key            string
+
+	State string
+
+	key string
 }
 
 func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats *eventApp.AppStats) *DisplayContainerStats {

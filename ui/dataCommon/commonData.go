@@ -174,31 +174,34 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		}
 
 		for _, cs := range appStats.ContainerArray {
-			if cs != nil && cs.ContainerMetric != nil {
+			if cs != nil {
+				// TODO: the above cs != nil check also needs a cs State != DOWN check
 
-				// TODO: Need to test this logic
-				if cs.CellLastExitStatusMsgTime != nil {
-					if cs.CellLastCreatingContainerMsgTime == nil ||
-						cs.CellLastCreatingContainerMsgTime.Before(*cs.CellLastExitStatusMsgTime) {
-						continue
-					}
-				}
+				totalReportingContainers++
+				if cs.ContainerMetric != nil {
 
-				/*
-					TODO: How can we ignore crashed / stopped containers immediately?
-
-						lastCrashTime := cs.LastCrashTime()
-						if lastCrashTime != nil && cs.LastUpdate.Before(*lastCrashTime) {
-							// If the container has crashed since the last update, lets not
-							// count it as running
+					// TODO: Need to test this logic
+					/*
+						if cs.LastUpdateTime == nil ||
+							cs.LastUpdateTime.Before(*cs.CellLastExitStatusMsgTime) {
 							continue
 						}
-				*/
+					*/
 
-				totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
-				totalMemoryUsed = totalMemoryUsed + int64(*cs.ContainerMetric.MemoryBytes)
-				totalDiskUsed = totalDiskUsed + int64(*cs.ContainerMetric.DiskBytes)
-				totalReportingContainers++
+					/*
+						TODO: How can we ignore crashed / stopped containers immediately?
+
+							lastCrashTime := cs.LastCrashTime()
+							if lastCrashTime != nil && cs.LastUpdate.Before(*lastCrashTime) {
+								// If the container has crashed since the last update, lets not
+								// count it as running
+								continue
+							}
+					*/
+					totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
+					totalMemoryUsed = totalMemoryUsed + int64(*cs.ContainerMetric.MemoryBytes)
+					totalDiskUsed = totalDiskUsed + int64(*cs.ContainerMetric.DiskBytes)
+				}
 			}
 		}
 		if displayAppStats.Monitored && totalReportingContainers < displayAppStats.DesiredContainers {

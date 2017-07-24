@@ -822,6 +822,9 @@ func (asUI *ListWidget) pageUpAction(g *gocui.Gui, v *gocui.View) error {
 			if offset < 0 {
 				offset = 0
 			}
+			if offset > len(asUI.listData) {
+				offset = len(asUI.listData) - 1
+			}
 			if offset < asUI.displayRowIndexOffset {
 				asUI.displayRowIndexOffset = offset
 			}

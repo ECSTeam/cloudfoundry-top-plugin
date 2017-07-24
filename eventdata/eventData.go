@@ -223,12 +223,24 @@ func (ed *EventData) Clone() *EventData {
 		// Check if we need to remove data for any old containers -- containers that haven't reported in for awhile
 		for containerIndex, cs := range appStat.ContainerArray {
 			if cs != nil {
-				// If we haven't gotten a container update recently, ignore the old value
-				if cs.LastUpdateTime == nil || now.Sub(*cs.LastUpdateTime) > time.Second*config.StaleContainerSeconds {
+				// If we haven't gotten a container update in DeadContainerSeconds then remove the entire container data
+				if cs.LastUpdateTime == nil || now.Sub(*cs.LastUpdateTime) > time.Second*config.DeadContainerSeconds {
 					// Remove container stats for realtime data and the clone
 					appStat.ContainerArray[containerIndex] = nil
 					clonedAppStat.ContainerArray[containerIndex] = nil
+				} else {
+					if cs.ContainerMetric != nil {
+						// If we haven't gotten a container update in StaleContainerSeconds then remove just the
+						// container metrics not the entire container data
+						if cs.LastUpdateTime == nil || now.Sub(*cs.LastUpdateTime) > time.Second*config.StaleContainerSeconds {
+							// Remove container stats for realtime data and the clone
+							appStat.ContainerArray[containerIndex].ContainerMetric = nil
+							clonedAppStat.ContainerArray[containerIndex].ContainerMetric = nil
+						}
+					}
+
 				}
+
 			}
 		}
 
@@ -341,7 +353,7 @@ func (ed *EventData) getContainerStats(appStats *eventApp.AppStats, instIndex in
 	containerStats := appStats.ContainerArray[instIndex]
 
 	if containerStats == nil {
-		// New app we haven't seen yet
+		// New app instance (container) we haven't seen yet
 		containerStats = eventApp.NewContainerStats(instIndex)
 		appStats.ContainerArray[instIndex] = containerStats
 

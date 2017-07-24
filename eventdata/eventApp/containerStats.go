@@ -29,14 +29,10 @@ type ContainerStats struct {
 	LastContainerUpdateTime *time.Time
 	OutCount                int64
 	ErrCount                int64
-	CellLastMsgText         string
-	CellLastMsgTime         *time.Time
-	// We need the last "Creating container" time so we can ignore "Destroying container" and "Successfully destroyed container"
-	// messages that occur after this time.
-	// We need to do tall this because the destroying of a container is async so a new container can be created while the old
-	// container is still being destroyed.
-	CellLastCreatingContainerMsgTime *time.Time
-	CellLastExitStatusMsgTime        *time.Time
+	StartTime               *time.Time
+	Uptime                  *time.Duration
+	CellLastStartMsgText    string
+	CellLastStartMsgTime    *time.Time
 }
 
 func NewContainerStats(containerIndex int) *ContainerStats {

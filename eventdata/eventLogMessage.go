@@ -91,38 +91,33 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 		msgText = string(logMessage.GetMessage())
 	}
 
-	// We need the last "Creating container" time so we can ignore "Destroying container" and "Successfully destroyed container"
-	// messages that occur after this time.
-	// We need to do tall this because the destroying of a container is async so a new container can be created while the old
-	// container is still being destroyed.   We don't want to capture the last cell message of "Successfully destroyed container"
-	// When a new container is running hand healthy.
 	switch {
-	case strings.HasPrefix(msgText, "Exit status"):
-		// This message comes out just before the container begins to get destroyed.  The real message is "Exit status 0" but
-		// not sure if there could be other exit status values so we just look for the begging of ths string
-		containerStats.CellLastExitStatusMsgTime = &msgTime
-	case strings.HasPrefix(msgText, "Creating container"):
-		containerStats.CellLastCreatingContainerMsgTime = &msgTime
-		containerStats.Ip = msg.GetIp()
-	case strings.Contains(msgText, "estroying"): // Removed the leading "D" since we don't want to deal with upper/lower case
-		fallthrough
-	case strings.Contains(msgText, "estroyed"): // Removed the leading "D" since we don't want to deal with upper/lower case
-		if containerStats.CellLastExitStatusMsgTime == nil ||
-			(containerStats.CellLastCreatingContainerMsgTime != nil &&
-				containerStats.CellLastExitStatusMsgTime != nil &&
-				containerStats.CellLastCreatingContainerMsgTime.After(*containerStats.CellLastExitStatusMsgTime)) {
-			// ignore this event message (see comment above switch statement)
-			return
-		}
-		// Since the container is about to die, we clear out the container metrics since they are no longer valid
+	case strings.Contains(msgText, "Creating"):
+		// Clear the container metrics since any old metrics would be from a prior container
 		containerStats.ContainerMetric = nil
+		fallthrough
+	case strings.Contains(msgText, "created"):
+		fallthrough
+	case strings.Contains(msgText, "monitor"):
+		fallthrough
+	case strings.Contains(msgText, "healthy"):
+		if containerStats.LastUpdateTime == nil || msgTime.After(*containerStats.LastUpdateTime) {
+			containerStats.Ip = msg.GetIp()
+			containerStats.CellLastStartMsgText = msgText
+			containerStats.CellLastStartMsgTime = &msgTime
+			containerStats.LastUpdateTime = &msgTime
+		}
 	}
 
-	if containerStats.CellLastMsgTime == nil || containerStats.CellLastMsgTime.Before(msgTime) {
-		containerStats.CellLastMsgText = msgText
-		containerStats.CellLastMsgTime = &msgTime
-		containerStats.LastUpdateTime = &msgTime
+	switch {
+	case strings.Contains(msgText, "Successfully created container"):
+		fallthrough
+	case strings.Contains(msgText, "healthy"):
+		fallthrough
+	case strings.Contains(msgText, "Exit status"):
+		ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstanceStatisticsMetadata(appStats.AppId)
 	}
+
 }
 
 func (ed *EventData) logApiCall(msg *events.Envelope) {
