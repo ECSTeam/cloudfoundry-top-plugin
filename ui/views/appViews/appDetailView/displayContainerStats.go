@@ -18,6 +18,7 @@ package appDetailView
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 )
@@ -35,7 +36,9 @@ type DisplayContainerStats struct {
 	FreeDisk       uint64
 	ReservedDisk   uint64
 
-	State string
+	State     string
+	StartTime *time.Time
+	Uptime    *time.Duration
 
 	key string
 }

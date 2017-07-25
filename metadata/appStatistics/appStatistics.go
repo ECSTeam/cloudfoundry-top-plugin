@@ -97,6 +97,12 @@ func LoadAppStatisticCache(cliConnection plugin.CliConnection, appId string) err
 	return nil
 }
 
+func Clear() {
+	mu.Lock()
+	defer mu.Unlock()
+	appStatisticsMetadataCache = make(map[string]*AppInstanceStatistics)
+}
+
 func getAppStatisticMetadata(cliConnection plugin.CliConnection, appId string) (map[string]*AppInstanceStatistic, error) {
 
 	url := "/v2/apps/" + appId + "/stats"

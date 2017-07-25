@@ -29,8 +29,6 @@ type ContainerStats struct {
 	LastContainerUpdateTime *time.Time
 	OutCount                int64
 	ErrCount                int64
-	StartTime               *time.Time
-	Uptime                  *time.Duration
 	CellLastStartMsgText    string
 	CellLastStartMsgTime    *time.Time
 }

@@ -125,6 +125,7 @@ func (mgr *GlobalManager) LoadMetadata() {
 }
 
 func (mgr *GlobalManager) FlushCache() {
+	appStatistics.Clear()
 	mgr.LoadMetadata()
 	mgr.orgQuotaMdMgr.FlushCache()
 	mgr.spaceQuotaMdMgr.FlushCache()

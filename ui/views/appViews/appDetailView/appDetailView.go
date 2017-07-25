@@ -219,6 +219,8 @@ func (asUI *AppDetailView) GetListData() []uiCommon.IData {
 func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
 	displayStatsArray := make([]*DisplayContainerStats, 0)
+	displayContainerStatsMap := make(map[int]*DisplayContainerStats)
+
 	now := time.Now().Truncate(time.Second)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
@@ -236,10 +238,38 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 		toplog.Debug("No app inst stat data loaded yet")
 	}
 
+	// If we have app instance list from metadata -- populate map with current state / uptime
+	if appInstStatsMap != nil {
+		for containerIndexStr, appInstStats := range appInstStatsMap {
+			if appInstStats != nil {
+				containerIndex, err := strconv.Atoi(containerIndexStr)
+				if err != nil {
+					// TODO
+				}
+				placeHolder := eventApp.NewContainerStats(containerIndex)
+				displayContainerStats := NewDisplayContainerStats(placeHolder, appStats)
+
+				displayContainerStatsMap[containerIndex] = displayContainerStats
+				displayContainerStats.State = appInstStats.State
+				startTime := appInstStats.Stats.StartTime
+				displayContainerStats.StartTime = startTime
+				uptime := now.Sub(*startTime)
+				displayContainerStats.Uptime = &uptime
+			}
+		}
+	}
+
+	// Loop through any reporting containers and populate cpu/memory/disk info
 	for _, containerStats := range appStats.ContainerArray {
 
 		if containerStats != nil {
-			displayContainerStats := NewDisplayContainerStats(containerStats, appStats)
+			displayContainerStats := displayContainerStatsMap[containerStats.ContainerIndex]
+			if displayContainerStats == nil {
+				displayContainerStats = NewDisplayContainerStats(containerStats, appStats)
+				displayContainerStatsMap[containerStats.ContainerIndex] = displayContainerStats
+			} else {
+				displayContainerStats.ContainerStats = containerStats
+			}
 			displayContainerStats.AppName = appMetadata.Name
 			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
@@ -258,23 +288,17 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 				displayContainerStats.ReservedDisk = reservedDisk
 			}
 
-			displayStatsArray = append(displayStatsArray, displayContainerStats)
+			//displayStatsArray = append(displayStatsArray, displayContainerStats)
 
-			if appInstStatsMap != nil {
-				appInstStats := appInstStatsMap[strconv.Itoa(containerStats.ContainerIndex)]
-				if appInstStats != nil {
-					displayContainerStats.State = appInstStats.State
-					startTime := appInstStats.Stats.StartTime
-					displayContainerStats.StartTime = startTime
-					uptime := now.Sub(*startTime)
-					displayContainerStats.Uptime = &uptime
-				}
-			}
 		}
 	}
 
-	displayStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
-	displayAppStats := displayStatsMap[asUI.appId]
+	for _, displayContainerStats := range displayContainerStatsMap {
+		displayStatsArray = append(displayStatsArray, displayContainerStats)
+	}
+
+	displayAppStatsMap := asUI.GetMasterUI().GetCommonData().GetDisplayAppStatsMap()
+	displayAppStats := displayAppStatsMap[asUI.appId]
 
 	asUI.Crash1hCount = displayAppStats.Crash1hCount
 	asUI.Crash24hCount = displayAppStats.Crash24hCount
