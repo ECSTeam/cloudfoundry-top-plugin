@@ -110,6 +110,8 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 	}
 
 	switch {
+	case strings.Contains(msgText, "Creating"):
+		fallthrough
 	case strings.Contains(msgText, "Successfully created container"):
 		fallthrough
 	case strings.Contains(msgText, "healthy"):

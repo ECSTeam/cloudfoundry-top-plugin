@@ -81,6 +81,11 @@ const (
 	ATTENTION_ALERT
 	ATTENTION_WARN
 	ATTENTION_NOT_MONITORED
+	ATTENTION_STATE_STARTING
+	ATTENTION_STATE_DOWN
+	ATTENTION_STATE_TERM
+	ATTENTION_STATE_CRASHED
+	ATTENTION_CONTAINER_SHORT_UPTIME
 )
 
 type ListColumn struct {
@@ -537,6 +542,16 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 				colorString = util.CYAN
 			case ATTENTION_NOT_MONITORED:
 				colorString = util.BRIGHT_BLACK
+			case ATTENTION_STATE_STARTING:
+				colorString = util.YELLOW
+			case ATTENTION_STATE_DOWN:
+				colorString = util.RED
+			case ATTENTION_STATE_TERM:
+				colorString = util.PURPLE
+			case ATTENTION_STATE_CRASHED:
+				colorString = util.RED
+			case ATTENTION_CONTAINER_SHORT_UPTIME:
+				colorString = util.CYAN
 			}
 			if len(colorString) == 4 {
 				colorString = colorString + attributeModifier

@@ -86,7 +86,7 @@ func LoadAppStatisticCache(cliConnection plugin.CliConnection, appId string) err
 	now := time.Now()
 	data, err := getAppStatisticMetadata(cliConnection, appId)
 	if err != nil {
-		toplog.Warn("*** app instance metadata error: %v", err.Error())
+		toplog.Warn("*** app instance stats metadata error: %v  response: %v", err.Error(), data)
 		return err
 	}
 
@@ -133,9 +133,14 @@ func getAppStatisticMetadata(cliConnection plugin.CliConnection, appId string) (
 	// Set the startTime relative to now and uptime of the container
 	now := time.Now().Truncate(time.Second)
 	for _, stat := range response {
-		uptimeSeconds := stat.Stats.Uptime
-		startTime := now.Add(time.Duration(-uptimeSeconds) * time.Second)
-		stat.Stats.StartTime = &startTime
+		// Ignore "update" field if container is in state DOWN or CRASHED as its not up
+		if stat.State == "DOWN" || stat.State == "CRASHED" {
+			stat.Stats.Uptime = 0
+		} else {
+			uptimeSeconds := stat.Stats.Uptime
+			startTime := now.Add(time.Duration(-uptimeSeconds) * time.Second)
+			stat.Stats.StartTime = &startTime
+		}
 	}
 
 	return response, nil

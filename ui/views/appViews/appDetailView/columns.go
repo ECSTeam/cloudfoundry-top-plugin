@@ -22,6 +22,43 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
 
+func stateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+	stats := data.(*DisplayContainerStats)
+	attentionType := uiCommon.ATTENTION_NORMAL
+
+	// "FLAPPING"
+	switch stats.State {
+	case "DOWN":
+		attentionType = uiCommon.ATTENTION_STATE_DOWN
+	case "TERM":
+		attentionType = uiCommon.ATTENTION_STATE_TERM
+	case "STARTING":
+		attentionType = uiCommon.ATTENTION_STATE_STARTING
+	case "CRASHED":
+		attentionType = uiCommon.ATTENTION_STATE_CRASHED
+	case "RUNNING":
+		attentionType = uiCommon.ATTENTION_NORMAL
+	case "":
+		attentionType = uiCommon.ATTENTION_NORMAL
+	default:
+		attentionType = uiCommon.ATTENTION_NORMAL
+	}
+
+	return attentionType
+}
+
+func uptimeAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+
+	attentionType := stateAttentionFunc(data, columnOwner)
+	if attentionType == uiCommon.ATTENTION_NORMAL {
+		stats := data.(*DisplayContainerStats)
+		if stats.Uptime != nil && stats.Uptime.Seconds() < 60 {
+			attentionType = uiCommon.ATTENTION_CONTAINER_SHORT_UPTIME
+		}
+	}
+	return attentionType
+}
+
 func ColumnContainerIndex() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -37,7 +74,7 @@ func ColumnContainerIndex() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.ContainerIndex)
 	}
 	c := uiCommon.NewListColumn("IDX", "IDX", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -71,7 +108,7 @@ func ColumnTotalCpuPercentage() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.ContainerMetric.GetCpuPercentage())
 	}
 	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 
 	return c
 }
@@ -90,7 +127,7 @@ func ColumnAppName() *uiCommon.ListColumn {
 		return appStats.AppName
 	}
 	c := uiCommon.NewListColumn("appName", "APPLICATION", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -108,7 +145,7 @@ func ColumnSpaceName() *uiCommon.ListColumn {
 		return appStats.SpaceName
 	}
 	c := uiCommon.NewListColumn("spaceName", "SPACE", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -126,7 +163,7 @@ func ColumnOrgName() *uiCommon.ListColumn {
 		return appStats.OrgName
 	}
 	c := uiCommon.NewListColumn("orgName", "ORG", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -147,7 +184,7 @@ func ColumnMemoryUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.ContainerMetric.GetMemoryBytes())
 	}
 	c := uiCommon.NewListColumn("MEM_USED", "MEM_USED", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -168,7 +205,7 @@ func ColumnMemoryFree() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.FreeMemory)
 	}
 	c := uiCommon.NewListColumn("MEM_FREE", "MEM_FREE", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -189,7 +226,7 @@ func ColumnMemoryReserved() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.ReservedMemory)
 	}
 	c := uiCommon.NewListColumn("MEM_RSVD", "MEM_RSVD", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -210,7 +247,7 @@ func ColumnDiskUsed() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.ContainerMetric.GetDiskBytes())
 	}
 	c := uiCommon.NewListColumn("DISK_USED", "DISK_USED", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -231,7 +268,7 @@ func ColumnDiskFree() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.FreeDisk)
 	}
 	c := uiCommon.NewListColumn("DISK_FREE", "DISK_FREE", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -252,7 +289,7 @@ func ColumnDiskReserved() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.ReservedDisk)
 	}
 	c := uiCommon.NewListColumn("DISK_RSVD", "DISK_RSVD", 9,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -269,7 +306,7 @@ func ColumnLogStdout() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.OutCount)
 	}
 	c := uiCommon.NewListColumn("LOG_OUT", "LOG_OUT", 11,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -286,7 +323,7 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", appStats.ErrCount)
 	}
 	c := uiCommon.NewListColumn("LOG_ERR", "LOG_ERR", 11,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -308,7 +345,7 @@ func ColumnCellIp() *uiCommon.ListColumn {
 		return appStats.Ip
 	}
 	c := uiCommon.NewListColumn("CELL_IP", "CELL_IP", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -330,7 +367,7 @@ func ColumnState() *uiCommon.ListColumn {
 		return appStats.State
 	}
 	c := uiCommon.NewListColumn("STATE", "STATE", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -349,14 +386,18 @@ func ColumnUptime() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%11v", util.FormatDuration(stats.Uptime))
+		if stats.Uptime == nil {
+			return fmt.Sprintf("%11v", "--")
+		} else {
+			return fmt.Sprintf("%11v", util.FormatDuration(stats.Uptime))
+		}
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)
 		return fmt.Sprintf("%v", appStats.Uptime.Seconds())
 	}
 	c := uiCommon.NewListColumn("UPTIME", "UPTIME", 11,
-		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, uptimeAttentionFunc)
 	return c
 }
 
@@ -386,12 +427,12 @@ func ColumnStartTime() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.StartTime)
 	}
 	c := uiCommon.NewListColumn("START_TIME", "START_TIME", defaultColSize,
-		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
 func ColumnCellLastStartMsgText() *uiCommon.ListColumn {
-	defaultColSize := 35
+	defaultColSize := 57
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return (c1.(*DisplayContainerStats).CellLastStartMsgText) < (c2.(*DisplayContainerStats).CellLastStartMsgText)
 	}
@@ -408,7 +449,7 @@ func ColumnCellLastStartMsgText() *uiCommon.ListColumn {
 		return appStats.CellLastStartMsgText
 	}
 	c := uiCommon.NewListColumn("LAST_CSTART_MSG", "LAST_CSTART_MSG", defaultColSize,
-		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
+		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
 
@@ -442,6 +483,6 @@ func ColumnCellLastStartMsgTime() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", stats.CellLastStartMsgTime)
 	}
 	c := uiCommon.NewListColumn("LAST_CSTART_MSG_TM", "LAST_CSTART_MSG_TM", defaultColSize,
-		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, nil)
+		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }

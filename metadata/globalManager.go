@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appStatistics"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
@@ -289,6 +290,16 @@ func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
 					toplog.Warn("Metadata appInstanceStatistics - appId: %v name: [%v] - Error: %v", appId, appName, err)
 				} else {
 					toplog.Info("Metadata appInstanceStatistics - appId: %v name: [%v] - Load complete", appId, appName)
+
+					if mgr.anyAppInstanceHaveState(appId, "DOWN") {
+						err := appInstances.LoadAppInstancesCache(mgr.cliConnection, appId)
+						if err != nil {
+							toplog.Warn("Metadata appInstances - appId: %v name: [%v] - Error: %v", appId, appName, err)
+						} else {
+							toplog.Info("Metadata appInstances - appId: %v name: [%v] - Load complete", appId, appName)
+						}
+					}
+
 					// Only delete if request for reload was queue before we loaded the data
 					// This prevents a timing issue a request is in progress while another one is queued.
 					mgr.refreshAppInstanceStatisticsLock.Lock()
@@ -298,6 +309,7 @@ func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
 						delete(mgr.refreshAppInstanceStatisticsQueue, appId)
 					}
 					mgr.refreshAppInstanceStatisticsLock.Unlock()
+
 				}
 			} else {
 				toplog.Debug("Metadata appInstanceStatistics - appId %v name: [%v] - Too soon to reload", appId, appName)
@@ -310,4 +322,17 @@ func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
 			}
 		}
 	}
+}
+
+func (mgr *GlobalManager) anyAppInstanceHaveState(appId string, state string) bool {
+	appInstanceStatistics := appStatistics.FindAppStatisticMetadataInternal(appId)
+	if appInstanceStatistics == nil {
+		return false
+	}
+	for _, stat := range appInstanceStatistics.Data {
+		if stat.State == state {
+			return true
+		}
+	}
+	return false
 }

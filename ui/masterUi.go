@@ -463,14 +463,15 @@ func (mui *MasterUI) editUpdateInterval(g *gocui.Gui, v *gocui.View) error {
 	titleText := "Update refresh interval"
 	helpText := "no help"
 
-	valueText := strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.1f", mui.refreshIntervalMS.Seconds()), "0"), ".")
+	valueText := strings.TrimRight(strings.TrimRight(fmt.Sprintf("%.2f", mui.refreshIntervalMS.Seconds()), "0"), ".")
 
 	applyCallbackFunc := func(g *gocui.Gui, v *gocui.View, w managerUI.Manager, inputValue string) error {
 		f, err := strconv.ParseFloat(inputValue, 64)
 		if err != nil {
 			return err
 		}
-		if f < float64(0.1) {
+		// Minimum refresh time
+		if f < float64(0.01) {
 			return nil
 		}
 		mui.refreshIntervalMS = time.Duration(f*1000) * time.Millisecond

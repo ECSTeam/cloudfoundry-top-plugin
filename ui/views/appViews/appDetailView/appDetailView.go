@@ -24,6 +24,7 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appStatistics"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
@@ -253,8 +254,10 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 				displayContainerStats.State = appInstStats.State
 				startTime := appInstStats.Stats.StartTime
 				displayContainerStats.StartTime = startTime
-				uptime := now.Sub(*startTime)
-				displayContainerStats.Uptime = &uptime
+				if startTime != nil {
+					uptime := now.Sub(*startTime)
+					displayContainerStats.Uptime = &uptime
+				}
 			}
 		}
 	}
@@ -265,14 +268,28 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 		if containerStats != nil {
 			displayContainerStats := displayContainerStatsMap[containerStats.ContainerIndex]
 			if displayContainerStats == nil {
+				// We have container stats but /v2/app/<GUID>/stats doesn't know about it
+				// So either the app was scaled down (container terminated) or we've scaled up
+				// and we got container messages and we're working with stale data from /v2/app/<GUID>/stats
 				displayContainerStats = NewDisplayContainerStats(containerStats, appStats)
 				displayContainerStatsMap[containerStats.ContainerIndex] = displayContainerStats
+				if appInstStatsMap != nil {
+					if containerStats.LastContainerUpdateTime != nil {
+						displayContainerStats.State = "TERM"
+					} else {
+						displayContainerStats.State = "NEW"
+					}
+				}
 			} else {
 				displayContainerStats.ContainerStats = containerStats
 			}
 			displayContainerStats.AppName = appMetadata.Name
 			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
+			if displayContainerStats.State == "TERM" || displayContainerStats.State == "DOWN" {
+				containerStats.ContainerMetric = nil
+			}
 
 			if containerStats.ContainerMetric != nil {
 				usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
@@ -293,7 +310,20 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 		}
 	}
 
-	for _, displayContainerStats := range displayContainerStatsMap {
+	for containerIndex, displayContainerStats := range displayContainerStatsMap {
+
+		// Populate the DOWN reason
+		if displayContainerStats.State == "DOWN" {
+			instancesMap := appInstances.FindAppInstancesMetadata(appId)
+			if instancesMap != nil {
+				instance := instancesMap[strconv.Itoa(containerIndex)]
+				if instance != nil {
+					displayContainerStats.CellLastStartMsgText = instance.Details
+					displayContainerStats.CellLastStartMsgTime = nil
+				}
+			}
+		}
+
 		displayStatsArray = append(displayStatsArray, displayContainerStats)
 	}
 
