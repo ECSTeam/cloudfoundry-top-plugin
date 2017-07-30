@@ -26,11 +26,12 @@ type ContainerStats struct {
 	Ip                      string
 	ContainerMetric         *events.ContainerMetric
 	LastUpdateTime          *time.Time
-	LastContainerUpdateTime *time.Time
+	LastMetricUpdateTime    *time.Time
 	OutCount                int64
 	ErrCount                int64
 	CellLastStartMsgText    string
 	CellLastStartMsgTime    *time.Time
+	CellLastCreatingMsgTime *time.Time
 }
 
 func NewContainerStats(containerIndex int) *ContainerStats {

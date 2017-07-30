@@ -50,17 +50,20 @@ var (
 	mu                        sync.Mutex
 )
 
-func FindAppInstancesMetadata(appId string) map[string]*AppInstance {
+func FindAppInstancesMetadata(appId string) *AppInstances {
 
-	instances := FindAppInstancesMetadataInternal(appId)
-	if instances != nil {
-		appInstances := instances.Data
-		if appInstances != nil {
-			return appInstances
+	return FindAppInstancesMetadataInternal(appId)
+	/*
+		if instances != nil {
+			appInstances := instances.Data
+			if appInstances != nil {
+				return appInstances
+			}
 		}
-	}
-	//return make(map[string]*AppInstance)
-	return nil
+		//return make(map[string]*AppInstance)
+		return nil
+	*/
+
 }
 
 func FindAppInstancesMetadataInternal(appId string) *AppInstances {
@@ -101,7 +104,8 @@ func getAppInstancesMetadata(cliConnection plugin.CliConnection, appId string) (
 	}
 
 	if strings.Contains(output, "error_code") {
-		if strings.Contains(output, "CF-AppStoppedStatsError") {
+		// "Instances error: Request failed for app: cf-nodejs as the app is in stopped state."
+		if strings.Contains(output, "220001") {
 			// This error is OK
 			return make(map[string]*AppInstance), nil
 		} else {

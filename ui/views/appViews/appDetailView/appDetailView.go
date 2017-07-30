@@ -25,7 +25,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appStatistics"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
@@ -232,16 +231,16 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	appId := appStats.AppId
 	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
 
-	appInstStatsMap := appStatistics.FindAppStatisticMetadata(appId)
-	if appInstStatsMap == nil {
+	appInsts := appInstances.FindAppInstancesMetadata(appId)
+	if appInsts == nil {
 		// Update the app instance statistics
-		asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppInstanceStatisticsMetadata(appId)
-		toplog.Debug("No app inst stat data loaded yet")
+		asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppInstancesMetadata(appId)
+		toplog.Debug("No app inst data loaded yet")
 	}
 
 	// If we have app instance list from metadata -- populate map with current state / uptime
-	if appInstStatsMap != nil {
-		for containerIndexStr, appInstStats := range appInstStatsMap {
+	if appInsts != nil && appInsts.Data != nil {
+		for containerIndexStr, appInstStats := range appInsts.Data {
 			if appInstStats != nil {
 				containerIndex, err := strconv.Atoi(containerIndexStr)
 				if err != nil {
@@ -252,7 +251,7 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
 				displayContainerStatsMap[containerIndex] = displayContainerStats
 				displayContainerStats.State = appInstStats.State
-				startTime := appInstStats.Stats.StartTime
+				startTime := appInstStats.StartTime
 				displayContainerStats.StartTime = startTime
 				if startTime != nil {
 					uptime := now.Sub(*startTime)
@@ -273,12 +272,15 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 				// and we got container messages and we're working with stale data from /v2/app/<GUID>/stats
 				displayContainerStats = NewDisplayContainerStats(containerStats, appStats)
 				displayContainerStatsMap[containerStats.ContainerIndex] = displayContainerStats
-				if appInstStatsMap != nil {
-					if containerStats.LastContainerUpdateTime != nil {
+				if appInsts != nil {
+					if containerStats.CellLastCreatingMsgTime == nil || (containerStats.CellLastCreatingMsgTime != nil &&
+						appInsts.CacheTime.After(*containerStats.CellLastCreatingMsgTime)) {
 						displayContainerStats.State = "TERM"
 					} else {
-						displayContainerStats.State = "NEW"
+						displayContainerStats.State = "UNKNOWN"
 					}
+				} else {
+					displayContainerStats.State = "CHECKING"
 				}
 			} else {
 				displayContainerStats.ContainerStats = containerStats
@@ -314,9 +316,8 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
 		// Populate the DOWN reason
 		if displayContainerStats.State == "DOWN" {
-			instancesMap := appInstances.FindAppInstancesMetadata(appId)
-			if instancesMap != nil {
-				instance := instancesMap[strconv.Itoa(containerIndex)]
+			if appInsts != nil && appInsts.Data != nil {
+				instance := appInsts.Data[strconv.Itoa(containerIndex)]
 				if instance != nil {
 					displayContainerStats.CellLastStartMsgText = instance.Details
 					displayContainerStats.CellLastStartMsgTime = nil

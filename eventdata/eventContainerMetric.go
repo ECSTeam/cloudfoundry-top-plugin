@@ -32,7 +32,7 @@ func (ed *EventData) containerMetricEvent(msg *events.Envelope) {
 	containerStats := ed.getContainerStats(appStats, instNum)
 
 	now := time.Unix(0, msg.GetTimestamp())
-	containerStats.LastContainerUpdateTime = &now
+	containerStats.LastMetricUpdateTime = &now
 	containerStats.LastUpdateTime = &now
 	containerStats.Ip = msg.GetIp()
 	containerStats.ContainerMetric = containerMetric

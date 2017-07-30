@@ -34,6 +34,8 @@ func stateAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) 
 		attentionType = uiCommon.ATTENTION_STATE_TERM
 	case "STARTING":
 		attentionType = uiCommon.ATTENTION_STATE_STARTING
+	case "UNKNOWN":
+		attentionType = uiCommon.ATTENTION_STATE_UNKNOWN
 	case "CRASHED":
 		attentionType = uiCommon.ATTENTION_STATE_CRASHED
 	case "RUNNING":

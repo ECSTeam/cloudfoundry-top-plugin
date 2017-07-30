@@ -82,6 +82,7 @@ const (
 	ATTENTION_WARN
 	ATTENTION_NOT_MONITORED
 	ATTENTION_STATE_STARTING
+	ATTENTION_STATE_UNKNOWN
 	ATTENTION_STATE_DOWN
 	ATTENTION_STATE_TERM
 	ATTENTION_STATE_CRASHED
@@ -543,6 +544,8 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_NOT_MONITORED:
 				colorString = util.BRIGHT_BLACK
 			case ATTENTION_STATE_STARTING:
+				colorString = util.YELLOW
+			case ATTENTION_STATE_UNKNOWN:
 				colorString = util.YELLOW
 			case ATTENTION_STATE_DOWN:
 				colorString = util.RED

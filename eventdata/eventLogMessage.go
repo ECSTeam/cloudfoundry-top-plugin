@@ -95,6 +95,7 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 	case strings.Contains(msgText, "Creating"):
 		// Clear the container metrics since any old metrics would be from a prior container
 		containerStats.ContainerMetric = nil
+		containerStats.CellLastCreatingMsgTime = &msgTime
 		fallthrough
 	case strings.Contains(msgText, "created"):
 		fallthrough
@@ -109,16 +110,20 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 		}
 	}
 
-	switch {
-	case strings.Contains(msgText, "Creating"):
-		fallthrough
-	case strings.Contains(msgText, "Successfully created container"):
-		fallthrough
-	case strings.Contains(msgText, "healthy"):
-		fallthrough
-	case strings.Contains(msgText, "Exit status"):
-		ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstanceStatisticsMetadata(appStats.AppId)
-	}
+	/*
+		switch {
+		case strings.Contains(msgText, "Creating"):
+			fallthrough
+		case strings.Contains(msgText, "Successfully created container"):
+			fallthrough
+		case strings.Contains(msgText, "healthy"):
+			fallthrough
+		case strings.Contains(msgText, "Exit status"):
+			ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appStats.AppId)
+		}
+	*/
+
+	ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appStats.AppId)
 
 }
 
@@ -132,6 +137,7 @@ func (ed *EventData) logApiCall(msg *events.Envelope) {
 	logText := string(logMessage.GetMessage())
 	toplog.Debug("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
+	ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appId)
 
 	if !strings.HasPrefix(logText, "App instance exited") {
 		return

@@ -50,9 +50,9 @@ type GlobalManager struct {
 	refreshNow     chan bool
 	refreshLock    sync.Mutex
 
-	refreshAppInstanceStatisticsQueue map[string]time.Time
-	refreshAppInstanceStatisticsNow   chan bool
-	refreshAppInstanceStatisticsLock  sync.Mutex
+	refreshAppInstancesQueue map[string]time.Time
+	refreshAppInstancesNow   chan bool
+	refreshAppInstancesLock  sync.Mutex
 
 	loadMetadataInProgress bool
 }
@@ -71,8 +71,8 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 	mgr.refreshQueue = make(map[string]time.Time)
 	mgr.refreshNow = make(chan bool, 2)
 
-	mgr.refreshAppInstanceStatisticsQueue = make(map[string]time.Time)
-	mgr.refreshAppInstanceStatisticsNow = make(chan bool, 2)
+	mgr.refreshAppInstancesQueue = make(map[string]time.Time)
+	mgr.refreshAppInstancesNow = make(chan bool, 2)
 
 	// Set set the time of event data end date/time here so we don't end up loading
 	// events after we've already started counting them from the firehose.
@@ -80,7 +80,7 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 	crashData.LoadEventsUntilTime = &now
 
 	go mgr.loadMetadataThread()
-	go mgr.loadMetadataAppStatisticsThread()
+	go mgr.loadMetadataAppInstancesThread()
 
 	return mgr
 }
@@ -127,6 +127,7 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 func (mgr *GlobalManager) FlushCache() {
 	appStatistics.Clear()
+	appInstances.Clear()
 	mgr.LoadMetadata()
 	mgr.orgQuotaMdMgr.FlushCache()
 	mgr.spaceQuotaMdMgr.FlushCache()
@@ -156,16 +157,16 @@ func (mgr *GlobalManager) wakeRefreshThread() {
 	}
 }
 
-func (mgr *GlobalManager) RequestRefreshAppInstanceStatisticsMetadata(appId string) {
-	mgr.refreshAppInstanceStatisticsLock.Lock()
-	mgr.refreshAppInstanceStatisticsQueue[appId] = time.Now()
-	mgr.refreshAppInstanceStatisticsLock.Unlock()
-	mgr.wakeRefreshAppInstanceStatisticsThread()
+func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
+	mgr.refreshAppInstancesLock.Lock()
+	mgr.refreshAppInstancesQueue[appId] = time.Now()
+	mgr.refreshAppInstancesLock.Unlock()
+	mgr.wakeRefreshAppInstancesThread()
 }
 
-func (mgr *GlobalManager) wakeRefreshAppInstanceStatisticsThread() {
+func (mgr *GlobalManager) wakeRefreshAppInstancesThread() {
 	select {
-	case mgr.refreshAppInstanceStatisticsNow <- true:
+	case mgr.refreshAppInstancesNow <- true:
 	default:
 		//case <-time.After(1 * time.Nanosecond):
 	}
@@ -247,7 +248,7 @@ func (mgr *GlobalManager) loadMetadataThread() {
 	}
 }
 
-func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
+func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 
 	minimumLoadTimeMS := time.Millisecond * 1000
 	veryLongtime := time.Hour * 10000
@@ -255,68 +256,59 @@ func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
 
 	for {
 
-		toplog.Debug("Metadata appInstanceStatistics - sleep time: %v", minNextLoadTime)
+		toplog.Debug("Metadata appInstances - sleep time: %v", minNextLoadTime)
 
 		select {
-		case <-mgr.refreshAppInstanceStatisticsNow:
+		case <-mgr.refreshAppInstancesNow:
 		case <-time.After(minNextLoadTime):
 		}
 
 		minNextLoadTime = veryLongtime
-		toplog.Debug("Metadata appInstanceStatistics thread is awake")
+		toplog.Debug("Metadata appInstances thread is awake")
 
-		mgr.refreshAppInstanceStatisticsLock.Lock()
+		mgr.refreshAppInstancesLock.Lock()
 		queue := make([]string, 0)
-		for appId, _ := range mgr.refreshAppInstanceStatisticsQueue {
+		for appId, _ := range mgr.refreshAppInstancesQueue {
 			queue = append(queue, appId)
 		}
-		mgr.refreshAppInstanceStatisticsLock.Unlock()
+		mgr.refreshAppInstancesLock.Unlock()
 
 		for _, appId := range queue {
 			now := time.Now()
 			appMetadata := mgr.appMdMgr.FindAppMetadataInternal(appId, false)
 			appName := appMetadata.Name
 
-			appInstanceStatistics := appStatistics.FindAppStatisticMetadataInternal(appId)
+			appInsts := appInstances.FindAppInstancesMetadataInternal(appId)
 			timeSinceLastLoad := veryLongtime
-			if appInstanceStatistics != nil {
-				timeSinceLastLoad = time.Now().Sub(*appInstanceStatistics.CacheTime)
+			if appInsts != nil {
+				timeSinceLastLoad = time.Now().Sub(*appInsts.CacheTime)
 			}
-			toplog.Debug("Metadata appInstanceStatistics - appId: %v name: [%v] - inqueue check time since last load: %v", appId, appName, timeSinceLastLoad)
+			toplog.Debug("Metadata appInstances - appId: %v name: [%v] - inqueue check time since last load: %v", appId, appName, timeSinceLastLoad)
 			if timeSinceLastLoad > minimumLoadTimeMS {
-				toplog.Debug("Metadata appInstanceStatistics - appId: %v name: [%v] - Needs to be loaded now", appId, appName)
-				err := appStatistics.LoadAppStatisticCache(mgr.cliConnection, appId)
+				toplog.Debug("Metadata appInstances - appId: %v name: [%v] - Needs to be loaded now", appId, appName)
+				err := appInstances.LoadAppInstancesCache(mgr.cliConnection, appId)
 				if err != nil {
-					toplog.Warn("Metadata appInstanceStatistics - appId: %v name: [%v] - Error: %v", appId, appName, err)
+					toplog.Warn("Metadata appInstances - appId: %v name: [%v] - Error: %v", appId, appName, err)
 				} else {
-					toplog.Info("Metadata appInstanceStatistics - appId: %v name: [%v] - Load complete", appId, appName)
-
-					if mgr.anyAppInstanceHaveState(appId, "DOWN") {
-						err := appInstances.LoadAppInstancesCache(mgr.cliConnection, appId)
-						if err != nil {
-							toplog.Warn("Metadata appInstances - appId: %v name: [%v] - Error: %v", appId, appName, err)
-						} else {
-							toplog.Info("Metadata appInstances - appId: %v name: [%v] - Load complete", appId, appName)
-						}
-					}
+					toplog.Info("Metadata appInstances - appId: %v name: [%v] - Load complete", appId, appName)
 
 					// Only delete if request for reload was queue before we loaded the data
 					// This prevents a timing issue a request is in progress while another one is queued.
-					mgr.refreshAppInstanceStatisticsLock.Lock()
-					queueTime := mgr.refreshAppInstanceStatisticsQueue[appId]
+					mgr.refreshAppInstancesLock.Lock()
+					queueTime := mgr.refreshAppInstancesQueue[appId]
 					if queueTime.Before(now) {
-						toplog.Debug("Metadata appInstanceStatistics - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
-						delete(mgr.refreshAppInstanceStatisticsQueue, appId)
+						toplog.Debug("Metadata appInstances - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
+						delete(mgr.refreshAppInstancesQueue, appId)
 					}
-					mgr.refreshAppInstanceStatisticsLock.Unlock()
+					mgr.refreshAppInstancesLock.Unlock()
 
 				}
 			} else {
-				toplog.Debug("Metadata appInstanceStatistics - appId %v name: [%v] - Too soon to reload", appId, appName)
+				toplog.Debug("Metadata appInstances - appId %v name: [%v] - Too soon to reload", appId, appName)
 				nextLoadTime := minimumLoadTimeMS - timeSinceLastLoad
-				toplog.Debug("Metadata appInstanceStatistics - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime)
+				toplog.Debug("Metadata appInstances - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime)
 				if minNextLoadTime > nextLoadTime {
-					toplog.Debug("Metadata appInstanceStatistics - appId %v name: [%v] - value was min: %v", appId, appName, nextLoadTime)
+					toplog.Debug("Metadata appInstances - appId %v name: [%v] - value was min: %v", appId, appName, nextLoadTime)
 					minNextLoadTime = nextLoadTime
 				}
 			}
@@ -325,11 +317,11 @@ func (mgr *GlobalManager) loadMetadataAppStatisticsThread() {
 }
 
 func (mgr *GlobalManager) anyAppInstanceHaveState(appId string, state string) bool {
-	appInstanceStatistics := appStatistics.FindAppStatisticMetadataInternal(appId)
-	if appInstanceStatistics == nil {
+	appInstances := appStatistics.FindAppStatisticMetadataInternal(appId)
+	if appInstances == nil {
 		return false
 	}
-	for _, stat := range appInstanceStatistics.Data {
+	for _, stat := range appInstances.Data {
 		if stat.State == state {
 			return true
 		}
