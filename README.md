@@ -122,7 +122,7 @@ List top live statistics for CF.
 
 ```
 NAME:
-   top - Displays top stats - by Kurt Kellner of ECS Team
+   top - Displays top stats - by Kurt Kellner of ECS Team (now part of CGI)
 
 USAGE:
    cf top

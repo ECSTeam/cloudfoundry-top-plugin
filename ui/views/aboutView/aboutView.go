@@ -174,7 +174,7 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 
 	fmt.Fprintf(v, " Version: %v\n", currentVersion)
 	fmt.Fprintf(v, " Lastest: %v\n", lastestVersionMsg)
-	fmt.Fprintf(v, " Author:  %v\n", "Kurt Kellner of ECS Team")
+	fmt.Fprintf(v, " Author:  %v\n", "Kurt Kellner of ECS Team (now part of CGI)")
 	fmt.Fprintf(v, " Company: %v\n", "http://www.ECSTeam.com")
 	fmt.Fprintf(v, " Program: %v\n", "http://github.com/ECSTeam/cloudfoundry-top-plugin")
 	fmt.Fprintln(v)
