@@ -192,7 +192,7 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnContainerIndex())
 
 	columns = append(columns, ColumnState())
-	columns = append(columns, ColumnUptime())
+	columns = append(columns, ColumnStateDuration())
 
 	columns = append(columns, ColumnTotalCpuPercentage())
 	columns = append(columns, ColumnMemoryUsed())
@@ -203,7 +203,10 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnLogStderr())
 
 	columns = append(columns, ColumnCellIp())
-	columns = append(columns, ColumnStartTime())
+
+	columns = append(columns, ColumnStartupDuration())
+	columns = append(columns, ColumnCreateCount())
+	columns = append(columns, ColumnStateTime())
 
 	columns = append(columns, ColumnCellLastStartMsgText())
 	columns = append(columns, ColumnCellLastStartMsgTime())
@@ -229,6 +232,8 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 		return displayStatsArray
 	}
 	appId := appStats.AppId
+	asUI.GetEventProcessor().GetMetadataManager().MonitorAppDetails(appId, &now)
+
 	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
 
 	appInsts := appInstances.FindAppInstancesMetadata(appId)
@@ -251,11 +256,11 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 
 				displayContainerStatsMap[containerIndex] = displayContainerStats
 				displayContainerStats.State = appInstStats.State
-				startTime := appInstStats.StartTime
-				displayContainerStats.StartTime = startTime
-				if startTime != nil {
-					uptime := now.Sub(*startTime)
-					displayContainerStats.Uptime = &uptime
+				stateTime := appInstStats.StartTime
+				displayContainerStats.StateTime = stateTime
+				if stateTime != nil {
+					stateDuration := now.Sub(*stateTime)
+					displayContainerStats.StateDuration = &stateDuration
 				}
 			}
 		}
@@ -289,8 +294,16 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
 			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
 
-			if displayContainerStats.State == "TERM" || displayContainerStats.State == "DOWN" {
+			if containerStats.CellCreatedMsgTime != nil && containerStats.CellHealthyMsgTime != nil {
+				startupDuration := containerStats.CellHealthyMsgTime.Sub(*containerStats.CellCreatedMsgTime)
+				if startupDuration > 0 {
+					displayContainerStats.StartupDuration = &startupDuration
+				}
+			}
+
+			if displayContainerStats.State == "DOWN" {
 				containerStats.ContainerMetric = nil
+				containerStats.Ip = ""
 			}
 
 			if containerStats.ContainerMetric != nil {
@@ -306,8 +319,6 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 				displayContainerStats.FreeDisk = freeDisk
 				displayContainerStats.ReservedDisk = reservedDisk
 			}
-
-			//displayStatsArray = append(displayStatsArray, displayContainerStats)
 
 		}
 	}

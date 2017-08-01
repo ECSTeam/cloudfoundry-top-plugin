@@ -36,9 +36,10 @@ type DisplayContainerStats struct {
 	FreeDisk       uint64
 	ReservedDisk   uint64
 
-	State     string
-	StartTime *time.Time
-	Uptime    *time.Duration
+	State           string
+	StateTime       *time.Time
+	StateDuration   *time.Duration
+	StartupDuration *time.Duration
 
 	key string
 }

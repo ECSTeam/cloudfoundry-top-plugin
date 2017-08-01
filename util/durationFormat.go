@@ -23,7 +23,7 @@ import (
 // Leading zero units are omitted. As a special case, durations less than one
 // second format use a smaller unit (milli-, micro-, or nanoseconds) to ensure
 // that the leading digit is non-zero. The zero duration formats as 0s.
-func FormatDuration(d *time.Duration) string {
+func FormatDuration(d *time.Duration, showSecondsOver1Min bool) string {
 	// Largest time is 2540400h10m10.000000000s
 
 	if d == nil {
@@ -68,14 +68,16 @@ func FormatDuration(d *time.Duration) string {
 		w = fmtInt(buf[:w], u, false)
 	} else {
 
-		w, u = fmtFrac(buf[:w], u, 9)
+		// Fraction of a second
+		//w, u = fmtFrac(buf[:w], u, 9)
+		u = u / 1000000000
 
 		// u is now integer seconds
 		sec := u
 		u /= 60
 
 		// Only includes seconds if less then 1 minutes
-		if u == 0 {
+		if showSecondsOver1Min || u == 0 {
 
 			w--
 			buf[w] = 's'

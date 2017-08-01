@@ -29,9 +29,12 @@ type ContainerStats struct {
 	LastMetricUpdateTime    *time.Time
 	OutCount                int64
 	ErrCount                int64
+	CreateCount             int64
 	CellLastStartMsgText    string
 	CellLastStartMsgTime    *time.Time
 	CellLastCreatingMsgTime *time.Time
+	CellCreatedMsgTime      *time.Time
+	CellHealthyMsgTime      *time.Time
 }
 
 func NewContainerStats(containerIndex int) *ContainerStats {

@@ -39,9 +39,15 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		// PCF 1.10 has "CELL" for non-app related logging: e.g. "Container became healthy"
 		ed.logCellMsg(msg, logMessage, appStats)
 		fallthrough
-	case strings.HasPrefix(sourceType, "APP"):
-		// PCF 1.6 - 1.9 used "APP" but 1.10 changed to "APP/PROC/WEB/0" and "APP/TASK/f7e79060/0"
-		// TODO: Is this wrong? Can a TASK stdout/stderr output be attributed to instance 0 of real app?
+	case sourceType == "APP":
+		fallthrough
+	case strings.HasPrefix(sourceType, "APP/PROC"):
+		// PCF 1.6 - 1.9 used "APP" but 1.10 changed to:
+		//	 	"APP/PROC/WEB/0" or "APP/PROC/WEB"  AND   (the /0 seems to have been removed in later versions of 1.10)
+		// 		"APP/TASK/f7e79060/0" or "APP/TASK/6dd774cd"
+		// A TASK stdout/stderr output should NOT be attributed to instance 0 of real app.  We let this drop to
+		// default statement to count TASK output as general log messages.
+		// FUTURE: create seperate counters for tasks
 		instNum, err := strconv.Atoi(*logMessage.SourceInstance)
 		if err == nil {
 			containerStats := ed.getContainerStats(appStats, instNum)
@@ -91,23 +97,37 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 		msgText = string(logMessage.GetMessage())
 	}
 
+	startMsgType := false
 	switch {
 	case strings.Contains(msgText, "Creating"):
+		startMsgType = true
 		// Clear the container metrics since any old metrics would be from a prior container
 		containerStats.ContainerMetric = nil
+		containerStats.CellCreatedMsgTime = nil
+		containerStats.CellHealthyMsgTime = nil
 		containerStats.CellLastCreatingMsgTime = &msgTime
-		fallthrough
 	case strings.Contains(msgText, "created"):
-		fallthrough
+		startMsgType = true
+		containerStats.CreateCount++
+		containerStats.CellCreatedMsgTime = &msgTime
 	case strings.Contains(msgText, "monitor"):
-		fallthrough
+		startMsgType = true
+		// Monitor / healthy messages do not occur if health check set to process
+		// 	cf set-health-check cf-nodejs process
+		// these messages do occur for:
+		// 	cf set-health-check cf-nodejs port
+		//  cf set-health-check cf-nodejs http
+		// 	cf set-health-check cf-nodejs http --endpoint /foo
 	case strings.Contains(msgText, "healthy"):
-		if containerStats.LastUpdateTime == nil || msgTime.After(*containerStats.LastUpdateTime) {
-			containerStats.Ip = msg.GetIp()
-			containerStats.CellLastStartMsgText = msgText
-			containerStats.CellLastStartMsgTime = &msgTime
-			containerStats.LastUpdateTime = &msgTime
-		}
+		startMsgType = true
+		containerStats.CellHealthyMsgTime = &msgTime
+	}
+
+	if startMsgType && (containerStats.LastUpdateTime == nil || msgTime.After(*containerStats.LastUpdateTime)) {
+		containerStats.Ip = msg.GetIp()
+		containerStats.CellLastStartMsgText = msgText
+		containerStats.CellLastStartMsgTime = &msgTime
+		containerStats.LastUpdateTime = &msgTime
 	}
 
 	/*

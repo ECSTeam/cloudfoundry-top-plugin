@@ -19,10 +19,9 @@ package config
 
 const WarmUpSeconds = 60
 const StaleContainerSeconds = 65
-
 const DeadContainerSeconds = 185
 
-//const DeadContainerSeconds = 36
+const MonitorAppDetailTTL = 60
 
 const MaxDomainBucket = 100
 const MaxHostBucket = 10000

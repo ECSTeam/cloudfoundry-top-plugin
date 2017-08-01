@@ -16,11 +16,13 @@
 package dataCommon
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
@@ -105,6 +107,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	runtimeSeconds := statsTime.Sub(cd.router.GetStartTime())
 	cd.isWarmupComplete = runtimeSeconds > time.Second*config.WarmUpSeconds
 
+	mdMgr := cd.router.GetProcessor().GetMetadataManager()
 	displayStatsMap := make(map[string]*DisplayAppStats)
 
 	appMap := cd.router.GetProcessor().GetDisplayedEventData().AppMap
@@ -121,8 +124,10 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
 
 		displayAppStats.AppName = appMetadata.Name
+		if mdMgr.IsMonitorAppDetails(appId) {
+			displayAppStats.AppName += "*"
+		}
 		displayAppStats.SpaceId = appMetadata.SpaceGuid
-
 		spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
 		displayAppStats.SpaceName = spaceMetadata.Name
 
@@ -175,29 +180,18 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil {
-				// TODO: the above cs != nil check also needs a cs State != DOWN check
 
-				totalReportingContainers++
+				appInsts := appInstances.FindAppInstancesMetadata(appId)
+				if appInsts != nil {
+					// If we have app instance metadata, lets check if the app is in a good state
+					appInst := appInsts.Data[strconv.Itoa(cs.ContainerIndex)]
+					if appInst == nil || appInst.State == "DOWN" || appInst.State == "CRASHED" {
+						continue
+					}
+				}
 				if cs.ContainerMetric != nil {
+					totalReportingContainers++
 
-					// TODO: Need to test this logic
-					/*
-						if cs.LastUpdateTime == nil ||
-							cs.LastUpdateTime.Before(*cs.CellLastExitStatusMsgTime) {
-							continue
-						}
-					*/
-
-					/*
-						TODO: How can we ignore crashed / stopped containers immediately?
-
-							lastCrashTime := cs.LastCrashTime()
-							if lastCrashTime != nil && cs.LastUpdate.Before(*lastCrashTime) {
-								// If the container has crashed since the last update, lets not
-								// count it as running
-								continue
-							}
-					*/
 					totalCpuPercentage = totalCpuPercentage + *cs.ContainerMetric.CpuPercentage
 					totalMemoryUsed = totalMemoryUsed + int64(*cs.ContainerMetric.MemoryBytes)
 					totalDiskUsed = totalDiskUsed + int64(*cs.ContainerMetric.DiskBytes)

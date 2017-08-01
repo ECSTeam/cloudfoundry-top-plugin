@@ -47,15 +47,25 @@ time a container crashed in the previous 24 hours.
 const HelpColumnsText = `
 **Container Columns:**
 
-  IDX - Application container index
-  CPU%% - CPU percent consumed by container
-  MEM_USED - Memory used by the container
-  MEM_FREE - Memory free in the container
-  DISK_USED - Disk used by container
-  DISK_FREE - Disk free in the container
-  LOG_OUT - Total number of log stdout events  
-  LOG_ERR - Total number of log stderr events 
-  CELL_IP - IP address of the cell running the container
+  IDX - Application container index.
+  STATE - Current container state: 
+      DOWN, STARTING, RUNNING, CRASHED, TERM, UNKNOWN.
+  STATE_DUR - Duration of time container has been in current state.
+  CPU%% - CPU percent consumed by container.
+  MEM_USED - Memory used by the container.
+  MEM_FREE - Memory free in the container.
+  DISK_USED - Disk used by container.
+  DISK_FREE - Disk free in the container.
+  LOG_OUT - Total number of log stdout events.  
+  LOG_ERR - Total number of log stderr events.
+  CELL_IP - IP address of the cell running the container.
+  STRT_DUR - Start duration. Amount of time from container creation to
+      healthy container. This will be less then the overall time spent
+      in STARTING state.
+  CCR - Create counter. Number of times the container has been created.
+  STATE_TIME - Time when the container entered current state.
+  CNTR_START_MSG - Last container start-up message.
+  CNTR_START_MSG_TM - Time when last container start-up message occured.
 `
 
 const HelpLocalViewKeybindings = `

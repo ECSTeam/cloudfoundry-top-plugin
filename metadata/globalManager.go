@@ -34,6 +34,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 
 	"code.cloudfoundry.org/cli/plugin"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 )
 
 type GlobalManager struct {
@@ -44,6 +45,11 @@ type GlobalManager struct {
 	spaceQuotaMdMgr *spaceQuota.SpaceQuotaMetadataManager
 
 	cliConnection plugin.CliConnection
+
+	// Collection of appIds that are monitored for container changes
+	// The time is when the app was last viewed -- it will be used for a TTL
+	// If app detail hasn't been viewed for awhile, it will be removed from list
+	monitoredAppDetails map[string]*time.Time
 
 	appDeleteQueue map[string]string
 	refreshQueue   map[string]time.Time
@@ -66,6 +72,8 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 	mgr.spaceQuotaMdMgr = spaceQuota.NewSpaceQuotaMetadataManager(mgr)
 
 	mgr.cliConnection = conn
+
+	mgr.monitoredAppDetails = make(map[string]*time.Time)
 
 	mgr.appDeleteQueue = make(map[string]string)
 	mgr.refreshQueue = make(map[string]time.Time)
@@ -157,10 +165,47 @@ func (mgr *GlobalManager) wakeRefreshThread() {
 	}
 }
 
+// Indicate that we should actively monitor app details (container updates) for given appId
+func (mgr *GlobalManager) MonitorAppDetails(appId string, lastViewed *time.Time) {
+	mgr.refreshAppInstancesLock.Lock()
+	defer mgr.refreshAppInstancesLock.Unlock()
+	mgr.monitoredAppDetails[appId] = lastViewed
+}
+
+func (mgr *GlobalManager) IsMonitorAppDetails(appId string) bool {
+
+	mgr.refreshAppInstancesLock.Lock()
+	defer mgr.refreshAppInstancesLock.Unlock()
+
+	lastViewed := mgr.monitoredAppDetails[appId]
+	if lastViewed == nil {
+		// AppId is not monitored
+		toplog.Debug("Ignore refresh App Instance metadata - AppdId [%v] not monitored", appId)
+		return false
+	}
+
+	now := time.Now()
+	lastViewedDuration := now.Sub(*lastViewed)
+	if lastViewedDuration > (time.Second * config.MonitorAppDetailTTL) {
+		// App Detail monitor TTL expired
+		toplog.Info("Ignore refresh App Instance metadata - AppdId [%v] TTL expired", appId)
+		appInstances.ClearAppInstancesMetadata(appId)
+		delete(mgr.monitoredAppDetails, appId)
+		return false
+	}
+	return true
+}
+
 func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
+
+	if !mgr.IsMonitorAppDetails(appId) {
+		return
+	}
+
 	mgr.refreshAppInstancesLock.Lock()
 	mgr.refreshAppInstancesQueue[appId] = time.Now()
 	mgr.refreshAppInstancesLock.Unlock()
+
 	mgr.wakeRefreshAppInstancesThread()
 }
 
@@ -299,6 +344,11 @@ func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 					if queueTime.Before(now) {
 						toplog.Debug("Metadata appInstances - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
 						delete(mgr.refreshAppInstancesQueue, appId)
+						// Check if we have a race condition where we were in the middle of reloading metadata when the TTL expired
+						if mgr.monitoredAppDetails[appId] == nil {
+							toplog.Info("Clear App Instance metadata - AppdId [%v] TTL expired", appId)
+							appInstances.ClearAppInstancesMetadata(appId)
+						}
 					}
 					mgr.refreshAppInstancesLock.Unlock()
 

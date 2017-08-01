@@ -51,19 +51,13 @@ var (
 )
 
 func FindAppInstancesMetadata(appId string) *AppInstances {
-
 	return FindAppInstancesMetadataInternal(appId)
-	/*
-		if instances != nil {
-			appInstances := instances.Data
-			if appInstances != nil {
-				return appInstances
-			}
-		}
-		//return make(map[string]*AppInstance)
-		return nil
-	*/
+}
 
+func ClearAppInstancesMetadata(appId string) {
+	mu.Lock()
+	defer mu.Unlock()
+	appInstancesMetadataCache[appId] = nil
 }
 
 func FindAppInstancesMetadataInternal(appId string) *AppInstances {
@@ -123,14 +117,12 @@ func getAppInstancesMetadata(cliConnection plugin.CliConnection, appId string) (
 	}
 
 	// Set the startTime relative to now and uptime of the container
-	now := time.Now().Truncate(time.Second)
 	for _, stat := range response {
-		// Ignore "update" field if container is in state DOWN or CRASHED as its not up
-		if stat.State == "DOWN" || stat.State == "CRASHED" {
+		// Ignore "uptime" field if container is in state DOWN
+		if stat.State == "DOWN" {
 			stat.Uptime = 0
 		} else {
-			uptimeSeconds := stat.Uptime
-			startTime := now.Add(time.Duration(-uptimeSeconds) * time.Second)
+			startTime := time.Unix(int64(stat.Since), 0)
 			stat.StartTime = &startTime
 		}
 	}
