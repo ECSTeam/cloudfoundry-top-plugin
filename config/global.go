@@ -21,7 +21,8 @@ const WarmUpSeconds = 60
 const StaleContainerSeconds = 65
 const DeadContainerSeconds = 185
 
-const MonitorAppDetailTTL = 60
+// Monitor app details after vist for 15 minutes (900 seconds)
+const MonitorAppDetailTTL = 900
 
 const MaxDomainBucket = 100
 const MaxHostBucket = 10000

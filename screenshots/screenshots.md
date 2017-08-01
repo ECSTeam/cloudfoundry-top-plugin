@@ -38,13 +38,15 @@ Top allows sorting output on any column. Sorting on multiple columns is supporte
 
 
 ### Application "detail" view:
-Shows all instances (containers) of selected application.
-![Screenshot](screenshot_appDetailView.png?raw=true)
+Shows all instances (containers) of selected application. The container information is updated in real-time.
+![Screenshot](screenshot_appDetailViewContainerState.png?raw=true)
 
+![Screenshot](screencast_appDetailView.gif?raw=true)
 
 ### Application "detail" - info view:
 Shows additional information about selected application.
 ![Screenshot](screenshot_appDetailViewAppInfo.png?raw=true)
+
 
 ### Org and Space view:
 Shows a list of all organizations with memory quota information.  When an organization is selected a list
