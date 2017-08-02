@@ -237,7 +237,7 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
 
 	appInsts := appInstances.FindAppInstancesMetadata(appId)
-	if appInsts == nil {
+	if appInsts == nil && appMetadata.State == "STARTED" {
 		// Update the app instance statistics
 		asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppInstancesMetadata(appId)
 		toplog.Debug("No app inst data loaded yet")

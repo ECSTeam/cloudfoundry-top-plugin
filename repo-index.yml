@@ -1,24 +1,22 @@
-- name: top
-  description: An interactive interface that shows top statistics similar in concept as the UNIX top command.
-  version: __VERSION__
-  created: 2016-11-07T00:00:00Z
-  updated: __TODAY__
-  company: ECS Team
-  authors:
-  - name: Kurt Kellner of ECS Team (now part of CGI)
+- authors:
+  - contact: kkellner@ecsteam.com
     homepage: https://github.com/kkellner
-    contact: kkellner@ecsteam.com
-  homepage: https://github.com/ECSTeam/cloudfoundry-top-plugin
+    name: Kurt Kellner
   binaries:
-  - platform: osx
+  - checksum: __osx-sha1__
+    platform: osx
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
-    checksum: __osx-sha1__
-  - platform: win64
+  - checksum: __win64-sha1__
+    platform: win64
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
-    checksum: __win64-sha1__
-  - platform: linux64
+  - checksum: __linux64-sha1__
+    platform: linux64
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
-    checksum: __linux64-sha1__
-  - platform: linux-arm6
-    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux-arm6
-    checksum: __linuxarm6-sha1__
+  company: ECS Team (now part of CGI)
+  created: 2016-11-07T00:00:00Z
+  description: An interactive interface that shows top statistics similar in concept
+    as the UNIX top command.  NEW 
+  homepage: https://github.com/ECSTeam/cloudfoundry-top-plugin
+  name: top
+  updated: __TODAY__
+  version: __VERSION__

@@ -71,7 +71,7 @@ func LoadAppInstancesCache(cliConnection plugin.CliConnection, appId string) err
 	now := time.Now()
 	data, err := getAppInstancesMetadata(cliConnection, appId)
 	if err != nil {
-		toplog.Warn("*** app instance metadata error: %v  response: %v", err.Error(), data)
+		toplog.Warn("*** app instance metadata error: %v  response: %v   appId: %v", err.Error(), data, appId)
 		return err
 	}
 
