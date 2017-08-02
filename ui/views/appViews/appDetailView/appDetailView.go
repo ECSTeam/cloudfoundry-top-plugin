@@ -95,6 +95,12 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 	if err := g.SetKeybinding(viewName, gocui.KeyEsc, gocui.ModNone, asUI.closeAppDetailView); err != nil {
 		log.Panicln(err)
 	}
+
+	copyMenu := NewCopyMenu(asUI.GetMasterUI(), asUI)
+	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, copyMenu.CopyAction); err != nil {
+		log.Panicln(err)
+	}
+
 	/*
 		if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
 			log.Panicln(err)
@@ -109,6 +115,10 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 		}
 	*/
 	return nil
+}
+
+func (asUI *AppDetailView) GetAppId() string {
+	return asUI.appId
 }
 
 func (asUI *AppDetailView) selectDisplayAction(g *gocui.Gui, v *gocui.View) error {

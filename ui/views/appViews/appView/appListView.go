@@ -19,11 +19,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -98,11 +96,18 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 
 }
 
+func (asUI *AppListView) GetAppId() string {
+	selectedAppId := asUI.GetListWidget().HighlightKey()
+	return selectedAppId
+}
+
 func (asUI *AppListView) initializeCallback(g *gocui.Gui, viewName string) error {
 
-	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, asUI.copyAction); err != nil {
+	copyMenu := appDetailView.NewCopyMenu(asUI.GetMasterUI(), asUI)
+	if err := g.SetKeybinding(viewName, 'c', gocui.ModNone, copyMenu.CopyAction); err != nil {
 		log.Panicln(err)
 	}
+
 	if asUI.spaceIdFilter != "" {
 		if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, asUI.CloseDetailView); err != nil {
 			log.Panicln(err)
@@ -170,59 +175,6 @@ func (asUI *AppListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnStackName())
 
 	return columns
-}
-
-func (asUI *AppListView) copyAction(g *gocui.Gui, v *gocui.View) error {
-
-	selectedAppId := asUI.GetListWidget().HighlightKey()
-	if selectedAppId == "" {
-		// Nothing selected
-		return nil
-	}
-	menuItems := make([]*uiCommon.MenuItem, 0, 5)
-	menuItems = append(menuItems, uiCommon.NewMenuItem("cftarget", "cf target"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("cfapp", "cf app"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("cfscale", "cf scale"))
-	menuItems = append(menuItems, uiCommon.NewMenuItem("appguid", "app guid"))
-	masterUI := asUI.GetMasterUI()
-	clipboardView := uiCommon.NewSelectMenuWidget(masterUI, "clipboardView", "Copy to Clipboard", menuItems, asUI.clipboardCallback)
-
-	masterUI.LayoutManager().Add(clipboardView)
-	masterUI.SetCurrentViewOnTop(g)
-	return nil
-}
-
-func (asUI *AppListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId string) error {
-
-	clipboardValue := ""
-
-	selectedAppId := asUI.GetListWidget().HighlightKey()
-	statsMap := asUI.GetDisplayedEventData().AppMap
-	appStats := statsMap[selectedAppId]
-	if appStats == nil {
-		// Nothing selected
-		return nil
-	}
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(selectedAppId)
-	appName := appMetadata.Name
-	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
-	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
-
-	switch menuId {
-	case "cftarget":
-		clipboardValue = fmt.Sprintf("cf target -o %v -s %v", orgName, spaceName)
-	case "cfapp":
-		clipboardValue = fmt.Sprintf("cf app %v", appName)
-	case "cfscale":
-		clipboardValue = fmt.Sprintf("cf scale %v ", appName)
-	case "appguid":
-		clipboardValue = selectedAppId
-	}
-	err := clipboard.WriteAll(clipboardValue)
-	if err != nil {
-		toplog.Error("Copy into Clipboard error: " + err.Error())
-	}
-	return nil
 }
 
 func (asUI *AppListView) getAppStatsMap() map[string]*dataCommon.DisplayAppStats {

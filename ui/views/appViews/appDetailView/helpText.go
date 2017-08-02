@@ -71,4 +71,8 @@ const HelpColumnsText = `
 const HelpLocalViewKeybindings = `
 **Display: **
 Press 'd' to show app detail view menu.
+
+**Clipboard menu: **
+Press 'c' to open the clipboard menu.  This will copy to clipboard a
+command you can paste in terminal window later.
 `
