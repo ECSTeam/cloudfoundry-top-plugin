@@ -180,7 +180,6 @@ func (mgr *GlobalManager) IsMonitorAppDetails(appId string) bool {
 	lastViewed := mgr.monitoredAppDetails[appId]
 	if lastViewed == nil {
 		// AppId is not monitored
-		toplog.Debug("Ignore refresh App Instance metadata - AppdId [%v] not monitored", appId)
 		return false
 	}
 
@@ -199,6 +198,7 @@ func (mgr *GlobalManager) IsMonitorAppDetails(appId string) bool {
 func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
 
 	if !mgr.IsMonitorAppDetails(appId) {
+		toplog.Debug("Ignore refresh App Instance metadata - AppdId [%v] not monitored", appId)
 		return
 	}
 
@@ -246,6 +246,7 @@ func (mgr *GlobalManager) loadMetadataThread() {
 		toplog.Debug("Metadata cache thread is awake")
 		for _, appId := range queue {
 			now := time.Now()
+			removedFromQueue := false
 			appMetadata := mgr.appMdMgr.FindAppMetadataInternal(appId, false)
 			timeSinceLastLoad := time.Now().Sub(appMetadata.CacheTime)
 			appName := appMetadata.Name
@@ -255,6 +256,11 @@ func (mgr *GlobalManager) loadMetadataThread() {
 				newAppMetadata, err := mgr.appMdMgr.GetAppMetadataInternal(mgr.cliConnection, appId)
 				if err != nil {
 					toplog.Warn("Metadata - appId: %v name: [%v] - Error: %v", appId, appName, err)
+					// Since we had an error trying to load the metadata -- just remove from queue to prevent endless retries to load it
+					mgr.refreshLock.Lock()
+					delete(mgr.refreshQueue, appId)
+					removedFromQueue = true
+					mgr.refreshLock.Unlock()
 				} else {
 					toplog.Info("Metadata - appId: %v name: [%v] - Load start", appId, appName)
 					if newAppMetadata.Name != "" {
@@ -276,11 +282,14 @@ func (mgr *GlobalManager) loadMetadataThread() {
 					if queueTime.Before(now) {
 						toplog.Debug("Metadata - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
 						delete(mgr.refreshQueue, appId)
+						removedFromQueue = true
 					}
 					mgr.refreshLock.Unlock()
 
 				}
-			} else {
+			}
+
+			if !removedFromQueue {
 				toplog.Debug("Metadata - appId %v name: [%v] - Too soon to reload", appId, appName)
 				nextLoadTime := minimumLoadTimeMS - timeSinceLastLoad
 				toplog.Debug("Metadata - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime)
@@ -320,6 +329,7 @@ func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 
 		for _, appId := range queue {
 			now := time.Now()
+			removedFromQueue := false
 			appMetadata := mgr.appMdMgr.FindAppMetadataInternal(appId, false)
 			appName := appMetadata.Name
 
@@ -334,6 +344,11 @@ func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 				err := appInstances.LoadAppInstancesCache(mgr.cliConnection, appId)
 				if err != nil {
 					toplog.Warn("Metadata appInstances - appId: %v name: [%v] - Error: %v", appId, appName, err)
+					// Since we had an error trying to load the metadata -- just remove from queue to prevent endless retries to load it
+					mgr.refreshAppInstancesLock.Lock()
+					delete(mgr.refreshAppInstancesQueue, appId)
+					removedFromQueue = true
+					mgr.refreshAppInstancesLock.Unlock()
 				} else {
 					toplog.Info("Metadata appInstances - appId: %v name: [%v] - Load complete", appId, appName)
 
@@ -341,9 +356,11 @@ func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 					// This prevents a timing issue a request is in progress while another one is queued.
 					mgr.refreshAppInstancesLock.Lock()
 					queueTime := mgr.refreshAppInstancesQueue[appId]
+
 					if queueTime.Before(now) {
 						toplog.Debug("Metadata appInstances - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
 						delete(mgr.refreshAppInstancesQueue, appId)
+						removedFromQueue = true
 						// Check if we have a race condition where we were in the middle of reloading metadata when the TTL expired
 						if mgr.monitoredAppDetails[appId] == nil {
 							toplog.Info("Clear App Instance metadata - AppdId [%v] TTL expired", appId)
@@ -353,7 +370,9 @@ func (mgr *GlobalManager) loadMetadataAppInstancesThread() {
 					mgr.refreshAppInstancesLock.Unlock()
 
 				}
-			} else {
+			}
+
+			if !removedFromQueue {
 				toplog.Debug("Metadata appInstances - appId %v name: [%v] - Too soon to reload", appId, appName)
 				nextLoadTime := minimumLoadTimeMS - timeSinceLastLoad
 				toplog.Debug("Metadata appInstances - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime)
