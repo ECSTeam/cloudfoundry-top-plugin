@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/atotto/clipboard"
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/interfaces/managerUI"
 	"github.com/jroimartin/gocui"
 )
@@ -46,7 +47,7 @@ const (
 	WHITE_TEXT_CYAN_BG = "\033[37m\033[46m"
 )
 
-const MAX_LOG_FILES = 1000
+//const MAX_LOG_FILES = 1000
 const WindowHeaderSize = 2
 const WindowHeaderText = "Top Internal Log View"
 const WindowHeaderHelpText = WHITE + BRIGHT + "ENTER" + WHITE + DIM + ":close  " +
@@ -209,7 +210,8 @@ func logMsg(level LogLevel, msg string, a ...interface{}) {
 	msg = strings.Replace(msg, "\n", " | ", -1)
 	logLine := NewLogLine(level, msg, time.Now())
 	debugLines = append(debugLines, logLine)
-	if len(debugLines) > MAX_LOG_FILES {
+
+	if len(debugLines) > config.MaxTopInternalLogLineHistory {
 		debugLines = debugLines[1:]
 	}
 	if windowOpen && !freezeAutoScroll {

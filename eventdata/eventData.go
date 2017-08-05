@@ -108,6 +108,8 @@ func (ed *EventData) Process(instanceId int, msg *events.Envelope) {
 	case events.Envelope_ValueMetric:
 		ed.valueMetricEvent(msg)
 	case events.Envelope_CounterEvent:
+		// Message that is sent on nozzle when its not keeping up.
+		// https://docs.cloudfoundry.org/loggregator/log-ops-guide.html#slow-noz
 		if msg.CounterEvent.GetName() == "TruncatingBuffer.DroppedMessages" &&
 			(msg.GetOrigin() == "DopplerServer" || msg.GetOrigin() == "doppler") {
 			ed.droppedMessages(instanceId, msg)

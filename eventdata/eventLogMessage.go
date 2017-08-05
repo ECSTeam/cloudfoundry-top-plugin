@@ -71,6 +71,9 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 		//ed.handleHttpAccessLogLine(string(logMsg))
 	case sourceType == "HEALTH":
 		// Ignore health check messages (TODO: Check sourceType of "crashed" messages)
+	case sourceType == "STG":
+		ed.logStgCall(msg)
+		fallthrough
 	default:
 		// Non-container log -- staging logs, router logs, etc
 		switch *logMessage.MessageType {
@@ -144,6 +147,24 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 	*/
 
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appStats.AppId)
+
+}
+
+// Staging log message
+func (ed *EventData) logStgCall(msg *events.Envelope) {
+	logMessage := msg.GetLogMessage()
+	appId := logMessage.GetAppId()
+	logText := string(logMessage.GetMessage())
+
+	// We only care about when a "Successfully destroyed container" staging event occures.
+	// This means we're all done staging (sucessful or not) so we can reload
+	// metadata for this app
+	if logText != "Successfully destroyed container" {
+		return
+	}
+	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
+	toplog.Info("STG event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
+	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
 
 }
 

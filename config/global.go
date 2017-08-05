@@ -17,6 +17,8 @@ package config
 
 // TODO: Future home for storing configuration information to a json file
 
+const MaxTopInternalLogLineHistory = 2000
+
 const WarmUpSeconds = 60
 const StaleContainerSeconds = 65
 const DeadContainerSeconds = 185

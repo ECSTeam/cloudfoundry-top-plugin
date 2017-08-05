@@ -440,7 +440,7 @@ func ColumnCreateCount() *uiCommon.ListColumn {
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		stats := data.(*DisplayContainerStats)
-		return fmt.Sprintf("%4v", util.Format(stats.CreateCount))
+		return fmt.Sprintf("%4v", stats.CreateCount)
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayContainerStats)

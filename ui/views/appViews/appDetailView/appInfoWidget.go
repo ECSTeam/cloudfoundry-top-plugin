@@ -106,6 +106,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 		totalMemoryDisplay := util.ByteSize((appMetadata.MemoryMB * util.MEGABYTE) * appMetadata.Instances).String()
 		totalDiskDisplay := util.ByteSize((appMetadata.DiskQuotaMB * util.MEGABYTE) * appMetadata.Instances).String()
 		state := appMetadata.State
+		packageState := appMetadata.PackageState
 		buildpack := appMetadata.Buildpack
 		if buildpack == "" {
 			buildpack = appMetadata.DetectedBuildpack
@@ -134,6 +135,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 		fmt.Fprintf(v, " Isolation Seg:   %v\n", isoSegName)
 
 		fmt.Fprintf(v, " Desired insts:   %v\n", instancesDisplay)
+		fmt.Fprintf(v, " Package State:   %v\n", packageState)
 		fmt.Fprintf(v, " State:           %v\n", state)
 		if dockerImage != "" {
 			fmt.Fprintf(v, " Docker Image:    %v\n", dockerImage)
@@ -152,7 +154,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 
 	//fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
 	//fmt.Fprintf(v, "%v", util.CLEAR)
-	fmt.Fprintf(v, "\n")
+	//fmt.Fprintf(v, "\n")
 
 	fmt.Fprintf(v, "\n %vx%v:exit view", "\033[37;1m", "\033[0m")
 	return nil
