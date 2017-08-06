@@ -44,7 +44,16 @@ func (w *HelpTextTipsWidget) Name() string {
 
 func (w *HelpTextTipsWidget) Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	v, err := g.SetView(w.name, 0, maxY-w.height, maxX-1, maxY)
+	top := maxY - w.height
+	if top < 0 {
+		top = 0
+	}
+	right := maxX - 1
+	if right < 1 {
+		right = 1
+	}
+
+	v, err := g.SetView(w.name, 0, top, right, maxY)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return errors.New(w.name + " layout error:" + err.Error())
