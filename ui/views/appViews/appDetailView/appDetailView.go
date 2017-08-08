@@ -101,11 +101,6 @@ func (asUI *AppDetailView) initializeCallback(g *gocui.Gui, viewName string) err
 		log.Panicln(err)
 	}
 
-	/*
-		if err := g.SetKeybinding(viewName, 'i', gocui.ModNone, asUI.openInfoAction); err != nil {
-			log.Panicln(err)
-		}
-	*/
 	if err := g.SetKeybinding(viewName, 'd', gocui.ModNone, asUI.selectDisplayAction); err != nil {
 		log.Panicln(err)
 	}

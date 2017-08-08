@@ -149,6 +149,7 @@ type FilterColumn struct {
 
 var (
 	normalHeaderColor string
+	savedSortColumns  map[string][]*SortColumn
 )
 
 func init() {
@@ -158,6 +159,7 @@ func init() {
 	} else {
 		normalHeaderColor = util.WHITE_TEXT_SOFT_BG
 	}
+	savedSortColumns = make(map[string][]*SortColumn)
 }
 
 func NewSortColumn(id string, reverseSort bool) *SortColumn {
@@ -192,7 +194,7 @@ func NewListColumn(
 
 func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	bottomMargin int, displayView DisplayViewInterface,
-	columns []*ListColumn, columnOwner IColumnOwner) *ListWidget {
+	columns []*ListColumn, columnOwner IColumnOwner, defaultSortColumns []*SortColumn) *ListWidget {
 	w := &ListWidget{
 		masterUI:        masterUI,
 		name:            name,
@@ -206,6 +208,12 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 	for _, col := range columns {
 		w.columnMap[col.id] = col
 	}
+
+	sortColumns := savedSortColumns[name]
+	if sortColumns == nil {
+		sortColumns = defaultSortColumns
+	}
+	w.SetSortColumns(sortColumns)
 
 	return w
 }
@@ -420,6 +428,9 @@ func (asUI *ListWidget) filterRowAlpha(data IData, column *ListColumn, filter *F
 
 func (asUI *ListWidget) SetSortColumns(sortColumns []*SortColumn) {
 	asUI.sortColumns = sortColumns
+	// TOOD: The savedSortColumns should write to json file to save the sort order
+	// between runs of top plugin
+	savedSortColumns[asUI.name] = sortColumns
 }
 
 func (asUI *ListWidget) GetSortColumns() []*SortColumn {

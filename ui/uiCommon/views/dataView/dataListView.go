@@ -81,9 +81,8 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 	asUI.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
 
 	listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
-		asUI.bottomMargin, asUI, columnDefinitions, columnOwner)
+		asUI.bottomMargin, asUI, columnDefinitions, columnOwner, defaultSortColumns)
 	listWidget.PreRowDisplayFunc = asUI.PreRowDisplay
-	listWidget.SetSortColumns(defaultSortColumns)
 
 	asUI.listWidget = listWidget
 

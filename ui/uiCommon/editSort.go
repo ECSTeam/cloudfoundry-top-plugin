@@ -199,7 +199,7 @@ func (w *EditSortView) applySort(g *gocui.Gui) {
 			useSortColumns = append(useSortColumns, sc)
 		}
 	}
-	w.listWidget.sortColumns = useSortColumns
+	w.listWidget.SetSortColumns(useSortColumns)
 	w.listWidget.FilterAndSortData()
 	w.listWidget.displayRowIndexOffset = 0
 	w.RefreshDisplay(g)
@@ -211,7 +211,7 @@ func (w *EditSortView) applyActionCallback(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *EditSortView) cancelActionCallback(g *gocui.Gui, v *gocui.View) error {
-	w.listWidget.sortColumns = w.oldSortColumns
+	w.listWidget.SetSortColumns(w.oldSortColumns)
 	w.listWidget.FilterAndSortData()
 	return nil
 }
