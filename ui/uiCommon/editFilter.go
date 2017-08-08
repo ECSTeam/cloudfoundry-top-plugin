@@ -283,6 +283,7 @@ func (w *EditFilterView) keySpaceAction(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *EditFilterView) applyActionCallback(g *gocui.Gui, v *gocui.View) error {
+	w.listWidget.SaveFilters()
 	return nil
 }
 

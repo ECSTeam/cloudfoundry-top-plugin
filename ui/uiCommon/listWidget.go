@@ -148,8 +148,9 @@ type FilterColumn struct {
 }
 
 var (
-	normalHeaderColor string
-	savedSortColumns  map[string][]*SortColumn
+	normalHeaderColor    string
+	savedSortColumns     map[string][]*SortColumn
+	savedFilterColumnMap map[string]map[string]*FilterColumn
 )
 
 func init() {
@@ -159,7 +160,10 @@ func init() {
 	} else {
 		normalHeaderColor = util.WHITE_TEXT_SOFT_BG
 	}
+	// savedSortColumns map key = viewName
 	savedSortColumns = make(map[string][]*SortColumn)
+	// savedFilterColumnMap map key = viewName
+	savedFilterColumnMap = make(map[string]map[string]*FilterColumn)
 }
 
 func NewSortColumn(id string, reverseSort bool) *SortColumn {
@@ -214,6 +218,11 @@ func NewListWidget(masterUI masterUIInterface.MasterUIInterface, name string,
 		sortColumns = defaultSortColumns
 	}
 	w.SetSortColumns(sortColumns)
+
+	savedFilterColumnMap := savedFilterColumnMap[name]
+	if savedFilterColumnMap != nil {
+		w.filterColumnMap = savedFilterColumnMap
+	}
 
 	return w
 }
@@ -424,6 +433,10 @@ func (asUI *ListWidget) filterRowAlpha(data IData, column *ListColumn, filter *F
 	value := column.rawValueFunc(data)
 
 	return regex.MatchString(value)
+}
+
+func (asUI *ListWidget) SaveFilters() {
+	savedFilterColumnMap[asUI.name] = asUI.filterColumnMap
 }
 
 func (asUI *ListWidget) SetSortColumns(sortColumns []*SortColumn) {
