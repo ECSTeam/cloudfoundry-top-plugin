@@ -22,21 +22,23 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
 type RequestsInfoWidget struct {
 	masterUI   masterUIInterface.MasterUIInterface
+	parentView dataView.DataListViewInterface
 	name       string
 	height     int
 	detailView *AppDetailView
 	appMdMgr   *app.AppMetadataManager
 }
 
-func NewRequestsInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int, detailView *AppDetailView) *RequestsInfoWidget {
+func NewRequestsInfoWidget(masterUI masterUIInterface.MasterUIInterface, parentView dataView.DataListViewInterface, name string, height int, detailView *AppDetailView) *RequestsInfoWidget {
 	appMdMgr := detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-	return &RequestsInfoWidget{masterUI: masterUI, name: name, height: height, detailView: detailView, appMdMgr: appMdMgr}
+	return &RequestsInfoWidget{masterUI: masterUI, parentView: parentView, name: name, height: height, detailView: detailView, appMdMgr: appMdMgr}
 }
 
 func (w *RequestsInfoWidget) Name() string {
@@ -46,7 +48,8 @@ func (w *RequestsInfoWidget) Name() string {
 func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 
 	topOffset := w.detailView.GetTopOffset()
-	if w.masterUI.IsHeaderMinimized() {
+
+	if w.parentView.GetListWidget().IsSelectColumnMode() {
 		// This will hide this view by displaying it off-view (negative top)
 		topOffset = 0
 	}

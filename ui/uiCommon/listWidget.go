@@ -952,3 +952,7 @@ func (asUI *ListWidget) editSortAction(g *gocui.Gui, v *gocui.View) error {
 func (asUI *ListWidget) enableSelectColumnMode(enable bool) {
 	asUI.selectColumnMode = enable
 }
+
+func (asUI *ListWidget) IsSelectColumnMode() bool {
+	return asUI.selectColumnMode
+}

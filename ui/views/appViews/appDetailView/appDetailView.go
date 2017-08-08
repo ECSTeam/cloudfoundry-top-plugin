@@ -79,10 +79,10 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 
 	asUI.DataListView = dataListView
 
-	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, "requestsInfoWidget", requestViewHeight, asUI)
+	asUI.requestsInfoWidget = NewRequestsInfoWidget(masterUI, dataListView, "requestsInfoWidget", requestViewHeight, asUI)
 	masterUI.LayoutManager().Add(asUI.requestsInfoWidget)
 
-	asUI.crashInfoWidget = NewCrashInfoWidget(masterUI, "crashInfoWidget", requestViewHeight, asUI)
+	asUI.crashInfoWidget = NewCrashInfoWidget(masterUI, dataListView, "crashInfoWidget", requestViewHeight, asUI)
 	masterUI.LayoutManager().Add(asUI.crashInfoWidget)
 
 	return asUI
