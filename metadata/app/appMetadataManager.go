@@ -17,6 +17,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -148,5 +149,20 @@ func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]*
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)
 
 	return appsMetadataArray, err
+
+}
+
+func (mdMgr *AppMetadataManager) CreateTestData(dataSize int) {
+
+	metadataMap := make(map[string]*AppMetadata)
+
+	for i := 0; i < dataSize; i++ {
+		guid := fmt.Sprintf("GUID-%02v", i)
+		app := &App{Guid: guid, Name: guid}
+		appMetadata := NewAppMetadata(*app)
+		metadataMap[guid] = appMetadata
+	}
+
+	mdMgr.appMetadataMap = metadataMap
 
 }

@@ -91,8 +91,9 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 	if err != nil {
 		return
 	}
+
 	containerStats := ed.getContainerStats(appStats, instNum)
-	msgTime := time.Unix(0, msg.GetTimestamp())
+	msgTime := time.Unix(0, logMessage.GetTimestamp())
 
 	msgBytes := logMessage.GetMessage()
 	msgText := ""

@@ -285,19 +285,43 @@ func (mui *MasterUI) AddCommonDataViewKeybindings(g *gocui.Gui, viewName string)
 		}); err != nil {
 		log.Panicln(err)
 	}
+
 	/*
-		// TODO: Testing -- remove later
+		// ******** BEGIN: Test List scrolling *************
+		if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+			mui.router.GetProcessor().GetMetadataManager().GetAppMdManager().CreateTestData(10)
+			mui.router.GetProcessor().SeedStatsFromMetadata()
+			mui.router.Clear()
+			mui.updateDisplay(g)
+			return nil
+		}); err != nil {
+			log.Panicln(err)
+		}
+
+		if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+			mui.router.GetProcessor().GetMetadataManager().GetAppMdManager().CreateTestData(50)
+			mui.router.GetProcessor().SeedStatsFromMetadata()
+			mui.router.Clear()
+			mui.updateDisplay(g)
+			return nil
+		}); err != nil {
+			log.Panicln(err)
+		}
+		// ******** END: Test List scrolling *************
+	*/
+
+	/*
+		// ******** BEGIN: Test Alert Messages *************
 		if err := g.SetKeybinding(viewName, 'z', gocui.ModNone, mui.testShowUserMessage); err != nil {
 			log.Panicln(err)
 		}
-		// TODO: Testing -- remove later
 		if err := g.SetKeybinding(viewName, 'x', gocui.ModNone, mui.test2ShowUserMessage); err != nil {
 			log.Panicln(err)
 		}
-		// TODO: Testing -- remove later
 		if err := g.SetKeybinding(viewName, 'a', gocui.ModNone, mui.testClearUserMessage); err != nil {
 			log.Panicln(err)
 		}
+		// ******** END: Test Alert Messages *************
 	*/
 	return nil
 }

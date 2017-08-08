@@ -466,18 +466,27 @@ func (asUI *ListWidget) RefreshDisplay(g *gocui.Gui) error {
 
 	v.Clear()
 	listSize := len(asUI.listData)
+	offset := asUI.displayRowIndexOffset
+	if offset > listSize || offset < 0 {
+		// If the list changes size, specifically gets smaller since the last time we've
+		// refreshed AND we're scroll beyond the new list size, reset display offset back
+		// to zero
+		asUI.displayRowIndexOffset = 0
+		offset = 0
+	}
 
 	if listSize > 0 || asUI.selectColumnMode {
-		stopRowIndex := maxRows + asUI.displayRowIndexOffset
+		stopRowIndex := maxRows + offset
 		asUI.writeHeader(g, v)
 
 		/*
 			toplog.Info("listWidget listSize: %v  stopRowIndex: %v  maxRows: %v  offset: %v",
-				listSize, stopRowIndex, maxRows, asUI.displayRowIndexOffset)
+				listSize, stopRowIndex, maxRows, offset)
 		*/
+
 		// Loop through all rows
 		for i := 0; i < listSize && i < stopRowIndex; i++ {
-			if i < asUI.displayRowIndexOffset {
+			if i < offset {
 				continue
 			}
 			asUI.writeRowData(g, v, i)
