@@ -26,12 +26,14 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
+	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
 type AppInfoWidget struct {
 	masterUI   masterUIInterface.MasterUIInterface
+	parentView dataView.DataListViewInterface
 	name       string
 	width      int
 	height     int
@@ -39,9 +41,9 @@ type AppInfoWidget struct {
 	appMdMgr   *app.AppMetadataManager
 }
 
-func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {
+func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, parentView dataView.DataListViewInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {
 	appMdMgr := detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-	return &AppInfoWidget{masterUI: masterUI, name: name, width: width, height: height, detailView: detailView, appMdMgr: appMdMgr}
+	return &AppInfoWidget{masterUI: masterUI, parentView: parentView, name: name, width: width, height: height, detailView: detailView, appMdMgr: appMdMgr}
 }
 
 func (w *AppInfoWidget) Name() string {
@@ -80,6 +82,10 @@ func (w *AppInfoWidget) closeAppInfoWidget(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (w *AppInfoWidget) UpdateDisplay(g *gocui.Gui) error {
+
+	// Refresh the background (parent) view
+	w.parentView.UpdateDisplay(g)
+
 	return w.RefreshDisplay(g)
 }
 
@@ -89,6 +95,9 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 	if err != nil {
 		return err
 	}
+
+	// Refresh the background (parent) view
+	w.parentView.RefreshDisplay(g)
 
 	v.Clear()
 
@@ -157,5 +166,6 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 	//fmt.Fprintf(v, "\n")
 
 	fmt.Fprintf(v, "\n %vx%v:exit view", "\033[37;1m", "\033[0m")
+
 	return nil
 }

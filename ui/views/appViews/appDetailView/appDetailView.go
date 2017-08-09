@@ -166,7 +166,7 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 	switch viewName {
 	case "infoView":
 		infoWidgetName := "appInfoWidget"
-		view = NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 20, asUI)
+		view = NewAppInfoWidget(asUI.GetMasterUI(), asUI, infoWidgetName, 70, 20, asUI)
 	case "crashInfoView":
 		_, bottomMargin := asUI.GetMargins()
 		view = appCrashView.NewAppCrashView(asUI.GetMasterUI(), asUI, "crashInfoView", bottomMargin,
@@ -183,9 +183,9 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 	return asUI.GetMasterUI().OpenView(g, view)
 }
 
-func (asUI *AppDetailView) openInfoAction(g *gocui.Gui, v *gocui.View) error {
+func (asUI *AppDetailView) openInfoActionX(g *gocui.Gui, v *gocui.View) error {
 	infoWidgetName := "appInfoWidget"
-	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), infoWidgetName, 70, 18, asUI)
+	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), asUI, infoWidgetName, 70, 18, asUI)
 	asUI.GetMasterUI().LayoutManager().Add(appInfoWidget)
 	asUI.GetMasterUI().SetCurrentViewOnTop(g)
 	asUI.GetMasterUI().AddCommonDataViewKeybindings(g, infoWidgetName)
