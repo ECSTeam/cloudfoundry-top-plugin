@@ -456,7 +456,7 @@ func (asUI *ListWidget) GetSortFunctions() []util.LessFunc {
 	for _, sortColumn := range asUI.sortColumns {
 		sc := asUI.columnMap[sortColumn.Id]
 		if sc == nil {
-			log.Panic(merry.Errorf("Unable to find sort column: %v", sortColumn.Id))
+			log.Panic(merry.Errorf("Unable to find sort column: %v in view: %v title: %v", sortColumn.Id, asUI.name, asUI.Title))
 		}
 		sortFunc := sc.sortFunc
 		if sortColumn.ReverseSort {
