@@ -108,7 +108,7 @@ func (asUI *EventOriginListView) enterAction(g *gocui.Gui, v *gocui.View) error 
 		topMargin, bottomMargin := asUI.GetMargins()
 
 		detailView := eventDetailView.NewEventDetailListView(asUI.GetMasterUI(), asUI,
-			"cellDetailView",
+			"eventDetailView",
 			topMargin, bottomMargin,
 			asUI.GetEventProcessor(),
 			asUI.eventType.String(),
