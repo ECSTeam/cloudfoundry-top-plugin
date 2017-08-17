@@ -311,6 +311,9 @@ func (ed *EventData) GetAppRouteStats(uri string, domain string, host string, po
 
 	appRouteStats := routeStats.FindAppRouteStats(appId)
 	if appRouteStats == nil {
+		// QUESTION: Can a freshly deployed app (after cf top was running) end up here?
+		// I think so -- the AppMetadata is loaded when a new app is deployed but the
+		// route(s) for that app are never loaded/seeded (I need to verify this)
 		toplog.Debug("appRouteStats not found. It will be dynamically added for uri:[%v] domain:[%v] host:[%v] port:[%v] path:[%v]",
 			uri, domain, host, port, path)
 		appRouteStats = eventRoute.NewAppRouteStats(appId)
@@ -343,10 +346,8 @@ func (ed *EventData) updateRouteStats(domain string, host string, port string, p
 		appRouteStats.HttpMethodStatsMap[httpMethod] = httpMethodStats
 	}
 
-	//appRouteStats.HttpMethod[httpEvent.GetMethod()] = appRouteStats.HttpMethod[httpEvent.GetMethod()] + 1
-
-	// TODO: Should this really come from msg.GetTimestamp() instead of marking it with when we processed the event?
-	httpMethodStats.LastAccess = time.Now()
+	msgTime := time.Unix(0, msg.GetTimestamp())
+	httpMethodStats.LastAccess = msgTime
 
 	httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] = httpMethodStats.HttpStatusCode[httpEvent.GetStatusCode()] + 1
 

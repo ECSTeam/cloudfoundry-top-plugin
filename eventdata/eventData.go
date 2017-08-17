@@ -42,7 +42,30 @@ type EventData struct {
 	AppMap  map[string]*eventApp.AppStats
 	CellMap map[string]*eventCell.CellStats
 	// Domain name: Both shared + private
-	DomainMap    map[string]*eventRoute.DomainStats
+	DomainMap map[string]*eventRoute.DomainStats
+
+	// ***** TODO BEGIN: Track AppRouteStats in a map here (as well as in DomainMap object tree)
+	// So that we have easy access to the data for use on AppDetail: HTTP Info Views
+	// ISSUE: If we hold onto a objecct pointer to AppRouteStats from two different loccations:
+	// AppRouteStatsMap and downstream from DomainMap, if we do a "deepcopy" during clone, do
+	// we end up with two complete copies of the data??  That would be bad (time/memory footprint)
+	//
+	// IDEA: To fix the above problem, what if we change eventRoute.RouteStats object to just
+	// hold onto an array of AppIds and not a map of the real AppRouteStats object?  The code
+	// code would just use the AppId and lookup the AppRouteStats object from map in EventData
+	// object.  Example change in eventRoute.RouteStats object:
+	//    from: AppRouteStatsMap map[string]*AppRouteStats
+	//    to:   AppIds []*string
+	//
+	// ISSUE2: I just realized why the above will not work -- the current solution of having
+	// a map of *AppRouteStats within each route is to handle tracking how much traffic comes
+	// in through that route -- meaning an app can have multiple route and we want to track
+	// traffic seperately for each route even though its going to the same app.
+	//
+	// Key: appId
+	AppRouteStatsMap map[string]*eventRoute.AppRouteStats
+	// ***** TODO END:
+
 	EventTypeMap map[events.Envelope_EventType]*eventEventType.EventTypeStats
 
 	EnableRouteTracking bool

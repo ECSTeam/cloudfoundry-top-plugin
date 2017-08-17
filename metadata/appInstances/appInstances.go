@@ -25,6 +25,7 @@ import (
 
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -50,8 +51,33 @@ var (
 	mu                        sync.Mutex
 )
 
+func init() {
+	mh := &MetadataHandler{}
+	loader.RegisterMetadataHandler(loader.APP_INST, mh)
+}
+
+type MetadataHandler struct {
+}
+
+func (mh MetadataHandler) MetadataLoadMethod(cliConnection plugin.CliConnection, guid string) error {
+	return LoadAppInstancesCache(cliConnection, guid)
+}
+
+func (mh MetadataHandler) MinimumReloadDuration() time.Duration {
+	return time.Millisecond * 1000
+}
+
+// Last time data was loaded or nil if never
+func (mh MetadataHandler) LastLoadTime(dataKey string) *time.Time {
+	item := findAppInstancesMetadataInternal(dataKey)
+	if item != nil {
+		return item.CacheTime
+	}
+	return nil
+}
+
 func FindAppInstancesMetadata(appId string) *AppInstances {
-	return FindAppInstancesMetadataInternal(appId)
+	return findAppInstancesMetadataInternal(appId)
 }
 
 func ClearAppInstancesMetadata(appId string) {
@@ -60,7 +86,7 @@ func ClearAppInstancesMetadata(appId string) {
 	appInstancesMetadataCache[appId] = nil
 }
 
-func FindAppInstancesMetadataInternal(appId string) *AppInstances {
+func findAppInstancesMetadataInternal(appId string) *AppInstances {
 	mu.Lock()
 	defer mu.Unlock()
 	return appInstancesMetadataCache[appId]
