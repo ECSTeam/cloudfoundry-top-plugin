@@ -78,7 +78,7 @@ func (w *CrashInfoWidget) Layout(g *gocui.Gui) error {
 
 func (w *CrashInfoWidget) getAppName() string {
 	//appMdMgr := w.detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-	appMetadata := w.appMdMgr.FindAppMetadata(w.detailView.appId)
+	appMetadata := w.appMdMgr.FindItem(w.detailView.appId)
 	appName := appMetadata.Name
 	return appName
 }

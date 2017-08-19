@@ -106,7 +106,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 	if appStats == nil {
 		return nil
 	}
-	appMetadata := w.appMdMgr.FindAppMetadata(appStats.AppId)
+	appMetadata := w.appMdMgr.FindItem(appStats.AppId)
 
 	if appMetadata.Guid != "" {
 		memoryDisplay := util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()

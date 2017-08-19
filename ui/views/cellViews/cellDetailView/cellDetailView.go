@@ -126,7 +126,7 @@ func (asUI *CellDetailView) postProcessData() []*appDetailView.DisplayContainerS
 	appMap := asUI.GetDisplayedEventData().AppMap
 	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
 	for _, appStats := range appStatsArray {
-		appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+		appMetadata := asUI.GetAppMdMgr().FindItem(appStats.AppId)
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil {
 				if containerStats.Ip == asUI.cellIp {

@@ -170,7 +170,7 @@ func (asUI *CapacityPlanView) postProcessData() map[string]*cellView.DisplayCell
 
 					if containerStats.ContainerMetric != nil {
 
-						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+						appMetadata := asUI.GetAppMdMgr().FindItem(appStats.AppId)
 						cellStats.TotalContainerMemoryReserved = cellStats.TotalContainerMemoryReserved + uint64(appMetadata.MemoryMB*util.MEGABYTE)
 
 						usedMemoryValue := containerStats.ContainerMetric.GetMemoryBytes()

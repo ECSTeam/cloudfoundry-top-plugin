@@ -38,7 +38,7 @@ const MaxLoadAttempts = 5
 const WaitToReloadOnErrorDuration = time.Second * 30
 const ALL = ""
 
-var metadataHandlerMap map[DataType]MetadataHandler // How do we get this loaded??
+var metadataHandlerMap map[DataType]MetadataHandler = make(map[DataType]MetadataHandler)
 
 type MetadataHandler interface {
 	MetadataLoadMethod(cliConnection plugin.CliConnection, guid string) error
@@ -83,7 +83,6 @@ type LoadRequest struct {
 
 func RegisterMetadataHandler(dataType DataType, metadataHandler MetadataHandler) {
 	toplog.Info("Registering metadata load handler for: %v", dataType)
-	metadataHandlerMap = make(map[DataType]MetadataHandler)
 	metadataHandlerMap[dataType] = metadataHandler
 }
 
@@ -168,6 +167,9 @@ func (lh *LoadHandler) adjustLoadTimeIfNeeded(loadRequest *LoadRequest) bool {
 		lastReloadDuration := now.Sub(*lastLoadTime)
 		minReloadDuration := metadataHandler.MinimumReloadDuration()
 		if lastReloadDuration < minReloadDuration {
+
+			toplog.Info("Metadata loader - Adjusting load time. lastReloadDuration: %v minReloadDuration: %v", lastReloadDuration, minReloadDuration)
+
 			requestedReloadDuration := loadRequest.loadAfter.Sub(now)
 			if requestedReloadDuration < minReloadDuration {
 				adjustedNextLoadTime := lastLoadTime.Add(minReloadDuration)

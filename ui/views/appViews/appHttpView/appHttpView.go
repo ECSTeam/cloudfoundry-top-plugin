@@ -167,7 +167,7 @@ func (asUI *AppHttpView) closeAppHttpView(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *AppHttpView) getAppName() string {
-	appMetadata := asUI.appMdMgr.FindAppMetadata(asUI.appId)
+	appMetadata := asUI.appMdMgr.FindItem(asUI.appId)
 	appName := appMetadata.Name
 	return appName
 }

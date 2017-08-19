@@ -72,7 +72,7 @@ func (w *RequestsInfoWidget) Layout(g *gocui.Gui) error {
 }
 
 func (w *RequestsInfoWidget) getAppName() string {
-	appMetadata := w.appMdMgr.FindAppMetadata(w.detailView.appId)
+	appMetadata := w.appMdMgr.FindItem(w.detailView.appId)
 	appName := appMetadata.Name
 	return appName
 }

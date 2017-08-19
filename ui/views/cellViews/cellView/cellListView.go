@@ -154,7 +154,7 @@ func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 
 					if containerStats.ContainerMetric != nil {
 
-						appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appStats.AppId)
+						appMetadata := asUI.GetAppMdMgr().FindItem(appStats.AppId)
 
 						isoSegName := isolationSegment.FindName(displayCellStat.IsolationSegmentGuid)
 						displayCellStat.IsolationSegmentName = isoSegName

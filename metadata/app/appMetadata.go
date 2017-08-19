@@ -15,25 +15,30 @@
 
 package app
 
-import "time"
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 const MEGABYTE = (1024 * 1024)
 
 type AppMetadata struct {
+	*common.BaseMetadataItem
 	*App
-	//IsolationSegmentGuid string
-	// TODO: Make this private
-	CacheTime time.Time
 }
 
 func NewAppMetadata(app App) *AppMetadata {
-
 	appMetadata := &AppMetadata{}
+	appMetadata.BaseMetadataItem = common.NewBaseMetadataItem()
 	appMetadata.App = &app
-	appMetadata.CacheTime = time.Now()
 	return appMetadata
 }
 
 func NewAppMetadataById(appId string) *AppMetadata {
 	return NewAppMetadata(App{Guid: appId, Name: appId})
+}
+
+func (metadataItem *AppMetadata) GetGuid() string {
+	return metadataItem.Guid
+}
+
+func (metadataItem *AppMetadata) GetName() string {
+	return metadataItem.Name
 }

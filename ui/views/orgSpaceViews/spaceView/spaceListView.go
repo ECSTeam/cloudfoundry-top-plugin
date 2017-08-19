@@ -171,7 +171,7 @@ func (asUI *SpaceListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(selectedAppId)
+	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
 	appName := appMetadata.Name
 	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
 	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
@@ -254,7 +254,7 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
 			displaySpace.DesiredContainers += appStats.DesiredContainers
 
-			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
+			appMetadata := appMdMgr.FindItem(appStats.AppId)
 			displaySpace.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 			displaySpace.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 

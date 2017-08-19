@@ -190,7 +190,7 @@ func (asUI *RouteMapListView) postProcessData() []*DisplayRouteMapStats {
 
 		for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 
-			appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
+			appMetadata := asUI.GetAppMdMgr().FindItem(appId)
 			appName := appMetadata.Name
 			spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
 			orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)

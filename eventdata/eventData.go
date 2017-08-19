@@ -177,8 +177,7 @@ func (ed *EventData) Clone() *EventData {
 	for _, appStat := range ed.AppMap {
 
 		// Check if this app has been deleted
-		if ed.eventProcessor.GetMetadataManager().IsAppDeleted(appStat.AppId) {
-			ed.eventProcessor.GetMetadataManager().RemoveAppFromDeletedQueue(appStat.AppId)
+		if ed.eventProcessor.GetMetadataManager().GetAppMdManager().IsDeletedFromCache(appStat.AppId) {
 			delete(ed.AppMap, appStat.AppId)
 			delete(clone.AppMap, appStat.AppId)
 			continue
@@ -338,7 +337,7 @@ func (ed *EventData) assignStackId(cellStats *eventCell.CellStats) {
 		for _, containerStats := range appStats.ContainerArray {
 			//if containerStats != nil && cellStats.Ip == containerStats.Ip && space.All() != nil && len(space.All()) > 0 {
 			if containerStats != nil && cellStats.Ip == containerStats.Ip {
-				appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appStats.AppId)
+				appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appStats.AppId)
 				cellStats.StackId = appMetadata.StackGuid
 				return
 			}
@@ -351,11 +350,11 @@ func (ed *EventData) AssignIsolationSegment(cellStats *eventCell.CellStats) {
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil && cellStats.Ip == containerStats.Ip {
 
-				//appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appStats.AppId)
+				//appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appStats.AppId)
 				ep := ed.eventProcessor
 				mm := ep.GetMetadataManager()
 				amdm := mm.GetAppMdManager()
-				appMetadata := amdm.FindAppMetadata(appStats.AppId)
+				appMetadata := amdm.FindItem(appStats.AppId)
 				spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
 				cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegmentGuid
 				return

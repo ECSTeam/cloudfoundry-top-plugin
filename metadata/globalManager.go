@@ -53,11 +53,6 @@ type GlobalManager struct {
 	monitoredAppDetails     map[string]*time.Time
 	monitoredAppDetailsLock sync.Mutex
 
-	appDeleteQueue map[string]string
-	refreshQueue   map[string]time.Time
-	refreshNow     chan bool
-	refreshLock    sync.Mutex
-
 	loadMetadataInProgress bool
 
 	loadHandler *loader.LoadHandler
@@ -77,16 +72,10 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 	mgr.monitoredAppDetails = make(map[string]*time.Time)
 
-	mgr.appDeleteQueue = make(map[string]string)
-	mgr.refreshQueue = make(map[string]time.Time)
-	mgr.refreshNow = make(chan bool, 2)
-
 	// Set set the time of event data end date/time here so we don't end up loading
 	// events after we've already started counting them from the firehose.
 	now := time.Now()
 	crashData.LoadEventsUntilTime = &now
-
-	go mgr.loadMetadataThread()
 
 	return mgr
 }
@@ -116,7 +105,7 @@ func (mgr *GlobalManager) LoadMetadata() {
 	isolationSegment.LoadCache(mgr.cliConnection)
 	stack.LoadStackCache(mgr.cliConnection)
 
-	mgr.appMdMgr.LoadAppCache(mgr.cliConnection)
+	mgr.appMdMgr.LoadCache(mgr.cliConnection)
 
 	//time.Sleep(time.Second * 60)
 
@@ -139,27 +128,9 @@ func (mgr *GlobalManager) FlushCache() {
 	mgr.spaceQuotaMdMgr.FlushCache()
 }
 
-func (mgr *GlobalManager) IsAppDeleted(appId string) bool {
-	return mgr.appDeleteQueue[appId] != ""
-}
-
-func (mgr *GlobalManager) RemoveAppFromDeletedQueue(appId string) {
-	delete(mgr.appDeleteQueue, appId)
-}
-
 // Request a refresh of specific app metadata
 func (mgr *GlobalManager) RequestRefreshAppMetadata(appId string) {
-	mgr.refreshLock.Lock()
-	mgr.refreshQueue[appId] = time.Now()
-	mgr.refreshLock.Unlock()
-	mgr.wakeRefreshThread()
-}
-
-func (mgr *GlobalManager) wakeRefreshThread() {
-	select {
-	case mgr.refreshNow <- true:
-	default:
-	}
+	mgr.loadHandler.RequestLoadOfItem(loader.APP, appId, 0*time.Second)
 }
 
 // Indicate that we should actively monitor app details (container updates) for given appId
@@ -199,89 +170,4 @@ func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
 		return
 	}
 	mgr.loadHandler.RequestLoadOfItem(loader.APP_INST, appId, 0*time.Second)
-}
-
-func (mgr *GlobalManager) loadMetadataThread() {
-
-	minimumLoadTimeMS := time.Millisecond * 10000
-	veryLongtime := time.Hour * 10000
-	minNextLoadTime := veryLongtime
-
-	for {
-
-		toplog.Debug("Metadata - sleep time: %v", minNextLoadTime)
-
-		select {
-		case <-mgr.refreshNow:
-			//mui.updateDisplay(g)
-		case <-time.After(minNextLoadTime):
-			//mui.updateDisplay(g)
-		}
-
-		minNextLoadTime = veryLongtime
-
-		mgr.refreshLock.Lock()
-		queue := make([]string, 0)
-		for appId, _ := range mgr.refreshQueue {
-			queue = append(queue, appId)
-		}
-		mgr.refreshLock.Unlock()
-
-		toplog.Debug("Metadata cache thread is awake")
-		for _, appId := range queue {
-			now := time.Now()
-			removedFromQueue := false
-			appMetadata := mgr.appMdMgr.FindAppMetadataInternal(appId, false)
-			timeSinceLastLoad := time.Now().Sub(appMetadata.CacheTime)
-			appName := appMetadata.Name
-			toplog.Debug("Metadata - appId: %v name: [%v] - inqueue check time since last load: %v", appId, appName, timeSinceLastLoad)
-			if timeSinceLastLoad > minimumLoadTimeMS {
-				toplog.Debug("Metadata - appId: %v name: [%v] - Needs to be loaded now", appId, appName)
-				newAppMetadata, err := mgr.appMdMgr.GetAppMetadataInternal(mgr.cliConnection, appId)
-				if err != nil {
-					toplog.Warn("Metadata - appId: %v name: [%v] - Error: %v", appId, appName, err)
-					// Since we had an error trying to load the metadata -- just remove from queue to prevent endless retries to load it
-					mgr.refreshLock.Lock()
-					delete(mgr.refreshQueue, appId)
-					removedFromQueue = true
-					mgr.refreshLock.Unlock()
-				} else {
-					toplog.Info("Metadata - appId: %v name: [%v] - Load start", appId, appName)
-					if newAppMetadata.Name != "" {
-						// Only save if it really loaded
-						mgr.appMdMgr.AddAppMetadata(newAppMetadata)
-					} else {
-						// If we can't reload this appId the it must have been deleted
-						// Remove from metadata cache AND remove from appstats in "current" processor
-						mgr.appMdMgr.DeleteAppMetadata(appId)
-						mgr.appDeleteQueue[appId] = appId
-						toplog.Info("Metadata - appId: %v name: [%v] - Removed from cache as it doesn't seem to exist", appId, appName)
-					}
-					toplog.Info("Metadata - appId: %v name: [%v] - Load complete", appId, newAppMetadata.Name)
-
-					// Only delete if request for reload was queue before we loaded the data
-					// This prevents a timing issue a request is in progress while another one is queued.
-					mgr.refreshLock.Lock()
-					queueTime := mgr.refreshQueue[appId]
-					if queueTime.Before(now) {
-						toplog.Debug("Metadata - appId: %v name: [%v] - Remove from queue queueTime: %v now: %v", appId, appName, queueTime, now)
-						delete(mgr.refreshQueue, appId)
-						removedFromQueue = true
-					}
-					mgr.refreshLock.Unlock()
-
-				}
-			}
-
-			if !removedFromQueue {
-				toplog.Debug("Metadata - appId %v name: [%v] - Too soon to reload", appId, appName)
-				nextLoadTime := minimumLoadTimeMS - timeSinceLastLoad
-				toplog.Debug("Metadata - appId %v name: [%v] - Try to load in: %v", appId, appName, nextLoadTime)
-				if minNextLoadTime > nextLoadTime {
-					toplog.Debug("Metadata - appId %v name: [%v] - value was min: %v", appId, appName, nextLoadTime)
-					minNextLoadTime = nextLoadTime
-				}
-			}
-		}
-	}
 }

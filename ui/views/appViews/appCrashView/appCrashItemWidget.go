@@ -112,7 +112,7 @@ func (w *AppCrashItemWidget) RefreshDisplay(g *gocui.Gui) error {
 	if appStats == nil {
 		return nil
 	}
-	//appMetadata := w.appMdMgr.FindAppMetadata(appStats.AppId)
+	//appMetadata := w.appMdMgr.FindItem(appStats.AppId)
 
 	//fmt.Fprintf(v, "Crash Details - ")
 	//fmt.Fprintf(v, "%vx%v:exit view", "\033[37;1m", "\033[0m")

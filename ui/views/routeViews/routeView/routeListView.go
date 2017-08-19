@@ -134,7 +134,7 @@ func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 	if monitoredAppGuids != nil {
 		for appId := range monitoredAppGuids {
 			appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-			appMd := appMdMgr.FindAppMetadata(appId)
+			appMd := appMdMgr.FindItem(appId)
 			spaceGuid = appMd.SpaceGuid
 		}
 	}

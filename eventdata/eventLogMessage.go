@@ -163,7 +163,7 @@ func (ed *EventData) logStgCall(msg *events.Envelope) {
 	if logText != "Successfully destroyed container" {
 		return
 	}
-	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
+	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appId)
 	toplog.Info("STG event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
 
@@ -175,7 +175,7 @@ func (ed *EventData) logApiCall(msg *events.Envelope) {
 	appId := logMessage.GetAppId()
 	appStats := ed.getAppStats(appId)
 
-	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindAppMetadata(appId)
+	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appId)
 	logText := string(logMessage.GetMessage())
 	toplog.Debug("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)

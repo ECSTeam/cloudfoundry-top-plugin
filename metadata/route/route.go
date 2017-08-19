@@ -128,12 +128,12 @@ func getAppIdsForRoute(cliConnection plugin.CliConnection, routeId string) []str
 	}
 	appIdList := make([]string, len(appList))
 	for i, app := range appList {
-		appIdList[i] = app.Guid
+		appIdList[i] = app.GetGuid()
 	}
 	return appIdList
 }
 
-func getAppsForRoute(cliConnection plugin.CliConnection, routeId string) ([]*app.AppMetadata, error) {
+func getAppsForRoute(cliConnection plugin.CliConnection, routeId string) ([]common.BaseMetadataItemI, error) {
 	url := fmt.Sprintf("/v2/routes/%v/apps", routeId)
 	toplog.Debug("getAppsForRoute url: %v", url)
 	return app.GetAppsMetadataFromUrl(cliConnection, url)

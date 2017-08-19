@@ -19,94 +19,47 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"time"
 
 	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
 type AppMetadataManager struct {
-	appMetadataMap map[string]*AppMetadata
-	mu             sync.Mutex
+	*common.BaseMetadataManager
+	mu sync.Mutex
 }
 
 func NewAppMetadataManager() *AppMetadataManager {
 
-	mgr := &AppMetadataManager{}
-	mgr.appMetadataMap = make(map[string]*AppMetadata)
-
-	return mgr
-}
-
-func (mdMgr *AppMetadataManager) AppMetadataSize() int {
-	return len(mdMgr.appMetadataMap)
-}
-
-func (mdMgr *AppMetadataManager) AddAppMetadata(appMetadata *AppMetadata) {
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-	mdMgr.appMetadataMap[appMetadata.Guid] = appMetadata
-}
-
-func (mdMgr *AppMetadataManager) DeleteAppMetadata(appId string) {
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-	delete(mdMgr.appMetadataMap, appId)
+	mdMgr := &AppMetadataManager{}
+	mdMgr.BaseMetadataManager = common.NewBaseMetadataManager(mdMgr)
+	loader.RegisterMetadataHandler(loader.APP, mdMgr)
+	return mdMgr
 }
 
 func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 	mdMgr.mu.Lock()
 	defer mdMgr.mu.Unlock()
 	appsMetadataArray := []*AppMetadata{}
-	for _, appMetadata := range mdMgr.appMetadataMap {
-		appsMetadataArray = append(appsMetadataArray, appMetadata)
+	for _, appMetadata := range mdMgr.MetadataMap {
+		appsMetadataArray = append(appsMetadataArray, appMetadata.(*AppMetadata))
 	}
 	return appsMetadataArray
 }
 
-func (mdMgr *AppMetadataManager) FindAppMetadata(appId string) *AppMetadata {
-	return mdMgr.FindAppMetadataInternal(appId, true)
+func (mdMgr *AppMetadataManager) FindItem(appId string) *AppMetadata {
+	return mdMgr.FindItemInternal(appId, false).(*AppMetadata)
 }
 
-func (mdMgr *AppMetadataManager) FindAppMetadataInternal(appId string, requestLoadIfNotFound bool) *AppMetadata {
-
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
-
-	//TODO: error: concurrent map read and map write
-	appMetadata := mdMgr.appMetadataMap[appId]
-	if appMetadata == nil {
-		appMetadata = NewAppMetadataById(appId)
-		if requestLoadIfNotFound {
-			// TODO: Queue metadata load for this id
-		} else {
-			// We mark this metadata as 60 mins old
-			appMetadata.CacheTime = appMetadata.CacheTime.Add(-60 * time.Minute)
-		}
-	}
-	return appMetadata
+func (mdMgr *AppMetadataManager) NewItemById(guid string) common.BaseMetadataItemI {
+	return NewAppMetadataById(guid)
 }
 
-func (mdMgr *AppMetadataManager) LoadAppCache(cliConnection plugin.CliConnection) {
-	appMetadataArray, err := mdMgr.getAppsMetadata(cliConnection)
-	if err != nil {
-		toplog.Warn("*** app metadata error: %v", err.Error())
-		return
-	}
-
-	metadataMap := make(map[string]*AppMetadata)
-	for _, appMetadata := range appMetadataArray {
-		//toplog.Debug("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name)
-		metadataMap[appMetadata.Guid] = appMetadata
-	}
-
-	mdMgr.appMetadataMap = metadataMap
-}
-
-func (mdMgr *AppMetadataManager) GetAppMetadataInternal(cliConnection plugin.CliConnection, appId string) (*AppMetadata, error) {
-	url := "/v2/apps/" + appId
-	emptyApp := NewAppMetadataById(appId)
+func (mdMgr *AppMetadataManager) GetItemInternal(cliConnection plugin.CliConnection, guid string) (common.BaseMetadataItemI, error) {
+	url := "/v2/apps/" + guid
+	emptyApp := mdMgr.NewItemById(guid)
 
 	outputStr, err := common.CallAPI(cliConnection, url)
 	if err != nil {
@@ -123,46 +76,40 @@ func (mdMgr *AppMetadataManager) GetAppMetadataInternal(cliConnection plugin.Cli
 	return appMetadata, nil
 }
 
-func (mdMgr *AppMetadataManager) getAppsMetadata(cliConnection plugin.CliConnection) ([]*AppMetadata, error) {
+func (mdMgr *AppMetadataManager) LoadInternal(cliConnection plugin.CliConnection) ([]common.BaseMetadataItemI, error) {
 	return GetAppsMetadataFromUrl(cliConnection, "/v2/apps")
 }
 
-func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]*AppMetadata, error) {
+func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]common.BaseMetadataItemI, error) {
 
-	appsMetadataArray := []*AppMetadata{}
-
+	metadataItemArray := []common.BaseMetadataItemI{}
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		var appResp AppResponse
 		err = json.Unmarshal(outputBytes, &appResp)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return appsMetadataArray, "", err
+			return metadataItemArray, "", err
 		}
 		for _, app := range appResp.Resources {
 			app.Entity.Guid = app.Meta.Guid
 			appMetadata := NewAppMetadata(app.Entity)
-			appsMetadataArray = append(appsMetadataArray, appMetadata)
+			metadataItemArray = append(metadataItemArray, appMetadata)
 		}
 		return appResp, appResp.NextUrl, nil
 	}
 
 	err := common.CallPagableAPI(cliConnection, url, handleRequest)
-
-	return appsMetadataArray, err
+	return metadataItemArray, err
 
 }
 
 func (mdMgr *AppMetadataManager) CreateTestData(dataSize int) {
-
-	metadataMap := make(map[string]*AppMetadata)
-
+	metadataMap := make(map[string]common.BaseMetadataItemI)
 	for i := 0; i < dataSize; i++ {
 		guid := fmt.Sprintf("GUID-%02v", i)
 		app := &App{Guid: guid, Name: guid}
 		appMetadata := NewAppMetadata(*app)
 		metadataMap[guid] = appMetadata
 	}
-
-	mdMgr.appMetadataMap = metadataMap
-
+	mdMgr.MetadataMap = metadataMap
 }

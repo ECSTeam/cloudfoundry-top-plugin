@@ -239,7 +239,7 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	appId := appStats.AppId
 	asUI.GetEventProcessor().GetMetadataManager().MonitorAppDetails(appId, &now)
 
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(appId)
+	appMetadata := asUI.GetAppMdMgr().FindItem(appId)
 
 	appInsts := appInstances.FindAppInstancesMetadata(appId)
 	if appInsts == nil && appMetadata.State == "STARTED" {

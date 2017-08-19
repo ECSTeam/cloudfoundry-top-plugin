@@ -76,7 +76,7 @@ func (asUI *CopyMenu) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(selectedAppId)
+	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
 	appName := appMetadata.Name
 	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
 	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)

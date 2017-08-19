@@ -160,7 +160,7 @@ func (asUI *OrgListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId s
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindAppMetadata(selectedAppId)
+	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
 	appName := appMetadata.Name
 	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
 	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
@@ -238,7 +238,7 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 			displayOrg.TotalReportingContainers += appStats.TotalReportingContainers
 			displayOrg.DesiredContainers += appStats.DesiredContainers
 
-			appMetadata := appMdMgr.FindAppMetadata(appStats.AppId)
+			appMetadata := appMdMgr.FindItem(appStats.AppId)
 			displayOrg.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 			displayOrg.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 

@@ -165,7 +165,7 @@ func (asUI *AppCrashView) closeAppCrashView(g *gocui.Gui, v *gocui.View) error {
 }
 
 func (asUI *AppCrashView) getAppName() string {
-	appMetadata := asUI.appMdMgr.FindAppMetadata(asUI.appId)
+	appMetadata := asUI.appMdMgr.FindItem(asUI.appId)
 	appName := appMetadata.Name
 	return appName
 }

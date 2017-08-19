@@ -121,7 +121,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.Monitored = cd.IsMonitoredAppGuid(appId)
 
 		displayStatsMap[appId] = displayAppStats
-		appMetadata := cd.appMdMgr.FindAppMetadata(appStats.AppId)
+		appMetadata := cd.appMdMgr.FindItem(appStats.AppId)
 
 		displayAppStats.AppName = appMetadata.Name
 		if mdMgr.IsMonitorAppDetails(appId) {
