@@ -37,3 +37,8 @@ func NewBaseMetadataItem() *BaseMetadataItem {
 func (mdItem *BaseMetadataItem) GetCacheTime() *time.Time {
 	return mdItem.cacheTime
 }
+
+// ------
+
+type IResponseV2Type interface {
+}

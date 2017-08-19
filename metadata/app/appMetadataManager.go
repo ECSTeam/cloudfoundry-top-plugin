@@ -57,7 +57,7 @@ func (mdMgr *AppMetadataManager) NewItemById(guid string) common.BaseMetadataIte
 	return NewAppMetadataById(guid)
 }
 
-func (mdMgr *AppMetadataManager) GetItemInternal(cliConnection plugin.CliConnection, guid string) (common.BaseMetadataItemI, error) {
+func (mdMgr *AppMetadataManager) LoadItemInternal(cliConnection plugin.CliConnection, guid string) (common.BaseMetadataItemI, error) {
 	url := "/v2/apps/" + guid
 	emptyApp := mdMgr.NewItemById(guid)
 
@@ -77,10 +77,10 @@ func (mdMgr *AppMetadataManager) GetItemInternal(cliConnection plugin.CliConnect
 }
 
 func (mdMgr *AppMetadataManager) LoadInternal(cliConnection plugin.CliConnection) ([]common.BaseMetadataItemI, error) {
-	return GetAppsMetadataFromUrl(cliConnection, "/v2/apps")
+	return GetMetadataFromUrl(cliConnection, "/v2/apps")
 }
 
-func GetAppsMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]common.BaseMetadataItemI, error) {
+func GetMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]common.BaseMetadataItemI, error) {
 
 	metadataItemArray := []common.BaseMetadataItemI{}
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {

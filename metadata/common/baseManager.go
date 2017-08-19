@@ -34,7 +34,7 @@ type MetadataManager interface {
 }
 
 type BaseMetadataManager struct {
-	MetadataManager
+	mm          MetadataManager
 	mu          sync.Mutex
 	MetadataMap map[string]BaseMetadataItemI
 
@@ -42,8 +42,8 @@ type BaseMetadataManager struct {
 	deletedFromCache       map[string]*time.Time
 }
 
-func NewBaseMetadataManager(mdMgr MetadataManager) *BaseMetadataManager {
-	commonMgr := &BaseMetadataManager{MetadataManager: mdMgr}
+func NewBaseMetadataManager(mm MetadataManager) *BaseMetadataManager {
+	commonMgr := &BaseMetadataManager{mm: mm}
 	commonMgr.MetadataMap = make(map[string]BaseMetadataItemI)
 
 	commonMgr.pendingDeleteFromCache = make(map[string]*time.Time)
@@ -79,7 +79,7 @@ func (commonMgr *BaseMetadataManager) FindItemInternal(guid string, requestLoadI
 	//TODO: error: concurrent map read and map write
 	metadataItem := commonMgr.MetadataMap[guid]
 	if metadataItem == nil {
-		metadataItem = commonMgr.NewItemById(guid)
+		metadataItem = commonMgr.mm.NewItemById(guid)
 		if requestLoadIfNotFound {
 			// TODO: Queue metadata load for this id
 		} else {
@@ -138,7 +138,7 @@ func (commonMgr *BaseMetadataManager) LastLoadTime(dataKey string) *time.Time {
 }
 
 func (commonMgr *BaseMetadataManager) LoadCache(cliConnection plugin.CliConnection) {
-	metadataItemArray, err := commonMgr.LoadInternal(cliConnection)
+	metadataItemArray, err := commonMgr.mm.LoadInternal(cliConnection)
 	if err != nil {
 		toplog.Warn("*** app metadata error: %v", err.Error())
 		return
@@ -164,7 +164,7 @@ func (commonMgr *BaseMetadataManager) LoadItem(cliConnection plugin.CliConnectio
 	}
 
 	toplog.Info("Metadata - guid: %v name: [%v] - Load start", guid, itemName)
-	newAppMetadata, err := commonMgr.LoadItemInternal(cliConnection, guid)
+	newAppMetadata, err := commonMgr.mm.LoadItemInternal(cliConnection, guid)
 	if err != nil {
 		return err
 	} else {
