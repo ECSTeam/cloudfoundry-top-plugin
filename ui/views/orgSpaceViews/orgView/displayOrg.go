@@ -18,7 +18,7 @@ package orgView
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 
 type DisplayOrg struct {
-	*org.Org
+	*org.OrgMetadata
 
 	QuotaName          string
 	MemoryLimitInBytes int64
@@ -43,9 +43,9 @@ type DisplayOrg struct {
 	HttpAllCount int64
 }
 
-func NewDisplayOrg(Org *org.Org) *DisplayOrg {
+func NewDisplayOrg(orgMd *org.OrgMetadata) *DisplayOrg {
 	stats := &DisplayOrg{}
-	stats.Org = Org
+	stats.OrgMetadata = orgMd
 	return stats
 }
 

@@ -15,13 +15,7 @@
 
 package isolationSegment
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 const SharedIsolationSegmentName = "shared"
 const DefaultIsolationSegmentGuid = "-1"
@@ -43,18 +37,27 @@ type IsolationSegmentResponse struct {
 	Resources  []IsolationSegment `json:"resources"`
 }
 
+func (resp *IsolationSegmentResponse) GetPagination() Pagination {
+	return resp.Pagination
+}
+
 type IsolationSegment struct {
-	Guid string `json:"guid"`
+	common.EntityCommon
+	//Guid string `json:"guid"`
 	Name string `json:"name"`
 }
 
 var (
-	DefaultIsolationSegment       = &IsolationSegment{Guid: DefaultIsolationSegmentGuid, Name: "default"}
-	SharedIsolationSegment        *IsolationSegment
-	UnknownIsolationSegment       = &IsolationSegment{Guid: UnknownIsolationSegmentGuid, Name: UnknownIsolationSegmentName}
-	isolationSegmentMetadataCache []*IsolationSegment
+	DefaultIsolationSegment = NewIsolationSegmentMetadata(IsolationSegment{EntityCommon: common.EntityCommon{Guid: DefaultIsolationSegmentGuid}, Name: "default"})
+	UnknownIsolationSegment = NewIsolationSegmentMetadata(IsolationSegment{EntityCommon: common.EntityCommon{Guid: UnknownIsolationSegmentGuid}, Name: UnknownIsolationSegmentName})
+	SharedIsolationSegment  *IsolationSegmentMetadata //= NewIsolationSegmentMetadata(IsolationSegment{})
 )
 
+func GetDefault() *IsolationSegmentMetadata {
+	return SharedIsolationSegment
+}
+
+/*
 func All() []*IsolationSegment {
 	return isolationSegmentMetadataCache
 }
@@ -135,3 +138,4 @@ func getMetadata(cliConnection plugin.CliConnection) ([]*IsolationSegment, error
 	return metadata, err
 
 }
+*/

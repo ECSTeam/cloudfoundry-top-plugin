@@ -22,12 +22,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventrouting"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 )
 
 type CommonData struct {
@@ -116,8 +111,8 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 	totalCrash24hCount := 0
 
 	for appId, appStats := range appMap {
-		displayAppStats := NewDisplayAppStats(appStats)
 
+		displayAppStats := NewDisplayAppStats(appStats)
 		displayAppStats.Monitored = cd.IsMonitoredAppGuid(appId)
 
 		displayStatsMap[appId] = displayAppStats
@@ -128,10 +123,12 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 			displayAppStats.AppName += "*"
 		}
 		displayAppStats.SpaceId = appMetadata.SpaceGuid
-		spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
+		spaceMetadata := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
 		displayAppStats.SpaceName = spaceMetadata.Name
 
-		displayAppStats.OrgId, displayAppStats.OrgName = org.FindBySpaceGuid(appMetadata.SpaceGuid)
+		orgMd := mdMgr.GetOrgMdManager().FindItem(spaceMetadata.OrgGuid)
+		displayAppStats.OrgId = orgMd.GetGuid()
+		displayAppStats.OrgName = orgMd.GetName()
 
 		totalCpuPercentage := 0.0
 		totalMemoryUsed := int64(0)
@@ -142,11 +139,11 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 			displayAppStats.DesiredContainers = int(appMetadata.Instances)
 		}
 
-		stack := stack.FindStackMetadata(appMetadata.StackGuid)
+		stack := mdMgr.GetStackMdManager().FindItem(appMetadata.StackGuid)
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
-		isoSeg := isolationSegment.FindMetadata(spaceMetadata.IsolationSegmentGuid)
+		isoSeg := mdMgr.GetIsoSegMdManager().FindItem(spaceMetadata.IsolationSegmentGuid)
 		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
 		displayAppStats.IsolationSegmentName = isoSeg.Name
 
@@ -180,9 +177,9 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 
 		for _, cs := range appStats.ContainerArray {
 			if cs != nil {
-
-				appInsts := appInstances.FindAppInstancesMetadata(appId)
+				appInsts := mdMgr.GetAppInstMdManager().FindItem(appId)
 				if appInsts != nil {
+
 					// If we have app instance metadata, lets check if the app is in a good state
 					appInst := appInsts.Data[strconv.Itoa(cs.ContainerIndex)]
 					if appInst == nil || appInst.State == "DOWN" || appInst.State == "CRASHED" {

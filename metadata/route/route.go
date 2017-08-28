@@ -20,8 +20,8 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -63,6 +63,7 @@ func CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid s
 }
 
 var (
+	mdGlobalManager             mdGlobalManagerInterface.MdGlobalManagerInterface
 	routesMetadataCache         []*Route
 	internalRoutesMetadataCache []*Route
 	// Key: routeId, value: list of AppId
@@ -133,10 +134,11 @@ func getAppIdsForRoute(cliConnection plugin.CliConnection, routeId string) []str
 	return appIdList
 }
 
-func getAppsForRoute(cliConnection plugin.CliConnection, routeId string) ([]common.BaseMetadataItemI, error) {
+func getAppsForRoute(cliConnection plugin.CliConnection, routeId string) ([]common.IMetadata, error) {
 	url := fmt.Sprintf("/v2/routes/%v/apps", routeId)
 	toplog.Debug("getAppsForRoute url: %v", url)
-	return app.GetMetadataFromUrl(cliConnection, url)
+	//return mdGlobalManager..GetMetadataFromUrl(cliConnection, url)
+	return nil, nil
 }
 
 func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {

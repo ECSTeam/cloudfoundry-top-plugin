@@ -19,50 +19,70 @@ import (
 	"sync"
 	"time"
 
-	"code.cloudfoundry.org/cli/plugin"
-
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
 const DelayedRemovalFromCacheDuration = 15 * time.Second
 
 type MetadataManager interface {
-	NewItemById(guid string) BaseMetadataItemI
-	//LoadItem(cliConnection plugin.CliConnection, appId string) error
-	LoadItemInternal(cliConnection plugin.CliConnection, appId string) (BaseMetadataItemI, error)
-	LoadInternal(cliConnection plugin.CliConnection) ([]BaseMetadataItemI, error)
+	NewItemById(guid string) IMetadata
+	LoadItemInternal(guid string) (IMetadata, error)
 }
 
-type BaseMetadataManager struct {
-	mm          MetadataManager
-	mu          sync.Mutex
-	MetadataMap map[string]BaseMetadataItemI
+type CommonMetadataManager struct {
+	mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface
+	url             string
+
+	mm                 MetadataManager
+	mu                 sync.Mutex
+	MetadataMap        map[string]IMetadata
+	autoLoadIfNotFound bool
 
 	pendingDeleteFromCache map[string]*time.Time
 	deletedFromCache       map[string]*time.Time
 }
 
-func NewBaseMetadataManager(mm MetadataManager) *BaseMetadataManager {
-	commonMgr := &BaseMetadataManager{mm: mm}
-	commonMgr.MetadataMap = make(map[string]BaseMetadataItemI)
-
-	commonMgr.pendingDeleteFromCache = make(map[string]*time.Time)
-	commonMgr.deletedFromCache = make(map[string]*time.Time)
-
+func NewCommonMetadataManager(
+	mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface,
+	url string,
+	mm MetadataManager) *CommonMetadataManager {
+	commonMgr := &CommonMetadataManager{mdGlobalManager: mdGlobalManager, url: url, mm: mm}
+	commonMgr.clear()
 	return commonMgr
 }
 
-func (commonMgr *BaseMetadataManager) CacheSize() int {
+func (commonMgr *CommonMetadataManager) GetUrl() string {
+	return commonMgr.url
+}
+
+func (commonMgr *CommonMetadataManager) GetMdGlobalManager() mdGlobalManagerInterface.MdGlobalManagerInterface {
+	return commonMgr.mdGlobalManager
+}
+
+func (commonMgr *CommonMetadataManager) clear() {
+	commonMgr.MetadataMap = make(map[string]IMetadata)
+	commonMgr.pendingDeleteFromCache = make(map[string]*time.Time)
+	commonMgr.deletedFromCache = make(map[string]*time.Time)
+}
+
+func (commonMgr *CommonMetadataManager) Clear() {
+	commonMgr.mu.Lock()
+	defer commonMgr.mu.Unlock()
+	commonMgr.clear()
+}
+
+func (commonMgr *CommonMetadataManager) CacheSize() int {
 	return len(commonMgr.MetadataMap)
 }
 
-func (commonMgr *BaseMetadataManager) AddItem(metadataItem BaseMetadataItemI) {
+func (commonMgr *CommonMetadataManager) AddItem(metadataItem IMetadata) {
 	commonMgr.mu.Lock()
 	defer commonMgr.mu.Unlock()
 	commonMgr.MetadataMap[metadataItem.GetGuid()] = metadataItem
 }
 
-func (commonMgr *BaseMetadataManager) DeleteItem(guid string) {
+func (commonMgr *CommonMetadataManager) DeleteItem(guid string) {
 	commonMgr.mu.Lock()
 	defer commonMgr.mu.Unlock()
 	delete(commonMgr.MetadataMap, guid)
@@ -71,14 +91,14 @@ func (commonMgr *BaseMetadataManager) DeleteItem(guid string) {
 	commonMgr.deletedFromCache[guid] = &now
 }
 
-func (commonMgr *BaseMetadataManager) FindItemInternal(guid string, requestLoadIfNotFound bool) BaseMetadataItemI {
+func (commonMgr *CommonMetadataManager) FindItemInternal(guid string, requestLoadIfNotFound bool, createEmptyObjectIfNotFound bool) IMetadata {
 
 	commonMgr.mu.Lock()
 	defer commonMgr.mu.Unlock()
 
 	//TODO: error: concurrent map read and map write
 	metadataItem := commonMgr.MetadataMap[guid]
-	if metadataItem == nil {
+	if metadataItem == nil && createEmptyObjectIfNotFound {
 		metadataItem = commonMgr.mm.NewItemById(guid)
 		if requestLoadIfNotFound {
 			// TODO: Queue metadata load for this id
@@ -92,7 +112,7 @@ func (commonMgr *BaseMetadataManager) FindItemInternal(guid string, requestLoadI
 }
 
 // Called via a seperate thread - after a delay, remove the requested guid from cache
-func (commonMgr *BaseMetadataManager) DelayedRemovalFromCache(guid string, itemName string) {
+func (commonMgr *CommonMetadataManager) DelayedRemovalFromCache(guid string, itemName string) {
 
 	commonMgr.addToPendingDeleteFromCache(guid, itemName)
 	time.Sleep(DelayedRemovalFromCacheDuration)
@@ -100,7 +120,7 @@ func (commonMgr *BaseMetadataManager) DelayedRemovalFromCache(guid string, itemN
 	commonMgr.DeleteItem(guid)
 }
 
-func (commonMgr *BaseMetadataManager) addToPendingDeleteFromCache(guid string, itemName string) {
+func (commonMgr *CommonMetadataManager) addToPendingDeleteFromCache(guid string, itemName string) {
 	commonMgr.mu.Lock()
 	defer commonMgr.mu.Unlock()
 
@@ -112,50 +132,34 @@ func (commonMgr *BaseMetadataManager) addToPendingDeleteFromCache(guid string, i
 	commonMgr.pendingDeleteFromCache[guid] = &now
 }
 
-func (commonMgr *BaseMetadataManager) IsDeletedFromCache(guid string) bool {
+func (commonMgr *CommonMetadataManager) IsDeletedFromCache(guid string) bool {
 	return commonMgr.deletedFromCache[guid] != nil
 }
 
-func (commonMgr *BaseMetadataManager) IsPendingDeleteFromCache(guid string) bool {
+func (commonMgr *CommonMetadataManager) IsPendingDeleteFromCache(guid string) bool {
 	return commonMgr.pendingDeleteFromCache[guid] != nil
 }
 
-func (commonMgr *BaseMetadataManager) MetadataLoadMethod(cliConnection plugin.CliConnection, guid string) error {
-	return commonMgr.LoadItem(cliConnection, guid)
+func (commonMgr *CommonMetadataManager) MetadataLoadMethod(guid string) error {
+	return commonMgr.LoadItem(guid)
 }
 
-func (commonMgr *BaseMetadataManager) MinimumReloadDuration() time.Duration {
+func (commonMgr *CommonMetadataManager) MinimumReloadDuration() time.Duration {
 	return time.Millisecond * 10000
 }
 
 // Last time data was loaded or nil if never
-func (commonMgr *BaseMetadataManager) LastLoadTime(dataKey string) *time.Time {
-	item := commonMgr.FindItemInternal(dataKey, false)
+func (commonMgr *CommonMetadataManager) LastLoadTime(dataKey string) *time.Time {
+	item := commonMgr.FindItemInternal(dataKey, false, false)
 	if item != nil {
 		return item.GetCacheTime()
 	}
 	return nil
 }
 
-func (commonMgr *BaseMetadataManager) LoadCache(cliConnection plugin.CliConnection) {
-	metadataItemArray, err := commonMgr.mm.LoadInternal(cliConnection)
-	if err != nil {
-		toplog.Warn("*** app metadata error: %v", err.Error())
-		return
-	}
+func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 
-	metadataMap := make(map[string]BaseMetadataItemI)
-	for _, metadataItem := range metadataItemArray {
-		//toplog.Debug("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name)
-		metadataMap[metadataItem.GetGuid()] = metadataItem
-	}
-
-	commonMgr.MetadataMap = metadataMap
-}
-
-func (commonMgr *BaseMetadataManager) LoadItem(cliConnection plugin.CliConnection, guid string) error {
-
-	metadataItem := commonMgr.FindItemInternal(guid, false)
+	metadataItem := commonMgr.FindItemInternal(guid, commonMgr.autoLoadIfNotFound, true)
 	itemName := metadataItem.GetName()
 
 	if commonMgr.IsPendingDeleteFromCache(guid) {
@@ -164,14 +168,14 @@ func (commonMgr *BaseMetadataManager) LoadItem(cliConnection plugin.CliConnectio
 	}
 
 	toplog.Info("Metadata - guid: %v name: [%v] - Load start", guid, itemName)
-	newAppMetadata, err := commonMgr.mm.LoadItemInternal(cliConnection, guid)
+	newMetadata, err := commonMgr.mm.LoadItemInternal(guid)
 	if err != nil {
 		return err
 	} else {
-		itemName = newAppMetadata.GetName()
+		itemName = newMetadata.GetName()
 		if itemName != "" {
 			// Only save if it really loaded
-			commonMgr.AddItem(newAppMetadata)
+			commonMgr.AddItem(newMetadata)
 		} else {
 			// If we can't reload this guid then it must have been deleted
 			// Remove from metadata cache AND remove from appstats in "current" processor

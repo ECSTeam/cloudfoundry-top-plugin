@@ -15,13 +15,7 @@
 
 package stack
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type StackResponse struct {
 	Count     int             `json:"total_results"`
@@ -36,11 +30,13 @@ type StackResource struct {
 }
 
 type Stack struct {
-	Guid        string `json:"guid"`
+	common.EntityCommon
+	//Guid        string `json:"guid"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
+/*
 var (
 	stacksMetadataCache []Stack
 )
@@ -91,3 +87,5 @@ func getStackMetadata(cliConnection plugin.CliConnection) ([]Stack, error) {
 	return metadata, err
 
 }
+
+*/

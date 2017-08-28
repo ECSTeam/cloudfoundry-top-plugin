@@ -15,8 +15,7 @@
 
 package common
 
-import "time"
-
+/*
 type BaseMetadataItemI interface {
 	GetCacheTime() *time.Time
 	GetGuid() string
@@ -37,8 +36,11 @@ func NewBaseMetadataItem() *BaseMetadataItem {
 func (mdItem *BaseMetadataItem) GetCacheTime() *time.Time {
 	return mdItem.cacheTime
 }
+*/
 
 // ------
 
+/*
 type IResponseV2Type interface {
 }
+*/

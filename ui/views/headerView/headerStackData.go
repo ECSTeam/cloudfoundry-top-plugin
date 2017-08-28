@@ -22,8 +22,7 @@ import (
 	"strings"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -110,7 +109,10 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	isWarmupComplete := asUI.masterUI.IsWarmupComplete()
 
-	stacks := stack.AllStacks()
+	router := asUI.router
+	processor := router.GetProcessor()
+	mdMgr := processor.GetMetadataManager()
+	stacks := mdMgr.GetStackMdManager().GetAll()
 	if len(stacks) == 0 {
 		fmt.Fprintf(v, "\n Waiting for more data...")
 		return 3, nil
@@ -120,10 +122,11 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	summaryStatsByIsoSeg := make(map[string]map[string]*StackSummaryStats)
 	//summaryStatsByStack := make(map[string]*StackSummaryStats)
 
-	isolationSegments := isolationSegment.All()
+	isolationSegments := mdMgr.GetIsoSegMdManager().GetAll()
+
 	if len(isolationSegments) == 0 {
 		// We must be running against a Cloud Foundry foundation prior to isolation segment support
-		isolationSegments = []*isolationSegment.IsolationSegment{isolationSegment.GetDefault()}
+		isolationSegments = []*isolationSegment.IsolationSegmentMetadata{isolationSegment.GetDefault()}
 	} else {
 		isolationSegments = append(isolationSegments, isolationSegment.UnknownIsolationSegment)
 		//isolationSegments = append(isolationSegments, isolationSegment.SharedIsolationSegment)
@@ -132,6 +135,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	for _, isoSeg := range isolationSegments {
 		summaryStatsByIsoSeg[isoSeg.Guid] = make(map[string]*StackSummaryStats)
 		for _, stack := range stacks {
+
+			//toplog.Info("isoSeg.Guid: %v  stack.Guid: %v", isoSeg.Guid, stack.Guid)
 			summaryStatsByIsoSeg[isoSeg.Guid][stack.Guid] = &StackSummaryStats{
 				IsolationSegmentGuid: isoSeg.Guid,
 				IsolationSegmentName: isoSeg.Name,
@@ -153,9 +158,13 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	for _, appStats := range asUI.commonData.GetDisplayAppStatsMap() {
 		isolationSegGuid := appStats.IsolationSegmentGuid
+
+		toplog.Info("isolationSegGuid-1: %v", isolationSegGuid)
 		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
 			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
+		toplog.Info("isolationSegGuid-2: %v", isolationSegGuid)
+
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
 			// This appStats has no stackId -- This could be caused by not having
@@ -188,12 +197,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		sumStats.TotalApps++
 	}
 
-	router := asUI.router
-	processor := router.GetProcessor()
-
-	appMdMgr := processor.GetMetadataManager().GetAppMdManager()
+	appMdMgr := mdMgr.GetAppMdManager()
 	for _, app := range appMdMgr.AllApps() {
-		spaceMetadata := space.FindSpaceMetadata(app.SpaceGuid)
+		spaceMetadata := mdMgr.GetSpaceMdManager().FindItem(app.SpaceGuid)
 		isolationSegGuid := spaceMetadata.IsolationSegmentGuid
 		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
 			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid

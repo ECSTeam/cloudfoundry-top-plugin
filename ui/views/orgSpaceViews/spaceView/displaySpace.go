@@ -18,7 +18,7 @@ package spaceView
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 
 type DisplaySpace struct {
-	*space.Space
+	*space.SpaceMetadata
 
 	QuotaName          string
 	MemoryLimitInBytes int64
@@ -46,9 +46,9 @@ type DisplaySpace struct {
 	IsolationSegmentName string
 }
 
-func NewDisplaySpace(spaceMetadata *space.Space) *DisplaySpace {
+func NewDisplaySpace(spaceMetadata *space.SpaceMetadata) *DisplaySpace {
 	stats := &DisplaySpace{}
-	stats.Space = spaceMetadata
+	stats.SpaceMetadata = spaceMetadata
 	return stats
 }
 

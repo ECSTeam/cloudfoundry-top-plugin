@@ -19,8 +19,6 @@ import (
 	"fmt"
 
 	"github.com/atotto/clipboard"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -76,10 +74,13 @@ func (asUI *CopyMenu) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId stri
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
+	appMetadata := asUI.GetMdGlobalMgr().GetAppMdManager().FindItem(selectedAppId)
 	appName := appMetadata.Name
-	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
-	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+	spaceMd := asUI.GetMdGlobalMgr().GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+	spaceName := spaceMd.Name
+	orgMdMgr := asUI.GetMdGlobalMgr().GetOrgMdManager()
+	org := orgMdMgr.FindItem(spaceMd.OrgGuid)
+	orgName := org.Name
 
 	switch menuId {
 	case "cftarget":

@@ -20,11 +20,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/jroimartin/gocui"
 )
@@ -34,12 +32,12 @@ type RouteMapDetailWidget struct {
 	name             string
 	height           int
 	routeMapListView *RouteMapListView
-	appMdMgr         *app.AppMetadataManager
+	mdMgr            *metadata.GlobalManager
 }
 
 func NewRouteMapDetailWidget(masterUI masterUIInterface.MasterUIInterface, name string, height int, routeMapListView *RouteMapListView) *RouteMapDetailWidget {
-	appMdMgr := routeMapListView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-	return &RouteMapDetailWidget{masterUI: masterUI, name: name, height: height, routeMapListView: routeMapListView, appMdMgr: appMdMgr}
+	mdMgr := routeMapListView.GetEventProcessor().GetMetadataManager()
+	return &RouteMapDetailWidget{masterUI: masterUI, name: name, height: height, routeMapListView: routeMapListView, mdMgr: mdMgr}
 }
 
 func (w *RouteMapDetailWidget) Name() string {
@@ -91,9 +89,9 @@ func (w *RouteMapDetailWidget) refreshDisplay(g *gocui.Gui) error {
 		domainType = "Shared"
 	}
 
-	spaceMd := space.FindSpaceMetadata(routeMd.SpaceGuid)
+	spaceMd := w.mdMgr.GetSpaceMdManager().FindItem(routeMd.SpaceGuid)
 	spaceName := spaceMd.Name
-	orgMd := org.FindOrgMetadata(spaceMd.OrgGuid)
+	orgMd := w.mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
 	orgName := orgMd.Name
 
 	v.Clear()

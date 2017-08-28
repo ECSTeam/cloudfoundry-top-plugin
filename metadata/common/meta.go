@@ -20,3 +20,7 @@ type Meta struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
+
+type MetaV3 struct {
+	Guid string `json:"guid"`
+}

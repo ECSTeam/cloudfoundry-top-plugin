@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.Space/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,19 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package spaceQuota
+package space
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-type SpaceQuotaMetadata struct {
+type SpaceMetadata struct {
 	*common.Metadata
-	*SpaceQuota
+	*Space
 }
 
-func NewSpaceQuotaMetadata(spaceQuota SpaceQuota) *SpaceQuotaMetadata {
-	return &SpaceQuotaMetadata{Metadata: &common.Metadata{}, SpaceQuota: &spaceQuota}
+func NewSpaceMetadata(Space Space) *SpaceMetadata {
+	return &SpaceMetadata{Metadata: &common.Metadata{}, Space: &Space}
 }
 
-func NewSpaceQuotaMetadataById(id string) *SpaceQuotaMetadata {
-	return NewSpaceQuotaMetadata(SpaceQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+func NewSpaceMetadataById(id string) *SpaceMetadata {
+	return NewSpaceMetadata(Space{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+}
+
+func (metadataItem *SpaceMetadata) GetName() string {
+	return metadataItem.Name
 }

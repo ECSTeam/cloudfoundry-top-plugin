@@ -16,25 +16,23 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 
-	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 )
 
 type AppMetadataManager struct {
-	*common.BaseMetadataManager
+	*common.CommonV2ResponseManager
 	mu sync.Mutex
 }
 
-func NewAppMetadataManager() *AppMetadataManager {
-
+func NewAppMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *AppMetadataManager {
+	url := "/v2/apps"
 	mdMgr := &AppMetadataManager{}
-	mdMgr.BaseMetadataManager = common.NewBaseMetadataManager(mdMgr)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, false)
 	loader.RegisterMetadataHandler(loader.APP, mdMgr)
 	return mdMgr
 }
@@ -50,64 +48,47 @@ func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 }
 
 func (mdMgr *AppMetadataManager) FindItem(appId string) *AppMetadata {
-	return mdMgr.FindItemInternal(appId, false).(*AppMetadata)
+	return mdMgr.FindItemInternal(appId, false, true).(*AppMetadata)
 }
 
-func (mdMgr *AppMetadataManager) NewItemById(guid string) common.BaseMetadataItemI {
+func (mdMgr *AppMetadataManager) NewItemById(guid string) common.IMetadata {
 	return NewAppMetadataById(guid)
 }
 
-func (mdMgr *AppMetadataManager) LoadItemInternal(cliConnection plugin.CliConnection, guid string) (common.BaseMetadataItemI, error) {
-	url := "/v2/apps/" + guid
-	emptyApp := mdMgr.NewItemById(guid)
-
-	outputStr, err := common.CallAPI(cliConnection, url)
-	if err != nil {
-		return emptyApp, err
-	}
-	outputBytes := []byte(outputStr)
-	var appResource AppResource
-	err = json.Unmarshal(outputBytes, &appResource)
-	if err != nil {
-		return emptyApp, err
-	}
-	appResource.Entity.Guid = appResource.Meta.Guid
-	appMetadata := NewAppMetadata(appResource.Entity)
-	return appMetadata, nil
+func (mdMgr *AppMetadataManager) CreateResponseObject() common.IResponse {
+	return &AppResponse{}
 }
 
-func (mdMgr *AppMetadataManager) LoadInternal(cliConnection plugin.CliConnection) ([]common.BaseMetadataItemI, error) {
-	return GetMetadataFromUrl(cliConnection, "/v2/apps")
+func (mdMgr *AppMetadataManager) CreateResourceObject() common.IResource {
+	return &AppResource{}
 }
 
-func GetMetadataFromUrl(cliConnection plugin.CliConnection, url string) ([]common.BaseMetadataItemI, error) {
+func (mdMgr *AppMetadataManager) CreateMetadataEntityObject(guid string) common.IMetadata {
+	return NewAppMetadataById(guid)
+}
 
-	metadataItemArray := []common.BaseMetadataItemI{}
-	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
-		var appResp AppResponse
-		err = json.Unmarshal(outputBytes, &appResp)
-		if err != nil {
-			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-			return metadataItemArray, "", err
-		}
-		for _, app := range appResp.Resources {
-			app.Entity.Guid = app.Meta.Guid
-			appMetadata := NewAppMetadata(app.Entity)
-			metadataItemArray = append(metadataItemArray, appMetadata)
-		}
-		return appResp, appResp.NextUrl, nil
+func (mdMgr *AppMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
+	resp := response.(*AppResponse)
+	for _, item := range resp.Resources {
+		item.Entity.Guid = item.Meta.Guid
+		metadata := NewAppMetadata(item.Entity)
+		metadataArray = append(metadataArray, metadata)
 	}
+	return metadataArray
+}
 
-	err := common.CallPagableAPI(cliConnection, url, handleRequest)
-	return metadataItemArray, err
-
+func (mdMgr *AppMetadataManager) ProcessResource(resource common.IResource) common.IMetadata {
+	resourceType := resource.(*AppResource)
+	resourceType.Entity.Guid = resourceType.Meta.Guid
+	metadata := NewAppMetadata(resourceType.Entity)
+	return metadata
 }
 
 func (mdMgr *AppMetadataManager) CreateTestData(dataSize int) {
-	metadataMap := make(map[string]common.BaseMetadataItemI)
+	metadataMap := make(map[string]common.IMetadata)
 	for i := 0; i < dataSize; i++ {
 		guid := fmt.Sprintf("GUID-%02v", i)
-		app := &App{Guid: guid, Name: guid}
+		app := &App{EntityCommon: common.EntityCommon{Guid: guid}, Name: guid}
 		appMetadata := NewAppMetadata(*app)
 		metadataMap[guid] = appMetadata
 	}

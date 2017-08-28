@@ -16,143 +16,48 @@
 package appInstances
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"strings"
-	"sync"
 	"time"
 
-	"code.cloudfoundry.org/cli/plugin"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
 // ****************************************************************
 // The following are used used calling API: /v2/apps/APP_GUID/instances
 // ****************************************************************
 type AppInstances struct {
-	CacheTime *time.Time
-	Data      map[string]*AppInstance
+	//*common.BaseMetadataItem
+	*common.Metadata
+	*common.EntityCommon
+	Data map[string]*AppInstance
+	Guid string
+	Name string
 }
+
+func NewAppInstances(appId string) *AppInstances {
+	data := make(map[string]*AppInstance)
+	appInst := NewAppInstancesWithData(appId, data)
+	return appInst
+}
+
+func NewAppInstancesWithData(appId string, data map[string]*AppInstance) *AppInstances {
+	appInst := &AppInstances{Guid: appId, Name: appId, Data: data}
+	appInst.Metadata = common.NewMetadata()
+	return appInst
+}
+
+func (metadataItem *AppInstances) GetGuid() string {
+	return metadataItem.Guid
+}
+
+func (metadataItem *AppInstances) GetName() string {
+	return metadataItem.Name
+}
+
 type AppInstance struct {
 	Details   string     `json:"details"`
 	Since     float64    `json:"since"`
 	State     string     `json:"state"`
 	Uptime    int64      `json:"uptime"`
 	StartTime *time.Time // This will be populated on post-processing of response
-
-}
-
-var (
-	// A map of AppIds
-	appInstancesMetadataCache = make(map[string]*AppInstances)
-	mu                        sync.Mutex
-)
-
-func init() {
-	mh := &MetadataHandler{}
-	loader.RegisterMetadataHandler(loader.APP_INST, mh)
-}
-
-type MetadataHandler struct {
-}
-
-func (mh MetadataHandler) MetadataLoadMethod(cliConnection plugin.CliConnection, guid string) error {
-	return LoadAppInstancesCache(cliConnection, guid)
-}
-
-func (mh MetadataHandler) MinimumReloadDuration() time.Duration {
-	return time.Millisecond * 1000
-}
-
-// Last time data was loaded or nil if never
-func (mh MetadataHandler) LastLoadTime(dataKey string) *time.Time {
-	item := findAppInstancesMetadataInternal(dataKey)
-	if item != nil {
-		return item.CacheTime
-	}
-	return nil
-}
-
-func FindAppInstancesMetadata(appId string) *AppInstances {
-	return findAppInstancesMetadataInternal(appId)
-}
-
-func ClearAppInstancesMetadata(appId string) {
-	mu.Lock()
-	defer mu.Unlock()
-	appInstancesMetadataCache[appId] = nil
-}
-
-func findAppInstancesMetadataInternal(appId string) *AppInstances {
-	mu.Lock()
-	defer mu.Unlock()
-	return appInstancesMetadataCache[appId]
-}
-
-func LoadAppInstancesCache(cliConnection plugin.CliConnection, appId string) error {
-
-	now := time.Now()
-	data, err := getAppInstancesMetadata(cliConnection, appId)
-	if err != nil {
-		toplog.Warn("*** app instance metadata error: %v  response: %v   appId: %v", err.Error(), data, appId)
-		return err
-	}
-
-	instStats := &AppInstances{CacheTime: &now, Data: data}
-	mu.Lock()
-	defer mu.Unlock()
-	appInstancesMetadataCache[appId] = instStats
-	return nil
-}
-
-func Clear() {
-	mu.Lock()
-	defer mu.Unlock()
-	appInstancesMetadataCache = make(map[string]*AppInstances)
-}
-
-func getAppInstancesMetadata(cliConnection plugin.CliConnection, appId string) (map[string]*AppInstance, error) {
-
-	url := "/v2/apps/" + appId + "/instances"
-
-	output, err := common.CallAPI(cliConnection, url)
-	if err != nil {
-		return nil, err
-	}
-
-	if strings.Contains(output, "error_code") {
-		// "Instances error: Request failed for app: cf-nodejs as the app is in stopped state."
-		if strings.Contains(output, "220001") {
-			// This error is OK
-			return make(map[string]*AppInstance), nil
-		} else {
-			errMsg := fmt.Sprintf("Error from API call: %v", output)
-			return nil, errors.New(errMsg)
-		}
-	}
-
-	response := make(map[string]*AppInstance)
-	outputBytes := []byte(output)
-	err = json.Unmarshal(outputBytes, &response)
-	if err != nil {
-		toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
-		return response, err
-	}
-
-	// Set the startTime relative to now and uptime of the container
-	for _, stat := range response {
-		// Ignore "uptime" field if container is in state DOWN
-		if stat.State == "DOWN" {
-			stat.Uptime = 0
-		} else {
-			startTime := time.Unix(int64(stat.Since), 0)
-			stat.StartTime = &startTime
-		}
-	}
-
-	return response, nil
 
 }

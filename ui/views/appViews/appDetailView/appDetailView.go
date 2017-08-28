@@ -24,10 +24,7 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
@@ -239,9 +236,11 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	appId := appStats.AppId
 	asUI.GetEventProcessor().GetMetadataManager().MonitorAppDetails(appId, &now)
 
-	appMetadata := asUI.GetAppMdMgr().FindItem(appId)
+	mdMgr := asUI.GetMdGlobalMgr()
+	mdAppMgr := mdMgr.GetAppMdManager()
+	appMetadata := mdAppMgr.FindItem(appId)
 
-	appInsts := appInstances.FindAppInstancesMetadata(appId)
+	appInsts := asUI.GetEventProcessor().GetMetadataManager().GetAppInstMdManager().FindItem(appId)
 	if appInsts == nil && appMetadata.State == "STARTED" {
 		// Update the app instance statistics
 		asUI.GetEventProcessor().GetMetadataManager().RequestRefreshAppInstancesMetadata(appId)
@@ -284,7 +283,7 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 				displayContainerStatsMap[containerStats.ContainerIndex] = displayContainerStats
 				if appInsts != nil {
 					if containerStats.CellLastCreatingMsgTime == nil || (containerStats.CellLastCreatingMsgTime != nil &&
-						appInsts.CacheTime.After(*containerStats.CellLastCreatingMsgTime)) {
+						appInsts.GetCacheTime().After(*containerStats.CellLastCreatingMsgTime)) {
 						displayContainerStats.State = "TERM"
 					} else {
 						displayContainerStats.State = "UNKNOWN"
@@ -295,9 +294,12 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			} else {
 				displayContainerStats.ContainerStats = containerStats
 			}
+
 			displayContainerStats.AppName = appMetadata.Name
-			displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
-			displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+			spaceMd := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+			displayContainerStats.SpaceName = spaceMd.Name
+			orgMd := mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+			displayContainerStats.OrgName = orgMd.Name
 
 			if containerStats.CellCreatedMsgTime != nil && containerStats.CellHealthyMsgTime != nil {
 				startupDuration := containerStats.CellHealthyMsgTime.Sub(*containerStats.CellCreatedMsgTime)

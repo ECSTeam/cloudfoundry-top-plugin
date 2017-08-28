@@ -41,7 +41,7 @@ const ALL = ""
 var metadataHandlerMap map[DataType]MetadataHandler = make(map[DataType]MetadataHandler)
 
 type MetadataHandler interface {
-	MetadataLoadMethod(cliConnection plugin.CliConnection, guid string) error
+	MetadataLoadMethod(guid string) error
 	MinimumReloadDuration() time.Duration
 	LastLoadTime(dataKey string) *time.Time
 }
@@ -272,7 +272,7 @@ func (lh *LoadHandler) load(loadRequest *LoadRequest) {
 		toplog.Error("Metadata loader - MetadataLoadHandler not found: %v", loadRequest)
 		return
 	}
-	err := metadataHandler.MetadataLoadMethod(lh.cliConnection, loadRequest.dataKey)
+	err := metadataHandler.MetadataLoadMethod(loadRequest.dataKey)
 	if err != nil {
 		// re-queue to load later if not at max load attempts
 		loadRequest.loadAttempts = loadRequest.loadAttempts + 1

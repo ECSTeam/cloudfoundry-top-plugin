@@ -21,26 +21,37 @@ import (
 )
 
 type SpaceQuotaMetadataManager struct {
-	*common.MdCommonManager
+	*common.CommonV2ResponseManager
 }
 
 func NewSpaceQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *SpaceQuotaMetadataManager {
 	url := "/v2/space_quota_definitions"
 	mdMgr := &SpaceQuotaMetadataManager{}
-	commonMgr := common.NewMdCommonManager(mdGlobalManager, url, mdMgr.createResponseObject, mdMgr.createMetadataEntityObject, mdMgr.processResponse)
-	mdMgr.MdCommonManager = commonMgr
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)
 	return mdMgr
 }
 
-func (mdMgr *SpaceQuotaMetadataManager) createResponseObject() common.IResponse {
-	return &SpaceQuotaResponse{}
+func (mdMgr *SpaceQuotaMetadataManager) FindItem(appId string) *SpaceQuotaMetadata {
+	return mdMgr.FindItemInternal(appId, false, true).(*SpaceQuotaMetadata)
 }
 
-func (mdMgr *SpaceQuotaMetadataManager) createMetadataEntityObject(guid string) common.IMetadata {
+func (mdMgr *SpaceQuotaMetadataManager) NewItemById(guid string) common.IMetadata {
 	return NewSpaceQuotaMetadataById(guid)
 }
 
-func (mdMgr *SpaceQuotaMetadataManager) processResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
+func (mdMgr *SpaceQuotaMetadataManager) CreateResponseObject() common.IResponse {
+	return &SpaceQuotaResponse{}
+}
+
+func (mdMgr *SpaceQuotaMetadataManager) CreateResourceObject() common.IResource {
+	return &SpaceQuotaResource{}
+}
+
+func (mdMgr *SpaceQuotaMetadataManager) CreateMetadataEntityObject(guid string) common.IMetadata {
+	return NewSpaceQuotaMetadataById(guid)
+}
+
+func (mdMgr *SpaceQuotaMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*SpaceQuotaResponse)
 	for _, item := range resp.Resources {
 		item.Entity.Guid = item.Meta.Guid
@@ -50,6 +61,9 @@ func (mdMgr *SpaceQuotaMetadataManager) processResponse(response common.IRespons
 	return metadataArray
 }
 
-func (mdMgr *SpaceQuotaMetadataManager) Find(guid string) *SpaceQuotaMetadata {
-	return mdMgr.MdCommonManager.Find(guid).(*SpaceQuotaMetadata)
+func (mdMgr *SpaceQuotaMetadataManager) ProcessResource(resource common.IResource) common.IMetadata {
+	resourceType := resource.(*SpaceQuotaResource)
+	resourceType.Entity.Guid = resourceType.Meta.Guid
+	metadata := NewSpaceQuotaMetadata(resourceType.Entity)
+	return metadata
 }

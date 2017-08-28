@@ -21,8 +21,6 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
@@ -62,8 +60,8 @@ func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	org := org.FindOrgMetadata(orgId)
-	dataListView.SetTitle(fmt.Sprintf("Space List of Org %v", org.Name))
+	orgMd := eventProcessor.GetMetadataManager().GetOrgMdManager().FindItem(orgId)
+	dataListView.SetTitle(fmt.Sprintf("Space List of Org %v", orgMd.Name))
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 
@@ -171,10 +169,14 @@ func (asUI *SpaceListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
+	mdMgr := asUI.GetMdGlobalMgr()
+	appMetadata := mdMgr.GetAppMdManager().FindItem(selectedAppId)
 	appName := appMetadata.Name
-	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
-	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
+	spaceMd := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+	spaceName := spaceMd.Name
+	orgMd := mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+	orgName := orgMd.Name
 
 	switch menuId {
 	case "cftarget":
@@ -202,12 +204,14 @@ func (asUI *SpaceListView) GetListData() []uiCommon.IData {
 func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 
 	orgId := asUI.orgId
-	spaceQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetSpaceQuotaMdManager()
-	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	mdMgr := asUI.GetEventProcessor().GetMetadataManager()
+	spaceQuotaMdMgr := mdMgr.GetSpaceQuotaMdManager()
+	appMdMgr := mdMgr.GetAppMdManager()
 
 	// Get list of space in selected org
-	allSpaces := space.All()
-	orgSpaces := make([]space.Space, 0)
+	allSpaces := mdMgr.GetSpaceMdManager().GetAll()
+
+	orgSpaces := make([]*space.SpaceMetadata, 0)
 	for _, spaceMetadata := range allSpaces {
 		if spaceMetadata.OrgGuid == orgId {
 			orgSpaces = append(orgSpaces, spaceMetadata)
@@ -231,20 +235,20 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 	// Build Map of Spaces
 	displaySpaceMap := make(map[string]*DisplaySpace)
 	for _, spaceMetadata := range orgSpaces {
-		aSpaceMetadata := spaceMetadata
-		displaySpace := NewDisplaySpace(&aSpaceMetadata)
+		displaySpace := NewDisplaySpace(spaceMetadata)
 		displaySpaceMap[spaceMetadata.Guid] = displaySpace
 		displaySpace.NumberOfApps = len(appsBySpaceMap[spaceMetadata.Guid])
 
 		if spaceMetadata.QuotaGuid != "" {
-			spaceQuotaMd := spaceQuotaMdMgr.Find(spaceMetadata.QuotaGuid)
+			spaceQuotaMd := spaceQuotaMdMgr.FindItem(spaceMetadata.QuotaGuid)
 			displaySpace.QuotaName = spaceQuotaMd.Name
 			displaySpace.MemoryLimitInBytes = int64(spaceQuotaMd.MemoryLimit) * util.MEGABYTE
 		} else {
 			displaySpace.QuotaName = "-none-"
 		}
 
-		isoSegName := isolationSegment.FindName(spaceMetadata.IsolationSegmentGuid)
+		isoSegMd := mdMgr.GetIsoSegMdManager().FindItem(spaceMetadata.IsolationSegmentGuid)
+		isoSegName := isoSegMd.Name
 		displaySpace.IsolationSegmentName = isoSegName
 
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
@@ -273,9 +277,10 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			displaySpace.TotalMemoryReservedPercentOfSpaceQuota = (float64(displaySpace.TotalMemoryReserved) / float64(displaySpace.MemoryLimitInBytes)) * 100
 		}
 
-		org := org.FindOrgMetadata(orgId)
+		orgMd := mdMgr.GetOrgMdManager().FindItem(orgId)
+
 		orgQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetOrgQuotaMdManager()
-		orgQuotaMd := orgQuotaMdMgr.Find(org.QuotaGuid)
+		orgQuotaMd := orgQuotaMdMgr.FindItem(orgMd.QuotaGuid)
 		orgQuotaMemoryLimitInBytes := orgQuotaMd.MemoryLimit * util.MEGABYTE
 		if orgQuotaMemoryLimitInBytes > 0 {
 			displaySpace.TotalMemoryReservedPercentOfOrgQuota = (float64(displaySpace.TotalMemoryReserved) / float64(orgQuotaMemoryLimitInBytes)) * 100

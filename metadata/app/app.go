@@ -30,7 +30,9 @@ type AppResource struct {
 }
 
 type App struct {
-	Guid      string `json:"guid"`
+	common.EntityCommon
+
+	//Guid      string `json:"guid"`
 	Name      string `json:"name,omitempty"`
 	SpaceGuid string `json:"space_guid,omitempty"`
 

@@ -15,14 +15,7 @@
 
 package org
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 const UnknownName = "unknown"
 
@@ -39,7 +32,8 @@ type OrgResource struct {
 }
 
 type Org struct {
-	Guid                 string `json:"guid"`
+	common.EntityCommon
+	//Guid                 string `json:"guid"`
 	Name                 string `json:"name"`
 	QuotaGuid            string `json:"quota_definition_guid"`
 	Status               string `json:"status"`
@@ -51,6 +45,7 @@ type Org struct {
 	Billing_managers_url string `json:"billing_managers_url"`
 }
 
+/*
 var (
 	orgsMetadataCache []Org
 )
@@ -118,3 +113,5 @@ func getOrgMetadata(cliConnection plugin.CliConnection) ([]Org, error) {
 	return metadata, err
 
 }
+
+*/

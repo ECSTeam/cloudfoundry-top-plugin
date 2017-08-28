@@ -21,26 +21,38 @@ import (
 )
 
 type OrgQuotaMetadataManager struct {
-	*common.MdCommonManager
+	*common.CommonV2ResponseManager
 }
 
 func NewOrgQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *OrgQuotaMetadataManager {
 	url := "/v2/quota_definitions"
 	mdMgr := &OrgQuotaMetadataManager{}
-	commonMgr := common.NewMdCommonManager(mdGlobalManager, url, mdMgr.createResponseObject, mdMgr.createMetadataEntityObject, mdMgr.processResponse)
-	mdMgr.MdCommonManager = commonMgr
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)
+
 	return mdMgr
 }
 
-func (mdMgr *OrgQuotaMetadataManager) createResponseObject() common.IResponse {
-	return &OrgQuotaResponse{}
+func (mdMgr *OrgQuotaMetadataManager) FindItem(appId string) *OrgQuotaMetadata {
+	return mdMgr.FindItemInternal(appId, false, true).(*OrgQuotaMetadata)
 }
 
-func (mdMgr *OrgQuotaMetadataManager) createMetadataEntityObject(guid string) common.IMetadata {
+func (mdMgr *OrgQuotaMetadataManager) NewItemById(guid string) common.IMetadata {
 	return NewOrgQuotaMetadataById(guid)
 }
 
-func (mdMgr *OrgQuotaMetadataManager) processResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
+func (mdMgr *OrgQuotaMetadataManager) CreateResourceObject() common.IResource {
+	return &OrgQuotaResource{}
+}
+
+func (mdMgr *OrgQuotaMetadataManager) CreateResponseObject() common.IResponse {
+	return &OrgQuotaResponse{}
+}
+
+func (mdMgr *OrgQuotaMetadataManager) CreateMetadataEntityObject(guid string) common.IMetadata {
+	return NewOrgQuotaMetadataById(guid)
+}
+
+func (mdMgr *OrgQuotaMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*OrgQuotaResponse)
 	for _, item := range resp.Resources {
 		item.Entity.Guid = item.Meta.Guid
@@ -50,6 +62,9 @@ func (mdMgr *OrgQuotaMetadataManager) processResponse(response common.IResponse,
 	return metadataArray
 }
 
-func (mdMgr *OrgQuotaMetadataManager) Find(guid string) *OrgQuotaMetadata {
-	return mdMgr.MdCommonManager.Find(guid).(*OrgQuotaMetadata)
+func (mdMgr *OrgQuotaMetadataManager) ProcessResource(resource common.IResource) common.IMetadata {
+	resourceType := resource.(OrgQuotaResource)
+	resourceType.Entity.Guid = resourceType.Meta.Guid
+	metadata := NewOrgQuotaMetadata(resourceType.Entity)
+	return metadata
 }

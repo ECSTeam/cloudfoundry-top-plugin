@@ -15,16 +15,7 @@
 
 package common
 
-import (
-	"encoding/json"
-	"sync"
-	"time"
-
-	"code.cloudfoundry.org/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-)
-
+/*
 type createResponseObject func() IResponse
 type createMetadataEntityObject func(guid string) IMetadata
 type processResponse func(IResponse, []IMetadata) []IMetadata
@@ -72,7 +63,9 @@ func (mdMgr *MdCommonManager) Find(guid string) IMetadata {
 		mdMgr.RequestLoadCacheIfOld()
 		metadata = mdMgr.createMetadataEntityObject(guid)
 		// We mark this metadata as 60 mins old so it will be refreshed with async load
-		metadata.SetCacheTime(metadata.GetCacheTime().Add(-60 * time.Minute))
+		// TODO: Just use 'nil'
+		//		old := metadata.GetCacheTime().Add(-60 * time.Minute)
+		metadata.SetCacheTime(nil)
 	}
 	return metadata
 }
@@ -150,3 +143,5 @@ func (mdMgr *MdCommonManager) GetMetadataFromUrl(cliConnection plugin.CliConnect
 	return metadataArray, err
 
 }
+
+*/

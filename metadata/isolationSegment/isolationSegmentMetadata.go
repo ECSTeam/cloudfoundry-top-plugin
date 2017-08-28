@@ -13,19 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package spaceQuota
+package isolationSegment
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-type SpaceQuotaMetadata struct {
+type IsolationSegmentMetadata struct {
 	*common.Metadata
-	*SpaceQuota
+	*IsolationSegment
 }
 
-func NewSpaceQuotaMetadata(spaceQuota SpaceQuota) *SpaceQuotaMetadata {
-	return &SpaceQuotaMetadata{Metadata: &common.Metadata{}, SpaceQuota: &spaceQuota}
+func NewIsolationSegmentMetadata(isoSeg IsolationSegment) *IsolationSegmentMetadata {
+	return &IsolationSegmentMetadata{Metadata: &common.Metadata{}, IsolationSegment: &isoSeg}
 }
 
-func NewSpaceQuotaMetadataById(id string) *SpaceQuotaMetadata {
-	return NewSpaceQuotaMetadata(SpaceQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+func NewIsolationSegmentMetadataById(id string) *IsolationSegmentMetadata {
+	return NewIsolationSegmentMetadata(IsolationSegment{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+}
+
+func (metadataItem *IsolationSegmentMetadata) GetName() string {
+	return metadataItem.Name
 }

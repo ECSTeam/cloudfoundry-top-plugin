@@ -20,8 +20,6 @@ import (
 	"log"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -154,17 +152,18 @@ func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 
 					if containerStats.ContainerMetric != nil {
 
-						appMetadata := asUI.GetAppMdMgr().FindItem(appStats.AppId)
+						appMetadata := asUI.GetMdGlobalMgr().GetAppMdManager().FindItem(appStats.AppId)
 
-						isoSegName := isolationSegment.FindName(displayCellStat.IsolationSegmentGuid)
+						isoSegMd := asUI.GetMdGlobalMgr().GetIsoSegMdManager().FindItem(displayCellStat.IsolationSegmentGuid)
+						isoSegName := isoSegMd.Name
 						displayCellStat.IsolationSegmentName = isoSegName
 
-						stack := stack.FindStackMetadata(appMetadata.StackGuid)
+						stackMd := asUI.GetMdGlobalMgr().GetStackMdManager().FindItem(appMetadata.StackGuid)
 						if displayCellStat.StackId == "" && appMetadata.StackGuid != "" {
 							displayCellStat.StackId = appMetadata.StackGuid
 						}
-						if displayCellStat.StackName == "" && stack.Name != "" {
-							displayCellStat.StackName = stack.Name
+						if displayCellStat.StackName == "" && stackMd.Name != "" {
+							displayCellStat.StackName = stackMd.Name
 						}
 
 						displayCellStat.TotalReportingContainers = displayCellStat.TotalReportingContainers + 1

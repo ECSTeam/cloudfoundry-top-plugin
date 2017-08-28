@@ -17,7 +17,7 @@ package dataView
 
 import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/jroimartin/gocui"
@@ -40,5 +40,5 @@ type DataListViewInterface interface {
 	UpdateDisplay(g *gocui.Gui) error
 	GetTopOffset() int
 	GetDisplayedListData() []uiCommon.IData
-	GetAppMdMgr() *app.AppMetadataManager
+	GetMdGlobalMgr() *metadata.GlobalManager
 }

@@ -24,9 +24,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -183,6 +181,7 @@ func (asUI *RouteMapListView) postProcessData() []*DisplayRouteMapStats {
 	domainStats := domainMap[domainName]
 	hostStats := domainStats.HostStatsMap[hostName]
 
+	mdMgr := asUI.GetMdGlobalMgr()
 	if port == 0 {
 		routeStats := hostStats.RouteStatsMap[pathName]
 
@@ -190,10 +189,12 @@ func (asUI *RouteMapListView) postProcessData() []*DisplayRouteMapStats {
 
 		for appId, appRouteStats := range routeStats.AppRouteStatsMap {
 
-			appMetadata := asUI.GetAppMdMgr().FindItem(appId)
+			appMetadata := mdMgr.GetAppMdManager().FindItem(appId)
 			appName := appMetadata.Name
-			spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
-			orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+			spaceMd := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+			spaceName := spaceMd.Name
+			orgMd := mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+			orgName := orgMd.Name
 
 			displayRouteStat := NewDisplayRouteMapStats(routeStats, appId, appName, spaceName, orgName)
 			displayRouteArray = append(displayRouteArray, displayRouteStat)

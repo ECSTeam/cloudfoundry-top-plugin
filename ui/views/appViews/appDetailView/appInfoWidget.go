@@ -20,11 +20,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/stack"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
@@ -38,12 +34,12 @@ type AppInfoWidget struct {
 	width      int
 	height     int
 	detailView *AppDetailView
-	appMdMgr   *app.AppMetadataManager
+	mdMgr      *metadata.GlobalManager
 }
 
 func NewAppInfoWidget(masterUI masterUIInterface.MasterUIInterface, parentView dataView.DataListViewInterface, name string, width, height int, detailView *AppDetailView) *AppInfoWidget {
-	appMdMgr := detailView.GetEventProcessor().GetMetadataManager().GetAppMdManager()
-	return &AppInfoWidget{masterUI: masterUI, parentView: parentView, name: name, width: width, height: height, detailView: detailView, appMdMgr: appMdMgr}
+	mdMgr := detailView.GetEventProcessor().GetMetadataManager()
+	return &AppInfoWidget{masterUI: masterUI, parentView: parentView, name: name, width: width, height: height, detailView: detailView, mdMgr: mdMgr}
 }
 
 func (w *AppInfoWidget) Name() string {
@@ -106,7 +102,7 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 	if appStats == nil {
 		return nil
 	}
-	appMetadata := w.appMdMgr.FindItem(appStats.AppId)
+	appMetadata := w.mdMgr.GetAppMdManager().FindItem(appStats.AppId)
 
 	if appMetadata.Guid != "" {
 		memoryDisplay := util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()
@@ -124,13 +120,15 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 		dockerImage := appMetadata.DockerImage
 
 		appName := appMetadata.Name
-		orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+		spaceMd := w.mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+		orgMdMgr := w.mdMgr.GetOrgMdManager()
+		org := orgMdMgr.FindItem(spaceMd.OrgGuid)
+		orgName := org.Name
 
-		spaceMd := space.FindSpaceMetadata(appMetadata.SpaceGuid)
 		spaceName := spaceMd.Name
-		isoSegName := isolationSegment.FindMetadata(spaceMd.IsolationSegmentGuid).Name
+		isoSegName := w.mdMgr.GetIsoSegMdManager().FindItem(spaceMd.IsolationSegmentGuid).Name
 
-		stackMd := stack.FindStackMetadata(appMetadata.StackGuid)
+		stackMd := w.mdMgr.GetStackMdManager().FindItem(appMetadata.StackGuid)
 		stackName := stackMd.Name
 
 		fmt.Fprintf(v, " \n")

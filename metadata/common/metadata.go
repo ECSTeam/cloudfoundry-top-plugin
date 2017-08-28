@@ -17,10 +17,24 @@ package common
 
 import "time"
 
+type Link struct {
+	Href string `json:"href"`
+}
+
+type Pagination struct {
+	Count int  `json:"total_results"`
+	Pages int  `json:"total_pages"`
+	Next  Link `json:"next"`
+}
+
 type IResponse interface {
 	//Count() int
 	//Pages() int
 	//Resources() []IResource
+}
+
+type IResponseV3 interface {
+	GetPagination() Pagination
 }
 
 type IResource interface {
@@ -39,22 +53,30 @@ type IResourceMetadata interface {
 type IEntity interface {
 	GetGuid() string
 	SetGuid(string)
+	GetName() string
 }
 
 type IMetadata interface {
 	IEntity
-	SetCacheTime(time.Time)
-	GetCacheTime() time.Time
+	SetCacheTime(*time.Time)
+	GetCacheTime() *time.Time
 }
 
 type Metadata struct {
-	cacheTime time.Time
+	cacheTime *time.Time
 }
 
-func (md *Metadata) SetCacheTime(time time.Time) {
+func NewMetadata() *Metadata {
+	item := &Metadata{}
+	now := time.Now()
+	item.cacheTime = &now
+	return item
+}
+
+func (md *Metadata) SetCacheTime(time *time.Time) {
 	md.cacheTime = time
 }
 
-func (md *Metadata) GetCacheTime() time.Time {
+func (md *Metadata) GetCacheTime() *time.Time {
 	return md.cacheTime
 }

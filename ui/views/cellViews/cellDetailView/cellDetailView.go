@@ -21,8 +21,6 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -123,18 +121,22 @@ func (asUI *CellDetailView) postProcessData() []*appDetailView.DisplayContainerS
 
 	containerStatsArray := make([]*appDetailView.DisplayContainerStats, 0)
 
+	mdMgr := asUI.GetMdGlobalMgr()
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStatsArray := eventApp.ConvertFromMap(appMap, asUI.GetAppMdMgr())
+	appStatsArray := eventApp.ConvertFromMap(appMap, mdMgr.GetAppMdManager())
 	for _, appStats := range appStatsArray {
-		appMetadata := asUI.GetAppMdMgr().FindItem(appStats.AppId)
+		appMetadata := asUI.GetMdGlobalMgr().GetAppMdManager().FindItem(appStats.AppId)
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil {
 				if containerStats.Ip == asUI.cellIp {
 					// This is a container on the selected cell
 					displayContainerStats := appDetailView.NewDisplayContainerStats(containerStats, appStats)
 					displayContainerStats.AppName = appMetadata.Name
-					displayContainerStats.SpaceName = space.FindSpaceName(appMetadata.SpaceGuid)
-					displayContainerStats.OrgName = org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
+					spaceMd := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+					displayContainerStats.SpaceName = spaceMd.Name
+					org := mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+					displayContainerStats.OrgName = org.Name
 
 					usedMemory := containerStats.ContainerMetric.GetMemoryBytes()
 					reservedMemory := uint64(appMetadata.MemoryMB) * util.MEGABYTE

@@ -15,14 +15,7 @@
 
 package space
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 const UnknownName = "unknown"
 
@@ -39,7 +32,8 @@ type SpaceResource struct {
 }
 
 type Space struct {
-	Guid                 string `json:"guid"`
+	common.EntityCommon
+	//Guid                 string `json:"guid"`
 	Name                 string `json:"name"`
 	OrgGuid              string `json:"organization_guid"`
 	QuotaGuid            string `json:"space_quota_definition_guid"`
@@ -49,6 +43,7 @@ type Space struct {
 	Developers_url       string `json:"developers_url"`
 }
 
+/*
 var (
 	spacesMetadataCache []Space
 )
@@ -111,3 +106,4 @@ func getSpaceMetadata(cliConnection plugin.CliConnection) ([]Space, error) {
 	return metadata, err
 
 }
+*/

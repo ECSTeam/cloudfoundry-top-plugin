@@ -28,7 +28,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventCell"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventEventType"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/mohae/deepcopy"
@@ -175,6 +174,8 @@ func (ed *EventData) Clone() *EventData {
 	clone.eventProcessor = ed.eventProcessor
 
 	for _, appStat := range ed.AppMap {
+
+		//toplog.Info("XXXX  appId %v size: %v", appStat.AppId, len(appStat.ContainerArray))
 
 		// Check if this app has been deleted
 		if ed.eventProcessor.GetMetadataManager().GetAppMdManager().IsDeletedFromCache(appStat.AppId) {
@@ -349,13 +350,11 @@ func (ed *EventData) AssignIsolationSegment(cellStats *eventCell.CellStats) {
 	for _, appStats := range ed.AppMap {
 		for _, containerStats := range appStats.ContainerArray {
 			if containerStats != nil && cellStats.Ip == containerStats.Ip {
-
-				//appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appStats.AppId)
 				ep := ed.eventProcessor
-				mm := ep.GetMetadataManager()
-				amdm := mm.GetAppMdManager()
-				appMetadata := amdm.FindItem(appStats.AppId)
-				spaceMetadata := space.FindSpaceMetadata(appMetadata.SpaceGuid)
+				mdMgr := ep.GetMetadataManager()
+				appMdMgr := mdMgr.GetAppMdManager()
+				appMetadata := appMdMgr.FindItem(appStats.AppId)
+				spaceMetadata := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
 				cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegmentGuid
 				return
 			}

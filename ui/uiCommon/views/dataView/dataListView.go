@@ -20,7 +20,7 @@ import (
 	"sync"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/helpView"
@@ -44,7 +44,7 @@ type DataListView struct {
 	topMargin             int
 	bottomMargin          int
 	eventProcessor        *eventdata.EventProcessor
-	appMdMgr              *app.AppMetadataManager
+	mdGlobalMgr           *metadata.GlobalManager
 	mu                    sync.Mutex
 	listWidget            *uiCommon.ListWidget
 	initialized           bool
@@ -78,7 +78,7 @@ func NewDataListView(masterUI masterUIInterface.MasterUIInterface,
 		columnOwner:    columnOwner,
 	}
 
-	asUI.appMdMgr = eventProcessor.GetMetadataManager().GetAppMdManager()
+	asUI.mdGlobalMgr = eventProcessor.GetMetadataManager()
 
 	listWidget := uiCommon.NewListWidget(asUI.masterUI, asUI.name,
 		asUI.bottomMargin, asUI, columnDefinitions, columnOwner, defaultSortColumns)
@@ -138,8 +138,8 @@ func (asUI *DataListView) GetEventProcessor() *eventdata.EventProcessor {
 	return asUI.eventProcessor
 }
 
-func (asUI *DataListView) GetAppMdMgr() *app.AppMetadataManager {
-	return asUI.appMdMgr
+func (asUI *DataListView) GetMdGlobalMgr() *metadata.GlobalManager {
+	return asUI.mdGlobalMgr
 }
 
 func (asUI *DataListView) Layout(g *gocui.Gui) error {

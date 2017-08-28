@@ -13,19 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package spaceQuota
+package stack
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-type SpaceQuotaMetadata struct {
+type StackMetadata struct {
 	*common.Metadata
-	*SpaceQuota
+	*Stack
 }
 
-func NewSpaceQuotaMetadata(spaceQuota SpaceQuota) *SpaceQuotaMetadata {
-	return &SpaceQuotaMetadata{Metadata: &common.Metadata{}, SpaceQuota: &spaceQuota}
+func NewStackMetadata(stack Stack) *StackMetadata {
+	return &StackMetadata{Metadata: &common.Metadata{}, Stack: &stack}
 }
 
-func NewSpaceQuotaMetadataById(id string) *SpaceQuotaMetadata {
-	return NewSpaceQuotaMetadata(SpaceQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+func NewStackMetadataById(id string) *StackMetadata {
+	return NewStackMetadata(Stack{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
 }

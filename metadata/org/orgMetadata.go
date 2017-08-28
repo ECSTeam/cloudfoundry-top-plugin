@@ -13,19 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package spaceQuota
+package org
 
 import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-type SpaceQuotaMetadata struct {
+type OrgMetadata struct {
 	*common.Metadata
-	*SpaceQuota
+	*Org
 }
 
-func NewSpaceQuotaMetadata(spaceQuota SpaceQuota) *SpaceQuotaMetadata {
-	return &SpaceQuotaMetadata{Metadata: &common.Metadata{}, SpaceQuota: &spaceQuota}
+func NewOrgMetadata(org Org) *OrgMetadata {
+	return &OrgMetadata{Metadata: &common.Metadata{}, Org: &org}
 }
 
-func NewSpaceQuotaMetadataById(id string) *SpaceQuotaMetadata {
-	return NewSpaceQuotaMetadata(SpaceQuota{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+func NewOrgMetadataById(id string) *OrgMetadata {
+	return NewOrgMetadata(Org{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+}
+
+func (metadataItem *OrgMetadata) GetName() string {
+	return metadataItem.Name
 }

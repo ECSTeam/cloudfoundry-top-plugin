@@ -39,11 +39,14 @@ import (
 )
 
 type GlobalManager struct {
-	appMdMgr *app.AppMetadataManager
-	//orgMdMgr *OrgMetadataManager
-	//spaceMdMgr *SpaceMetadataManager
+	appMdMgr        *app.AppMetadataManager
+	appInstMdMgr    *appInstances.AppInstanceMetadataManager
+	orgMdMgr        *org.OrgMetadataManager
 	orgQuotaMdMgr   *orgQuota.OrgQuotaMetadataManager
+	spaceMdMgr      *space.SpaceMetadataManager
 	spaceQuotaMdMgr *spaceQuota.SpaceQuotaMetadataManager
+	stackMdMgr      *stack.StackMetadataManager
+	isoSegMdMgr     *isolationSegment.IsolationSegmentMetadataManager
 
 	cliConnection plugin.CliConnection
 
@@ -64,10 +67,16 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 	mgr.loadHandler = loader.NewLoadHandler(conn)
 
-	mgr.appMdMgr = app.NewAppMetadataManager()
+	mgr.appMdMgr = app.NewAppMetadataManager(mgr)
+	mgr.appInstMdMgr = appInstances.NewAppInstanceMetadataManager(mgr)
+	mgr.orgMdMgr = org.NewOrgMetadataManager(mgr)
 	mgr.orgQuotaMdMgr = orgQuota.NewOrgQuotaMetadataManager(mgr)
+
+	mgr.spaceMdMgr = space.NewSpaceMetadataManager(mgr)
 	mgr.spaceQuotaMdMgr = spaceQuota.NewSpaceQuotaMetadataManager(mgr)
 
+	mgr.stackMdMgr = stack.NewStackMetadataManager(mgr)
+	mgr.isoSegMdMgr = isolationSegment.NewIsolationSegmentMetadataManager(mgr)
 	mgr.cliConnection = conn
 
 	mgr.monitoredAppDetails = make(map[string]*time.Time)
@@ -84,12 +93,32 @@ func (mgr *GlobalManager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
 }
 
+func (mgr *GlobalManager) GetAppInstMdManager() *appInstances.AppInstanceMetadataManager {
+	return mgr.appInstMdMgr
+}
+
+func (mgr *GlobalManager) GetOrgMdManager() *org.OrgMetadataManager {
+	return mgr.orgMdMgr
+}
+
 func (mgr *GlobalManager) GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager {
 	return mgr.orgQuotaMdMgr
 }
 
+func (mgr *GlobalManager) GetSpaceMdManager() *space.SpaceMetadataManager {
+	return mgr.spaceMdMgr
+}
+
+func (mgr *GlobalManager) GetStackMdManager() *stack.StackMetadataManager {
+	return mgr.stackMdMgr
+}
+
 func (mgr *GlobalManager) GetSpaceQuotaMdManager() *spaceQuota.SpaceQuotaMetadataManager {
 	return mgr.spaceQuotaMdMgr
+}
+
+func (mgr *GlobalManager) GetIsoSegMdManager() *isolationSegment.IsolationSegmentMetadataManager {
+	return mgr.isoSegMdMgr
 }
 
 func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
@@ -102,15 +131,14 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 	mgr.loadMetadataInProgress = true
 
-	isolationSegment.LoadCache(mgr.cliConnection)
-	stack.LoadStackCache(mgr.cliConnection)
-
-	mgr.appMdMgr.LoadCache(mgr.cliConnection)
+	mgr.isoSegMdMgr.LoadAllItems()
+	mgr.stackMdMgr.LoadAllItems()
+	mgr.appMdMgr.LoadAllItems()
 
 	//time.Sleep(time.Second * 60)
 
-	space.LoadSpaceCache(mgr.cliConnection)
-	org.LoadOrgCache(mgr.cliConnection)
+	mgr.spaceMdMgr.LoadAllItems()
+	mgr.orgMdMgr.LoadAllItems()
 
 	route.LoadRouteCache(mgr.cliConnection)
 	domain.LoadDomainCache(mgr.cliConnection)
@@ -122,10 +150,10 @@ func (mgr *GlobalManager) LoadMetadata() {
 
 func (mgr *GlobalManager) FlushCache() {
 	appStatistics.Clear()
-	appInstances.Clear()
+	mgr.appInstMdMgr.Clear()
 	mgr.LoadMetadata()
-	mgr.orgQuotaMdMgr.FlushCache()
-	mgr.spaceQuotaMdMgr.FlushCache()
+	mgr.orgQuotaMdMgr.Clear()
+	mgr.spaceQuotaMdMgr.Clear()
 }
 
 // Request a refresh of specific app metadata
@@ -156,7 +184,8 @@ func (mgr *GlobalManager) IsMonitorAppDetails(appId string) bool {
 	if lastViewedDuration > (time.Second * config.MonitorAppDetailTTL) {
 		// App Detail monitor TTL expired
 		toplog.Info("Ignore refresh App Instance metadata - AppdId [%v] TTL expired", appId)
-		appInstances.ClearAppInstancesMetadata(appId)
+		//appInstances.ClearAppInstancesMetadata(appId)
+		mgr.appInstMdMgr.DeleteItem(appId)
 		delete(mgr.monitoredAppDetails, appId)
 		return false
 	}

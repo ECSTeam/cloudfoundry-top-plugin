@@ -21,7 +21,6 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/space"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/dataCommon"
@@ -160,10 +159,16 @@ func (asUI *OrgListView) clipboardCallback(g *gocui.Gui, v *gocui.View, menuId s
 		// Nothing selected
 		return nil
 	}
-	appMetadata := asUI.GetAppMdMgr().FindItem(selectedAppId)
+
+	mdMgr := asUI.GetMdGlobalMgr()
+
+	appMetadata := mdMgr.GetAppMdManager().FindItem(selectedAppId)
 	appName := appMetadata.Name
-	spaceName := space.FindSpaceName(appMetadata.SpaceGuid)
-	orgName := org.FindOrgNameBySpaceGuid(appMetadata.SpaceGuid)
+
+	spaceMd := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+	spaceName := spaceMd.Name
+	orgMd := mdMgr.GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+	orgName := orgMd.Name
 
 	switch menuId {
 	case "cftarget":
@@ -191,15 +196,16 @@ func (asUI *OrgListView) GetListData() []uiCommon.IData {
 func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 
 	orgQuotaMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetOrgQuotaMdManager()
-	appMdMgr := asUI.GetEventProcessor().GetMetadataManager().GetAppMdManager()
+	mdMgr := asUI.GetEventProcessor().GetMetadataManager()
+	appMdMgr := mdMgr.GetAppMdManager()
 
 	// Build map of all spaces by Org
-	spaces := space.All()
-	spaceByOrgMap := make(map[string][]space.Space)
+	spaces := mdMgr.GetSpaceMdManager().GetAll()
+	spaceByOrgMap := make(map[string][]*space.SpaceMetadata)
 	for _, spaceMetadata := range spaces {
 		spacesList := spaceByOrgMap[spaceMetadata.OrgGuid]
 		if spacesList == nil {
-			spacesList = make([]space.Space, 0)
+			spacesList = make([]*space.SpaceMetadata, 0)
 		}
 		spacesList = append(spacesList, spaceMetadata)
 		spaceByOrgMap[spaceMetadata.OrgGuid] = spacesList
@@ -218,20 +224,20 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 	}
 
 	// Build Map of Orgs
-	orgs := org.All()
-	displayOrgMap := make(map[string]*DisplayOrg)
-	for _, org := range orgs {
-		anOrg := org
-		displayOrg := NewDisplayOrg(&anOrg)
-		displayOrgMap[org.Guid] = displayOrg
-		displayOrg.NumberOfSpaces = len(spaceByOrgMap[org.Guid])
-		displayOrg.NumberOfApps = len(appsByOrgMap[org.Guid])
+	orgs := mdMgr.GetOrgMdManager().GetAll()
 
-		orgQuotaMd := orgQuotaMdMgr.Find(org.QuotaGuid)
+	displayOrgMap := make(map[string]*DisplayOrg)
+	for _, anOrg := range orgs {
+		displayOrg := NewDisplayOrg(anOrg)
+		displayOrgMap[anOrg.Guid] = displayOrg
+		displayOrg.NumberOfSpaces = len(spaceByOrgMap[anOrg.Guid])
+		displayOrg.NumberOfApps = len(appsByOrgMap[anOrg.Guid])
+
+		orgQuotaMd := orgQuotaMdMgr.FindItem(anOrg.QuotaGuid)
 		displayOrg.QuotaName = orgQuotaMd.Name
 		displayOrg.MemoryLimitInBytes = int64(orgQuotaMd.MemoryLimit) * util.MEGABYTE
 
-		for _, appStats := range appsByOrgMap[org.Guid] {
+		for _, appStats := range appsByOrgMap[anOrg.Guid] {
 			displayOrg.TotalCpuPercentage += appStats.TotalCpuPercentage
 			displayOrg.TotalMemoryUsed += appStats.TotalMemoryUsed
 			displayOrg.TotalDiskUsed += appStats.TotalDiskUsed

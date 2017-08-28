@@ -20,23 +20,20 @@ import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 const MEGABYTE = (1024 * 1024)
 
 type AppMetadata struct {
-	*common.BaseMetadataItem
+	//*common.BaseMetadataItem
+	*common.Metadata
 	*App
 }
 
 func NewAppMetadata(app App) *AppMetadata {
 	appMetadata := &AppMetadata{}
-	appMetadata.BaseMetadataItem = common.NewBaseMetadataItem()
+	appMetadata.Metadata = common.NewMetadata()
 	appMetadata.App = &app
 	return appMetadata
 }
 
 func NewAppMetadataById(appId string) *AppMetadata {
-	return NewAppMetadata(App{Guid: appId, Name: appId})
-}
-
-func (metadataItem *AppMetadata) GetGuid() string {
-	return metadataItem.Guid
+	return NewAppMetadata(App{EntityCommon: common.EntityCommon{Guid: appId}, Name: appId})
 }
 
 func (metadataItem *AppMetadata) GetName() string {
