@@ -15,16 +15,13 @@
 
 package spaceQuota
 
-import (
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type SpaceQuotaMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewSpaceQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *SpaceQuotaMetadataManager {
+func NewSpaceQuotaMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *SpaceQuotaMetadataManager {
 	url := "/v2/space_quota_definitions"
 	mdMgr := &SpaceQuotaMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

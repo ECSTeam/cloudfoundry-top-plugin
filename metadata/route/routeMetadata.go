@@ -13,14 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mdGlobalManagerInterface
+package route
 
-/*
-type MdGlobalManagerInterface interface {
-	GetCliConnection() plugin.CliConnection
-	//GetAppMdManager() *app.AppMetadataManager
-	//GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-	//GetAppMdManager() *common.CommonV2ResponseManager
+type RouteMetadata struct {
+	*common.Metadata
+	*Route
 }
-*/
+
+func NewRouteMetadata(Route Route) *RouteMetadata {
+	return &RouteMetadata{Metadata: &common.Metadata{}, Route: &Route}
+}
+
+func NewRouteMetadataById(id string) *RouteMetadata {
+	return NewRouteMetadata(Route{EntityCommon: common.EntityCommon{Guid: id}, Host: id})
+}
+
+func (metadataItem *RouteMetadata) GetName() string {
+	return metadataItem.Host
+}

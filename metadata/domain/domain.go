@@ -15,14 +15,7 @@
 
 package domain
 
-import (
-	"encoding/json"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type DomainResponse struct {
 	Count     int              `json:"total_results"`
@@ -37,7 +30,8 @@ type DomainResource struct {
 }
 
 type Domain struct {
-	Guid                   string `json:"guid"`
+	common.EntityCommon
+	//Guid                   string `json:"guid"`
 	Name                   string `json:"name"`
 	RouterGroupGuid        string `json:"router_group_guid"`
 	RouterGroupType        string `json:"router_group_type"`
@@ -50,6 +44,7 @@ var (
 	domainsMetadataCache []*Domain
 )
 
+/*
 func AllDomains() []*Domain {
 	return domainsMetadataCache
 }
@@ -128,3 +123,4 @@ func getDomainMetadata(cliConnection plugin.CliConnection, url string) ([]*Domai
 	return metadata, err
 
 }
+*/

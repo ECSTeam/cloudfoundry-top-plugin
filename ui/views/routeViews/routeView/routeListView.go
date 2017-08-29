@@ -22,7 +22,6 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -150,7 +149,7 @@ func (asUI *RouteListView) postProcessData() []*DisplayRouteStats {
 				displayRouteArray = append(displayRouteArray, displayRouteStat)
 
 				if spaceGuid != "" {
-					routeMd := route.FindRouteMetadata(routeStats.RouteId)
+					routeMd := asUI.GetMdGlobalMgr().GetRouteMdManager().FindItem(routeStats.RouteId)
 					if spaceGuid == routeMd.SpaceGuid {
 						displayRouteStat.Monitored = true
 					}

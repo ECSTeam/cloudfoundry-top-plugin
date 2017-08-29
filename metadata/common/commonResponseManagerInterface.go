@@ -13,14 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mdGlobalManagerInterface
+package common
 
-/*
-type MdGlobalManagerInterface interface {
-	GetCliConnection() plugin.CliConnection
-	//GetAppMdManager() *app.AppMetadataManager
-	//GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager
-
-	//GetAppMdManager() *common.CommonV2ResponseManager
+type ICommonResponseManager interface {
+	GetMetadataFromUrl(url string) ([]IMetadata, error)
 }
-*/

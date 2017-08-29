@@ -21,8 +21,6 @@ import (
 	"fmt"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/jroimartin/gocui"
 )
@@ -69,8 +67,8 @@ func (w *RouteMapDetailWidget) refreshDisplay(g *gocui.Gui) error {
 		return err
 	}
 	routeId := w.routeMapListView.routeId
-	routeMd := route.FindRouteMetadata(routeId)
-	domainMd := domain.FindDomainMetadata(routeMd.DomainGuid)
+	routeMd := w.mdMgr.GetRouteMdManager().FindItem(routeId)
+	domainMd := w.mdMgr.GetDomainFinder().FindDomainMetadata(routeMd.DomainGuid)
 
 	var urlBuffer bytes.Buffer
 	urlBuffer.WriteString(routeMd.Host)

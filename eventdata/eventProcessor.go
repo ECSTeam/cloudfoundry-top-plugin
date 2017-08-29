@@ -29,7 +29,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -138,7 +137,8 @@ func (ep *EventProcessor) SeedStatsFromMetadata() {
 	defer ep.mu.Unlock()
 
 	ep.seedAppMap()
-	ep.seedDomainMap()
+	ep.seedDomainShared()
+	ep.seedDomainPrivate()
 	ep.seedRouteData()
 	if ep.privileged {
 		ep.seedSpecialRouteData()
@@ -161,9 +161,17 @@ func (ep *EventProcessor) seedAppMap() {
 	}
 }
 
-func (ep *EventProcessor) seedDomainMap() {
+func (ep *EventProcessor) seedDomainShared() {
+	ep.seedDomain(ep.GetMetadataManager().GetDomainSharedMdManager().GetAll())
+}
+
+func (ep *EventProcessor) seedDomainPrivate() {
+	ep.seedDomain(ep.GetMetadataManager().GetDomainPrivateMdManager().GetAll())
+}
+
+func (ep *EventProcessor) seedDomain(domains []*domain.DomainMetadata) {
 	currentStatsMap := ep.currentEventData.DomainMap
-	for _, domain := range domain.AllDomains() {
+	for _, domain := range domains {
 		domainStats := currentStatsMap[domain.Name]
 		if domainStats == nil {
 			// New domain we haven't seen yet
@@ -175,8 +183,8 @@ func (ep *EventProcessor) seedDomainMap() {
 
 func (ep *EventProcessor) seedRouteData() {
 
-	for _, route := range route.AllRoutes() {
-		domainMd := domain.FindDomainMetadata(route.DomainGuid)
+	for _, route := range ep.GetMetadataManager().GetRouteMdManager().GetAll() {
+		domainMd := ep.GetMetadataManager().GetDomainFinder().FindDomainMetadata(route.DomainGuid)
 		ep.addRoute(domainMd.Name, route.Host, route.Path, route.Port, route.Guid)
 	}
 }
@@ -239,14 +247,14 @@ func (ep *EventProcessor) seedSpecialRouteData() {
 }
 
 func (ep *EventProcessor) addInternalRoute(domainName string, hostName string, pathName string, port int) *eventRoute.RouteStats {
-	domainItem := domain.FindDomainMetadataByName(domainName)
+	domainItem := ep.GetMetadataManager().GetDomainFinder().FindDomainMetadataByName(domainName)
 	if domainItem == nil {
-		domainItem = domain.AddDomainMetadata(domainName)
+		domainItem = ep.GetMetadataManager().GetDomainPrivateMdManager().AddDomainMetadata(domainName)
 		toplog.Info("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v].  Dynamically added.", domainName, hostName, pathName)
 		//toplog.Warn("addInternalRoute for domain [%v] but domain metadata not found (or not loaded) host: [%v] path: [%v]", domainName, hostName, pathName)
 		//return nil
 	}
-	route := route.CreateInternalGeneratedRoute(hostName, pathName, domainItem.Guid, port)
+	route := ep.GetMetadataManager().GetRouteMdManager().CreateInternalGeneratedRoute(hostName, pathName, domainItem.Guid, port)
 	return ep.addRoute(domainName, hostName, pathName, port, route.Guid)
 }
 

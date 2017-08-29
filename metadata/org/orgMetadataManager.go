@@ -15,16 +15,13 @@
 
 package org
 
-import (
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type OrgMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewOrgMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *OrgMetadataManager {
+func NewOrgMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *OrgMetadataManager {
 	url := "/v2/organizations"
 	mdMgr := &OrgMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

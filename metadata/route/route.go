@@ -15,16 +15,7 @@
 
 package route
 
-import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/cloudfoundry/cli/plugin"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
-	"github.com/ecsteam/cloudfoundry-top-plugin/util"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type RouteResponse struct {
 	Count     int             `json:"total_results"`
@@ -39,7 +30,8 @@ type RouteResource struct {
 }
 
 type Route struct {
-	Guid                string `json:"guid"`
+	common.EntityCommon
+	//Guid                string `json:"guid"`
 	Host                string `json:"host"`
 	Path                string `json:"path"`
 	DomainGuid          string `json:"domain_guid"`
@@ -49,9 +41,10 @@ type Route struct {
 	InternalGenerated   bool
 }
 
+/*
 func CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid string, port int) *Route {
 	r := &Route{
-		Guid:              util.Pseudo_uuid(),
+		EntityCommon:      common.EntityCommon{Guid: util.Pseudo_uuid()},
 		Host:              hostName,
 		Path:              pathName,
 		DomainGuid:        domainGuid,
@@ -89,7 +82,7 @@ func FindRouteMetadata(routeGuid string) *Route {
 			return route
 		}
 	}
-	return &Route{Guid: routeGuid}
+	return &Route{EntityCommon: common.EntityCommon{Guid: routeGuid}}
 }
 
 func FindAppIdsForRouteMetadata(cliConnection plugin.CliConnection, routeGuid string) []string {
@@ -170,3 +163,4 @@ func getRouteMetadata(cliConnection plugin.CliConnection) ([]*Route, error) {
 	return metadata, err
 
 }
+*/

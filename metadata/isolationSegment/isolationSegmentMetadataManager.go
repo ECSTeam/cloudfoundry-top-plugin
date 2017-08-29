@@ -15,16 +15,13 @@
 
 package isolationSegment
 
-import (
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type IsolationSegmentMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewIsolationSegmentMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *IsolationSegmentMetadataManager {
+func NewIsolationSegmentMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *IsolationSegmentMetadataManager {
 	url := "/v3/isolation_segments"
 	mdMgr := &IsolationSegmentMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

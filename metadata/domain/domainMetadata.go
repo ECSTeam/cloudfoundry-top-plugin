@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.Domain/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,14 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package mdGlobalManagerInterface
+package domain
 
-/*
-type MdGlobalManagerInterface interface {
-	GetCliConnection() plugin.CliConnection
-	//GetAppMdManager() *app.AppMetadataManager
-	//GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
-	//GetAppMdManager() *common.CommonV2ResponseManager
+type DomainMetadata struct {
+	*common.Metadata
+	*Domain
 }
-*/
+
+func NewDomainMetadata(Domain Domain) *DomainMetadata {
+	return &DomainMetadata{Metadata: &common.Metadata{}, Domain: &Domain}
+}
+
+func NewDomainMetadataById(id string) *DomainMetadata {
+	return NewDomainMetadata(Domain{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
+}
+
+func (metadataItem *DomainMetadata) GetName() string {
+	return metadataItem.Name
+}

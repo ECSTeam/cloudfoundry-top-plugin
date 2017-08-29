@@ -15,16 +15,13 @@
 
 package orgQuota
 
-import (
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type OrgQuotaMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewOrgQuotaMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *OrgQuotaMetadataManager {
+func NewOrgQuotaMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *OrgQuotaMetadataManager {
 	url := "/v2/quota_definitions"
 	mdMgr := &OrgQuotaMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

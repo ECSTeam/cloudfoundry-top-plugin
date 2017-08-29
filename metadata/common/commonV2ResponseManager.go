@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -44,7 +43,7 @@ type CommonV2ResponseManager struct {
 	loadInProgress         bool
 }
 
-func NewCommonV2ResponseManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface,
+func NewCommonV2ResponseManager(mdGlobalManager MdGlobalManagerInterface,
 	url string,
 	mm V2MetadataManager,
 	autoFullLoadIfNotFound bool) *CommonV2ResponseManager {
@@ -66,7 +65,7 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) FindItemInternal(guid string
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItemsInternal() ([]IMetadata, error) {
-	return commonV2ResponseMgr.GetMetadataFromUrl()
+	return commonV2ResponseMgr.GetMetadata()
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) LoadItemInternal(guid string) (IMetadata, error) {
@@ -134,8 +133,11 @@ func (commonMgr *CommonMetadataManager) GetNextUrl(response IResponse) string {
 	return nextUrl
 }
 
-func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl() ([]IMetadata, error) {
-	url := commonV2ResponseMgr.GetUrl()
+func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadata() ([]IMetadata, error) {
+	return commonV2ResponseMgr.GetMetadataFromUrl(commonV2ResponseMgr.GetUrl())
+}
+
+func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url string) ([]IMetadata, error) {
 	metadataArray := []IMetadata{}
 
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {

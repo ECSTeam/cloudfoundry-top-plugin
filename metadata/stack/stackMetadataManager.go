@@ -15,16 +15,13 @@
 
 package stack
 
-import (
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
-)
+import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 
 type StackMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewStackMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *StackMetadataManager {
+func NewStackMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *StackMetadataManager {
 	url := "/v2/stacks"
 	mdMgr := &StackMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

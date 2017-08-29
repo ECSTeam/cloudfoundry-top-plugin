@@ -18,14 +18,13 @@ package space
 import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 )
 
 type SpaceMetadataManager struct {
 	*common.CommonV2ResponseManager
 }
 
-func NewSpaceMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *SpaceMetadataManager {
+func NewSpaceMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *SpaceMetadataManager {
 	url := "/v2/spaces"
 	mdMgr := &SpaceMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)

@@ -22,6 +22,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/app"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appInstances"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/appStatistics"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
@@ -39,14 +40,18 @@ import (
 )
 
 type GlobalManager struct {
-	appMdMgr        *app.AppMetadataManager
-	appInstMdMgr    *appInstances.AppInstanceMetadataManager
-	orgMdMgr        *org.OrgMetadataManager
-	orgQuotaMdMgr   *orgQuota.OrgQuotaMetadataManager
-	spaceMdMgr      *space.SpaceMetadataManager
-	spaceQuotaMdMgr *spaceQuota.SpaceQuotaMetadataManager
-	stackMdMgr      *stack.StackMetadataManager
-	isoSegMdMgr     *isolationSegment.IsolationSegmentMetadataManager
+	appMdMgr           *app.AppMetadataManager
+	appInstMdMgr       *appInstances.AppInstanceMetadataManager
+	orgMdMgr           *org.OrgMetadataManager
+	orgQuotaMdMgr      *orgQuota.OrgQuotaMetadataManager
+	spaceMdMgr         *space.SpaceMetadataManager
+	spaceQuotaMdMgr    *spaceQuota.SpaceQuotaMetadataManager
+	stackMdMgr         *stack.StackMetadataManager
+	isoSegMdMgr        *isolationSegment.IsolationSegmentMetadataManager
+	domainSharedMdMgr  *domain.DomainSharedMetadataManager
+	domainPrivateMdMgr *domain.DomainPrivateMetadataManager
+	domainFinder       *domain.DomainFinder
+	routeMdMgr         *route.RouteMetadataManager
 
 	cliConnection plugin.CliConnection
 
@@ -77,6 +82,13 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 	mgr.stackMdMgr = stack.NewStackMetadataManager(mgr)
 	mgr.isoSegMdMgr = isolationSegment.NewIsolationSegmentMetadataManager(mgr)
+
+	mgr.domainSharedMdMgr = domain.NewDomainSharedMetadataManager(mgr)
+	mgr.domainPrivateMdMgr = domain.NewDomainPrivateMetadataManager(mgr)
+	mgr.domainFinder = domain.NewDomainFinder(mgr.domainSharedMdMgr, mgr.domainPrivateMdMgr)
+
+	mgr.routeMdMgr = route.NewRouteMetadataManager(mgr)
+
 	mgr.cliConnection = conn
 
 	mgr.monitoredAppDetails = make(map[string]*time.Time)
@@ -91,6 +103,10 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 func (mgr *GlobalManager) GetAppMdManager() *app.AppMetadataManager {
 	return mgr.appMdMgr
+}
+
+func (mgr *GlobalManager) GetAppMetadataFromUrl(url string) ([]common.IMetadata, error) {
+	return mgr.appMdMgr.GetMetadataFromUrl(url)
 }
 
 func (mgr *GlobalManager) GetAppInstMdManager() *appInstances.AppInstanceMetadataManager {
@@ -121,6 +137,21 @@ func (mgr *GlobalManager) GetIsoSegMdManager() *isolationSegment.IsolationSegmen
 	return mgr.isoSegMdMgr
 }
 
+func (mgr *GlobalManager) GetDomainSharedMdManager() *domain.DomainSharedMetadataManager {
+	return mgr.domainSharedMdMgr
+}
+
+func (mgr *GlobalManager) GetDomainPrivateMdManager() *domain.DomainPrivateMetadataManager {
+	return mgr.domainPrivateMdMgr
+}
+func (mgr *GlobalManager) GetDomainFinder() *domain.DomainFinder {
+	return mgr.domainFinder
+}
+
+func (mgr *GlobalManager) GetRouteMdManager() *route.RouteMetadataManager {
+	return mgr.routeMdMgr
+}
+
 func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 	return mgr.cliConnection
 }
@@ -140,8 +171,10 @@ func (mgr *GlobalManager) LoadMetadata() {
 	mgr.spaceMdMgr.LoadAllItems()
 	mgr.orgMdMgr.LoadAllItems()
 
-	route.LoadRouteCache(mgr.cliConnection)
-	domain.LoadDomainCache(mgr.cliConnection)
+	mgr.routeMdMgr.LoadAllItems()
+
+	mgr.domainSharedMdMgr.LoadAllItems()
+	mgr.domainPrivateMdMgr.LoadAllItems()
 	crashData.LoadCrashDataCache(mgr.cliConnection)
 
 	mgr.loadMetadataInProgress = false

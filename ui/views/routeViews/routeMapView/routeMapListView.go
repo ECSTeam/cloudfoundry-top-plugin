@@ -23,8 +23,6 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -141,12 +139,12 @@ func (asUI *RouteMapListView) enterAction(g *gocui.Gui, v *gocui.View) error {
 
 func (asUI *RouteMapListView) seedAppsWithNoTraffic(routeStats *eventRoute.RouteStats) {
 
-	routeMd := route.FindRouteMetadata(asUI.routeId)
+	routeMd := asUI.GetMdGlobalMgr().GetRouteMdManager().FindItem(asUI.routeId)
 	if routeMd.InternalGenerated {
 		return
 	}
 
-	appIds := route.FindAppIdsForRouteMetadata(asUI.GetEventProcessor().GetCliConnection(), asUI.routeId)
+	appIds := asUI.GetMdGlobalMgr().GetRouteMdManager().FindAppIdsForRouteMetadata(asUI.routeId)
 	for _, appId := range appIds {
 		appRouteStats := routeStats.FindAppRouteStats(appId)
 		if appRouteStats == nil {
@@ -171,8 +169,10 @@ func (asUI *RouteMapListView) postProcessData() []*DisplayRouteMapStats {
 	domainMap := asUI.GetDisplayedEventData().DomainMap
 	displayRouteArray := make([]*DisplayRouteMapStats, 0)
 
-	routeMd := route.FindRouteMetadata(asUI.routeId)
-	domainMd := domain.FindDomainMetadata(routeMd.DomainGuid)
+	routeMd := asUI.GetMdGlobalMgr().GetRouteMdManager().FindItem(asUI.routeId)
+
+	domainFinder := asUI.GetEventProcessor().GetMetadataManager().GetDomainFinder()
+	domainMd := domainFinder.FindDomainMetadata(routeMd.DomainGuid)
 	domainName := strings.ToLower(domainMd.Name)
 	hostName := strings.ToLower(routeMd.Host)
 	pathName := routeMd.Path

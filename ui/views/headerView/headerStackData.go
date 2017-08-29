@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
@@ -159,11 +158,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	for _, appStats := range asUI.commonData.GetDisplayAppStatsMap() {
 		isolationSegGuid := appStats.IsolationSegmentGuid
 
-		toplog.Info("isolationSegGuid-1: %v", isolationSegGuid)
 		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
 			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
-		toplog.Info("isolationSegGuid-2: %v", isolationSegGuid)
 
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {

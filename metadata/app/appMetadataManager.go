@@ -21,7 +21,6 @@ import (
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 )
 
 type AppMetadataManager struct {
@@ -29,7 +28,7 @@ type AppMetadataManager struct {
 	mu sync.Mutex
 }
 
-func NewAppMetadataManager(mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface) *AppMetadataManager {
+func NewAppMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *AppMetadataManager {
 	url := "/v2/apps"
 	mdMgr := &AppMetadataManager{}
 	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, false)

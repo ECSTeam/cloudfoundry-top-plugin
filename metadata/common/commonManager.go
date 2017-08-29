@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/mdGlobalManagerInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -31,7 +30,7 @@ type MetadataManager interface {
 }
 
 type CommonMetadataManager struct {
-	mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface
+	mdGlobalManager MdGlobalManagerInterface
 	url             string
 
 	mm                 MetadataManager
@@ -44,7 +43,7 @@ type CommonMetadataManager struct {
 }
 
 func NewCommonMetadataManager(
-	mdGlobalManager mdGlobalManagerInterface.MdGlobalManagerInterface,
+	mdGlobalManager MdGlobalManagerInterface,
 	url string,
 	mm MetadataManager) *CommonMetadataManager {
 	commonMgr := &CommonMetadataManager{mdGlobalManager: mdGlobalManager, url: url, mm: mm}
@@ -56,7 +55,7 @@ func (commonMgr *CommonMetadataManager) GetUrl() string {
 	return commonMgr.url
 }
 
-func (commonMgr *CommonMetadataManager) GetMdGlobalManager() mdGlobalManagerInterface.MdGlobalManagerInterface {
+func (commonMgr *CommonMetadataManager) GetMdGlobalManager() MdGlobalManagerInterface {
 	return commonMgr.mdGlobalManager
 }
 
