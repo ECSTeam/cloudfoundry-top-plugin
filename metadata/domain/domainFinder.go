@@ -29,6 +29,9 @@ func (mdFinder *DomainFinder) FindDomainMetadata(guid string) *DomainMetadata {
 	if domainMd == nil {
 		domainMd = mdFinder.findDomainPrivateMetadataByGuid(guid)
 	}
+	if domainMd == nil {
+		domainMd = mdFinder.privateMdMgr.NewItemById(guid).(*DomainMetadata)
+	}
 	return domainMd
 }
 

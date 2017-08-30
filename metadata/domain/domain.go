@@ -40,11 +40,12 @@ type Domain struct {
 	SharedDomain bool
 }
 
+/*
 var (
 	domainsMetadataCache []*Domain
 )
 
-/*
+
 func AllDomains() []*Domain {
 	return domainsMetadataCache
 }

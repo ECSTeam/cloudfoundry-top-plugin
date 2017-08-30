@@ -25,7 +25,7 @@ import (
 
 type RouteMetadataManager struct {
 	*common.CommonV2ResponseManager
-	internalRoutesMetadataCache []*Route
+	internalRoutesMetadataCache []*RouteMetadata
 	// Key: routeId, value: list of AppId
 	appsForRouteCache map[string][]string
 }
@@ -38,8 +38,8 @@ func NewRouteMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *R
 	return mdMgr
 }
 
-func (mdMgr *RouteMetadataManager) CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid string, port int) *Route {
-	r := &Route{
+func (mdMgr *RouteMetadataManager) CreateInternalGeneratedRoute(hostName string, pathName string, domainGuid string, port int) *RouteMetadata {
+	route := &Route{
 		EntityCommon:      common.EntityCommon{Guid: util.Pseudo_uuid()},
 		Host:              hostName,
 		Path:              pathName,
@@ -47,12 +47,22 @@ func (mdMgr *RouteMetadataManager) CreateInternalGeneratedRoute(hostName string,
 		Port:              port,
 		InternalGenerated: true,
 	}
-	mdMgr.internalRoutesMetadataCache = append(mdMgr.internalRoutesMetadataCache, r)
-	return r
+	routeMd := NewRouteMetadata(*route)
+	mdMgr.internalRoutesMetadataCache = append(mdMgr.internalRoutesMetadataCache, routeMd)
+	return routeMd
 }
 
-func (mdMgr *RouteMetadataManager) FindItem(appId string) *RouteMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*RouteMetadata)
+func (mdMgr *RouteMetadataManager) FindItem(guid string) *RouteMetadata {
+	foundRouteMd := mdMgr.FindItemInternal(guid, false, false)
+	if foundRouteMd == nil {
+		for _, route := range mdMgr.internalRoutesMetadataCache {
+			if route.Guid == guid {
+				return route
+			}
+		}
+		return mdMgr.NewItemById(guid).(*RouteMetadata)
+	}
+	return foundRouteMd.(*RouteMetadata)
 }
 
 func (mdMgr *RouteMetadataManager) GetAll() []*RouteMetadata {

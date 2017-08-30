@@ -23,6 +23,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
@@ -179,7 +180,18 @@ func (asUI *RouteMapListView) postProcessData() []*DisplayRouteMapStats {
 	port := routeMd.Port
 
 	domainStats := domainMap[domainName]
+
+	if domainStats == nil {
+		toplog.Error("domainStats is nil.  domainName: [%v]  routeMd.DomainGuid: [%v]", domainName, routeMd.DomainGuid)
+		return displayRouteArray
+	}
+
 	hostStats := domainStats.HostStatsMap[hostName]
+
+	if hostStats == nil {
+		toplog.Error("hostStats is nil.  domainName: [%v] hostName: [%v]  routeMd.DomainGuid: [%v]", domainName, hostName, routeMd.DomainGuid)
+		return displayRouteArray
+	}
 
 	mdMgr := asUI.GetMdGlobalMgr()
 	if port == 0 {
