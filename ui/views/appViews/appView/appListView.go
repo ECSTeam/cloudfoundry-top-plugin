@@ -74,7 +74,7 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	title := "App List"
 
 	if asUI.spaceIdFilter != "" {
-		spaceMd := asUI.GetMdGlobalMgr().GetSpaceMdManager().FindItem(asUI.spaceIdFilter)
+		spaceMd := eventProcessor.GetMetadataManager().GetSpaceMdManager().FindItem(asUI.spaceIdFilter)
 		orgMd := eventProcessor.GetMetadataManager().GetOrgMdManager().FindItem(spaceMd.OrgGuid)
 		title = fmt.Sprintf("%v in Space %v Org %v", title, spaceMd.Name, orgMd.Name)
 	}

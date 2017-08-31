@@ -95,9 +95,8 @@ func (mdMgr *RouteMetadataManager) CreateMetadataEntityObject(guid string) commo
 func (mdMgr *RouteMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*RouteResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewRouteMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }

@@ -32,8 +32,8 @@ func NewDomainPrivateMetadataManager(mdGlobalManager common.MdGlobalManagerInter
 	return mdMgr
 }
 
-func (mdMgr *DomainPrivateMetadataManager) FindItem(appId string) *DomainMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*DomainMetadata)
+func (mdMgr *DomainPrivateMetadataManager) FindItem(guid string) *DomainMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*DomainMetadata)
 }
 
 func (mdMgr *DomainPrivateMetadataManager) GetAll() []*DomainMetadata {

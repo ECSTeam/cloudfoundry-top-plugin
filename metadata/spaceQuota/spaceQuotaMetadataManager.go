@@ -28,8 +28,8 @@ func NewSpaceQuotaMetadataManager(mdGlobalManager common.MdGlobalManagerInterfac
 	return mdMgr
 }
 
-func (mdMgr *SpaceQuotaMetadataManager) FindItem(appId string) *SpaceQuotaMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*SpaceQuotaMetadata)
+func (mdMgr *SpaceQuotaMetadataManager) FindItem(guid string) *SpaceQuotaMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*SpaceQuotaMetadata)
 }
 
 func (mdMgr *SpaceQuotaMetadataManager) NewItemById(guid string) common.IMetadata {
@@ -51,9 +51,8 @@ func (mdMgr *SpaceQuotaMetadataManager) CreateMetadataEntityObject(guid string) 
 func (mdMgr *SpaceQuotaMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*SpaceQuotaResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewSpaceQuotaMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }

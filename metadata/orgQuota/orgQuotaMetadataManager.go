@@ -29,8 +29,8 @@ func NewOrgQuotaMetadataManager(mdGlobalManager common.MdGlobalManagerInterface)
 	return mdMgr
 }
 
-func (mdMgr *OrgQuotaMetadataManager) FindItem(appId string) *OrgQuotaMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*OrgQuotaMetadata)
+func (mdMgr *OrgQuotaMetadataManager) FindItem(guid string) *OrgQuotaMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*OrgQuotaMetadata)
 }
 
 func (mdMgr *OrgQuotaMetadataManager) NewItemById(guid string) common.IMetadata {
@@ -52,15 +52,14 @@ func (mdMgr *OrgQuotaMetadataManager) CreateMetadataEntityObject(guid string) co
 func (mdMgr *OrgQuotaMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*OrgQuotaResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewOrgQuotaMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }
 
 func (mdMgr *OrgQuotaMetadataManager) ProcessResource(resource common.IResource) common.IMetadata {
-	resourceType := resource.(OrgQuotaResource)
+	resourceType := resource.(*OrgQuotaResource)
 	resourceType.Entity.Guid = resourceType.Meta.Guid
 	metadata := NewOrgQuotaMetadata(resourceType.Entity)
 	return metadata

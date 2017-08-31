@@ -29,8 +29,8 @@ func NewDomainSharedMetadataManager(mdGlobalManager common.MdGlobalManagerInterf
 	return mdMgr
 }
 
-func (mdMgr *DomainSharedMetadataManager) FindItem(appId string) *DomainMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*DomainMetadata)
+func (mdMgr *DomainSharedMetadataManager) FindItem(guid string) *DomainMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*DomainMetadata)
 }
 
 func (mdMgr *DomainSharedMetadataManager) GetAll() []*DomainMetadata {

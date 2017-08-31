@@ -32,8 +32,8 @@ func NewSpaceMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *S
 	return mdMgr
 }
 
-func (mdMgr *SpaceMetadataManager) FindItem(appId string) *SpaceMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*SpaceMetadata)
+func (mdMgr *SpaceMetadataManager) FindItem(guid string) *SpaceMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*SpaceMetadata)
 }
 
 func (mdMgr *SpaceMetadataManager) GetAll() []*SpaceMetadata {
@@ -66,12 +66,8 @@ func (mdMgr *SpaceMetadataManager) CreateMetadataEntityObject(guid string) commo
 func (mdMgr *SpaceMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*SpaceResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		if item.Entity.IsolationSegmentGuid == "" {
-			item.Entity.IsolationSegmentGuid = isolationSegment.DefaultIsolationSegmentGuid
-		}
-		metadata := NewSpaceMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }

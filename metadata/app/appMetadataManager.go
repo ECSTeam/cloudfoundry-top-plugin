@@ -46,8 +46,8 @@ func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
 	return appsMetadataArray
 }
 
-func (mdMgr *AppMetadataManager) FindItem(appId string) *AppMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*AppMetadata)
+func (mdMgr *AppMetadataManager) FindItem(guid string) *AppMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*AppMetadata)
 }
 
 func (mdMgr *AppMetadataManager) NewItemById(guid string) common.IMetadata {
@@ -69,9 +69,8 @@ func (mdMgr *AppMetadataManager) CreateMetadataEntityObject(guid string) common.
 func (mdMgr *AppMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*AppResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewAppMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }

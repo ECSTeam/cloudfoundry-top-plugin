@@ -86,15 +86,15 @@ func (mdMgr *IsolationSegmentMetadataManager) CreateMetadataEntityObject(guid st
 func (mdMgr *IsolationSegmentMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*IsolationSegmentResponse)
 	for _, item := range resp.Resources {
-		metadata := NewIsolationSegmentMetadata(item)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }
 
 func (mdMgr *IsolationSegmentMetadataManager) ProcessResource(resource common.IResource) common.IMetadata {
-	resourceType := resource.(IsolationSegment)
-	metadata := NewIsolationSegmentMetadata(resourceType)
+	resourceType := resource.(*IsolationSegment)
+	metadata := NewIsolationSegmentMetadata(*resourceType)
 	return metadata
 }
 

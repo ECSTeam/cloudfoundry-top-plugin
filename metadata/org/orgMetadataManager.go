@@ -29,8 +29,8 @@ func NewOrgMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *Org
 	return mdMgr
 }
 
-func (mdMgr *OrgMetadataManager) FindItem(appId string) *OrgMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*OrgMetadata)
+func (mdMgr *OrgMetadataManager) FindItem(guid string) *OrgMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*OrgMetadata)
 }
 
 func (mdMgr *OrgMetadataManager) GetAll() []*OrgMetadata {
@@ -63,9 +63,8 @@ func (mdMgr *OrgMetadataManager) CreateMetadataEntityObject(guid string) common.
 func (mdMgr *OrgMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*OrgResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewOrgMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }

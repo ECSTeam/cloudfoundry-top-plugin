@@ -28,8 +28,8 @@ func NewStackMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *S
 	return mdMgr
 }
 
-func (mdMgr *StackMetadataManager) FindItem(appId string) *StackMetadata {
-	return mdMgr.FindItemInternal(appId, false, true).(*StackMetadata)
+func (mdMgr *StackMetadataManager) FindItem(guid string) *StackMetadata {
+	return mdMgr.FindItemInternal(guid, false, true).(*StackMetadata)
 }
 
 func (mdMgr *StackMetadataManager) GetAll() []*StackMetadata {
@@ -62,9 +62,8 @@ func (mdMgr *StackMetadataManager) CreateMetadataEntityObject(guid string) commo
 func (mdMgr *StackMetadataManager) ProcessResponse(response common.IResponse, metadataArray []common.IMetadata) []common.IMetadata {
 	resp := response.(*StackResponse)
 	for _, item := range resp.Resources {
-		item.Entity.Guid = item.Meta.Guid
-		metadata := NewStackMetadata(item.Entity)
-		metadataArray = append(metadataArray, metadata)
+		itemMd := mdMgr.ProcessResource(&item)
+		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
 }
