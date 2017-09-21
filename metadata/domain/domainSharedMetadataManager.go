@@ -24,8 +24,7 @@ type DomainSharedMetadataManager struct {
 func NewDomainSharedMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *DomainSharedMetadataManager {
 	url := "/v2/shared_domains"
 	mdMgr := &DomainSharedMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)
-
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.DOMAIN_SHARED, url, mdMgr, true)
 	return mdMgr
 }
 

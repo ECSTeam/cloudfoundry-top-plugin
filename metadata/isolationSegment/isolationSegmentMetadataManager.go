@@ -24,8 +24,7 @@ type IsolationSegmentMetadataManager struct {
 func NewIsolationSegmentMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *IsolationSegmentMetadataManager {
 	url := "/v3/isolation_segments"
 	mdMgr := &IsolationSegmentMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)
-
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ISO_SEG, url, mdMgr, true)
 	return mdMgr
 }
 
@@ -53,6 +52,10 @@ func (mdMgr *IsolationSegmentMetadataManager) GetAll() []*IsolationSegmentMetada
 func (mdMgr *IsolationSegmentMetadataManager) LoadAllItems() {
 	mdMgr.CommonV2ResponseManager.LoadAllItems()
 	SharedIsolationSegment = mdMgr.findMetadataByName(SharedIsolationSegmentName)
+	if SharedIsolationSegment == nil {
+		// If we didn't find the shared segment, this must be a pre-isolation segment version of cloud foundry
+		SharedIsolationSegment = NewIsolationSegmentMetadata(IsolationSegment{EntityCommon: common.EntityCommon{Guid: DefaultIsolationSegmentGuid}, Name: SharedIsolationSegmentName})
+	}
 }
 
 func (mdMgr *IsolationSegmentMetadataManager) findMetadataByName(name string) *IsolationSegmentMetadata {

@@ -44,13 +44,22 @@ type CommonV2ResponseManager struct {
 }
 
 func NewCommonV2ResponseManager(mdGlobalManager MdGlobalManagerInterface,
+	dataType DataType,
 	url string,
 	mm V2MetadataManager,
 	autoFullLoadIfNotFound bool) *CommonV2ResponseManager {
 
 	commonV2ResponseMgr := &CommonV2ResponseManager{mm: mm, autoFullLoadIfNotFound: autoFullLoadIfNotFound}
-	commonV2ResponseMgr.CommonMetadataManager = NewCommonMetadataManager(mdGlobalManager, url, mm)
+	commonV2ResponseMgr.CommonMetadataManager = NewCommonMetadataManager(mdGlobalManager, dataType, url, mm)
 	return commonV2ResponseMgr
+}
+
+func (commonV2ResponseMgr *CommonV2ResponseManager) MetadataLoadMethod(guid string) error {
+	if guid == ALL {
+		return commonV2ResponseMgr.LoadAllItems()
+	} else {
+		return commonV2ResponseMgr.LoadItem(guid)
+	}
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) FindItemInternal(guid string, requestLoadIfNotFound bool, createEmptyObjectIfNotFound bool) IMetadata {
@@ -90,13 +99,13 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) LoadItemInternal(guid string
 	return itemMetadata, nil
 }
 
-func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItems() {
+func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItems() error {
 	now := time.Now()
 
 	metadataItemArray, err := commonV2ResponseMgr.LoadAllItemsInternal()
 	if err != nil {
 		toplog.Warn("*** app metadata error: %v", err.Error())
-		return
+		return err
 	}
 
 	metadataMap := make(map[string]IMetadata)
@@ -106,6 +115,8 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItems() {
 		metadataMap[metadataItem.GetGuid()] = metadataItem
 	}
 	commonV2ResponseMgr.MetadataMap = metadataMap
+
+	return nil
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItemsAysnc() {

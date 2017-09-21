@@ -125,7 +125,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	if len(isolationSegments) == 0 {
 		// We must be running against a Cloud Foundry foundation prior to isolation segment support
-		isolationSegments = []*isolationSegment.IsolationSegmentMetadata{isolationSegment.GetDefault()}
+		isolationSegments = append(isolationSegments, isolationSegment.GetDefault())
 	} else {
 		isolationSegments = append(isolationSegments, isolationSegment.UnknownIsolationSegment)
 		//isolationSegments = append(isolationSegments, isolationSegment.SharedIsolationSegment)
@@ -134,7 +134,6 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	for _, isoSeg := range isolationSegments {
 		summaryStatsByIsoSeg[isoSeg.Guid] = make(map[string]*StackSummaryStats)
 		for _, stack := range stacks {
-
 			//toplog.Info("isoSeg.Guid: %v  stack.Guid: %v", isoSeg.Guid, stack.Guid)
 			summaryStatsByIsoSeg[isoSeg.Guid][stack.Guid] = &StackSummaryStats{
 				IsolationSegmentGuid: isoSeg.Guid,

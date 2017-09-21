@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package loader
+package common
 
 import (
 	"sync"
@@ -36,7 +36,7 @@ Need to deal with minimumLoadTime -- timeSinceLastLoad > minimumLoadTimeMS
 const Infinity time.Duration = 1<<63 - 1
 const MaxLoadAttempts = 5
 const WaitToReloadOnErrorDuration = time.Second * 30
-const ALL = ""
+const ALL = "ALL"
 
 var metadataHandlerMap map[DataType]MetadataHandler = make(map[DataType]MetadataHandler)
 
@@ -45,23 +45,6 @@ type MetadataHandler interface {
 	MinimumReloadDuration() time.Duration
 	LastLoadTime(dataKey string) *time.Time
 }
-
-type DataType string
-
-const (
-	APP          DataType = "APP"
-	APP_INST              = "APP_INST"
-	APP_STATS             = "APP_STATS"
-	SPACE                 = "SPACE"
-	ORG                   = "ORG"
-	DOMAIN                = "DOMAIN"
-	ISO_SEG               = "ISO_SEG"
-	ORG_QUOTA             = "ORG_QUOTA"
-	SPACE_QUOTA           = "SPACE_QUOTA"
-	ROUTE                 = "ROUTE"
-	STACK                 = "STACK"
-	EVENTS_CRASH          = "EVENTS_CRASH"
-)
 
 type LoadHandler struct {
 	cliConnection plugin.CliConnection

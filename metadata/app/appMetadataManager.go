@@ -20,7 +20,6 @@ import (
 	"sync"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
 )
 
 type AppMetadataManager struct {
@@ -31,8 +30,7 @@ type AppMetadataManager struct {
 func NewAppMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *AppMetadataManager {
 	url := "/v2/apps"
 	mdMgr := &AppMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, false)
-	loader.RegisterMetadataHandler(loader.APP, mdMgr)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.APP, url, mdMgr, false)
 	return mdMgr
 }
 

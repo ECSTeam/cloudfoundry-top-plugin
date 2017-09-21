@@ -26,7 +26,6 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/domain"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/isolationSegment"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/org"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/orgQuota"
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/route"
@@ -63,14 +62,14 @@ type GlobalManager struct {
 
 	loadMetadataInProgress bool
 
-	loadHandler *loader.LoadHandler
+	loadHandler *common.LoadHandler
 }
 
 func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 
 	mgr := &GlobalManager{}
 
-	mgr.loadHandler = loader.NewLoadHandler(conn)
+	mgr.loadHandler = common.NewLoadHandler(conn)
 
 	mgr.appMdMgr = app.NewAppMetadataManager(mgr)
 	mgr.appInstMdMgr = appInstances.NewAppInstanceMetadataManager(mgr)
@@ -190,8 +189,12 @@ func (mgr *GlobalManager) FlushCache() {
 }
 
 // Request a refresh of specific app metadata
-func (mgr *GlobalManager) RequestRefreshAppMetadata(appId string) {
-	mgr.loadHandler.RequestLoadOfItem(loader.APP, appId, 0*time.Second)
+func (mgr *GlobalManager) RequestLoadOfItem(dataType common.DataType, guid string) {
+	mgr.loadHandler.RequestLoadOfItem(dataType, guid, 0*time.Second)
+}
+
+func (mgr *GlobalManager) RequestLoadOfAll(dataType common.DataType) {
+	mgr.loadHandler.RequestLoadOfAll(dataType, 0*time.Second)
 }
 
 // Indicate that we should actively monitor app details (container updates) for given appId
@@ -231,5 +234,5 @@ func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
 		toplog.Debug("Ignore refresh App Instance metadata - AppdId [%v] not monitored", appId)
 		return
 	}
-	mgr.loadHandler.RequestLoadOfItem(loader.APP_INST, appId, 0*time.Second)
+	mgr.loadHandler.RequestLoadOfItem(common.APP_INST, appId, 0*time.Second)
 }

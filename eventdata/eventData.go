@@ -83,7 +83,7 @@ func NewEventData(mu *sync.Mutex, eventProcessor *EventProcessor) *EventData {
 	logHttpAccess := NewEventLogHttpAccess()
 	apiUrl := util.GetApiEndpointNoProtocol(eventProcessor.cliConnection)
 
-	apiUrlRegexpStr := `^\/v[0-9]\/([^\/]*)\/([^\/]*)`
+	apiUrlRegexpStr := `^\/v[0-9]\/([^\/]*)(\/([^\/]*))?`
 	apiUrlRegexp := regexp.MustCompile(apiUrlRegexpStr)
 
 	urlPCF17RegexpStr := `^http[s]?:\/\/[^\/]*(\/v[0-9]\/.*)$`

@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/loader"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -36,8 +35,7 @@ type AppInstanceMetadataManager struct {
 func NewAppInstanceMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *AppInstanceMetadataManager {
 	url := "/v2/apps"
 	mdMgr := &AppInstanceMetadataManager{}
-	mdMgr.CommonMetadataManager = common.NewCommonMetadataManager(mdGlobalManager, url, mdMgr)
-	loader.RegisterMetadataHandler(loader.APP_INST, mdMgr)
+	mdMgr.CommonMetadataManager = common.NewCommonMetadataManager(mdGlobalManager, common.APP_INST, url, mdMgr)
 	return mdMgr
 }
 

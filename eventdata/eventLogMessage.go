@@ -23,6 +23,7 @@ import (
 	"github.com/Jeffail/gabs"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
 
@@ -165,7 +166,7 @@ func (ed *EventData) logStgCall(msg *events.Envelope) {
 	}
 	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appId)
 	toplog.Info("STG event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
-	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
+	ed.eventProcessor.GetMetadataManager().RequestLoadOfItem(common.APP, appId)
 
 }
 
@@ -178,7 +179,7 @@ func (ed *EventData) logApiCall(msg *events.Envelope) {
 	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appId)
 	logText := string(logMessage.GetMessage())
 	toplog.Debug("API event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
-	ed.eventProcessor.GetMetadataManager().RequestRefreshAppMetadata(appId)
+	ed.eventProcessor.GetMetadataManager().RequestLoadOfItem(common.APP, appId)
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appId)
 
 	if !strings.HasPrefix(logText, "App instance exited") {

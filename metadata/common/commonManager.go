@@ -31,7 +31,9 @@ type MetadataManager interface {
 
 type CommonMetadataManager struct {
 	mdGlobalManager MdGlobalManagerInterface
-	url             string
+
+	dataType DataType // APP, SPACE, ORG, etc
+	url      string
 
 	mm                 MetadataManager
 	mu                 sync.Mutex
@@ -44,10 +46,12 @@ type CommonMetadataManager struct {
 
 func NewCommonMetadataManager(
 	mdGlobalManager MdGlobalManagerInterface,
+	dataType DataType,
 	url string,
 	mm MetadataManager) *CommonMetadataManager {
-	commonMgr := &CommonMetadataManager{mdGlobalManager: mdGlobalManager, url: url, mm: mm}
+	commonMgr := &CommonMetadataManager{mdGlobalManager: mdGlobalManager, dataType: dataType, url: url, mm: mm}
 	commonMgr.clear()
+	RegisterMetadataHandler(dataType, commonMgr)
 	return commonMgr
 }
 
@@ -115,7 +119,7 @@ func (commonMgr *CommonMetadataManager) DelayedRemovalFromCache(guid string, ite
 
 	commonMgr.addToPendingDeleteFromCache(guid, itemName)
 	time.Sleep(DelayedRemovalFromCacheDuration)
-	toplog.Info("Metadata - guid: %v name: [%v] - Removed from cache as it doesn't seem to exist", guid, itemName)
+	toplog.Info("Metadata %v - guid: %v name: [%v] - Removed from cache as it doesn't seem to exist", commonMgr.dataType, guid, itemName)
 	commonMgr.DeleteItem(guid)
 }
 
@@ -166,7 +170,7 @@ func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 		return nil
 	}
 
-	toplog.Info("Metadata - guid: %v name: [%v] - Load start", guid, itemName)
+	toplog.Info("Metadata %v - guid: %v name: [%v] - Load start", commonMgr.dataType, guid, itemName)
 	newMetadata, err := commonMgr.mm.LoadItemInternal(guid)
 	if err != nil {
 		return err
@@ -179,9 +183,9 @@ func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 			// If we can't reload this guid then it must have been deleted
 			// Remove from metadata cache AND remove from appstats in "current" processor
 			go commonMgr.DelayedRemovalFromCache(guid, itemName)
-			toplog.Info("Metadata - guid: %v name: [%v] - Queue remove from cache as it doesn't seem to exist", guid, itemName)
+			toplog.Info("Metadata %v - guid: %v name: [%v] - Queue remove from cache as it doesn't seem to exist", commonMgr.dataType, guid, itemName)
 		}
-		toplog.Info("Metadata - guid: %v name: [%v] - Load complete", guid, itemName)
+		toplog.Info("Metadata %v - guid: %v name: [%v] - Load complete", commonMgr.dataType, guid, itemName)
 	}
 	return nil
 }

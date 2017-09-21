@@ -27,8 +27,7 @@ type SpaceMetadataManager struct {
 func NewSpaceMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *SpaceMetadataManager {
 	url := "/v2/spaces"
 	mdMgr := &SpaceMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, url, mdMgr, true)
-
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.SPACE, url, mdMgr, true)
 	return mdMgr
 }
 

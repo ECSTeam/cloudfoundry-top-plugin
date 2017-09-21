@@ -16,6 +16,7 @@
 package eventdata
 
 import (
+	"net/url"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventApp"
 	"github.com/ecsteam/cloudfoundry-top-plugin/eventdata/eventRoute"
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -44,25 +46,55 @@ func (ed *EventData) httpStartStopEvent(msg *events.Envelope) {
 		if appUUID != nil && instId != "" {
 			ed.httpStartStopEventForApp(msg)
 		} else if appUUID == nil && instId != "" {
+
+			url, err := url.Parse(httpEvent.GetUri())
+			if err != nil {
+				//log.Fatal(err)
+				return
+			}
+
+			// We only care about PUT, POST, DELETE which alters metadata
 			switch httpEvent.GetMethod() {
 			case events.Method_PUT:
 				fallthrough
-			//case events.Method_POST:
-			// TODO: Maybe this shouldn't be here as POST doesn't seem to include guid on URI
-			//	fallthrough
+			case events.Method_POST:
+				fallthrough
 			case events.Method_DELETE:
-				// Check if we have a PCF API call
-				uri := httpEvent.GetUri()
-
-				isApiCall, apiUri := ed.checkIfApiCall_PCF1_6(uri)
-				if !isApiCall {
-					// PCF 1.7 needs more testing -- comment out this check for now
-					//isApiCall, apiUri = ed.checkIfApiCall_PCF1_7(uri)
-				}
+				isApiCall, apiUri := ed.checkIfApiCall_PCF1_8Plus(url)
 				if isApiCall {
-					ed.pcfApiHasBeenCalled(msg, apiUri)
+					ed.pcfApiHasBeenCalled(msg, apiUri, httpEvent.GetMethod())
 				}
 			}
+
+			//uri := httpEvent.GetUri()
+			//toplog.Info("HTTP call: %v uri: %v", httpEvent.GetMethod(), uri)
+			/*
+				isApiCall, apiUri := ed.checkIfApiCall_PCF1_6(uri)
+				if isApiCall {
+					ed.pcfApiHasBeenCalled(msg, apiUri, httpEvent.GetMethod())
+				}
+			*/
+			/*
+				switch httpEvent.GetMethod() {
+				case events.Method_PUT:
+					fallthrough
+				//case events.Method_POST:
+				// TODO: Maybe this shouldn't be here as POST doesn't seem to include guid on URI
+				//	fallthrough
+				case events.Method_DELETE:
+					// Check if we have a PCF API call
+					uri := httpEvent.GetUri()
+
+					isApiCall, apiUri := ed.checkIfApiCall_PCF1_6(uri)
+					if !isApiCall {
+						// PCF 1.7 needs more testing -- comment out this check for now
+						//isApiCall, apiUri = ed.checkIfApiCall_PCF1_7(uri)
+					}
+					if isApiCall {
+						ed.pcfApiHasBeenCalled(msg, apiUri)
+					}
+				}
+			*/
 		}
 	default:
 		// Ignore
@@ -162,6 +194,23 @@ func (ed *EventData) checkIfApiCall_PCF1_7(uri string) (bool, string) {
 	return true, apiUri
 }
 
+// Format of HttpStartStop in PCF 1.8+ (below example from 1.11)
+// origin:"gorouter" eventType:HttpStartStop timestamp:1504214133282809203 deployment:"cf"
+// job:"router" index:"6b3af194-af76-4559-ada6-49f823d1fcfc" ip:"172.28.31.76"
+// httpStartStop:<startTimestamp:1504214133245642650 stopTimestamp:1504214133282794229
+// requestId:<low:15442731464348427596 high:16854041068462198120 > peerType:Client
+// method:PUT uri:"http://api.system.lab03.den.ecsteam.io/v2/spaces/4dbbefa5-f974-4e36-8275-1ccfddf9f04e"
+// remoteAddress:"172.28.31.250:57936" userAgent:"go-cli 6.29.0+ff886fa93.2017-07-24 / darwin"
+// statusCode:201 contentLength:1572 instanceId:"1353d169-1458-4afb-59a8-2482390513a9"
+// 15:"206.173.105.122" 15:"172.29.0.111" 15:"172.28.31.250" >
+func (ed *EventData) checkIfApiCall_PCF1_8Plus(url *url.URL) (bool, string) {
+	if url.Host == ed.apiUrl {
+		// A PCF API has been called
+		return true, url.Path
+	}
+	return false, ""
+}
+
 func (ed *EventData) getContainerTraffic(appStats *eventApp.AppStats, instId string) *eventApp.TrafficStats {
 
 	// Save the container data -- by instance id
@@ -184,7 +233,7 @@ func (ed *EventData) getContainerTraffic(appStats *eventApp.AppStats, instId str
 
 // A PCF API has been called -- use this to trigger reload of metadata if appropriate
 // Example: "/v2/spaces/59cde607-2cda-4e20-ab30-cc779c4026b0"
-func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
+func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string, method events.Method) {
 	toplog.Debug("API called: %v", apiUri)
 
 	parsedData := ed.apiUrlRegexp.FindAllStringSubmatch(apiUri, -1)
@@ -193,26 +242,40 @@ func (ed *EventData) pcfApiHasBeenCalled(msg *events.Envelope, apiUri string) {
 		return
 	}
 	dataArray := parsedData[0]
-	if len(dataArray) != 3 {
+	if len(dataArray) != 4 {
 		toplog.Debug("pcfApiHasBeenCalled>>Unable to parse (dataArray size) apiUri: %v", apiUri)
 		return
 	}
 	dataType := dataArray[1]
-	guid := dataArray[2]
-	ed.pcfApiHasBeenCalledReloadMetadata(dataType, guid)
+	guid := dataArray[3]
+	ed.pcfApiHasBeenCalledReloadMetadata(dataType, guid, method)
 
 }
 
-func (ed *EventData) pcfApiHasBeenCalledReloadMetadata(dataType, guid string) {
-	toplog.Debug("Data type:%v GUID:%v", dataType, guid)
-	switch dataType {
+func (ed *EventData) pcfApiHasBeenCalledReloadMetadata(dataTypeStr string, guid string, method events.Method) {
+	toplog.Debug("Data type:%v GUID:%v", dataTypeStr, guid)
+	var dataType common.DataType
+	switch dataTypeStr {
 	case "spaces":
-		// TODO reload metadata
-		toplog.Debug("Reload SPACE metadata for space with GUID:%v", guid)
+		dataType = common.SPACE
 	case "organizations":
-		// TODO reload metadata
-		toplog.Debug("Reload ORG metadata for org with GUID:%v", guid)
+		dataType = common.ORG
 	default:
+	}
+	if dataType != "" {
+		ed.reloadMetadata(dataType, guid, method)
+	}
+}
+
+func (ed *EventData) reloadMetadata(dataType common.DataType, guid string, method events.Method) {
+	toplog.Info("Reload %v metadata with GUID:%v method: %v", dataType, guid, method)
+	switch method {
+	case events.Method_PUT:
+		ed.eventProcessor.GetMetadataManager().RequestLoadOfItem(dataType, guid)
+	case events.Method_POST:
+		ed.eventProcessor.GetMetadataManager().RequestLoadOfAll(dataType)
+	case events.Method_DELETE:
+		ed.eventProcessor.GetMetadataManager().RequestLoadOfItem(dataType, guid)
 	}
 }
 
