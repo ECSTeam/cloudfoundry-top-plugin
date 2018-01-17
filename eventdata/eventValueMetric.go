@@ -20,7 +20,9 @@ import "github.com/cloudfoundry/sonde-go/events"
 func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 
 	// Can we assume that all rep orgins are cflinuxfs2 diego cells? Might be a bad idea
-	if msg.GetOrigin() == "rep" {
+	// 12/28/2017 - Added garden-linux to support PCF 2.0 small footprint
+	// Can't use "diego_cell" in job name as isolation segment job name could be custom job name
+	if msg.GetOrigin() == "rep" || msg.GetOrigin() == "garden-linux" {
 		ip := msg.GetIp()
 		cellStats := ed.getCellStats(ip)
 
