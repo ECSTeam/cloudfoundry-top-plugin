@@ -230,7 +230,10 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			cellCpu := cpuByCellMap[cellStats.Ip]
 			if cellCpu > sumStats.CellMaxCpuPercentage {
 				sumStats.CellMaxCpuPercentage = cpuByCellMap[cellStats.Ip]
-				sumStats.CellMaxCpuCapacity = sumStats.CellMaxCpuPercentage / float64(cellStats.NumOfCpus)
+				if cellStats.NumOfCpus > 0 {
+					// Only calc the capacity if we know the total CPU count
+					sumStats.CellMaxCpuCapacity = sumStats.CellMaxCpuPercentage / float64(cellStats.NumOfCpus)
+				}
 			}
 		}
 	}

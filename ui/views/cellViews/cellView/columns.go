@@ -75,12 +75,15 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 
 		cpuPercentage := cellStats.TotalContainerCpuPercentage
 		// This is the overall percentage of CPU in use on this cell, where 100% means all CPUs are 100% consumed
-		cellMaxCpuCapacity := cpuPercentage / float64(cellStats.NumOfCpus)
-		switch {
-		case cellMaxCpuCapacity >= 90:
-			attentionType = uiCommon.ATTENTION_HOT
-		case cellMaxCpuCapacity >= 80:
-			attentionType = uiCommon.ATTENTION_WARM
+		// Only calc and determine alert attention color if we know the total number of CPUs
+		if cellStats.NumOfCpus > 0 {
+			cellMaxCpuCapacity := cpuPercentage / float64(cellStats.NumOfCpus)
+			switch {
+			case cellMaxCpuCapacity >= 90:
+				attentionType = uiCommon.ATTENTION_HOT
+			case cellMaxCpuCapacity >= 80:
+				attentionType = uiCommon.ATTENTION_WARM
+			}
 		}
 		return attentionType
 	}
