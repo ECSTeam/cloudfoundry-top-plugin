@@ -31,6 +31,19 @@ func CaseInsensitiveLess(s1, s2 string) bool {
 	return strings.ToUpper(s1) < strings.ToUpper(s2)
 }
 
+func CaseInsensitiveCompare(s1, s2 string) int {
+	// TODO: Find a more efficent way to do this that does not involve obj creation
+	s1 = strings.ToUpper(s1)
+	s2 = strings.ToUpper(s2)
+	if s1 < s2 {
+		return -1
+	} else if s1 == s2 {
+		return 0
+	} else {
+		return 1
+	}
+}
+
 func Format(n int64) string {
 	return FormatUint64(uint64(n))
 }

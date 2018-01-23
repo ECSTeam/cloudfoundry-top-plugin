@@ -118,7 +118,17 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayStatsMap[appId] = displayAppStats
 		appMetadata := cd.appMdMgr.FindItem(appStats.AppId)
 
+		displayAppStats.AppNameForSort = appMetadata.Name
 		displayAppStats.AppName = appMetadata.Name
+
+		if appMetadata.PackageState == "PENDING" {
+			displayAppStats.IsPackageStatePending = true
+			displayAppStats.AppName = "[" + displayAppStats.AppName + "]"
+		}
+		if mdMgr.GetAppMdManager().IsPendingDeleteFromCache(appId) {
+			displayAppStats.IsDeleted = true
+			displayAppStats.AppName = "(" + displayAppStats.AppName + ")"
+		}
 		if mdMgr.IsMonitorAppDetails(appId) {
 			displayAppStats.AppName += "*"
 		}
@@ -195,7 +205,9 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 				}
 			}
 		}
-		if displayAppStats.Monitored && totalReportingContainers < displayAppStats.DesiredContainers {
+		if displayAppStats.Monitored &&
+			!displayAppStats.IsPackageStatePending &&
+			totalReportingContainers < displayAppStats.DesiredContainers {
 			appsNotInDesiredState = appsNotInDesiredState + 1
 		}
 		if totalReportingContainers > 0 {

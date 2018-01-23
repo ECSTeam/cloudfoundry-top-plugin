@@ -81,6 +81,7 @@ const (
 	ATTENTION_ALERT
 	ATTENTION_WARN
 	ATTENTION_NOT_MONITORED
+	ATTENTION_DELETED
 	ATTENTION_STATE_STARTING
 	ATTENTION_STATE_UNKNOWN
 	ATTENTION_STATE_DOWN
@@ -575,6 +576,8 @@ func (asUI *ListWidget) writeRowData(g *gocui.Gui, v *gocui.View, rowIndex int) 
 			case ATTENTION_ACTIVITY:
 				colorString = util.CYAN
 			case ATTENTION_NOT_MONITORED:
+				colorString = util.BRIGHT_BLACK
+			case ATTENTION_DELETED:
 				colorString = util.BRIGHT_BLACK
 			case ATTENTION_STATE_STARTING:
 				colorString = util.YELLOW

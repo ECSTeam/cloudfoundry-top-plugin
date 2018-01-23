@@ -33,10 +33,12 @@ be colored red.
 const HelpColumnsText = `
 **Application Columns:**
 
-  APPLICATION - Application name. If the name has an asterisk (*) on
-        the end, the application is being activily monitored. See
-        Active Monitoring below for more infomation. See Application
-        Name Color Key below for color information.
+  APPLICATION - Application name. If application name has:
+     () - App has been deleted. It will be removed from display shortly
+     [] - App is not yet fully staged (i.e., it is still deploying)
+     Asterisk (*) on the end of name means the application is being
+        activily monitored. See Active Monitoring below for more info.
+        See Application Name Color Key below for color information.
   SPACE - Space name.
   ORG - Organization name.
   DCR - Desired containers (instances).
@@ -69,10 +71,12 @@ CYAN  - Active. HTTP(S) traffic has been recieved in the last
         10 seconds. 
 RED   - Not in desired state. The application has been configured
         for DCR instances, but only RCR are running.
-GRAY  - Not monitored (non-privileged only). In non-privileged only
-        the first 50 applications in the currently targeted org and
-        space are monitored.
-
+GRAY  - One of two possibilities:
+        1. App has been deleted.
+        2. Not monitored (non-privileged only). In non-privileged
+           only the first 50 applications in the currently targeted
+           org and space are monitored.
+ 
 **Active Monitoring:**
 For the most part cf top passively monitors a platform by analyzing
 firehose events as they occur. Because of limitations of this data

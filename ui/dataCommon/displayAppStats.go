@@ -25,6 +25,7 @@ type DisplayAppStats struct {
 	*eventApp.AppStats
 
 	AppName              string
+	AppNameForSort       string
 	SpaceId              string
 	SpaceName            string
 	OrgId                string
@@ -34,6 +35,11 @@ type DisplayAppStats struct {
 	StackName            string
 	IsolationSegmentGuid string
 	IsolationSegmentName string
+
+	// If the app is in the pending delete from cache, then its been deleted
+	// but we keep it around for a n seconds to show newly deleted app on the UI
+	IsDeleted             bool
+	IsPackageStatePending bool
 
 	// Indicate if this app is monitored.  For privileged users
 	// this should always be true.
