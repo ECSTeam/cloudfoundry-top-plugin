@@ -118,7 +118,7 @@ if [[ "$1" = "release" ]] ; then
 	$GOPATH/bin/github-release upload \
     --tag $TAG \
     --name "top-plugin-linux32" \
-    --file bin/linux64/top-plugin-linux32
+    --file bin/linux32/top-plugin-linux32
 
 	echo "Upload top-plugin-linux64"
 	$GOPATH/bin/github-release upload \
@@ -130,7 +130,7 @@ if [[ "$1" = "release" ]] ; then
 	$GOPATH/bin/github-release upload \
     --tag $TAG \
     --name "top-plugin32.exe" \
-    --file bin/win64/top-plugin32.exe
+    --file bin/win32/top-plugin32.exe
 
 	echo "Upload top-plugin64.exe"
 	$GOPATH/bin/github-release upload \
