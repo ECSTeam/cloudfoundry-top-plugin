@@ -88,7 +88,7 @@ sed "s/__win32-sha1__/$WIN32_SHA1/" |
 sed "s/__win64-sha1__/$WIN64_SHA1/" |
 sed "s/__linux32-sha1__/$LINUX32_SHA1/" |
 sed "s/__linux64-sha1__/$LINUX64_SHA1/" |
-#sed "s/__linuxarm6-sha1__/$LINUXARM6_SHA1/" |
+sed "s/__linuxarm6-sha1__/$LINUXARM6_SHA1/" |
 sed "s/__TAG__/$TAG/" |
 sed "s/__VERSION__/$VERSION/" |
 sed "s/__TODAY__/$NOW/" |
