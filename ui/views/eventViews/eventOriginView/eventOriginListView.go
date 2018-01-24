@@ -58,7 +58,7 @@ func NewEventOriginListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle(fmt.Sprintf("Event Origin List - Event Type: %v", eventTypeName))
+	dataListView.SetTitle(func() string { return fmt.Sprintf("Event Origin List - Event Type: %v", eventTypeName) })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 

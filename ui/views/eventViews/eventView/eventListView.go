@@ -52,7 +52,7 @@ func NewEventListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Event List")
+	dataListView.SetTitle(func() string { return "Event List" })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 

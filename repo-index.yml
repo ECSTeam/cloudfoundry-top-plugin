@@ -6,12 +6,18 @@
   - checksum: __osx-sha1__
     platform: osx
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-darwin
+  - checksum: __win32-sha1__
+    platform: win32
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin32.exe
   - checksum: __win64-sha1__
     platform: win64
-    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin.exe
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin64.exe
+  - checksum: __linux32-sha1__
+    platform: linux32
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin32-linux
   - checksum: __linux64-sha1__
     platform: linux64
-    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin64-linux
   company: ECS Team (now part of CGI)
   created: 2016-11-07T00:00:00Z
   description: An interactive interface that shows top statistics similar in concept

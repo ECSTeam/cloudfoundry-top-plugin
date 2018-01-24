@@ -97,12 +97,19 @@ func (w *AppInfoWidget) RefreshDisplay(g *gocui.Gui) error {
 
 	v.Clear()
 
+	appId := w.detailView.appId
+	mdAppMgr := w.mdMgr.GetAppMdManager()
+	appMetadata := mdAppMgr.FindItem(appId)
+	if mdAppMgr.IsPendingDeleteFromCache(appId) || mdAppMgr.IsDeletedFromCache(appId) {
+		AppDeletedMsg(g, v)
+		return nil
+	}
+
 	m := w.detailView.GetDisplayedEventData().AppMap
-	appStats := m[w.detailView.appId]
+	appStats := m[appId]
 	if appStats == nil {
 		return nil
 	}
-	appMetadata := w.mdMgr.GetAppMdManager().FindItem(appStats.AppId)
 
 	if appMetadata.Guid != "" {
 		memoryDisplay := util.ByteSize(appMetadata.MemoryMB * util.MEGABYTE).String()

@@ -58,7 +58,7 @@ func NewCapacityPlanView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.GetListData = asUI.GetListData
 	//dataListView.PreRowDisplayCallback = asUI.preRowDisplay
 
-	dataListView.SetTitle("Capacity Plan (memory)")
+	dataListView.SetTitle(func() string { return "Capacity Plan (memory)" })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 

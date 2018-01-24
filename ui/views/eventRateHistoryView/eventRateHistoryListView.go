@@ -49,7 +49,7 @@ func NewEventRateHistoryView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Event Rate Peak History")
+	dataListView.SetTitle(func() string { return "Event Rate Peak History" })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 

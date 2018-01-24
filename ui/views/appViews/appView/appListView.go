@@ -71,15 +71,16 @@ func NewAppListView(masterUI masterUIInterface.MasterUIInterface,
 	//dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	title := "App List"
-
-	if asUI.spaceIdFilter != "" {
-		spaceMd := eventProcessor.GetMetadataManager().GetSpaceMdManager().FindItem(asUI.spaceIdFilter)
-		orgMd := eventProcessor.GetMetadataManager().GetOrgMdManager().FindItem(spaceMd.OrgGuid)
-		title = fmt.Sprintf("%v in Space %v Org %v", title, spaceMd.Name, orgMd.Name)
+	titleFunc := func() string {
+		title := "App List"
+		if asUI.spaceIdFilter != "" {
+			spaceMd := eventProcessor.GetMetadataManager().GetSpaceMdManager().FindItem(asUI.spaceIdFilter)
+			orgMd := eventProcessor.GetMetadataManager().GetOrgMdManager().FindItem(spaceMd.OrgGuid)
+			title = fmt.Sprintf("%v in Space %v Org %v", title, spaceMd.Name, orgMd.Name)
+		}
+		return title
 	}
-
-	dataListView.SetTitle(title)
+	dataListView.SetTitle(titleFunc)
 
 	dataListView.HelpText = HelpText
 	if asUI.spaceIdFilter == "" {

@@ -31,7 +31,7 @@ type updateHeaderCallback func(g *gocui.Gui, v *gocui.View) (int, error)
 type actionCallback func(g *gocui.Gui, v *gocui.View) error
 type initializeCallback func(g *gocui.Gui, viewName string) error
 type preRowDisplayCallback func(data uiCommon.IData, isSelected bool) string
-type refreshDisplayCallback func(g *gocui.Gui) error
+type refreshDisplayCallback func(g *gocui.Gui) (propagateRefresh bool, err error)
 type IColumnOwner interface{}
 
 type GetListData func() []uiCommon.IData
@@ -49,6 +49,7 @@ type DataListView struct {
 	listWidget            *uiCommon.ListWidget
 	initialized           bool
 	Title                 string
+	titleFunc             GetTitleFunc
 	HelpText              string
 	HelpTextTips          string
 	InitializeCallback    initializeCallback
@@ -106,8 +107,8 @@ func (asUI *DataListView) GetTopMargin() int {
 	return asUI.topMargin
 }
 
-func (asUI *DataListView) SetTitle(title string) {
-	asUI.listWidget.Title = title
+func (asUI *DataListView) SetTitle(titleFunc GetTitleFunc) {
+	asUI.titleFunc = titleFunc
 }
 
 func (asUI *DataListView) GetMargins() (int, int) {
@@ -148,9 +149,8 @@ func (asUI *DataListView) Layout(g *gocui.Gui) error {
 		asUI.initialize(g)
 	}
 	asUI.masterUI.SetHelpTextTips(g, asUI.HelpTextTips)
-	//topOffset := asUI.getTopOffset()
-	// TODO: Is this correct?
-	//asUI.listWidget.SetTopMargin(topOffset)
+	asUI.listWidget.Title = asUI.titleFunc()
+
 	return asUI.listWidget.Layout(g)
 }
 
@@ -182,25 +182,16 @@ func (asUI *DataListView) GetDisplayedListData() []uiCommon.IData {
 }
 
 func (asUI *DataListView) RefreshDisplay(g *gocui.Gui) error {
-	var err error
-
-	/*
-		TODO: Need to figure out framework for allowing data views to add rows to header
-		headerSize, err2 := asUI.updateHeader(g)
-		if err2 != nil {
-			return err2
-		}
-		asUI.masterUI.SetStatsSummarySize(headerSize)
-	*/
-
 	if asUI.RefreshDisplayCallback != nil {
-		err = asUI.RefreshDisplayCallback(g)
+		propagateRefresh, err := asUI.RefreshDisplayCallback(g)
 		if err != nil {
 			return err
 		}
+		if propagateRefresh == false {
+			return nil
+		}
 	}
-
-	err = asUI.refreshListDisplay(g)
+	err := asUI.refreshListDisplay(g)
 	if err != nil {
 		return err
 	}

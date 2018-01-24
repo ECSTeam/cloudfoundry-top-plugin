@@ -59,7 +59,7 @@ func NewOrgListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Org List")
+	dataListView.SetTitle(func() string { return "Org List" })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 

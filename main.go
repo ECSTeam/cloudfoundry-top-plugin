@@ -38,8 +38,8 @@ func (c *TopCmd) GetMetadata() plugin.PluginMetadata {
 		Name: "top",
 		Version: plugin.VersionType{
 			Major: 0,
-			Minor: 8,
-			Build: 8,
+			Minor: 9,
+			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,

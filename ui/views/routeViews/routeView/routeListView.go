@@ -57,7 +57,7 @@ func NewRouteListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.UpdateHeaderCallback = asUI.updateHeader
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle("Route List")
+	dataListView.SetTitle(func() string { return "Route List" })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = appView.HelpTextTips
 

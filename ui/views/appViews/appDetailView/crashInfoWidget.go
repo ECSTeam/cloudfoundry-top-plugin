@@ -92,7 +92,8 @@ func (w *CrashInfoWidget) refreshDisplay(g *gocui.Gui) error {
 
 	v.Clear()
 
-	if w.detailView.appId == "" {
+	appId := w.detailView.appId
+	if appId == "" {
 		fmt.Fprintln(v, "No application selected")
 		return nil
 	}

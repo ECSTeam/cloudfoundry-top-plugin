@@ -68,9 +68,10 @@ func NewAppDetailView(masterUI masterUIInterface.MasterUIInterface,
 
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
-	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
+	//dataListView.RefreshDisplayCallback = asUI.refreshDisplay
 
-	dataListView.SetTitle("Container List")
+	dataListView.SetTitle(func() string { return "Container List" })
+
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 
@@ -229,16 +230,21 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 	now := time.Now().Truncate(time.Second)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStats := appMap[asUI.appId]
-	if appStats == nil {
-		return displayStatsArray
-	}
-	appId := appStats.AppId
-	asUI.GetEventProcessor().GetMetadataManager().MonitorAppDetails(appId, &now)
 
+	appId := asUI.appId
 	mdMgr := asUI.GetMdGlobalMgr()
 	mdAppMgr := mdMgr.GetAppMdManager()
 	appMetadata := mdAppMgr.FindItem(appId)
+	if mdAppMgr.IsPendingDeleteFromCache(appId) || mdAppMgr.IsDeletedFromCache(appId) {
+		asUI.DataListView.RefreshDisplayCallback = asUI.refreshDisplay
+		return nil
+	}
+
+	appStats := appMap[appId]
+	if appStats == nil {
+		return displayStatsArray
+	}
+	asUI.GetEventProcessor().GetMetadataManager().MonitorAppDetails(appId, &now)
 
 	appInsts := asUI.GetEventProcessor().GetMetadataManager().GetAppInstMdManager().FindItem(appId)
 	if appInsts == nil && appMetadata.State == "STARTED" {
@@ -397,26 +403,23 @@ func (asUI *AppDetailView) closeAppDetailView(g *gocui.Gui, v *gocui.View) error
 	return nil
 }
 
-func (w *AppDetailView) refreshDisplay(g *gocui.Gui) error {
+func (w *AppDetailView) refreshDisplay(g *gocui.Gui) (propagateRefresh bool, err error) {
 
-	// HTTP request stats -- These stands are also on the appListView so we need them in a detail view??
-	/*
-		fmt.Fprintf(v, "\n")
-		fmt.Fprintf(v, "HTTP(S) status code:\n")
-		fmt.Fprintf(v, "  2xx: %12v\n", util.Format(appStats.TotalTraffic.Http2xxCount))
-		fmt.Fprintf(v, "  3xx: %12v\n", util.Format(appStats.TotalTraffic.Http3xxCount))
-		fmt.Fprintf(v, "  4xx: %12v\n", util.Format(appStats.TotalTraffic.Http4xxCount))
-		fmt.Fprintf(v, "  5xx: %12v\n", util.Format(appStats.TotalTraffic.Http5xxCount))
-		fmt.Fprintf(v, "%v", util.BRIGHT_WHITE)
-		fmt.Fprintf(v, "  All: %12v\n", util.Format(appStats.TotalTraffic.HttpAllCount))
-		fmt.Fprintf(v, "%v", util.CLEAR)
-	*/
+	name := w.DataListView.Name()
 
-	/*
-		totalLogCount = totalLogCount + appStats.NonContainerOutCount + appStats.NonContainerErrCount
-		fmt.Fprintf(v, "Non container logs - Stdout: %-12v ", util.Format(appStats.NonContainerOutCount))
-		fmt.Fprintf(v, "Stderr: %-12v\n", util.Format(appStats.NonContainerErrCount))
-		fmt.Fprintf(v, "Total log events: %12v\n", util.Format(totalLogCount))
-	*/
-	return nil
+	v, err := g.View(name)
+	if err != nil {
+		return false, err
+	}
+	AppDeletedMsg(g, v)
+
+	return false, nil
+}
+
+func AppDeletedMsg(g *gocui.Gui, v *gocui.View) {
+	v.Clear()
+	fmt.Fprintf(v, " \n")
+	fmt.Fprintf(v, "%v", util.BRIGHT_RED)
+	fmt.Fprintf(v, " Application has been deleted")
+	fmt.Fprintf(v, "%v", util.CLEAR)
 }

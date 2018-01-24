@@ -23,9 +23,12 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
+type GetTitleFunc func() string
+
 type DataListViewInterface interface {
 	Name() string
-	SetTitle(title string)
+	//SetTitle(title string)
+	SetTitle(title GetTitleFunc)
 	GetMargins() (int, int)
 	GetMasterUI() masterUIInterface.MasterUIInterface
 	GetParentView() DataListViewInterface

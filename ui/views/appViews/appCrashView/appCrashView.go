@@ -27,6 +27,7 @@ import (
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/masterUIInterface"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon/views/dataView"
+	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 	"github.com/jroimartin/gocui"
 )
 
@@ -59,7 +60,12 @@ func NewAppCrashView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.InitializeCallback = asUI.initializeCallback
 	dataListView.GetListData = asUI.GetListData
 
-	dataListView.SetTitle(fmt.Sprintf("App: %v - Container CRASH List (last 24 hours)", asUI.getAppName()))
+	titleFunc := func() string {
+		return fmt.Sprintf("App: %v - Container CRASH List (last 24 hours)", asUI.getAppName())
+	}
+	//dataListView.SetTitle(fmt.Sprintf("App: %v - Container CRASH List (last 24 hours)", asUI.getAppName()))
+	dataListView.SetTitle(titleFunc)
+	dataListView.RefreshDisplayCallback = asUI.refreshDisplay
 
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
@@ -116,7 +122,8 @@ func (asUI *AppCrashView) postProcessData() []*DisplayContainerCrashInfo {
 	displayCrashInfoList := make([]*DisplayContainerCrashInfo, 0)
 
 	appMap := asUI.GetDisplayedEventData().AppMap
-	appStats := appMap[asUI.appId]
+	appId := asUI.appId
+	appStats := appMap[appId]
 	if appStats == nil {
 		return displayCrashInfoList
 	}
@@ -168,4 +175,22 @@ func (asUI *AppCrashView) getAppName() string {
 	appMetadata := asUI.appMdMgr.FindItem(asUI.appId)
 	appName := appMetadata.Name
 	return appName
+}
+
+func (asUI *AppCrashView) refreshDisplay(g *gocui.Gui) (propagateRefresh bool, err error) {
+	v, err := g.View(asUI.DataListView.Name())
+	if err != nil {
+		return false, err
+	}
+	appId := asUI.appId
+	mdAppMgr := asUI.appMdMgr
+	if mdAppMgr.IsPendingDeleteFromCache(appId) || mdAppMgr.IsDeletedFromCache(appId) {
+		v.Clear()
+		fmt.Fprintf(v, " \n")
+		fmt.Fprintf(v, "%v", util.BRIGHT_RED)
+		fmt.Fprintf(v, " Application has been deleted")
+		fmt.Fprintf(v, "%v", util.CLEAR)
+		return false, nil
+	}
+	return true, nil
 }

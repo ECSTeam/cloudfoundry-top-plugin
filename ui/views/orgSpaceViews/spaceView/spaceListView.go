@@ -61,7 +61,7 @@ func NewSpaceListView(masterUI masterUIInterface.MasterUIInterface,
 	dataListView.GetListData = asUI.GetListData
 
 	orgMd := eventProcessor.GetMetadataManager().GetOrgMdManager().FindItem(orgId)
-	dataListView.SetTitle(fmt.Sprintf("Space List of Org %v", orgMd.Name))
+	dataListView.SetTitle(func() string { return fmt.Sprintf("Space List of Org %v", orgMd.Name) })
 	dataListView.HelpText = HelpText
 	dataListView.HelpTextTips = HelpTextTips
 
