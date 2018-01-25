@@ -14,10 +14,10 @@
     url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin64.exe
   - checksum: __linux32-sha1__
     platform: linux32
-    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin32-linux
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux32
   - checksum: __linux64-sha1__
     platform: linux64
-    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin64-linux
+    url: https://github.com/ECSTeam/cloudfoundry-top-plugin/releases/download/__TAG__/top-plugin-linux64
   company: ECS Team (now part of CGI)
   created: 2016-11-07T00:00:00Z
   description: An interactive interface that shows top statistics similar in concept
