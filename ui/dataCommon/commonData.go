@@ -205,11 +205,17 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 				}
 			}
 		}
-		if displayAppStats.Monitored &&
-			!displayAppStats.IsPackageStatePending &&
-			totalReportingContainers < displayAppStats.DesiredContainers {
-			appsNotInDesiredState = appsNotInDesiredState + 1
+
+		now := time.Now()
+		if displayAppStats.Monitored && appMetadata.State == "STARTED" && appMetadata.PackageState == "STAGED" {
+			cacheTime := appMetadata.GetCacheTime()
+			startedDuration := now.Sub(*cacheTime)
+			if startedDuration > (config.AppNotInDesiredStateWaitTimeSeconds*time.Second) && totalReportingContainers < displayAppStats.DesiredContainers {
+				appsNotInDesiredState = appsNotInDesiredState + 1
+				displayAppStats.AppNotInDesiredState = true
+			}
 		}
+
 		if totalReportingContainers > 0 {
 			displayAppStats.TotalCpuPercentage = totalCpuPercentage
 		} else {

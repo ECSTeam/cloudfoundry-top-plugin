@@ -65,8 +65,9 @@ func appNameColumnAttentionFunc(data uiCommon.IData, columnOwner uiCommon.IColum
 	if !appStats.Monitored {
 		return uiCommon.ATTENTION_NOT_MONITORED
 	}
+
 	attentionType := uiCommon.ATTENTION_NORMAL
-	if appListView.isWarmupComplete && !appStats.IsPackageStatePending && appStats.DesiredContainers > appStats.TotalReportingContainers {
+	if appListView.isWarmupComplete && appStats.AppNotInDesiredState {
 		attentionType = uiCommon.ATTENTION_NOT_DESIRED_STATE
 	}
 	return attentionType

@@ -45,6 +45,8 @@ type DisplayAppStats struct {
 	// this should always be true.
 	Monitored bool
 
+	AppNotInDesiredState bool
+
 	//TotalTraffic *eventdata.TrafficStats
 
 	TotalCpuPercentage float64

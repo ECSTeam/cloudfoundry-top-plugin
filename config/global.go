@@ -23,6 +23,11 @@ const WarmUpSeconds = 60
 const StaleContainerSeconds = 65
 const DeadContainerSeconds = 185
 
+// When an app is started it can take 15+ seconds for the container to report in (RCR)
+// In order to not trigger a "application not in desired state" warning too early we
+// wait some amount of time from the point where metadata cache shows the app in state "STARTED"
+const AppNotInDesiredStateWaitTimeSeconds = 30
+
 // Monitor app details after vist for 15 minutes (900 seconds)
 const MonitorAppDetailTTL = 900
 
