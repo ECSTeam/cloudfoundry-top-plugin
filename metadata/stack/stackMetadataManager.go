@@ -24,7 +24,7 @@ type StackMetadataManager struct {
 func NewStackMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *StackMetadataManager {
 	url := "/v2/stacks"
 	mdMgr := &StackMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.STACK, url, mdMgr, true)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.STACK, url, mdMgr, false)
 	return mdMgr
 }
 

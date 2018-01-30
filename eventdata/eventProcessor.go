@@ -41,18 +41,18 @@ type EventProcessor struct {
 	cliConnection      plugin.CliConnection
 	privileged         bool
 	metadataManager    *metadata.GlobalManager
-
-	eventRateHistory *EventRateHistory
+	statusMsg          chan string
+	eventRateHistory   *EventRateHistory
 
 	eventRateCounterMap     map[events.Envelope_EventType]*util.RateCounter
 	eventRateCounterMapLock sync.Mutex
 }
 
-func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *EventProcessor {
+func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool, statusMsg chan string) *EventProcessor {
 
 	mu := &sync.Mutex{}
 
-	metadataManager := metadata.NewGlobalManager(cliConnection)
+	metadataManager := metadata.NewGlobalManager(cliConnection, statusMsg)
 
 	ep := &EventProcessor{
 		mu:                  mu,
@@ -60,6 +60,7 @@ func NewEventProcessor(cliConnection plugin.CliConnection, privileged bool) *Eve
 		privileged:          privileged,
 		metadataManager:     metadataManager,
 		eventRateCounterMap: make(map[events.Envelope_EventType]*util.RateCounter),
+		statusMsg:           statusMsg,
 	}
 
 	ep.currentEventData = NewEventData(mu, ep)

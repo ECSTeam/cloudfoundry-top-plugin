@@ -51,6 +51,7 @@ import (
 
 const DefaultRefreshInternalMS = 1000
 const HELP_TEXT_VIEW_NAME = "helpTextTipsView"
+const STATUS_VIEW_NAME = "statusView"
 
 type MasterUI struct {
 	layoutManager  *uiCommon.LayoutManager
@@ -73,6 +74,8 @@ type MasterUI struct {
 	headerMinimized   bool
 	commonData        *dataCommon.CommonData
 
+	statusMsg chan string
+
 	//baseHeaderSize       int
 	//headerSize           int
 	helpTextTipsViewSize int
@@ -87,9 +90,10 @@ func NewMasterUI(cliConnection plugin.CliConnection, pluginMetadata *plugin.Plug
 		pluginMetadata: pluginMetadata,
 		privileged:     privileged,
 		refreshNow:     make(chan bool),
+		statusMsg:      make(chan string),
 	}
 
-	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection, privileged)
+	eventProcessor := eventdata.NewEventProcessor(mui.cliConnection, privileged, mui.statusMsg)
 	mui.router = eventrouting.NewEventRouter(eventProcessor)
 
 	username, err := cliConnection.Username()
@@ -165,6 +169,9 @@ func (mui *MasterUI) initGui(monitoredAppGuids map[string]bool) {
 	helpTextTipsView := NewHelpTextTipsWidget(mui, HELP_TEXT_VIEW_NAME, mui.helpTextTipsViewSize)
 	mui.layoutManager.Add(helpTextTipsView)
 
+	statusView := NewStatusWidget(mui, STATUS_VIEW_NAME)
+	mui.layoutManager.Add(statusView)
+
 	mui.commonData = dataCommon.NewCommonData(mui.router, monitoredAppGuids)
 
 	mui.alertManager = alertView.NewAlertManager(mui, mui.commonData)
@@ -187,6 +194,7 @@ func (mui *MasterUI) initGui(monitoredAppGuids map[string]bool) {
 	}
 
 	go mui.refreshDataAndDisplayThread(g)
+	go mui.refreshStatusThread(g)
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		m := merry.Details(err)
 		log.Panicln(m)
@@ -400,6 +408,15 @@ func (mui *MasterUI) SetHelpTextTips(g *gocui.Gui, helpTextTips string) error {
 	return nil
 }
 
+func (mui *MasterUI) SetStatus(g *gocui.Gui, status string) error {
+	statusMgr := mui.layoutManager.GetManagerByViewName(STATUS_VIEW_NAME)
+	if statusMgr != nil {
+		statusWidget := statusMgr.(*StatusWidget)
+		statusWidget.SetStatus(g, status)
+	}
+	return nil
+}
+
 func (mui *MasterUI) quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
@@ -562,6 +579,22 @@ func (mui *MasterUI) refreshDataAndDisplayThread(g *gocui.Gui) {
 		case <-time.After(mui.refreshIntervalMS):
 			mui.updateDisplay(g)
 		}
+	}
+}
+
+func (mui *MasterUI) refreshStatusThread(g *gocui.Gui) {
+
+	for {
+		status := <-mui.statusMsg
+		mui.SetStatus(g, status)
+		g.Execute(func(g *gocui.Gui) error {
+			statusMgr := mui.layoutManager.GetManagerByViewName(STATUS_VIEW_NAME)
+			if statusMgr != nil {
+				statusWidget := statusMgr.(*StatusWidget)
+				statusWidget.ShowStatus(g)
+			}
+			return nil
+		})
 	}
 }
 

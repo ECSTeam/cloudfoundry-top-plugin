@@ -33,7 +33,7 @@ type RouteMetadataManager struct {
 func NewRouteMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *RouteMetadataManager {
 	url := "/v2/routes"
 	mdMgr := &RouteMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ROUTE, url, mdMgr, true)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ROUTE, url, mdMgr, false)
 	mdMgr.appsForRouteCache = make(map[string][]string)
 	return mdMgr
 }

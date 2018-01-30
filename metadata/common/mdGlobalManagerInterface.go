@@ -20,6 +20,7 @@ import "code.cloudfoundry.org/cli/plugin"
 type MdGlobalManagerInterface interface {
 	GetCliConnection() plugin.CliConnection
 	GetAppMetadataFromUrl(url string) ([]IMetadata, error)
+	SetStatus(status string)
 	//GetAppMdManager() *app.AppMetadataManager
 	//GetOrgQuotaMdManager() *orgQuota.OrgQuotaMetadataManager
 

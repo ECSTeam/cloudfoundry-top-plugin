@@ -24,7 +24,7 @@ type OrgMetadataManager struct {
 func NewOrgMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *OrgMetadataManager {
 	url := "/v2/organizations"
 	mdMgr := &OrgMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ORG, url, mdMgr, true)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ORG, url, mdMgr, false)
 	return mdMgr
 }
 

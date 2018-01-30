@@ -24,7 +24,7 @@ type IsolationSegmentMetadataManager struct {
 func NewIsolationSegmentMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *IsolationSegmentMetadataManager {
 	url := "/v3/isolation_segments"
 	mdMgr := &IsolationSegmentMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ISO_SEG, url, mdMgr, true)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.ISO_SEG, url, mdMgr, false)
 	return mdMgr
 }
 

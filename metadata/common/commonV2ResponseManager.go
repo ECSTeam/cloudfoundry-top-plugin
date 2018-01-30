@@ -17,6 +17,7 @@ package common
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
@@ -160,12 +161,19 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 		}
 		metadataArray = commonV2ResponseMgr.mm.ProcessResponse(resp, metadataArray)
 
+		commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...  %v", commonV2ResponseMgr.dataType, len(metadataArray)))
+
 		nextUrl = commonV2ResponseMgr.mm.GetNextUrl(resp)
 		//nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 		return resp, nextUrl, nil
 	}
 
+	commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...", commonV2ResponseMgr.dataType))
+	toplog.Info(fmt.Sprintf("%v metadata loading...", commonV2ResponseMgr.dataType))
+
 	err := CallPagableAPI(commonV2ResponseMgr.mdGlobalManager.GetCliConnection(), url, handleRequest)
+
+	commonV2ResponseMgr.mdGlobalManager.SetStatus("")
 
 	return metadataArray, err
 

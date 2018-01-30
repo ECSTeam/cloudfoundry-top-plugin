@@ -27,7 +27,7 @@ type DomainPrivateMetadataManager struct {
 func NewDomainPrivateMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *DomainPrivateMetadataManager {
 	url := "/v2/private_domains"
 	mdMgr := &DomainPrivateMetadataManager{}
-	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.DOMAIN_PRIVATE, url, mdMgr, true)
+	mdMgr.CommonV2ResponseManager = common.NewCommonV2ResponseManager(mdGlobalManager, common.DOMAIN_PRIVATE, url, mdMgr, false)
 	return mdMgr
 }
 

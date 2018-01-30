@@ -60,14 +60,16 @@ type GlobalManager struct {
 	monitoredAppDetails     map[string]*time.Time
 	monitoredAppDetailsLock sync.Mutex
 
+	statusMsg chan string
+
 	loadMetadataInProgress bool
 
 	loadHandler *common.LoadHandler
 }
 
-func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
+func NewGlobalManager(conn plugin.CliConnection, statusMsg chan string) *GlobalManager {
 
-	mgr := &GlobalManager{}
+	mgr := &GlobalManager{statusMsg: statusMsg}
 
 	mgr.loadHandler = common.NewLoadHandler(conn)
 
@@ -98,6 +100,10 @@ func NewGlobalManager(conn plugin.CliConnection) *GlobalManager {
 	crashData.LoadEventsUntilTime = &now
 
 	return mgr
+}
+
+func (mgr *GlobalManager) SetStatus(status string) {
+	mgr.statusMsg <- status
 }
 
 func (mgr *GlobalManager) GetAppMdManager() *app.AppMetadataManager {
