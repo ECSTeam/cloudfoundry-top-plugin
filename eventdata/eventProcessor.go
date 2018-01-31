@@ -121,11 +121,19 @@ func (ep *EventProcessor) Start() {
 }
 
 func (ep *EventProcessor) LoadCacheAndSeedData() {
+	if ep.metadataManager.IsLoadMetadataInProgress() {
+		toplog.Info("EventProcessor>LoadCacheAndSeedData. Metadata load in progress. Ignoring request")
+		return
+	}
 	ep.metadataManager.LoadMetadata()
 	ep.SeedStatsFromMetadata()
 }
 
 func (ep *EventProcessor) FlushCache() {
+	if ep.metadataManager.IsLoadMetadataInProgress() {
+		toplog.Info("EventProcessor>FlushCache. Metadata load in progress. Ignoring request")
+		return
+	}
 	ep.metadataManager.FlushCache()
 	ep.SeedStatsFromMetadata()
 }

@@ -161,6 +161,10 @@ func (mgr *GlobalManager) GetCliConnection() plugin.CliConnection {
 	return mgr.cliConnection
 }
 
+func (mgr *GlobalManager) IsLoadMetadataInProgress() bool {
+	return mgr.loadMetadataInProgress
+}
+
 // Load all the metadata.  This is a blocking call.
 func (mgr *GlobalManager) LoadMetadata() {
 	toplog.Info("GlobalManager>loadMetadata")
