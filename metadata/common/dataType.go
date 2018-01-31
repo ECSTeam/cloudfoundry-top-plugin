@@ -32,3 +32,19 @@ const (
 	STACK                   = "STACK"
 	EVENTS_CRASH            = "EVENTS_CRASH"
 )
+
+var DataTypeDisplay = map[DataType]string{
+	APP:            "Application",
+	APP_INST:       "Application Instance",
+	APP_STATS:      "Application Stat",
+	SPACE:          "Space",
+	ORG:            "Organization",
+	DOMAIN_PRIVATE: "Private Domain",
+	DOMAIN_SHARED:  "Shared Domain",
+	ISO_SEG:        "Isolation Segment",
+	ORG_QUOTA:      "Organization Quota",
+	SPACE_QUOTA:    "Space Quota",
+	ROUTE:          "Route",
+	STACK:          "Stack",
+	EVENTS_CRASH:   "Event Crash",
+}

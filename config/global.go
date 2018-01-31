@@ -35,3 +35,6 @@ const MaxDomainBucket = 100
 const MaxHostBucket = 10000
 const MaxUserAgentBucket = 100
 const MaxForwarderBucket = 100
+
+// Number of records to retrieve per cloud controller REST call.
+const ResultsPerPage = 100

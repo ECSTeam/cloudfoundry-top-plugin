@@ -31,7 +31,7 @@ type StatusWidget struct {
 
 func NewStatusWidget(masterUI masterUIInterface.MasterUIInterface, name string) *StatusWidget {
 	w := &StatusWidget{masterUI: masterUI, name: name}
-	w.status = "Xyz metadata loading..."
+	w.status = " "
 	return w
 }
 
@@ -61,16 +61,13 @@ func (w *StatusWidget) Layout(g *gocui.Gui) error {
 	return nil
 }
 
+// NOTE: To update/refresh UI with status, the function MasterUI.SetStatus() should be called
 func (w *StatusWidget) SetStatus(g *gocui.Gui, status string) error {
-
 	w.status = status
-	v, err := g.View(w.name)
-	if err != nil {
-		return err
-	}
-	return w.showStatus(g, v)
+	return nil
 }
 
+// Called by thread running within the gocui
 func (w *StatusWidget) ShowStatus(g *gocui.Gui) error {
 	v, err := g.View(w.name)
 	if err != nil {

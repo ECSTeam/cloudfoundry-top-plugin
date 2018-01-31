@@ -17,11 +17,20 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/config"
 	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
 )
+
+type ResponseError struct {
+	Code        int    `json:"code"`
+	Description string `json:"description"`
+	ErrorCode   string `json:"error_code"`
+}
 
 type V2MetadataManager interface {
 	MetadataManager
@@ -33,6 +42,7 @@ type V2MetadataManager interface {
 	ProcessResponse(IResponse, []IMetadata) []IMetadata
 	ProcessResource(resource IResource) IMetadata
 	GetNextUrl(response IResponse) string
+	Count(response IResponse) int
 }
 
 type CommonV2ResponseManager struct {
@@ -145,15 +155,38 @@ func (commonMgr *CommonMetadataManager) GetNextUrl(response IResponse) string {
 	return nextUrl
 }
 
+func (commonMgr *CommonMetadataManager) Count(response IResponse) int {
+	count, _ := GetIntValueByFieldName(response, "Count")
+	return int(count)
+}
+
 func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadata() ([]IMetadata, error) {
 	return commonV2ResponseMgr.GetMetadataFromUrl(commonV2ResponseMgr.GetUrl())
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url string) ([]IMetadata, error) {
 	metadataArray := []IMetadata{}
+	respError := &ResponseError{}
 
+	// Configure the number of records per API call that we get
+	url += "?results-per-page=" + strconv.Itoa(config.ResultsPerPage)
+
+	//toplog.Info("URL: %v", url)
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		resp := commonV2ResponseMgr.mm.CreateResponseObject()
+		//toplog.Info("outputBytes: %v", string(outputBytes))
+		err = json.Unmarshal(outputBytes, &respError)
+
+		if err != nil {
+			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
+			return metadataArray, "", err
+		}
+		if respError.Code > 0 {
+			errMsg := fmt.Sprintf("API response error: %+v", respError)
+			toplog.Warn("*** %v %v", url, errMsg)
+			return metadataArray, "", errors.New(errMsg)
+		}
+
 		err = json.Unmarshal(outputBytes, &resp)
 		if err != nil {
 			toplog.Warn("*** %v unmarshal parsing output: %v", url, string(outputBytes[:]))
@@ -161,15 +194,20 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 		}
 		metadataArray = commonV2ResponseMgr.mm.ProcessResponse(resp, metadataArray)
 
-		commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...  %v", commonV2ResponseMgr.dataType, len(metadataArray)))
+		commonV2ResponseMgr.mdGlobalManager.SetStatus(
+			fmt.Sprintf("%v metadata loading...  %v of %v\nxxx",
+				DataTypeDisplay[commonV2ResponseMgr.dataType],
+				len(metadataArray),
+				commonV2ResponseMgr.mm.Count(resp)))
 
 		nextUrl = commonV2ResponseMgr.mm.GetNextUrl(resp)
 		//nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 		return resp, nextUrl, nil
 	}
 
-	commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...", commonV2ResponseMgr.dataType))
-	toplog.Info(fmt.Sprintf("%v metadata loading...", commonV2ResponseMgr.dataType))
+	commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...",
+		DataTypeDisplay[commonV2ResponseMgr.dataType]))
+	toplog.Info(fmt.Sprintf("%v metadata loading", commonV2ResponseMgr.dataType))
 
 	err := CallPagableAPI(commonV2ResponseMgr.mdGlobalManager.GetCliConnection(), url, handleRequest)
 

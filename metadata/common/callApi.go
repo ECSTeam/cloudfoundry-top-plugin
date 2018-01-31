@@ -118,3 +118,31 @@ func GetStringValueByFieldName(n interface{}, field_name string) (string, bool) 
 		// or use fmt.Sprint(f.Interface())
 	}
 }
+
+func GetIntValueByFieldName(n interface{}, field_name string) (int64, bool) {
+	s := reflect.ValueOf(n)
+	if s.Kind() == reflect.Ptr {
+		s = s.Elem()
+	}
+	if s.Kind() != reflect.Struct {
+		return -1, false
+	}
+	f := s.FieldByName(field_name)
+	if !f.IsValid() {
+		return -1, false
+	}
+	switch f.Kind() {
+	case reflect.String:
+		i, err := strconv.ParseInt(f.Interface().(string), 10, 64)
+		if err != nil {
+			return -1, false
+		}
+		return i, true
+	case reflect.Int:
+		return f.Int(), true
+	// add cases for more kinds as needed.
+	default:
+		return -1, false
+		// or use fmt.Sprint(f.Interface())
+	}
+}
