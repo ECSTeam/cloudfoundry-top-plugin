@@ -206,6 +206,10 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 			}
 		}
 
+		if displayAppStats.Monitored && appMetadata.State == "STARTED" {
+			displayAppStats.IsStarted = true
+		}
+
 		now := time.Now()
 		if displayAppStats.Monitored && appMetadata.State == "STARTED" && appMetadata.PackageState == "STAGED" {
 			cacheTime := appMetadata.GetCacheTime()

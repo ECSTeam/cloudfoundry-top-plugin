@@ -252,15 +252,17 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 		displaySpace.IsolationSegmentName = isoSegName
 
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {
-			displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage
-			displaySpace.TotalMemoryUsed += appStats.TotalMemoryUsed
-			displaySpace.TotalDiskUsed += appStats.TotalDiskUsed
+
+			if appStats.IsStarted {
+				displaySpace.TotalCpuPercentage += appStats.TotalCpuPercentage
+				displaySpace.TotalMemoryUsed += appStats.TotalMemoryUsed
+				displaySpace.TotalDiskUsed += appStats.TotalDiskUsed
+				appMetadata := appMdMgr.FindItem(appStats.AppId)
+				displaySpace.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+				displaySpace.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			}
 			displaySpace.TotalReportingContainers += appStats.TotalReportingContainers
 			displaySpace.DesiredContainers += appStats.DesiredContainers
-
-			appMetadata := appMdMgr.FindItem(appStats.AppId)
-			displaySpace.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
-			displaySpace.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
 				displaySpace.HttpAllCount += appStats.HttpAllCount

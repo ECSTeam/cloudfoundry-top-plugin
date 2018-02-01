@@ -238,15 +238,17 @@ func (asUI *OrgListView) postProcessData() map[string]*DisplayOrg {
 		displayOrg.MemoryLimitInBytes = int64(orgQuotaMd.MemoryLimit) * util.MEGABYTE
 
 		for _, appStats := range appsByOrgMap[anOrg.Guid] {
-			displayOrg.TotalCpuPercentage += appStats.TotalCpuPercentage
-			displayOrg.TotalMemoryUsed += appStats.TotalMemoryUsed
-			displayOrg.TotalDiskUsed += appStats.TotalDiskUsed
+
+			if appStats.IsStarted {
+				displayOrg.TotalCpuPercentage += appStats.TotalCpuPercentage
+				displayOrg.TotalMemoryUsed += appStats.TotalMemoryUsed
+				displayOrg.TotalDiskUsed += appStats.TotalDiskUsed
+				appMetadata := appMdMgr.FindItem(appStats.AppId)
+				displayOrg.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+				displayOrg.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
+			}
 			displayOrg.TotalReportingContainers += appStats.TotalReportingContainers
 			displayOrg.DesiredContainers += appStats.DesiredContainers
-
-			appMetadata := appMdMgr.FindItem(appStats.AppId)
-			displayOrg.TotalMemoryReserved += (int64(appMetadata.MemoryMB) * util.MEGABYTE) * int64(appMetadata.Instances)
-			displayOrg.TotalDiskReserved += (int64(appMetadata.DiskQuotaMB) * util.MEGABYTE) * int64(appMetadata.Instances)
 
 			if appStats.TotalTraffic != nil {
 				displayOrg.HttpAllCount += appStats.HttpAllCount

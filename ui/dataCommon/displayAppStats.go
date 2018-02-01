@@ -40,6 +40,7 @@ type DisplayAppStats struct {
 	// but we keep it around for a n seconds to show newly deleted app on the UI
 	IsDeleted             bool
 	IsPackageStatePending bool
+	IsStarted             bool
 
 	// Indicate if this app is monitored.  For privileged users
 	// this should always be true.
