@@ -151,6 +151,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackId: "", StackName: UNKNOWN_STACK_NAME}
 	}
 
+	//toplog.Info("asUI.commonData.GetDisplayAppStatsMap len: %v", len(asUI.commonData.GetDisplayAppStatsMap()))
+
 	// Key: cellIP
 	cpuByCellMap := make(map[string]float64)
 
@@ -160,6 +162,8 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
 			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
+
+		//toplog.Info("*** isolationSegGuid: %v", isolationSegGuid)
 
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][appStats.StackId]
 		if appStats.StackId == "" || sumStats == nil {
@@ -171,6 +175,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			//log.Panic(fmt.Sprintf("We didn't find the stack data, StackId: %v", appStats.StackId))
 			//fmt.Fprintf(v, "\n Waiting for more data...")
 			//return 3, nil
+			//toplog.Info("******** appStats.StackId: %v sumStats:%v", appStats.StackId, sumStats)
 			continue
 		}
 
@@ -255,7 +260,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	for _, stackSummaryStats := range stackSummaryStatsArray {
 
-		//toplog.Info("stackSummaryStats.TotalApps: %v", stackSummaryStats.TotalApps)
+		//toplog.Info("stackSummaryStats name: %v TotalApps: %v", stackSummaryStats.StackName, stackSummaryStats.TotalApps)
 
 		if stackSummaryStats.TotalApps > 0 || stackSummaryStats.TotalCellCPUs > 0 {
 			linesWritten += asUI.outputHeaderForStack(g, v, stackSummaryStats, showIsolationSegment)
