@@ -17,14 +17,12 @@ package app
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 )
 
 type AppMetadataManager struct {
 	*common.CommonV2ResponseManager
-	mu sync.Mutex
 }
 
 func NewAppMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *AppMetadataManager {
@@ -35,8 +33,8 @@ func NewAppMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *App
 }
 
 func (mdMgr *AppMetadataManager) AllApps() []*AppMetadata {
-	mdMgr.mu.Lock()
-	defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	appsMetadataArray := []*AppMetadata{}
 	for _, appMetadata := range mdMgr.MetadataMap {
 		appsMetadataArray = append(appsMetadataArray, appMetadata.(*AppMetadata))

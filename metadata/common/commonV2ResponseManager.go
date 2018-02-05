@@ -76,9 +76,9 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) MetadataLoadMethod(guid stri
 func (commonV2ResponseMgr *CommonV2ResponseManager) FindItemInternal(guid string, requestLoadIfNotFound bool, createEmptyObjectIfNotFound bool) IMetadata {
 
 	requestLoadIfNotFound = requestLoadIfNotFound && !commonV2ResponseMgr.autoFullLoadIfNotFound
-	item := commonV2ResponseMgr.CommonMetadataManager.FindItemInternal(guid, requestLoadIfNotFound, createEmptyObjectIfNotFound)
+	item, found := commonV2ResponseMgr.CommonMetadataManager.FindItemInternal(guid, requestLoadIfNotFound, createEmptyObjectIfNotFound)
 
-	if commonV2ResponseMgr.autoFullLoadIfNotFound && (item == nil || item.GetCacheTime() == nil) {
+	if commonV2ResponseMgr.autoFullLoadIfNotFound && !found {
 		commonV2ResponseMgr.LoadAllItemsAysnc()
 	}
 	return item
@@ -112,28 +112,35 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) LoadItemInternal(guid string
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItems() error {
 	now := time.Now()
-
-	metadataItemArray, err := commonV2ResponseMgr.LoadAllItemsInternal()
+	_, err := commonV2ResponseMgr.LoadAllItemsInternal()
 	if err != nil {
 		toplog.Warn("*** app metadata error: %v", err.Error())
 		return err
 	}
 
-	metadataMap := make(map[string]IMetadata)
-	for _, metadataItem := range metadataItemArray {
-		//toplog.Debug("From Map - app id: %v name:%v", appMetadata.Guid, appMetadata.Name)
-		metadataItem.SetCacheTime(&now)
-		metadataMap[metadataItem.GetGuid()] = metadataItem
+	// Loop through existing cache map checking if cacheTime older then "now".
+	var deleteMetadataItems []IMetadata
+	for _, metadataItem := range commonV2ResponseMgr.MetadataMap {
+		cacheTime := metadataItem.GetCacheTime()
+		if cacheTime != nil && cacheTime.Before(now) {
+			deleteMetadataItems = append(deleteMetadataItems, metadataItem)
+		}
 	}
-	commonV2ResponseMgr.MetadataMap = metadataMap
+
+	// removing anything that has old
+	for _, metadataItem := range deleteMetadataItems {
+		id := metadataItem.GetGuid()
+		toplog.Info("Delete from cache: %v", id)
+		commonV2ResponseMgr.DeleteItem(id)
+	}
 
 	return nil
 }
 
 func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItemsAysnc() {
 
-	commonV2ResponseMgr.mu.Lock()
-	defer commonV2ResponseMgr.mu.Unlock()
+	commonV2ResponseMgr.MetadataMapMutex.Lock()
+	defer commonV2ResponseMgr.MetadataMapMutex.Unlock()
 
 	if commonV2ResponseMgr.loadInProgress {
 		toplog.Debug("CommonV2ResponseManager.LoadAllItemsAysnc %v loadInProgress", commonV2ResponseMgr.url)
@@ -171,7 +178,7 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 	// Configure the number of records per API call that we get
 	url += "?results-per-page=" + strconv.Itoa(config.ResultsPerPage)
 
-	//toplog.Info("URL: %v", url)
+	toplog.Debug("URL: %v", url)
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
 		resp := commonV2ResponseMgr.mm.CreateResponseObject()
 		//toplog.Info("outputBytes: %v", string(outputBytes))
@@ -193,6 +200,16 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 			return metadataArray, "", err
 		}
 		metadataArray = commonV2ResponseMgr.mm.ProcessResponse(resp, metadataArray)
+
+		// Incrementically add records to our metadata cache as they are retrieved.
+		// This helps to get usable data when we have 3000+ items to load
+		now := time.Now()
+		commonV2ResponseMgr.MetadataMapMutex.Lock()
+		for _, metadataItem := range metadataArray {
+			metadataItem.SetCacheTime(&now)
+			commonV2ResponseMgr.MetadataMap[metadataItem.GetGuid()] = metadataItem
+		}
+		commonV2ResponseMgr.MetadataMapMutex.Unlock()
 
 		commonV2ResponseMgr.mdGlobalManager.SetStatus(
 			fmt.Sprintf("%v metadata loading...  %v of %v\nxxx",

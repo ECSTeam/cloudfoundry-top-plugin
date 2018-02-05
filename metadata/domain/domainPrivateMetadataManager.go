@@ -16,6 +16,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -36,9 +38,8 @@ func (mdMgr *DomainPrivateMetadataManager) FindItem(guid string) *DomainMetadata
 }
 
 func (mdMgr *DomainPrivateMetadataManager) GetAll() []*DomainMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	metadataArray := []*DomainMetadata{}
 	for _, metadata := range mdMgr.MetadataMap {
 		metadataArray = append(metadataArray, metadata.(*DomainMetadata))
@@ -81,6 +82,8 @@ func (mdMgr *DomainPrivateMetadataManager) ProcessResource(resource common.IReso
 func (mdMgr *DomainPrivateMetadataManager) AddDomainMetadata(domainName string) *DomainMetadata {
 	domain := NewDomainMetadataById(util.Pseudo_uuid())
 	domain.Name = domainName
+	now := time.Now()
+	domain.SetCacheTime(&now)
 	mdMgr.AddItem(domain)
 	return domain
 }

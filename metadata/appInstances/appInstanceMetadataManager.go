@@ -44,7 +44,7 @@ func (mdMgr *AppInstanceMetadataManager) MinimumReloadDuration() time.Duration {
 }
 
 func (mdMgr *AppInstanceMetadataManager) FindItem(appId string) *AppInstances {
-	item := mdMgr.FindItemInternal(appId, false, false)
+	item, _ := mdMgr.FindItemInternal(appId, false, false)
 	if item != nil {
 		return item.(*AppInstances)
 	}
@@ -95,6 +95,8 @@ func (mdMgr *AppInstanceMetadataManager) LoadItemInternal(guid string) (common.I
 	}
 
 	instances := NewAppInstancesWithData(guid, response)
+	now := time.Now()
+	instances.SetCacheTime(&now)
 	return instances, nil
 
 }

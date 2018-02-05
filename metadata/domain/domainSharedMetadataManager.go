@@ -33,9 +33,8 @@ func (mdMgr *DomainSharedMetadataManager) FindItem(guid string) *DomainMetadata 
 }
 
 func (mdMgr *DomainSharedMetadataManager) GetAll() []*DomainMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	metadataArray := []*DomainMetadata{}
 	for _, metadata := range mdMgr.MetadataMap {
 		metadataArray = append(metadataArray, metadata.(*DomainMetadata))

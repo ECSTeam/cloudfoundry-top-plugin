@@ -191,6 +191,9 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 func (asUI *TopView) writeAsciiArt(g *gocui.Gui, v *gocui.View) {
 	maxX, _ := v.Size()
 	leftPaddingSize := (maxX / 2) - (26 / 2)
+	if leftPaddingSize < 0 {
+		leftPaddingSize = 0
+	}
 	leftPadding := strings.Repeat(" ", leftPaddingSize)
 	for _, line := range asUI.asciiArtTopLines {
 		if line != "" {

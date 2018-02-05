@@ -36,7 +36,7 @@ type CommonMetadataManager struct {
 	url      string
 
 	mm                 MetadataManager
-	mu                 sync.Mutex
+	MetadataMapMutex   sync.Mutex
 	MetadataMap        map[string]IMetadata
 	autoLoadIfNotFound bool
 
@@ -70,8 +70,8 @@ func (commonMgr *CommonMetadataManager) clear() {
 }
 
 func (commonMgr *CommonMetadataManager) Clear() {
-	commonMgr.mu.Lock()
-	defer commonMgr.mu.Unlock()
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 	commonMgr.clear()
 }
 
@@ -80,38 +80,42 @@ func (commonMgr *CommonMetadataManager) CacheSize() int {
 }
 
 func (commonMgr *CommonMetadataManager) AddItem(metadataItem IMetadata) {
-	commonMgr.mu.Lock()
-	defer commonMgr.mu.Unlock()
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 	commonMgr.MetadataMap[metadataItem.GetGuid()] = metadataItem
 }
 
 func (commonMgr *CommonMetadataManager) DeleteItem(guid string) {
-	commonMgr.mu.Lock()
-	defer commonMgr.mu.Unlock()
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 	delete(commonMgr.MetadataMap, guid)
 	delete(commonMgr.pendingDeleteFromCache, guid)
 	now := time.Now()
 	commonMgr.deletedFromCache[guid] = &now
 }
 
-func (commonMgr *CommonMetadataManager) FindItemInternal(guid string, requestLoadIfNotFound bool, createEmptyObjectIfNotFound bool) IMetadata {
+func (commonMgr *CommonMetadataManager) FindItemInternal(guid string, requestLoadIfNotFound bool, createEmptyObjectIfNotFound bool) (IMetadata, bool) {
 
-	commonMgr.mu.Lock()
-	defer commonMgr.mu.Unlock()
-
-	//TODO: error: concurrent map read and map write
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
+	found := true
 	metadataItem := commonMgr.MetadataMap[guid]
-	if metadataItem == nil && createEmptyObjectIfNotFound {
-		metadataItem = commonMgr.mm.NewItemById(guid)
-		if requestLoadIfNotFound {
-			// TODO: Queue metadata load for this id
-		} else {
-			// We mark this metadata as 60 mins old
-			//loadTime := appMetadata.CacheTime.Add(-60 * time.Minute)
-			//appMetadata.CacheTime = &loadTime
+	if metadataItem == nil {
+		found = false
+		if createEmptyObjectIfNotFound {
+			metadataItem = commonMgr.mm.NewItemById(guid)
+			now := time.Now()
+			metadataItem.SetCacheTime(&now)
+			if requestLoadIfNotFound {
+				// TODO: Queue metadata load for this id
+			} else {
+				// We mark this metadata as 60 mins old
+				//loadTime := appMetadata.CacheTime.Add(-60 * time.Minute)
+				//appMetadata.CacheTime = &loadTime
+			}
 		}
 	}
-	return metadataItem
+	return metadataItem, found
 }
 
 // Called via a seperate thread - after a delay, remove the requested guid from cache
@@ -124,8 +128,8 @@ func (commonMgr *CommonMetadataManager) DelayedRemovalFromCache(guid string, ite
 }
 
 func (commonMgr *CommonMetadataManager) addToPendingDeleteFromCache(guid string, itemName string) {
-	commonMgr.mu.Lock()
-	defer commonMgr.mu.Unlock()
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 
 	if commonMgr.pendingDeleteFromCache[guid] != nil {
 		// guid already queued for delete
@@ -136,10 +140,14 @@ func (commonMgr *CommonMetadataManager) addToPendingDeleteFromCache(guid string,
 }
 
 func (commonMgr *CommonMetadataManager) IsDeletedFromCache(guid string) bool {
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 	return commonMgr.deletedFromCache[guid] != nil
 }
 
 func (commonMgr *CommonMetadataManager) IsPendingDeleteFromCache(guid string) bool {
+	commonMgr.MetadataMapMutex.Lock()
+	defer commonMgr.MetadataMapMutex.Unlock()
 	return commonMgr.pendingDeleteFromCache[guid] != nil
 }
 
@@ -153,7 +161,7 @@ func (commonMgr *CommonMetadataManager) MinimumReloadDuration() time.Duration {
 
 // Last time data was loaded or nil if never
 func (commonMgr *CommonMetadataManager) LastLoadTime(dataKey string) *time.Time {
-	item := commonMgr.FindItemInternal(dataKey, false, false)
+	item, _ := commonMgr.FindItemInternal(dataKey, false, false)
 	if item != nil {
 		return item.GetCacheTime()
 	}
@@ -162,7 +170,7 @@ func (commonMgr *CommonMetadataManager) LastLoadTime(dataKey string) *time.Time 
 
 func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 
-	metadataItem := commonMgr.FindItemInternal(guid, commonMgr.autoLoadIfNotFound, true)
+	metadataItem, _ := commonMgr.FindItemInternal(guid, commonMgr.autoLoadIfNotFound, true)
 	itemName := metadataItem.GetName()
 
 	if commonMgr.IsPendingDeleteFromCache(guid) {

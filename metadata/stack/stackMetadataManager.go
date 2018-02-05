@@ -33,9 +33,8 @@ func (mdMgr *StackMetadataManager) FindItem(guid string) *StackMetadata {
 }
 
 func (mdMgr *StackMetadataManager) GetAll() []*StackMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	metadataArray := []*StackMetadata{}
 	for _, metadata := range mdMgr.MetadataMap {
 		metadataArray = append(metadataArray, metadata.(*StackMetadata))

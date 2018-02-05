@@ -35,7 +35,7 @@ const HelpColumnsText = `
 
   APPLICATION - Application name. If application name has:
      () - App has been deleted. It will be removed from display shortly
-     [] - App is not yet fully staged (i.e., it is still deploying)
+     [] - App is not yet staged (i.e., no droplet)
      Asterisk (*) on the end of name means the application is being
         activily monitored. See Active Monitoring below for more info.
         See Application Name Color Key below for color information.

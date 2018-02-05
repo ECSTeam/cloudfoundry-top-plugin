@@ -252,7 +252,11 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	// as a real segment, there is no need to show segment
 	showIsolationSegment := len(isolationSegments) > 2
 	linesWritten := 0
+
 	for _, stackSummaryStats := range stackSummaryStatsArray {
+
+		//toplog.Info("stackSummaryStats.TotalApps: %v", stackSummaryStats.TotalApps)
+
 		if stackSummaryStats.TotalApps > 0 || stackSummaryStats.TotalCellCPUs > 0 {
 			linesWritten += asUI.outputHeaderForStack(g, v, stackSummaryStats, showIsolationSegment)
 		}

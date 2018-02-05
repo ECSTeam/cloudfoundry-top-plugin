@@ -33,9 +33,8 @@ func (mdMgr *OrgMetadataManager) FindItem(guid string) *OrgMetadata {
 }
 
 func (mdMgr *OrgMetadataManager) GetAll() []*OrgMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	metadataArray := []*OrgMetadata{}
 	for _, metadata := range mdMgr.MetadataMap {
 		metadataArray = append(metadataArray, metadata.(*OrgMetadata))

@@ -36,9 +36,8 @@ func (mdMgr *SpaceMetadataManager) FindItem(guid string) *SpaceMetadata {
 }
 
 func (mdMgr *SpaceMetadataManager) GetAll() []*SpaceMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	appsMetadataArray := []*SpaceMetadata{}
 	for _, appMetadata := range mdMgr.MetadataMap {
 		appsMetadataArray = append(appsMetadataArray, appMetadata.(*SpaceMetadata))

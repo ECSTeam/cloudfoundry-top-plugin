@@ -33,15 +33,18 @@ func (mdMgr *IsolationSegmentMetadataManager) FindItem(guid string) *IsolationSe
 		return UnknownIsolationSegment
 	}
 	if guid == DefaultIsolationSegmentGuid {
+		if SharedIsolationSegment == nil {
+			// This should not normally happen but if are reloading metadata it can
+			return mdMgr.NewItemById(guid).(*IsolationSegmentMetadata)
+		}
 		return SharedIsolationSegment
 	}
 	return mdMgr.FindItemInternal(guid, false, true).(*IsolationSegmentMetadata)
 }
 
 func (mdMgr *IsolationSegmentMetadataManager) GetAll() []*IsolationSegmentMetadata {
-	// TODO: Need to use parent lock
-	//mdMgr.mu.Lock()
-	//defer mdMgr.mu.Unlock()
+	mdMgr.MetadataMapMutex.Lock()
+	defer mdMgr.MetadataMapMutex.Unlock()
 	metadataArray := []*IsolationSegmentMetadata{}
 	for _, metadata := range mdMgr.MetadataMap {
 		metadataArray = append(metadataArray, metadata.(*IsolationSegmentMetadata))

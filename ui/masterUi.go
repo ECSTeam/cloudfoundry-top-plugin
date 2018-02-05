@@ -66,13 +66,14 @@ type MasterUI struct {
 	alertManager    *alertView.AlertManager
 	currentDataView masterUIInterface.UpdatableView
 
-	router            *eventrouting.EventRouter
-	refreshNow        chan bool
-	refreshIntervalMS time.Duration
-	displayPaused     bool
-	editColumnMode    bool
-	headerMinimized   bool
-	commonData        *dataCommon.CommonData
+	router                  *eventrouting.EventRouter
+	refreshNow              chan bool
+	refreshIntervalMS       time.Duration
+	displayPaused           bool
+	editColumnMode          bool
+	headerMinimized         bool
+	commonData              *dataCommon.CommonData
+	updateDisplayInProgress bool
 
 	statusMsg chan string
 
@@ -603,6 +604,10 @@ func (mui *MasterUI) snapshotLiveData() {
 }
 
 func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
+	if mui.updateDisplayInProgress {
+		return
+	}
+	mui.updateDisplayInProgress = true
 	g.Execute(func(g *gocui.Gui) error {
 
 		if !mui.displayPaused {
@@ -613,6 +618,7 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 
 		mui.updateHeaderDisplay(g)
 		mui.currentDataView.UpdateDisplay(g)
+		mui.updateDisplayInProgress = false
 		return nil
 	})
 }
