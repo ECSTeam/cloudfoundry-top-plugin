@@ -89,7 +89,7 @@ A specific application can be selected to show details of a specific application
 ## Cell Stats
 
 Provides details about each diego cell in the foundation.  This information can be used to find
-"hot" cells -- Cells with high CPU untilization.  A cell can be selected to get details 
+"hot" cells -- Cells with high CPU utilization.  A cell can be selected to get details 
 such as which containers are currenly running on the cell.
 
 * IP - The IP address of the diego cell
