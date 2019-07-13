@@ -321,8 +321,8 @@ func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 	}
 
 	// TODO: Is this the best place for this??
-	if cellStats.StackId == "" {
-		ed.assignStackId(cellStats)
+	if cellStats.StackGroupId == "" {
+		ed.assignStackGroupId(cellStats)
 	}
 	if cellStats.IsolationSegmentGuid == "" {
 		ed.AssignIsolationSegment(cellStats)
@@ -330,16 +330,26 @@ func (ed *EventData) getCellStats(cellIp string) *eventCell.CellStats {
 	return cellStats
 }
 
-func (ed *EventData) assignStackId(cellStats *eventCell.CellStats) {
+func (ed *EventData) assignStackGroupId(cellStats *eventCell.CellStats) {
 	// Look for a container running on cell to determine which stack the cell is running
 	// TODO: This is not very efficient -- if end up with a cell that has no containers yet
 	// this loop will run every time the cell metric comes in.
+
+	ep := ed.eventProcessor
+	mdMgr := ep.GetMetadataManager()
+	mdStackMgr := mdMgr.GetStackMdManager()
+
+	// TODO: SG - We don't want to associate a sigle stackId to the cell
 	for _, appStats := range ed.AppMap {
 		for _, containerStats := range appStats.ContainerArray {
 			//if containerStats != nil && cellStats.Ip == containerStats.Ip && space.All() != nil && len(space.All()) > 0 {
 			if containerStats != nil && cellStats.Ip == containerStats.Ip {
 				appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appStats.AppId)
-				cellStats.StackId = appMetadata.StackGuid
+
+				// TODO: SG - Lookup and assign stackGroupId with something like:
+				stackGroup := mdStackMgr.FindStackGroupByStackGuid(appMetadata.StackGuid)
+				cellStats.StackGroupId = stackGroup.Guid
+				//cellStats.StackId = appMetadata.StackGuid
 				return
 			}
 		}

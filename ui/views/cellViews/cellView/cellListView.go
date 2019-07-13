@@ -158,12 +158,12 @@ func (asUI *CellListView) postProcessData() map[string]*DisplayCellStats {
 						isoSegName := isoSegMd.Name
 						displayCellStat.IsolationSegmentName = isoSegName
 
-						stackMd := asUI.GetMdGlobalMgr().GetStackMdManager().FindItem(appMetadata.StackGuid)
-						if displayCellStat.StackId == "" && appMetadata.StackGuid != "" {
-							displayCellStat.StackId = appMetadata.StackGuid
+						stackGroupMd := asUI.GetMdGlobalMgr().GetStackMdManager().FindStackGroupByStackGuid(appMetadata.StackGuid)
+						if displayCellStat.StackGroupId == "" && appMetadata.StackGuid != "" {
+							displayCellStat.StackGroupId = stackGroupMd.Guid
 						}
-						if displayCellStat.StackName == "" && stackMd.Name != "" {
-							displayCellStat.StackName = stackMd.Name
+						if displayCellStat.StackGroupName == "" && stackGroupMd.Name != "" {
+							displayCellStat.StackGroupName = stackGroupMd.Name
 						}
 
 						displayCellStat.TotalReportingContainers = displayCellStat.TotalReportingContainers + 1

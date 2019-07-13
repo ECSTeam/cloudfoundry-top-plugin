@@ -183,7 +183,7 @@ func (asUI *TopView) RefreshDisplay(g *gocui.Gui) error {
 	fmt.Fprintln(v)
 	fmt.Fprintln(v)
 	fmt.Fprintln(v, " Licensed under the Apache License, Version 2.0")
-	fmt.Fprintln(v, " Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved")
+	fmt.Fprintln(v, " Copyright (c) 2016-2018 ECS Team, Inc. - All Rights Reserved")
 
 	return nil
 }

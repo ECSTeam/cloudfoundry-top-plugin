@@ -43,6 +43,7 @@ type V2MetadataManager interface {
 	ProcessResource(resource IResource) IMetadata
 	GetNextUrl(response IResponse) string
 	Count(response IResponse) int
+	PostProcessLoad([]IMetadata, error)
 }
 
 type CommonV2ResponseManager struct {
@@ -167,6 +168,10 @@ func (commonMgr *CommonMetadataManager) Count(response IResponse) int {
 	return int(count)
 }
 
+func (commonMgr *CommonMetadataManager) PostProcessLoad(metadataArray []IMetadata, err error) {
+	// do nothing by default
+}
+
 func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadata() ([]IMetadata, error) {
 	return commonV2ResponseMgr.GetMetadataFromUrl(commonV2ResponseMgr.GetUrl())
 }
@@ -227,6 +232,8 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 	toplog.Info(fmt.Sprintf("%v metadata loading", commonV2ResponseMgr.dataType))
 
 	err := CallPagableAPI(commonV2ResponseMgr.mdGlobalManager.GetCliConnection(), url, handleRequest)
+
+	commonV2ResponseMgr.mm.PostProcessLoad(metadataArray, err)
 
 	commonV2ResponseMgr.mdGlobalManager.SetStatus("")
 

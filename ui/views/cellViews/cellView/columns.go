@@ -403,11 +403,11 @@ func columnTotalContainerDiskUsed() *uiCommon.ListColumn {
 func columnStackName() *uiCommon.ListColumn {
 	defaultColSize := 15
 	sortFunc := func(c1, c2 util.Sortable) bool {
-		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).StackName, c2.(*DisplayCellStats).StackName)
+		return util.CaseInsensitiveLess(c1.(*DisplayCellStats).StackGroupName, c2.(*DisplayCellStats).StackGroupName)
 	}
 	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
 		appStats := data.(*DisplayCellStats)
-		displayName := appStats.StackName
+		displayName := appStats.StackGroupName
 		if displayName == "" {
 			displayName = "--"
 		}
@@ -415,7 +415,7 @@ func columnStackName() *uiCommon.ListColumn {
 	}
 	rawValueFunc := func(data uiCommon.IData) string {
 		appStats := data.(*DisplayCellStats)
-		return appStats.StackName
+		return appStats.StackGroupName
 	}
 	c := uiCommon.NewListColumn("stackName", "STACK", defaultColSize,
 		uiCommon.ALPHANUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)

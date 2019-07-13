@@ -26,14 +26,15 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-const UNKNOWN_STACK_NAME = "UNKNOWN"
+const UNKNOWN_STACK_GROUP_NAME = "UNKNOWN"
 const UNKNOWN_ISOSEG_NAME = "UNKNOWN"
 
 type StackSummaryStats struct {
-	IsolationSegmentGuid        string
-	IsolationSegmentName        string
-	StackId                     string
-	StackName                   string
+	IsolationSegmentGuid string
+	IsolationSegmentName string
+	// TODO: SG - Can't have StackId/StackName here -- change to StackGroupId / StackGroupName
+	StackGroupId                string
+	StackGroupName              string
 	TotalCells                  int
 	TotalApps                   int
 	TotalReportingAppInstances  int
@@ -68,15 +69,15 @@ func (slice StackSummaryStatsArray) Less(i, j int) bool {
 
 	if isoSegName1 == isoSegName2 {
 		// Always sort UNKNOWN stack to bottom
-		stackName1 := slice[i].StackName
-		if strings.HasPrefix(stackName1, UNKNOWN_STACK_NAME) {
+		stackGroupName1 := slice[i].StackGroupName
+		if strings.HasPrefix(stackGroupName1, UNKNOWN_STACK_GROUP_NAME) {
 			return false
 		}
-		stackName2 := slice[j].StackName
-		if strings.HasPrefix(stackName2, UNKNOWN_STACK_NAME) {
+		stackGroupName2 := slice[j].StackGroupName
+		if strings.HasPrefix(stackGroupName2, UNKNOWN_STACK_GROUP_NAME) {
 			return true
 		}
-		return stackName1 < stackName2
+		return stackGroupName1 < stackGroupName2
 	}
 
 	// Always sort "shared" isolation segment to top
@@ -111,15 +112,16 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	router := asUI.router
 	processor := router.GetProcessor()
 	mdMgr := processor.GetMetadataManager()
-	stacks := mdMgr.GetStackMdManager().GetAll()
-	if len(stacks) == 0 {
+
+	// TODO: SG - Get Add StackGroup to StackMdManager -- call mdMgr.GetStackMdManager().GetAllStackGroups()
+	stackGroups := mdMgr.GetStackMdManager().GetAllStackGroups()
+	if len(stackGroups) == 0 {
 		fmt.Fprintf(v, "\n Waiting for more data...")
 		return 3, nil
 	}
 
-	// Keys: [IsoSegGuid] [StackGuid]
+	// Keys: [IsoSegGuid] [StackGroupGuid]
 	summaryStatsByIsoSeg := make(map[string]map[string]*StackSummaryStats)
-	//summaryStatsByStack := make(map[string]*StackSummaryStats)
 
 	isolationSegments := mdMgr.GetIsoSegMdManager().GetAll()
 
@@ -133,13 +135,13 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 	for _, isoSeg := range isolationSegments {
 		summaryStatsByIsoSeg[isoSeg.Guid] = make(map[string]*StackSummaryStats)
-		for _, stack := range stacks {
+		for _, stackGroup := range stackGroups {
 			//toplog.Info("isoSeg.Guid: %v  stack.Guid: %v", isoSeg.Guid, stack.Guid)
-			summaryStatsByIsoSeg[isoSeg.Guid][stack.Guid] = &StackSummaryStats{
+			summaryStatsByIsoSeg[isoSeg.Guid][stackGroup.Guid] = &StackSummaryStats{
 				IsolationSegmentGuid: isoSeg.Guid,
 				IsolationSegmentName: isoSeg.Name,
-				StackId:              stack.Guid,
-				StackName:            stack.Name}
+				StackGroupId:         stackGroup.Guid,
+				StackGroupName:       stackGroup.Name}
 		}
 	}
 
@@ -148,7 +150,7 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if summaryStatsByIsoSeg[""] == nil {
 			summaryStatsByIsoSeg[""] = make(map[string]*StackSummaryStats)
 		}
-		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackId: "", StackName: UNKNOWN_STACK_NAME}
+		summaryStatsByIsoSeg[""][""] = &StackSummaryStats{IsolationSegmentName: UNKNOWN_ISOSEG_NAME, StackGroupId: "", StackGroupName: UNKNOWN_STACK_GROUP_NAME}
 	}
 
 	//toplog.Info("asUI.commonData.GetDisplayAppStatsMap len: %v", len(asUI.commonData.GetDisplayAppStatsMap()))
@@ -165,13 +167,22 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 
 		//toplog.Info("*** isolationSegGuid: %v", isolationSegGuid)
 
-		sumStats := summaryStatsByIsoSeg[isolationSegGuid][appStats.StackId]
-		if appStats.StackId == "" || sumStats == nil {
+		if appStats.StackId == "" {
 			// This appStats has no stackId -- This could be caused by not having
 			// the app metadata in cache.  Either because it hasn't been loaded yet
 			// or it was deleted because the app has been deleted but we still
 			// have stats from when the app was deployed.
+			continue
+		}
 
+		stackGroup := mdMgr.GetStackMdManager().FindStackGroupByStackGuid(appStats.StackId)
+		if stackGroup == nil {
+			// Didn't find the StackGroup for the given stack.  Why?
+			continue
+		}
+
+		sumStats := summaryStatsByIsoSeg[isolationSegGuid][stackGroup.Guid]
+		if sumStats == nil {
 			//log.Panic(fmt.Sprintf("We didn't find the stack data, StackId: %v", appStats.StackId))
 			//fmt.Fprintf(v, "\n Waiting for more data...")
 			//return 3, nil
@@ -205,7 +216,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
 			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
 		}
-		sumStats := summaryStatsByIsoSeg[isolationSegGuid][app.StackGuid]
+
+		stackGroup := mdMgr.GetStackMdManager().FindStackGroupByStackGuid(app.StackGuid)
+		sumStats := summaryStatsByIsoSeg[isolationSegGuid][stackGroup.Guid]
 		if sumStats != nil {
 			if app.State == "STARTED" {
 				sumStats.ReservedMem = sumStats.ReservedMem + ((app.MemoryMB * util.MEGABYTE) * app.Instances)
@@ -224,7 +237,9 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			processor.GetDisplayedEventData().AssignIsolationSegment(cellStats)
 			isolationSegGuid = cellStats.IsolationSegmentGuid
 		}
-		sumStats := summaryStatsByIsoSeg[isolationSegGuid][cellStats.StackId]
+
+		// TODO SG cellStats.StackId should be StackGroupGuid??
+		sumStats := summaryStatsByIsoSeg[isolationSegGuid][cellStats.StackGroupId]
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
 		if sumStats != nil {
 			sumStats.TotalCells = sumStats.TotalCells + 1
@@ -331,10 +346,10 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		fmt.Fprintf(v, "IsoSeg: %-12v ", stackSummaryStats.IsolationSegmentName)
 	}
 	notes := ""
-	if stackSummaryStats.StackName == UNKNOWN_STACK_NAME {
+	if stackSummaryStats.StackGroupName == UNKNOWN_STACK_GROUP_NAME {
 		notes = "(cells with no containers)"
 	}
-	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v%v\n", stackSummaryStats.StackName, TotalCellsDisplay, notes)
+	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v%v\n", stackSummaryStats.StackGroupName, TotalCellsDisplay, notes)
 	fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
 
 	displayTotalMem := "--"

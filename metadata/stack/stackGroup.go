@@ -1,4 +1,4 @@
-// Copyright (c) 2017 ECS Team, Inc. - All Rights Reserved
+// Copyright (c) 2019 ECS Team, Inc. - All Rights Reserved
 // https://github.com/ECSTeam/cloudfoundry-top-plugin
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,10 @@
 
 package stack
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
-
-type StackMetadata struct {
-	*common.Metadata
-	*Stack
-}
-
-func NewStackMetadata(stack Stack) *StackMetadata {
-	return &StackMetadata{Metadata: &common.Metadata{}, Stack: &stack}
-}
-
-func NewStackMetadataById(id string) *StackMetadata {
-	return NewStackMetadata(Stack{EntityCommon: common.EntityCommon{Guid: id}, Name: id})
-}
-
-func (metadataItem *StackMetadata) GetName() string {
-	return metadataItem.Name
+type StackGroup struct {
+	Guid        string
+	Name        string // cflinuxfs  (note the missing "2" / "3" suffix)
+	Description string
+	MatchNames  string   // regex that matches any stack that is in the group.  E.g.  "cflinuxfs.*"
+	StackIds    []string // list of stack GUIDs that are in this group
 }

@@ -120,8 +120,6 @@ func (asUI *AppDetailView) selectDisplayAction(g *gocui.Gui, v *gocui.View) erro
 	menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "App Info"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("crashInfoView", "View CRASH List"))
 	menuItems = append(menuItems, uiCommon.NewMenuItem("appHttpView", "HTTP Response Info"))
-	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "View App Logs"))
-	//menuItems = append(menuItems, uiCommon.NewMenuItem("infoView", "Todo"))
 
 	windowTitle := fmt.Sprintf("Select App Detail View")
 	selectDisplayView := uiCommon.NewSelectMenuWidget(asUI.GetMasterUI(), "selectDisplayView", windowTitle, menuItems, asUI.selectDisplayCallback)
@@ -179,15 +177,6 @@ func (asUI *AppDetailView) createAndOpenView(g *gocui.Gui, viewName string) erro
 		return errors.New("Unable to find view " + viewName)
 	}
 	return asUI.GetMasterUI().OpenView(g, view)
-}
-
-func (asUI *AppDetailView) openInfoActionX(g *gocui.Gui, v *gocui.View) error {
-	infoWidgetName := "appInfoWidget"
-	appInfoWidget := NewAppInfoWidget(asUI.GetMasterUI(), asUI, infoWidgetName, 70, 18, asUI)
-	asUI.GetMasterUI().LayoutManager().Add(appInfoWidget)
-	asUI.GetMasterUI().SetCurrentViewOnTop(g)
-	asUI.GetMasterUI().AddCommonDataViewKeybindings(g, infoWidgetName)
-	return nil
 }
 
 func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {

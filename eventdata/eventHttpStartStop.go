@@ -106,22 +106,30 @@ func (ed *EventData) httpStartStopEventForApp(msg *events.Envelope) {
 
 	appUUID := msg.GetHttpStartStop().GetApplicationId()
 	instId := msg.GetHttpStartStop().GetInstanceId()
-	//instIndex := msg.GetHttpStartStop().GetInstanceIndex()
+
+	// We use the raw field vs the getter function so that we
+	// can tell if the value is set to 0 vs non-existent.
+	// If we are PCF < 1.10 it will not exist.
+	instanceIndexRef := msg.GetHttpStartStop().InstanceIndex
+	instanceIndex := int32(-1)
+	if instanceIndexRef != nil {
+		instanceIndex = *instanceIndexRef
+	}
+
 	httpStartStopEvent := msg.GetHttpStartStop()
 
-	//toplog.Debug("index: %v\n", instIndex)
+	// TODO: Remove the following debug
+	//toplog.Info("*** instId: %v instanceIndex: %v\n", instId, instanceIndex)
 	//toplog.Debug("index mem: %v\n", msg.GetHttpStartStop().InstanceIndex)
-	//fmt.Printf("index: %v\n", instIndex)
 	ed.TotalEvents++
 	appId := formatUUID(appUUID)
-	//c.ui.Say("**** appId:%v ****", appId)
 
 	appStats := ed.getAppStats(appId)
 	if appStats.AppUUID == nil {
 		appStats.AppUUID = appUUID
 	}
 
-	containerTraffic := ed.getContainerTraffic(appStats, instId)
+	containerTraffic := ed.getContainerTraffic(appStats, instId, instanceIndex)
 
 	responseTimeNano := *httpStartStopEvent.StopTimestamp - *httpStartStopEvent.StartTimestamp
 
@@ -211,17 +219,18 @@ func (ed *EventData) checkIfApiCall_PCF1_8Plus(url *url.URL) (bool, string) {
 	return false, ""
 }
 
-func (ed *EventData) getContainerTraffic(appStats *eventApp.AppStats, instId string) *eventApp.TrafficStats {
-
-	// Save the container data -- by instance id
+func (ed *EventData) getContainerTraffic(appStats *eventApp.AppStats, instId string, instanceIndex int32) *eventApp.TrafficStats {
 
 	if appStats.ContainerTrafficMap == nil {
 		appStats.ContainerTrafficMap = make(map[string]*eventApp.TrafficStats)
 	}
 
+	// Save the container data by instance id
+
 	containerTraffic := appStats.ContainerTrafficMap[instId]
 	if containerTraffic == nil {
 		containerTraffic = eventApp.NewTrafficStats()
+		containerTraffic.InstanceIndex = instanceIndex
 		appStats.ContainerTrafficMap[instId] = containerTraffic
 		containerTraffic.ResponseL60Time = util.NewAvgTracker(time.Minute)
 		containerTraffic.ResponseL10Time = util.NewAvgTracker(time.Second * 10)

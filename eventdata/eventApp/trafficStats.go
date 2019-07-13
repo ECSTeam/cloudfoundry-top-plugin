@@ -32,6 +32,8 @@ type HttpInfo struct {
 }
 
 type TrafficStats struct {
+	InstanceIndex int32
+
 	ResponseL60Time    *util.AvgTracker
 	AvgResponseL60Time float64 // updated after a clone of this object
 	EventL60Rate       int     // updated after a clone of this object
