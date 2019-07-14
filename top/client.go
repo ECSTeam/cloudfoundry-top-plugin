@@ -452,10 +452,7 @@ func (c *Client) getUserScopes() ([]string, error) {
 		return nil, err
 	}
 
-	jsonScopes, err := jsonParsed.Search("scope").Children()
-	if err != nil {
-		return nil, err
-	}
+	jsonScopes := jsonParsed.Search("scope").Children()
 
 	scopes := make([]string, 0, 5)
 	for _, scope := range jsonScopes {

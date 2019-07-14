@@ -180,7 +180,7 @@ func markLastLocation() {
 
 func Open() {
 	if gui != nil {
-		gui.Execute(func(gui *gocui.Gui) error {
+		gui.Update(func(gui *gocui.Gui) error {
 			if !freezeAutoScroll {
 				debugWidget.calulateViewDimensions(gui)
 				mu.Lock()

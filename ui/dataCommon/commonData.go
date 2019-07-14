@@ -153,6 +153,7 @@ func (cd *CommonData) PostProcessData() map[string]*DisplayAppStats {
 		displayAppStats.StackId = appMetadata.StackGuid
 		displayAppStats.StackName = stack.Name
 
+		// TOOD: Need to check if this work corrctly if the "org" has set a default iso seg
 		isoSeg := mdMgr.GetIsoSegMdManager().FindItem(spaceMetadata.IsolationSegmentGuid)
 		displayAppStats.IsolationSegmentGuid = isoSeg.Guid
 		displayAppStats.IsolationSegmentName = isoSeg.Name

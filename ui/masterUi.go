@@ -588,7 +588,7 @@ func (mui *MasterUI) refreshStatusThread(g *gocui.Gui) {
 	for {
 		status := <-mui.statusMsg
 		mui.SetStatus(g, status)
-		g.Execute(func(g *gocui.Gui) error {
+		g.Update(func(g *gocui.Gui) error {
 			statusMgr := mui.layoutManager.GetManagerByViewName(STATUS_VIEW_NAME)
 			if statusMgr != nil {
 				statusWidget := statusMgr.(*StatusWidget)
@@ -608,7 +608,7 @@ func (mui *MasterUI) updateDisplay(g *gocui.Gui) {
 		return
 	}
 	mui.updateDisplayInProgress = true
-	g.Execute(func(g *gocui.Gui) error {
+	g.Update(func(g *gocui.Gui) error {
 
 		if !mui.displayPaused {
 			// This takes a snapshot of the live data

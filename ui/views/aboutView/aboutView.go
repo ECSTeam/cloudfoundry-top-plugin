@@ -290,7 +290,7 @@ func (asUI *TopView) asyncUpdateLastestVersion(g *gocui.Gui, v *gocui.View) {
 			lastestVersionMsg = fmt.Sprintf("%v (upgrade available)", latestVersion)
 		}
 	}
-	g.Execute(func(g *gocui.Gui) error {
+	g.Update(func(g *gocui.Gui) error {
 		return asUI.RefreshDisplay(g)
 	})
 }
