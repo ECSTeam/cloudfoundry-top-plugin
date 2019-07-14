@@ -339,17 +339,15 @@ func (ed *EventData) assignStackGroupId(cellStats *eventCell.CellStats) {
 	mdMgr := ep.GetMetadataManager()
 	mdStackMgr := mdMgr.GetStackMdManager()
 
-	// TODO: SG - We don't want to associate a sigle stackId to the cell
 	for _, appStats := range ed.AppMap {
 		for _, containerStats := range appStats.ContainerArray {
-			//if containerStats != nil && cellStats.Ip == containerStats.Ip && space.All() != nil && len(space.All()) > 0 {
 			if containerStats != nil && cellStats.Ip == containerStats.Ip {
 				appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appStats.AppId)
-
-				// TODO: SG - Lookup and assign stackGroupId with something like:
 				stackGroup := mdStackMgr.FindStackGroupByStackGuid(appMetadata.StackGuid)
-				cellStats.StackGroupId = stackGroup.Guid
-				//cellStats.StackId = appMetadata.StackGuid
+				// stackGroup can be nil if the metadata hasn't been loaded yet.
+				if stackGroup != nil {
+					cellStats.StackGroupId = stackGroup.Guid
+				}
 				return
 			}
 		}
