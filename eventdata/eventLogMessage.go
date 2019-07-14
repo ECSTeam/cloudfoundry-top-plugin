@@ -158,14 +158,17 @@ func (ed *EventData) logStgCall(msg *events.Envelope) {
 	appId := logMessage.GetAppId()
 	logText := string(logMessage.GetMessage())
 
-	// We only care about when a "Successfully destroyed container" staging event occures.
+	// We only care about when a "successfully destroyed container" staging event occures.
+	// NOTE: Since PCF 2.x uses lower case "sucessfully" vs PCF 1.x uses uppercase, we just
+	// eliminate the "s" in the Contains.
 	// This means we're all done staging (sucessful or not) so we can reload
 	// metadata for this app
-	if logText != "Successfully destroyed container" {
+	if !strings.Contains(logText, "uccessfully destroyed container") {
 		return
 	}
+
 	appMetadata := ed.eventProcessor.GetMetadataManager().GetAppMdManager().FindItem(appId)
-	toplog.Info("STG event occured for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
+	toplog.Info("STG event occured and complete for app:%v name:%v msg: %v", appId, appMetadata.Name, logText)
 	ed.eventProcessor.GetMetadataManager().RequestLoadOfItem(common.APP, appId)
 
 }
