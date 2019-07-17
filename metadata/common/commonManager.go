@@ -23,6 +23,7 @@ import (
 )
 
 const DelayedRemovalFromCacheDuration = 15 * time.Second
+const DefaultMinimumReloadDuration = time.Millisecond * 10000
 
 type MetadataManager interface {
 	NewItemById(guid string) IMetadata
@@ -42,14 +43,18 @@ type CommonMetadataManager struct {
 
 	pendingDeleteFromCache map[string]*time.Time
 	deletedFromCache       map[string]*time.Time
+
+	minimumReloadDuration time.Duration
 }
 
 func NewCommonMetadataManager(
 	mdGlobalManager MdGlobalManagerInterface,
 	dataType DataType,
 	url string,
-	mm MetadataManager) *CommonMetadataManager {
+	mm MetadataManager,
+	minimumReloadDuration time.Duration) *CommonMetadataManager {
 	commonMgr := &CommonMetadataManager{mdGlobalManager: mdGlobalManager, dataType: dataType, url: url, mm: mm}
+	commonMgr.minimumReloadDuration = minimumReloadDuration
 	commonMgr.clear()
 	RegisterMetadataHandler(dataType, commonMgr)
 	return commonMgr
@@ -156,7 +161,7 @@ func (commonMgr *CommonMetadataManager) MetadataLoadMethod(guid string) error {
 }
 
 func (commonMgr *CommonMetadataManager) MinimumReloadDuration() time.Duration {
-	return time.Millisecond * 10000
+	return commonMgr.minimumReloadDuration
 }
 
 // Last time data was loaded or nil if never

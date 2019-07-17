@@ -34,7 +34,7 @@ func (ed *EventData) logMessageEvent(msg *events.Envelope) {
 	appStats := ed.getAppStats(appId)
 	sourceType := logMessage.GetSourceType()
 	switch {
-	case sourceType == "CELL":
+	case sourceType == "CELL" || sourceType == "CELL/SSHD" || sourceType == "SSH":
 		// The Diego cell emits CELL logs when it starts or stops the app. These actions implement the
 		// desired state requested by the user. The Diego cell also emits messages when an app crashes.
 		// PCF 1.10 has "CELL" for non-app related logging: e.g. "Container became healthy"
@@ -104,13 +104,21 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 
 	startMsgType := false
 	switch {
-	case strings.Contains(msgText, "Creating"):
+	case strings.Contains(msgText, "reating"): // Creating/creating
 		startMsgType = true
 		// Clear the container metrics since any old metrics would be from a prior container
 		containerStats.ContainerMetric = nil
 		containerStats.CellCreatedMsgTime = nil
 		containerStats.CellHealthyMsgTime = nil
 		containerStats.CellLastCreatingMsgTime = &msgTime
+
+		// Locate the traffic stats for this app index
+		for appInstId, containerTraffic := range appStats.ContainerTrafficMap {
+			if int(containerTraffic.InstanceIndex) == instNum {
+				delete(appStats.ContainerTrafficMap, appInstId)
+			}
+		}
+
 	case strings.Contains(msgText, "created"):
 		startMsgType = true
 		containerStats.CreateCount++
@@ -128,26 +136,28 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 		containerStats.CellHealthyMsgTime = &msgTime
 	}
 
+	// TODO: Issue -- with handling all messagees the issue is we get some "destroy" message from the prior
+	// container after the new container starts logging create message beause the destroy is done async
+	// How can we ensure we only capture "new" container message and ignore the old container?
+	//startMsgType = true
+
 	if startMsgType && (containerStats.LastUpdateTime == nil || msgTime.After(*containerStats.LastUpdateTime)) {
+
+		msgPrefix := "Cell "
+		if strings.HasPrefix(msgText, msgPrefix) {
+			// If this has a Cell prefix message, we want to strip this part off so we can display the interesting part
+			// Exampe: Cell 377aa685-8acc-4251-91c8-e3369e83ae8d destroying container for ....
+			cellIdSize := len(*msg.Index)
+			msgText = msgText[len(msgPrefix)+cellIdSize+1:]
+		}
+
 		containerStats.Ip = msg.GetIp()
 		containerStats.CellLastStartMsgText = msgText
 		containerStats.CellLastStartMsgTime = &msgTime
 		containerStats.LastUpdateTime = &msgTime
 	}
 
-	/*
-		switch {
-		case strings.Contains(msgText, "Creating"):
-			fallthrough
-		case strings.Contains(msgText, "Successfully created container"):
-			fallthrough
-		case strings.Contains(msgText, "healthy"):
-			fallthrough
-		case strings.Contains(msgText, "Exit status"):
-			ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appStats.AppId)
-		}
-	*/
-
+	//toplog.Info("**** RequestRefreshAppInstancesMetadata for appId %v", appStats.AppId)
 	ed.eventProcessor.GetMetadataManager().RequestRefreshAppInstancesMetadata(appStats.AppId)
 
 }

@@ -191,8 +191,19 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnMemoryFree())
 	columns = append(columns, ColumnDiskUsed())
 	columns = append(columns, ColumnDiskFree())
+	columns = append(columns, columnAvgResponseTimeL60Info())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
+
+	columns = append(columns, columnReq1())
+	columns = append(columns, columnReq10())
+	columns = append(columns, columnReq60())
+
+	columns = append(columns, columnTotalReq())
+	columns = append(columns, column2XX())
+	columns = append(columns, column3XX())
+	columns = append(columns, column4XX())
+	columns = append(columns, column5XX())
 
 	columns = append(columns, ColumnCellIp())
 
@@ -323,6 +334,45 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			}
 
 		}
+	}
+
+	for appInstId, containerTraffic := range appStats.ContainerTrafficMap {
+
+		// TODO: Since we collect container info by appInst GUID and not index
+		// we could have multiple entries in the map for the same index in
+		// the case where a container restarted.  We only want to display
+		// states for the currently "alive" container -- how do we determine that?
+		appInstId = appInstId
+
+		//toplog.Info("appInstId: %v index: %v", appInstId, containerTraffic.InstanceIndex)
+
+		displayContainerStats := displayContainerStatsMap[int(containerTraffic.InstanceIndex)]
+		if displayContainerStats != nil {
+
+			displayContainerStats.AvgResponseL60Time = containerTraffic.AvgResponseL60Time
+			displayContainerStats.EventL1Rate = containerTraffic.EventL1Rate
+			displayContainerStats.EventL10Rate = containerTraffic.EventL10Rate
+			displayContainerStats.EventL60Rate = containerTraffic.EventL60Rate
+
+			for _, httpStatusCodeMap := range containerTraffic.HttpInfoMap {
+				for statusCode, httpCountInfo := range httpStatusCodeMap {
+					if httpCountInfo != nil {
+						displayContainerStats.HttpAllCount += httpCountInfo.HttpCount
+						switch {
+						case statusCode >= 200 && statusCode < 300:
+							displayContainerStats.Http2xxCount += httpCountInfo.HttpCount
+						case statusCode >= 300 && statusCode < 400:
+							displayContainerStats.Http3xxCount += httpCountInfo.HttpCount
+						case statusCode >= 400 && statusCode < 500:
+							displayContainerStats.Http4xxCount += httpCountInfo.HttpCount
+						case statusCode >= 500 && statusCode < 600:
+							displayContainerStats.Http5xxCount += httpCountInfo.HttpCount
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	for containerIndex, displayContainerStats := range displayContainerStatsMap {

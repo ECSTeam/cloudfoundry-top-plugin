@@ -42,6 +42,20 @@ type DisplayContainerStats struct {
 	StartupDuration *time.Duration
 
 	key string
+
+	// TODO: Newly added 07/16/2019 need to populate values
+	AvgResponseL60Time float64
+	EventL60Rate       int
+	//AvgResponseL10Time float64
+	EventL10Rate int
+	//AvgResponseL1Time float64
+	EventL1Rate int
+
+	HttpAllCount int64
+	Http2xxCount int64
+	Http3xxCount int64
+	Http4xxCount int64
+	Http5xxCount int64
 }
 
 func NewDisplayContainerStats(containerStats *eventApp.ContainerStats, appStats *eventApp.AppStats) *DisplayContainerStats {

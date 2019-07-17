@@ -62,7 +62,7 @@ func NewCommonV2ResponseManager(mdGlobalManager MdGlobalManagerInterface,
 	autoFullLoadIfNotFound bool) *CommonV2ResponseManager {
 
 	commonV2ResponseMgr := &CommonV2ResponseManager{mm: mm, autoFullLoadIfNotFound: autoFullLoadIfNotFound}
-	commonV2ResponseMgr.CommonMetadataManager = NewCommonMetadataManager(mdGlobalManager, dataType, url, mm)
+	commonV2ResponseMgr.CommonMetadataManager = NewCommonMetadataManager(mdGlobalManager, dataType, url, mm, DefaultMinimumReloadDuration)
 	return commonV2ResponseMgr
 }
 

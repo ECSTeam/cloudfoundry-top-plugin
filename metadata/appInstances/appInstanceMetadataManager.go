@@ -35,12 +35,8 @@ type AppInstanceMetadataManager struct {
 func NewAppInstanceMetadataManager(mdGlobalManager common.MdGlobalManagerInterface) *AppInstanceMetadataManager {
 	url := "/v2/apps"
 	mdMgr := &AppInstanceMetadataManager{}
-	mdMgr.CommonMetadataManager = common.NewCommonMetadataManager(mdGlobalManager, common.APP_INST, url, mdMgr)
+	mdMgr.CommonMetadataManager = common.NewCommonMetadataManager(mdGlobalManager, common.APP_INST, url, mdMgr, time.Millisecond*1000)
 	return mdMgr
-}
-
-func (mdMgr *AppInstanceMetadataManager) MinimumReloadDuration() time.Duration {
-	return time.Millisecond * 1000
 }
 
 func (mdMgr *AppInstanceMetadataManager) FindItem(appId string) *AppInstances {
@@ -84,7 +80,7 @@ func (mdMgr *AppInstanceMetadataManager) LoadItemInternal(guid string) (common.I
 	}
 
 	// Set the startTime relative to now and uptime of the container
-	for _, stat := range response {
+	for i, stat := range response {
 		// Ignore "uptime" field if container is in state DOWN
 		if stat.State == "DOWN" {
 			stat.Uptime = 0
@@ -92,6 +88,7 @@ func (mdMgr *AppInstanceMetadataManager) LoadItemInternal(guid string) (common.I
 			startTime := time.Unix(int64(stat.Since), 0)
 			stat.StartTime = &startTime
 		}
+		toplog.Debug("    appInst MD - index: %v state: %v", i, stat.State)
 	}
 
 	instances := NewAppInstancesWithData(guid, response)
