@@ -246,3 +246,25 @@ func (mgr *GlobalManager) RequestRefreshAppInstancesMetadata(appId string) {
 	}
 	mgr.loadHandler.RequestLoadOfItem(common.APP_INST, appId, 0*time.Second)
 }
+
+// Get the correct Isolation Segment associated with this app
+func (mgr *GlobalManager) FindIsoSegByApp(appMetadata *app.AppMetadata) *isolationSegment.IsolationSegmentMetadata {
+	spaceMetadata := mgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
+	return mgr.FindIsoSegBySpace(spaceMetadata)
+}
+
+// Get the correct Isolation Segment associated with this space
+func (mgr *GlobalManager) FindIsoSegBySpace(spaceMetadata *space.SpaceMetadata) *isolationSegment.IsolationSegmentMetadata {
+
+	// Need to first check space for isoseg, then if its set to default, look at org
+	isoSegGuid := spaceMetadata.IsolationSegmentGuid
+	if isoSegGuid == isolationSegment.DefaultIsolationSegmentGuid {
+		orgMetadata := mgr.GetOrgMdManager().FindItem(spaceMetadata.OrgGuid)
+		toplog.Info("isoseg for space: %v space has default, org has: [%v] (if empty then default/shared)", spaceMetadata.GetName(), orgMetadata.DefaultIsolationSegmentGuid)
+		if orgMetadata.DefaultIsolationSegmentGuid != "" {
+			isoSegGuid = orgMetadata.DefaultIsolationSegmentGuid
+		}
+	}
+	isoSeg := mgr.GetIsoSegMdManager().FindItem(isoSegGuid)
+	return isoSeg
+}

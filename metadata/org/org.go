@@ -34,15 +34,16 @@ type OrgResource struct {
 type Org struct {
 	common.EntityCommon
 	//Guid                 string `json:"guid"`
-	Name                 string `json:"name"`
-	QuotaGuid            string `json:"quota_definition_guid"`
-	Status               string `json:"status"`
-	Domains_url          string `json:"domains_url"`
-	Private_domains_url  string `json:"private_domains_url"`
-	Users_url            string `json:"users_url"`
-	Managers_url         string `json:"managers_url"`
-	Auditors_url         string `json:"auditors_url"`
-	Billing_managers_url string `json:"billing_managers_url"`
+	Name                        string `json:"name"`
+	QuotaGuid                   string `json:"quota_definition_guid"`
+	Status                      string `json:"status"`
+	Domains_url                 string `json:"domains_url"`
+	Private_domains_url         string `json:"private_domains_url"`
+	Users_url                   string `json:"users_url"`
+	Managers_url                string `json:"managers_url"`
+	Auditors_url                string `json:"auditors_url"`
+	Billing_managers_url        string `json:"billing_managers_url"`
+	DefaultIsolationSegmentGuid string `json:"default_isolation_segment_guid"`
 }
 
 /*

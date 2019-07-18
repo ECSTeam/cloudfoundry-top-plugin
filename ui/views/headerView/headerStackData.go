@@ -30,9 +30,8 @@ const UNKNOWN_STACK_GROUP_NAME = "UNKNOWN"
 const UNKNOWN_ISOSEG_NAME = "UNKNOWN"
 
 type StackSummaryStats struct {
-	IsolationSegmentGuid string
-	IsolationSegmentName string
-	// TODO: SG - Can't have StackId/StackName here -- change to StackGroupId / StackGroupName
+	IsolationSegmentGuid        string
+	IsolationSegmentName        string
 	StackGroupId                string
 	StackGroupName              string
 	TotalCells                  int
@@ -113,7 +112,6 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	processor := router.GetProcessor()
 	mdMgr := processor.GetMetadataManager()
 
-	// TODO: SG - Get Add StackGroup to StackMdManager -- call mdMgr.GetStackMdManager().GetAllStackGroups()
 	stackGroups := mdMgr.GetStackMdManager().GetAllStackGroups()
 	if len(stackGroups) == 0 {
 		fmt.Fprintf(v, "\n Waiting for more data...")
@@ -212,13 +210,12 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 	appMdMgr := mdMgr.GetAppMdManager()
 	for _, app := range appMdMgr.AllApps() {
 		spaceMetadata := mdMgr.GetSpaceMdManager().FindItem(app.SpaceGuid)
-		isolationSegGuid := spaceMetadata.IsolationSegmentGuid
-		if isolationSegGuid == isolationSegment.DefaultIsolationSegmentGuid && isolationSegment.SharedIsolationSegment != nil {
-			isolationSegGuid = isolationSegment.SharedIsolationSegment.Guid
-		}
+
+		isoSeg := mdMgr.FindIsoSegBySpace(spaceMetadata)
+		isoSegGuid := isoSeg.GetGuid()
 
 		stackGroup := mdMgr.GetStackMdManager().FindStackGroupByStackGuid(app.StackGuid)
-		sumStats := summaryStatsByIsoSeg[isolationSegGuid][stackGroup.Guid]
+		sumStats := summaryStatsByIsoSeg[isoSegGuid][stackGroup.Guid]
 		if sumStats != nil {
 			if app.State == "STARTED" {
 				sumStats.ReservedMem = sumStats.ReservedMem + ((app.MemoryMB * util.MEGABYTE) * app.Instances)
@@ -238,7 +235,6 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 			isolationSegGuid = cellStats.IsolationSegmentGuid
 		}
 
-		// TODO SG cellStats.StackId should be StackGroupGuid??
 		sumStats := summaryStatsByIsoSeg[isolationSegGuid][cellStats.StackGroupId]
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
 		if sumStats != nil {

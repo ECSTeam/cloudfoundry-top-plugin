@@ -146,3 +146,18 @@ func GetIntValueByFieldName(n interface{}, field_name string) (int64, bool) {
 		// or use fmt.Sprint(f.Interface())
 	}
 }
+
+func GetObjectValueByFieldName(n interface{}, field_name string) (interface{}, bool) {
+	s := reflect.ValueOf(n)
+	if s.Kind() == reflect.Ptr {
+		s = s.Elem()
+	}
+	if s.Kind() != reflect.Struct {
+		return "", false
+	}
+	f := s.FieldByName(field_name)
+	if !f.IsValid() {
+		return "", false
+	}
+	return f.Interface(), true
+}

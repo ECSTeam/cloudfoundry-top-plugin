@@ -363,7 +363,8 @@ func (ed *EventData) AssignIsolationSegment(cellStats *eventCell.CellStats) {
 				appMdMgr := mdMgr.GetAppMdManager()
 				appMetadata := appMdMgr.FindItem(appStats.AppId)
 				spaceMetadata := mdMgr.GetSpaceMdManager().FindItem(appMetadata.SpaceGuid)
-				cellStats.IsolationSegmentGuid = spaceMetadata.IsolationSegmentGuid
+				isoSeg := mdMgr.FindIsoSegBySpace(spaceMetadata)
+				cellStats.IsolationSegmentGuid = isoSeg.GetGuid()
 				return
 			}
 		}

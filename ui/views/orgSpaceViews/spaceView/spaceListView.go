@@ -247,8 +247,8 @@ func (asUI *SpaceListView) postProcessData() map[string]*DisplaySpace {
 			displaySpace.QuotaName = "-none-"
 		}
 
-		isoSegMd := mdMgr.GetIsoSegMdManager().FindItem(spaceMetadata.IsolationSegmentGuid)
-		isoSegName := isoSegMd.Name
+		isoSeg := mdMgr.FindIsoSegBySpace(spaceMetadata)
+		isoSegName := isoSeg.Name
 		displaySpace.IsolationSegmentName = isoSegName
 
 		for _, appStats := range appsBySpaceMap[spaceMetadata.Guid] {

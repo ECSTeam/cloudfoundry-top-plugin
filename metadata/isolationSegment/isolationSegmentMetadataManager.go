@@ -15,7 +15,12 @@
 
 package isolationSegment
 
-import "github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+import (
+	"net/url"
+
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/common"
+	"github.com/ecsteam/cloudfoundry-top-plugin/toplog"
+)
 
 type IsolationSegmentMetadataManager struct {
 	*common.CommonV2ResponseManager
@@ -53,12 +58,19 @@ func (mdMgr *IsolationSegmentMetadataManager) GetAll() []*IsolationSegmentMetada
 }
 
 func (mdMgr *IsolationSegmentMetadataManager) LoadAllItems() {
+
 	mdMgr.CommonV2ResponseManager.LoadAllItems()
 	SharedIsolationSegment = mdMgr.findMetadataByName(SharedIsolationSegmentName)
 	if SharedIsolationSegment == nil {
 		// If we didn't find the shared segment, this must be a pre-isolation segment version of cloud foundry
 		SharedIsolationSegment = NewIsolationSegmentMetadata(IsolationSegment{EntityCommon: common.EntityCommon{Guid: DefaultIsolationSegmentGuid}, Name: SharedIsolationSegmentName})
 	}
+
+	toplog.Debug("*** isoseg total map size: %v", len(mdMgr.MetadataMap))
+	// for _, metadata := range mdMgr.MetadataMap {
+	// 	isoSeg := metadata.(*IsolationSegmentMetadata)
+	// 	toplog.Info("*** isoseg item: %v  name: %v", isoSeg.GetGuid(), isoSeg.GetName())
+	// }
 }
 
 func (mdMgr *IsolationSegmentMetadataManager) findMetadataByName(name string) *IsolationSegmentMetadata {
@@ -93,6 +105,8 @@ func (mdMgr *IsolationSegmentMetadataManager) ProcessResponse(response common.IR
 	resp := response.(*IsolationSegmentResponse)
 	for _, item := range resp.Resources {
 		itemMd := mdMgr.ProcessResource(&item)
+		//isoSeg := itemMd.(*IsolationSegmentMetadata)
+		//toplog.Info("*** isoseg item: %v  name: %v", isoSeg.GetGuid(), isoSeg.GetName())
 		metadataArray = append(metadataArray, itemMd)
 	}
 	return metadataArray
@@ -106,6 +120,13 @@ func (mdMgr *IsolationSegmentMetadataManager) ProcessResource(resource common.IR
 
 func (mdMgr *IsolationSegmentMetadataManager) GetNextUrl(response common.IResponse) string {
 	isoSegresponse := response.(*IsolationSegmentResponse)
-	nextUrl := isoSegresponse.Pagination.Next.Href
-	return nextUrl
+	href := isoSegresponse.Pagination.Next.Href
+	if href != "" {
+		// The v3 API returns the full URL (including hostname), we just want the URI (path)
+		url, _ := url.Parse(href)
+		nextUrl := url.RequestURI()
+		return nextUrl
+	} else {
+		return ""
+	}
 }

@@ -19,7 +19,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ecsteam/cloudfoundry-top-plugin/config"
@@ -46,6 +49,13 @@ type V2MetadataManager interface {
 	PostProcessLoad([]IMetadata, error)
 }
 
+type APIVersion int
+
+const (
+	API_V2 APIVersion = 2
+	API_V3 APIVersion = 3
+)
+
 type CommonV2ResponseManager struct {
 	*CommonMetadataManager
 	mm V2MetadataManager
@@ -53,6 +63,7 @@ type CommonV2ResponseManager struct {
 	autoFullLoadIfNotFound bool
 	fullLoadCacheTime      time.Time
 	loadInProgress         bool
+	apiVersion             APIVersion
 }
 
 func NewCommonV2ResponseManager(mdGlobalManager MdGlobalManagerInterface,
@@ -61,7 +72,11 @@ func NewCommonV2ResponseManager(mdGlobalManager MdGlobalManagerInterface,
 	mm V2MetadataManager,
 	autoFullLoadIfNotFound bool) *CommonV2ResponseManager {
 
-	commonV2ResponseMgr := &CommonV2ResponseManager{mm: mm, autoFullLoadIfNotFound: autoFullLoadIfNotFound}
+	apiVersion := API_V2
+	if strings.HasPrefix(url, "/v3") {
+		apiVersion = API_V3
+	}
+	commonV2ResponseMgr := &CommonV2ResponseManager{mm: mm, autoFullLoadIfNotFound: autoFullLoadIfNotFound, apiVersion: apiVersion}
 	commonV2ResponseMgr.CommonMetadataManager = NewCommonMetadataManager(mdGlobalManager, dataType, url, mm, DefaultMinimumReloadDuration)
 	return commonV2ResponseMgr
 }
@@ -158,14 +173,50 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) LoadAllItemsAysnc() {
 	go loadAsync()
 }
 
-func (commonMgr *CommonMetadataManager) GetNextUrl(response IResponse) string {
-	nextUrl, _ := GetStringValueByFieldName(response, "NextUrl")
+func (commonV2ResponseMgr *CommonV2ResponseManager) GetNextUrl(response IResponse) string {
+
+	nextUrl := ""
+	if commonV2ResponseMgr.apiVersion == API_V2 {
+		nextUrl, _ = GetStringValueByFieldName(response, "NextUrl")
+	} else {
+
+		// NOTE: Since we only have 1 v3 api (iso segs) we override this method
+		// but need to thing about generic handling in fugure
+		log.Panicln("STOP -- using wrong GetNextUrl method for v3 API")
+
+		pagination, success := GetObjectValueByFieldName(response, "Pagination")
+		//toplog.Info("** GetNextUrl called - %v  success: %v pagination: %+v", commonV2ResponseMgr.url, success, pagination)
+		if success {
+			nextObj, _ := GetObjectValueByFieldName(pagination, "Next")
+			if nextObj != nil {
+				// The v3 API returns the full URL (including hostname), we just want the URI (path)
+				href, _ := GetStringValueByFieldName(nextObj, "Href")
+				url, _ := url.Parse(href)
+				nextUrl = url.RequestURI()
+			}
+		}
+	}
 	return nextUrl
 }
 
-func (commonMgr *CommonMetadataManager) Count(response IResponse) int {
-	count, _ := GetIntValueByFieldName(response, "Count")
-	return int(count)
+func (commonV2ResponseMgr *CommonV2ResponseManager) Count(response IResponse) int {
+
+	count := -2
+	if commonV2ResponseMgr.apiVersion == API_V2 {
+		count64, _ := GetIntValueByFieldName(response, "Count")
+		count = int(count64)
+	} else {
+		pagination, success := GetObjectValueByFieldName(response, "Pagination")
+		//toplog.Info("** Count called - %v  success: %v pagination: %+v", commonV2ResponseMgr.url, success, pagination)
+		if success {
+			count64, _ := GetIntValueByFieldName(pagination, "Count")
+			count = int(count64)
+		} else {
+			count = -3
+		}
+	}
+	//toplog.Info("** Count called - %v  count: %v", commonV2ResponseMgr.url, count)
+	return count
 }
 
 func (commonMgr *CommonMetadataManager) PostProcessLoad(metadataArray []IMetadata, err error) {
@@ -180,8 +231,15 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 	metadataArray := []IMetadata{}
 	respError := &ResponseError{}
 
+	pageParamVar := "results-per-page"
+	resultsPerVPage := config.ResultsPerPage
+	if commonV2ResponseMgr.apiVersion == API_V3 {
+		pageParamVar = "per_page"
+		resultsPerVPage = config.ResultsPerV3Page
+	}
+
 	// Configure the number of records per API call that we get
-	url += "?results-per-page=" + strconv.Itoa(config.ResultsPerPage)
+	url += "?" + pageParamVar + "=" + strconv.Itoa(resultsPerVPage)
 
 	toplog.Debug("URL: %v", url)
 	handleRequest := func(outputBytes []byte) (data interface{}, nextUrl string, err error) {
@@ -223,7 +281,6 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 				commonV2ResponseMgr.mm.Count(resp)))
 
 		nextUrl = commonV2ResponseMgr.mm.GetNextUrl(resp)
-		//nextUrl, _ = GetStringValueByFieldName(resp, "NextUrl")
 		return resp, nextUrl, nil
 	}
 

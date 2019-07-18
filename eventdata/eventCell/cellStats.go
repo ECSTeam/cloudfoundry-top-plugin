@@ -16,8 +16,7 @@
 package eventCell
 
 type CellStats struct {
-	Ip string
-	// TODO: SG - We can't assign a single stackId to a cell -- change to StackGroupId
+	Ip                   string
 	StackGroupId         string
 	IsolationSegmentGuid string
 	DeploymentName       string

@@ -38,3 +38,4 @@ const MaxForwarderBucket = 100
 
 // Number of records to retrieve per cloud controller REST call.
 const ResultsPerPage = 100
+const ResultsPerV3Page = 1000

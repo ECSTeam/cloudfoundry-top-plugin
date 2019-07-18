@@ -27,7 +27,6 @@ type StackMetadataManager struct {
 	stackGroups []*StackGroup
 }
 
-// TODO: SG - New method to support StackGroups
 func (mdMgr *StackMetadataManager) FindStackGroup(stackGroupId string) *StackGroup {
 	for _, stackGroup := range mdMgr.stackGroups {
 		if stackGroup.Guid == stackGroupId {
@@ -126,7 +125,7 @@ func (mdMgr *StackMetadataManager) PostProcessLoad(metadataArray []common.IMetad
 			if len(index) > 0 {
 				stackGroup.StackIds = append(stackGroup.StackIds, metadata.GetGuid())
 				found = true
-				toplog.Info("stack found: %v  stackGroup: %+v", metadata.GetName(), stackGroup)
+				toplog.Debug("stack found: %v  stackGroup: %+v", metadata.GetName(), stackGroup)
 				break
 			}
 		}
@@ -134,7 +133,7 @@ func (mdMgr *StackMetadataManager) PostProcessLoad(metadataArray []common.IMetad
 			stackGroup := &StackGroup{Guid: metadata.GetGuid(), Name: metadata.GetName(),
 				MatchNames: metadata.GetName(), StackIds: []string{metadata.GetGuid()}}
 			stackGroups = append(stackGroups, stackGroup)
-			toplog.Info("stack new: %v  stackGroup: %+v", metadata.GetName(), stackGroup)
+			toplog.Debug("stack new: %v  stackGroup: %+v", metadata.GetName(), stackGroup)
 		}
 	}
 

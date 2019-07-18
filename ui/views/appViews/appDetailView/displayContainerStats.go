@@ -43,7 +43,6 @@ type DisplayContainerStats struct {
 
 	key string
 
-	// TODO: Newly added 07/16/2019 need to populate values
 	AvgResponseL60Time float64
 	EventL60Rate       int
 	//AvgResponseL10Time float64
