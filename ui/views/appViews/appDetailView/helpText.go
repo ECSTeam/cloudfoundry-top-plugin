@@ -52,12 +52,26 @@ const HelpColumnsText = `
       DOWN, STARTING, RUNNING, CRASHED, TERM, UNKNOWN.
   STATE_DUR - Duration of time container has been in current state.
   CPU%% - CPU percent consumed by container.
+  CRH - Crashed container count in last 24 hours. 
+	  NOTE: The total crash count for 24 hour at top of screen can be
+	  larger then the sum of the crash counts across all current 
+	  instances because the app may have been scaled to a larger
+	  number of instances in the past.
   MEM_USED - Memory used by the container.
   MEM_FREE - Memory free in the container.
   DISK_USED - Disk used by container.
   DISK_FREE - Disk free in the container.
+  RESP - Avg response time in milliseconds over last 60 seconds.
   LOG_OUT - Total number of log stdout events.  
   LOG_ERR - Total number of log stderr events.
+  REQ/1 - Number of HTTP(S) request/responses in last 1 second.
+  REQ/10 - Number of HTTP(S) request/responses in last 10 seconds.
+  REQ/60 - Number of HTTP(S) request/responses in last 60 seconds.
+  TOT_REQ - Count of all of the HTTP(S) request/responses.
+  2XX - Count of HTTP(S) responses with status code 200-299.
+  3XX - Count of HTTP(S) responses with status code 300-399.
+  4XX - Count of HTTP(S) responses with status code 400-499.
+  5XX - Count of HTTP(S) responses with status code 500-599.
   CELL_IP - IP address of the cell running the container.
   STRT_DUR - Start duration. Amount of time from container creation to
       healthy container. This will be less then the overall time spent
@@ -66,6 +80,19 @@ const HelpColumnsText = `
   STATE_TIME - Time when the container entered current state.
   CNTR_START_MSG - Last container start-up message.
   CNTR_START_MSG_TM - Time when last container start-up message occured.
+  
+NOTE: The HTTP counters are based on traffic through the 
+go-router. Applications that talk directly container-to-
+container will not show up in the REQ/TOT-REQ/nXX counters.
+
+**Application Name Color Key:**
+WHITE - Normal
+CYAN  - Active. HTTP(S) traffic has been recieved in the last
+		10 seconds. 
+YELLOW - App instance starting.
+RED - App instance is crashed or down.
+PURPLE - App instance is terminated.
+
 `
 
 const HelpLocalViewKeybindings = `

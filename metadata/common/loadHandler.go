@@ -150,9 +150,8 @@ func (lh *LoadHandler) adjustLoadTimeIfNeeded(loadRequest *LoadRequest) bool {
 		lastReloadDuration := now.Sub(*lastLoadTime)
 		minReloadDuration := metadataHandler.MinimumReloadDuration()
 		if lastReloadDuration < minReloadDuration {
-
-			toplog.Info("Metadata loader [%v] - Adjusting load time. lastReloadDuration: %v minReloadDuration: %v", loadRequest.dataType, lastReloadDuration, minReloadDuration)
-
+			toplog.Info("Metadata loader [%v] key [%v] - Adjusting load time. lastReloadDuration: %v minReloadDuration: %v",
+				loadRequest.dataType, loadRequest.dataKey, lastReloadDuration, minReloadDuration)
 			requestedReloadDuration := loadRequest.loadAfter.Sub(now)
 			if requestedReloadDuration < minReloadDuration {
 				adjustedNextLoadTime := lastLoadTime.Add(minReloadDuration)

@@ -184,6 +184,7 @@ func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 	}
 
 	toplog.Info("Metadata %v - guid: %v name: [%v] - Load start", commonMgr.dataType, guid, itemName)
+	start := time.Now()
 	newMetadata, err := commonMgr.mm.LoadItemInternal(guid)
 	if err != nil {
 		return err
@@ -198,7 +199,8 @@ func (commonMgr *CommonMetadataManager) LoadItem(guid string) error {
 			go commonMgr.DelayedRemovalFromCache(guid, itemName)
 			toplog.Info("Metadata %v - guid: %v name: [%v] - Queue remove from cache as it doesn't seem to exist", commonMgr.dataType, guid, itemName)
 		}
-		toplog.Info("Metadata %v - guid: %v name: [%v] - Load complete", commonMgr.dataType, guid, itemName)
+		elapsed := time.Since(start)
+		toplog.Info("Metadata %v - guid: %v name: [%v] - Load complete in %s", commonMgr.dataType, guid, itemName, elapsed)
 	}
 	return nil
 }

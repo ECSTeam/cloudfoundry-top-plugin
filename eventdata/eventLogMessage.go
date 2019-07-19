@@ -111,6 +111,11 @@ func (ed *EventData) logCellMsg(msg *events.Envelope, logMessage *events.LogMess
 		containerStats.CellCreatedMsgTime = nil
 		containerStats.CellHealthyMsgTime = nil
 		containerStats.CellLastCreatingMsgTime = &msgTime
+		containerStats.ErrCount = 0
+		containerStats.OutCount = 0
+		containerStats.Ip = ""
+		containerStats.LastUpdateTime = nil
+		containerStats.LastMetricUpdateTime = nil
 
 		// Locate the traffic stats for this app index
 		for appInstId, containerTraffic := range appStats.ContainerTrafficMap {

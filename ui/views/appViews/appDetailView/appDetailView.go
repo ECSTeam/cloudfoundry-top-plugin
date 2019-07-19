@@ -187,23 +187,25 @@ func (asUI *AppDetailView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, ColumnStateDuration())
 
 	columns = append(columns, ColumnTotalCpuPercentage())
+	columns = append(columns, ColumnCrashCount())
+
 	columns = append(columns, ColumnMemoryUsed())
 	columns = append(columns, ColumnMemoryFree())
 	columns = append(columns, ColumnDiskUsed())
 	columns = append(columns, ColumnDiskFree())
-	columns = append(columns, columnAvgResponseTimeL60Info())
+	columns = append(columns, ColumnAvgResponseTimeL60Info())
 	columns = append(columns, ColumnLogStdout())
 	columns = append(columns, ColumnLogStderr())
 
-	columns = append(columns, columnReq1())
-	columns = append(columns, columnReq10())
-	columns = append(columns, columnReq60())
+	columns = append(columns, ColumnReq1())
+	columns = append(columns, ColumnReq10())
+	columns = append(columns, ColumnReq60())
 
-	columns = append(columns, columnTotalReq())
-	columns = append(columns, column2XX())
-	columns = append(columns, column3XX())
-	columns = append(columns, column4XX())
-	columns = append(columns, column5XX())
+	columns = append(columns, ColumnTotalReq())
+	columns = append(columns, Column2XX())
+	columns = append(columns, Column3XX())
+	columns = append(columns, Column4XX())
+	columns = append(columns, Column5XX())
 
 	columns = append(columns, ColumnCellIp())
 
@@ -410,6 +412,18 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 			asUI.LastCrashInfo = crashData.FindLastCrashByApp(appStats.AppId)
 		}
 	}
+
+	crashInfoFromApiArray := crashData.FindSinceByApp(appStats.AppId, -24*time.Hour)
+	crashInfoFromMemArray := appStats.CrashSince(-24 * time.Hour)
+	crashInfoArray := append(crashInfoFromApiArray, crashInfoFromMemArray...)
+
+	for _, crashInfo := range crashInfoArray {
+		displayContainerStats := displayContainerStatsMap[crashInfo.ContainerIndex]
+		if displayContainerStats != nil {
+			displayContainerStats.CrashCount++
+		}
+	}
+
 	return displayStatsArray
 }
 

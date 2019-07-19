@@ -286,11 +286,14 @@ func (commonV2ResponseMgr *CommonV2ResponseManager) GetMetadataFromUrl(url strin
 
 	commonV2ResponseMgr.mdGlobalManager.SetStatus(fmt.Sprintf("%v metadata loading...",
 		DataTypeDisplay[commonV2ResponseMgr.dataType]))
-	toplog.Info(fmt.Sprintf("%v metadata loading", commonV2ResponseMgr.dataType))
+	toplog.Info("%v metadata loading", commonV2ResponseMgr.dataType)
 
+	start := time.Now()
 	err := CallPagableAPI(commonV2ResponseMgr.mdGlobalManager.GetCliConnection(), url, handleRequest)
 
 	commonV2ResponseMgr.mm.PostProcessLoad(metadataArray, err)
+	elapsed := time.Since(start)
+	toplog.Info("%v metadata loaded %v items in %s", commonV2ResponseMgr.dataType, len(metadataArray), elapsed)
 
 	commonV2ResponseMgr.mdGlobalManager.SetStatus("")
 

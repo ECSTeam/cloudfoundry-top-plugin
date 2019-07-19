@@ -43,6 +43,8 @@ type DisplayContainerStats struct {
 
 	key string
 
+	CrashCount int
+
 	AvgResponseL60Time float64
 	EventL60Rate       int
 	//AvgResponseL10Time float64

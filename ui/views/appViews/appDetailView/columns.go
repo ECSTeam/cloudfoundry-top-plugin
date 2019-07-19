@@ -18,6 +18,7 @@ package appDetailView
 import (
 	"fmt"
 
+	"github.com/ecsteam/cloudfoundry-top-plugin/metadata/crashData"
 	"github.com/ecsteam/cloudfoundry-top-plugin/ui/uiCommon"
 	"github.com/ecsteam/cloudfoundry-top-plugin/util"
 )
@@ -295,7 +296,7 @@ func ColumnDiskReserved() *uiCommon.ListColumn {
 	return c
 }
 
-func columnAvgResponseTimeL60Info() *uiCommon.ListColumn {
+func ColumnAvgResponseTimeL60Info() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).AvgResponseL60Time < c2.(*DisplayContainerStats).AvgResponseL60Time
 	}
@@ -357,7 +358,7 @@ func ColumnLogStderr() *uiCommon.ListColumn {
 	return c
 }
 
-func columnReq1() *uiCommon.ListColumn {
+func ColumnReq1() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).EventL1Rate < c2.(*DisplayContainerStats).EventL1Rate
 	}
@@ -382,7 +383,7 @@ func columnReq1() *uiCommon.ListColumn {
 	return c
 }
 
-func columnReq10() *uiCommon.ListColumn {
+func ColumnReq10() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).EventL10Rate < c2.(*DisplayContainerStats).EventL10Rate
 	}
@@ -407,7 +408,7 @@ func columnReq10() *uiCommon.ListColumn {
 	return c
 }
 
-func columnReq60() *uiCommon.ListColumn {
+func ColumnReq60() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).EventL60Rate < c2.(*DisplayContainerStats).EventL60Rate
 	}
@@ -432,7 +433,7 @@ func columnReq60() *uiCommon.ListColumn {
 	return c
 }
 
-func columnTotalReq() *uiCommon.ListColumn {
+func ColumnTotalReq() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).HttpAllCount < c2.(*DisplayContainerStats).HttpAllCount
 	}
@@ -448,7 +449,7 @@ func columnTotalReq() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
-func column2XX() *uiCommon.ListColumn {
+func Column2XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).Http2xxCount < c2.(*DisplayContainerStats).Http2xxCount
 	}
@@ -464,7 +465,7 @@ func column2XX() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
 	return c
 }
-func column3XX() *uiCommon.ListColumn {
+func Column3XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).Http3xxCount < c2.(*DisplayContainerStats).Http3xxCount
 	}
@@ -481,7 +482,7 @@ func column3XX() *uiCommon.ListColumn {
 	return c
 }
 
-func column4XX() *uiCommon.ListColumn {
+func Column4XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).Http4xxCount < c2.(*DisplayContainerStats).Http4xxCount
 	}
@@ -498,7 +499,7 @@ func column4XX() *uiCommon.ListColumn {
 	return c
 }
 
-func column5XX() *uiCommon.ListColumn {
+func Column5XX() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {
 		return c1.(*DisplayContainerStats).Http5xxCount < c2.(*DisplayContainerStats).Http5xxCount
 	}
@@ -720,5 +721,36 @@ func ColumnCellLastStartMsgTime() *uiCommon.ListColumn {
 	}
 	c := uiCommon.NewListColumn("CNTR_START_MSG_TM", "CNTR_START_MSG_TM", defaultColSize,
 		uiCommon.TIMESTAMP, true, sortFunc, true, displayFunc, rawValueFunc, stateAttentionFunc)
+	return c
+}
+
+func ColumnCrashCount() *uiCommon.ListColumn {
+	sortFunc := func(c1, c2 util.Sortable) bool {
+		return c1.(*DisplayContainerStats).CrashCount < c2.(*DisplayContainerStats).CrashCount
+	}
+	displayFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) string {
+		stats := data.(*DisplayContainerStats)
+		crashCount := stats.CrashCount
+		if crashCount > 0 || crashData.IsCacheLoaded() {
+			display := fmt.Sprintf("%4v", util.Format(int64(crashCount)))
+			return display
+		} else {
+			return fmt.Sprintf("%4v", "--")
+		}
+	}
+	rawValueFunc := func(data uiCommon.IData) string {
+		appStats := data.(*DisplayContainerStats)
+		return fmt.Sprintf("%v", appStats.CrashCount)
+	}
+	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
+		appStats := data.(*DisplayContainerStats)
+		attentionType := uiCommon.ATTENTION_NORMAL
+		if appStats.CrashCount > 0 {
+			attentionType = uiCommon.ATTENTION_WARM
+		}
+		return attentionType
+	}
+	c := uiCommon.NewListColumn("CRH", "CRH", 4,
+		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, attentionFunc)
 	return c
 }
