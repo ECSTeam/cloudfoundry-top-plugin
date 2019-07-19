@@ -36,7 +36,8 @@ func (ed *EventData) valueMetricEvent(msg *events.Envelope) {
 		name := valueMetric.GetName()
 		switch name {
 		case "numCPUS":
-			cellStats.NumOfCpus = int(value)
+			// ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
+			//cellStats.NumOfCpus = int(value)
 		case "CapacityTotalMemory":
 			cellStats.CapacityMemoryTotal = int64(value)
 		case "CapacityRemainingMemory":

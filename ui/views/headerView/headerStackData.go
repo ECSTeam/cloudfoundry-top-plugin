@@ -239,17 +239,20 @@ func (asUI *HeaderWidget) updateHeaderStack(g *gocui.Gui, v *gocui.View) (int, e
 		// We might get nil sumStats if we are still in the warm-up period and stackId is unknown yet
 		if sumStats != nil {
 			sumStats.TotalCells = sumStats.TotalCells + 1
-			sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
+			// ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
+			// sumStats.TotalCellCPUs = sumStats.TotalCellCPUs + cellStats.NumOfCpus
 			sumStats.TotalCapacityMemory = sumStats.TotalCapacityMemory + cellStats.CapacityMemoryTotal
 			sumStats.TotalCapacityDisk = sumStats.TotalCapacityDisk + cellStats.CapacityDiskTotal
 
 			cellCpu := cpuByCellMap[cellStats.Ip]
 			if cellCpu > sumStats.CellMaxCpuPercentage {
 				sumStats.CellMaxCpuPercentage = cpuByCellMap[cellStats.Ip]
+				/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 				if cellStats.NumOfCpus > 0 {
 					// Only calc the capacity if we know the total CPU count
 					sumStats.CellMaxCpuCapacity = sumStats.CellMaxCpuPercentage / float64(cellStats.NumOfCpus)
 				}
+				*/
 			}
 		}
 	}
@@ -307,6 +310,7 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 			totalCpuPercentageDisplay = fmt.Sprintf("%.1f%%", stackSummaryStats.TotalCpuPercentage)
 		}
 
+		/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 		isWarmupComplete := asUI.masterUI.IsWarmupComplete()
 		if isWarmupComplete {
 			switch {
@@ -318,12 +322,15 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 				totalCpuPercentageDisplay = fmt.Sprintf("%v%7v%v", colorString, totalCpuPercentageDisplay, util.CLEAR)
 			}
 		}
+		*/
 	}
 
+	/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 	cellTotalCPUCapacityDisplay := "--"
 	if stackSummaryStats.TotalCellCPUs > 0 {
 		cellTotalCPUCapacityDisplay = fmt.Sprintf("%v%%", (stackSummaryStats.TotalCellCPUs * 100))
 	}
+	*/
 
 	CapacityMemoryTotalDisplay := "--"
 	if stackSummaryStats.TotalCapacityMemory > 0 {
@@ -346,7 +353,9 @@ func (asUI *HeaderWidget) outputHeaderForStack(g *gocui.Gui, v *gocui.View, stac
 		notes = "(cells with no containers)"
 	}
 	fmt.Fprintf(v, "Stack: %-13v Cells: %-3v%v\n", stackSummaryStats.StackGroupName, TotalCellsDisplay, notes)
-	fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
+	// ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
+	//fmt.Fprintf(v, "   CPU:%7v Used,%7v Max,     ", totalCpuPercentageDisplay, cellTotalCPUCapacityDisplay)
+	fmt.Fprintf(v, "   CPU:%7v Used,                 ", totalCpuPercentageDisplay)
 
 	displayTotalMem := "--"
 	totalMem := stackSummaryStats.ReservedMem

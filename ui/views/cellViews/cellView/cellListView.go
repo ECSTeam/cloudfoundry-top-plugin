@@ -70,7 +70,8 @@ func (asUI *CellListView) columnDefinitions() []*uiCommon.ListColumn {
 	columns = append(columns, columnTotalCpuPercentage())
 	columns = append(columns, columnTotalReportingContainers())
 
-	columns = append(columns, columnNumOfCpus())
+	// ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
+	// columns = append(columns, columnNumOfCpus())
 
 	columns = append(columns, columnCapacityMemoryTotal())
 	columns = append(columns, columnCapacityMemoryRemaining())

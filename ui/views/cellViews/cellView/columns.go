@@ -70,12 +70,16 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 		return fmt.Sprintf("%v", cellStats.TotalContainerCpuPercentage)
 	}
 	attentionFunc := func(data uiCommon.IData, columnOwner uiCommon.IColumnOwner) uiCommon.AttentionType {
-		cellStats := data.(*DisplayCellStats)
+
 		attentionType := uiCommon.ATTENTION_NORMAL
+
+		/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
+		cellStats := data.(*DisplayCellStats)
 
 		cpuPercentage := cellStats.TotalContainerCpuPercentage
 		// This is the overall percentage of CPU in use on this cell, where 100% means all CPUs are 100% consumed
 		// Only calc and determine alert attention color if we know the total number of CPUs
+		/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 		if cellStats.NumOfCpus > 0 {
 			cellMaxCpuCapacity := cpuPercentage / float64(cellStats.NumOfCpus)
 			switch {
@@ -85,6 +89,7 @@ func columnTotalCpuPercentage() *uiCommon.ListColumn {
 				attentionType = uiCommon.ATTENTION_WARM
 			}
 		}
+		*/
 		return attentionType
 	}
 	c := uiCommon.NewListColumn("CPU_PERCENT", "CPU%", defaultColSize,
@@ -116,6 +121,8 @@ func columnTotalReportingContainers() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, false, sortFunc, true, displayFunc, rawValueFunc, nil)
 	return c
 }
+
+/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 func columnNumOfCpus() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -139,6 +146,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
+*/
 
 func columnCapacityMemoryTotal() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {

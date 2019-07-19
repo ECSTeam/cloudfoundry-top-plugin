@@ -50,6 +50,7 @@ func columnIp() *uiCommon.ListColumn {
 	return c
 }
 
+/* ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 func columnNumOfCpus() *uiCommon.ListColumn {
 	defaultColSize := 4
 	sortFunc := func(c1, c2 util.Sortable) bool {
@@ -73,6 +74,7 @@ func columnNumOfCpus() *uiCommon.ListColumn {
 		uiCommon.NUMERIC, true, sortFunc, false, displayFunc, rawValueFunc, nil)
 	return c
 }
+*/
 
 func columnCapacityMemoryTotal() *uiCommon.ListColumn {
 	sortFunc := func(c1, c2 util.Sortable) bool {

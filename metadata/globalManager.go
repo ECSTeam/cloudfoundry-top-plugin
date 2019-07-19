@@ -260,7 +260,7 @@ func (mgr *GlobalManager) FindIsoSegBySpace(spaceMetadata *space.SpaceMetadata) 
 	isoSegGuid := spaceMetadata.IsolationSegmentGuid
 	if isoSegGuid == isolationSegment.DefaultIsolationSegmentGuid {
 		orgMetadata := mgr.GetOrgMdManager().FindItem(spaceMetadata.OrgGuid)
-		toplog.Info("isoseg for space: %v space has default, org has: [%v] (if empty then default/shared)", spaceMetadata.GetName(), orgMetadata.DefaultIsolationSegmentGuid)
+		//toplog.Info("isoseg for space: %v space has default, org has: [%v] (if empty then default/shared)", spaceMetadata.GetName(), orgMetadata.DefaultIsolationSegmentGuid)
 		if orgMetadata.DefaultIsolationSegmentGuid != "" {
 			isoSegGuid = orgMetadata.DefaultIsolationSegmentGuid
 		}

@@ -23,7 +23,7 @@ type CellStats struct {
 	JobName              string
 	JobIndex             string
 
-	NumOfCpus                   int
+	//NumOfCpus                   int  // ISSUE: numCPUS - PCF 2.6 no longer sending metric "numCPUS"
 	CapacityMemoryTotal         int64
 	CapacityMemoryRemaining     int64
 	CapacityDiskTotal           int64

@@ -72,7 +72,7 @@ func (asUI *CapacityPlanView) columnDefinitions() []*uiCommon.ListColumn {
 	columns := make([]*uiCommon.ListColumn, 0)
 	columns = append(columns, columnIp())
 
-	columns = append(columns, columnNumOfCpus())
+	//columns = append(columns, columnNumOfCpus())
 
 	columns = append(columns, columnCapacityMemoryTotal())
 	columns = append(columns, columnCapacityMemoryRemaining())
@@ -203,7 +203,7 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 	totalDisplayStat.CapacityPlan3_5GMem = UNKNOWN
 	totalDisplayStat.CapacityPlan4_0GMem = UNKNOWN
 
-	NumOfCpus := 0
+	//NumOfCpus := 0
 	CapacityMemoryTotal := int64(0)
 	CapacityMemoryRemaining := int64(0)
 	TotalContainerMemoryReserved := uint64(0)
@@ -221,7 +221,7 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 	capacityPlanHasValue := false
 	for _, cellStats := range displayCellMap {
 
-		NumOfCpus = NumOfCpus + cellStats.NumOfCpus
+		//NumOfCpus = NumOfCpus + cellStats.NumOfCpus
 		CapacityMemoryTotal = CapacityMemoryTotal + cellStats.CapacityMemoryTotal
 		CapacityMemoryRemaining = CapacityMemoryRemaining + cellStats.CapacityMemoryRemaining
 		TotalContainerMemoryReserved = TotalContainerMemoryReserved + cellStats.TotalContainerMemoryReserved
@@ -239,7 +239,7 @@ func (asUI *CapacityPlanView) addTotalRow(displayCellMap map[string]*cellView.Di
 			CapacityPlan4_0GMem = CapacityPlan4_0GMem + cellStats.CapacityPlan4_0GMem
 		}
 	}
-	totalDisplayStat.NumOfCpus = NumOfCpus
+	//totalDisplayStat.NumOfCpus = NumOfCpus
 	totalDisplayStat.CapacityMemoryTotal = CapacityMemoryTotal
 	totalDisplayStat.CapacityMemoryRemaining = CapacityMemoryRemaining
 	totalDisplayStat.TotalContainerMemoryReserved = TotalContainerMemoryReserved
