@@ -6,7 +6,7 @@
 #   export GITHUB_TOKEN=XXXXXXX (your personal token)
 #
 # Example:
-# ./scripts/build-all.sh release v0.7.3
+# ./scripts/build-all.sh release v0.9.4
 #
 #
 set -e
@@ -98,8 +98,10 @@ if [[ "$1" = "release" ]] ; then
 
 	echo "Git commit and push"
 
+    set +e
 	git commit -am "Build version $TAG"
 	git push
+    set -e
 
 	echo "Create git release $TAG"
 
