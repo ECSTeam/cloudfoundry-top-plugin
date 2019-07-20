@@ -338,16 +338,9 @@ func (asUI *AppDetailView) postProcessData() []*DisplayContainerStats {
 		}
 	}
 
-	for appInstId, containerTraffic := range appStats.ContainerTrafficMap {
-
-		// TODO: Since we collect container info by appInst GUID and not index
-		// we could have multiple entries in the map for the same index in
-		// the case where a container restarted.  We only want to display
-		// states for the currently "alive" container -- how do we determine that?
-		appInstId = appInstId
+	for _, containerTraffic := range appStats.ContainerTrafficMap {
 
 		//toplog.Info("appInstId: %v index: %v", appInstId, containerTraffic.InstanceIndex)
-
 		displayContainerStats := displayContainerStatsMap[int(containerTraffic.InstanceIndex)]
 		if displayContainerStats != nil {
 
