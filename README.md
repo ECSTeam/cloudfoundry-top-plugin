@@ -1,4 +1,4 @@
-# top-plugin by Kurt Kellner of ECS Team (www.ECSTeam.com)
+# top-plugin by Kurt Kellner of CGI (https://www.cgi.com/en/media/brochure/cloud-native-solutions)
 
 This is a Cloud Foundry command-line cf interactive plugin for showing live statistics of the targeted Cloud Foundry foundation.
 The live statistics include application statistics and route statistics among others.
