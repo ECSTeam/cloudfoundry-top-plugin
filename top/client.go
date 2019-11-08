@@ -120,7 +120,7 @@ func (c *Client) Start() {
 			c.ui.Warn("\nYour userid has 'cloud_controller.admin' but not 'doppler.firehose' scope.")
 		}
 		if hasFirehoseScope {
-			c.ui.Warn("Your userid has 'doppler.firehose' but not 'cloud_controller.admin' scope.")
+			c.ui.Warn("Your userid has 'doppler.firehose' but not 'cloud_controller.admin' or 'cloud_controller.admin_read_only' scope.")
 		}
 		c.ui.Warn("top cannot run in privileged mode in this configuration.")
 		c.ui.Warn("See: https://github.com/ECSTeam/cloudfoundry-top-plugin#assign-scope-if-privileged-mode-is-needed\n")
@@ -422,7 +422,8 @@ func (c *Client) hasDopplerFirehoseScope(scopes []string) bool {
 }
 
 func (c *Client) hasCloudControllerAdminScope(scopes []string) bool {
-	return c.hasScope(scopes, "cloud_controller.admin")
+	return c.hasScope(scopes, "cloud_controller.admin") ||
+		c.hasScope(scopes, "cloud_controller.admin_read_only")
 }
 
 func (c *Client) hasScope(scopes []string, findScope string) bool {
