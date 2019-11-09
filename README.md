@@ -82,8 +82,8 @@ Install the uaac client CLI if you do not already have it:
 gem install cf-uaac
 ```
 
-Login and add two scopes.  Note that the UAA password is NOT the
-"Admin Credentials", the password is found in the ERT under Credentials tab,
+Login and add 2 or 3 scopes as showed below.  Note that the UAA password is NOT the
+"Admin Credentials", the password is found in the PAS tile under Credentials tab,
 look for password for "Admin Client Credentials".
 
 ```
@@ -91,13 +91,35 @@ uaac target https://login.system.YOUR.DOMAIN --skip-ssl-validation
 uaac token client get admin -s [UAA Admin Client Credentials]  
 ```
 
-To assign scopes to a LDAP group (recommended if connected to LDAP/Active Directory):
+### To assign scopes to a LDAP group (recommended if connected to LDAP/Active Directory).
+Read-only admin API is all that is needed for this plugin but both options given below.
+
+Read-only API access:
+```
+uaac group map --name cloud_controller.admin_read_only [FULL DN to LDAP group]
+uaac group map --name scim.read  [FULL DN to LDAP group]
+uaac group map --name doppler.firehose [FULL DN to LDAP group]
+```
+-or-
+
+Full API access:
 ```
 uaac group map --name cloud_controller.admin [FULL DN to LDAP group]
 uaac group map --name doppler.firehose [FULL DN to LDAP group]
 ```
 
-To assing scopes directly to a user:
+### To assign scopes directly to a user. 
+Read-only admin API is all that is needed for this plugin but both options given below.
+
+Read-only API access:
+```
+uaac member add cloud_controller.admin_read_only [username]
+uaac member add scim.read [username]
+uaac member add doppler.firehose [username]
+```
+-or-
+
+Full API access:
 ```
 uaac member add cloud_controller.admin [username]
 uaac member add doppler.firehose [username]
